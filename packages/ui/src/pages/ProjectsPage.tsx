@@ -256,7 +256,7 @@ export function ProjectsPage() {
       </div>
 
       <PageContainer className="py-8">
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
           {filteredProjects.map((project) => {
             const stats = statsCache[project.id];
             return (

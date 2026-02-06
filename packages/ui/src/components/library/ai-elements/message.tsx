@@ -311,7 +311,11 @@ export const MessageResponse = memo(
     const markdownComponents = useMarkdownComponents("", "");
 
     return (
-      <div className={cn("prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}>
+      <div className={cn(
+        "prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+        "[&_*]:text-sm [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0 [&_h1]:my-2 [&_h2]:my-2 [&_h3]:my-2 [&_h4]:my-2 [&_blockquote]:my-1 [&_pre]:my-1",
+        className
+      )}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkBreaks]}
           rehypePlugins={[rehypeSlug, rehypeHighlight]}
