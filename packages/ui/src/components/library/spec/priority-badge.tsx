@@ -41,19 +41,20 @@ export function PriorityBadge({
   onChange,
 }: PriorityBadgeProps) {
   const config = defaultPriorityConfig[priority as SpecPriority] || defaultPriorityConfig.medium;
-  
+
   // Warn in development if an unknown priority is provided
   if (import.meta.env.DEV && !(priority in defaultPriorityConfig)) {
     console.warn(`PriorityBadge: Unknown priority "${priority}", falling back to "medium"`);
   }
-  
+
   const Icon = config.icon;
   const displayLabel = label ?? config.label;
 
   const badgeContent = (
     <Badge
+      variant="outline"
       className={cn(
-        'flex items-center w-fit',
+        'flex items-center w-fit border-transparent',
         !iconOnly && 'gap-1.5',
         config.className,
         editable && 'cursor-pointer hover:opacity-80 transition-opacity',
@@ -71,7 +72,7 @@ export function PriorityBadge({
 
   return (
     <Select value={priority} onValueChange={(value) => onChange(value as SpecPriority)}>
-      <SelectTrigger 
+      <SelectTrigger
         className={cn(
           'h-7 w-fit border-0 px-0 text-xs font-medium hover:bg-transparent focus:ring-0',
           config.className

@@ -41,19 +41,20 @@ export function StatusBadge({
   onChange,
 }: StatusBadgeProps) {
   const config = defaultStatusConfig[status as SpecStatus] || defaultStatusConfig.planned;
-  
+
   // Warn in development if an unknown status is provided
   if (import.meta.env.DEV && !(status in defaultStatusConfig)) {
     console.warn(`StatusBadge: Unknown status "${status}", falling back to "planned"`);
   }
-  
+
   const Icon = config.icon;
   const displayLabel = label ?? config.label;
 
   const badgeContent = (
     <Badge
+      variant="outline"
       className={cn(
-        'flex items-center w-fit',
+        'flex items-center w-fit border-transparent',
         !iconOnly && 'gap-1.5',
         config.className,
         editable && 'cursor-pointer hover:opacity-80 transition-opacity',
@@ -71,7 +72,7 @@ export function StatusBadge({
 
   return (
     <Select value={status} onValueChange={(value) => onChange(value as SpecStatus)}>
-      <SelectTrigger 
+      <SelectTrigger
         className={cn(
           'h-7 w-fit border-0 px-0 text-xs font-medium hover:bg-transparent focus:ring-0',
           config.className
