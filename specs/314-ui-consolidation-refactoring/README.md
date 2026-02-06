@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-02-06
 priority: medium
 tags:
@@ -8,8 +8,12 @@ tags:
 - dx
 - architecture
 created_at: 2026-02-06T01:51:49.885954530Z
-updated_at: 2026-02-06T01:51:49.885954530Z
+updated_at: 2026-02-06T04:03:35.532247888Z
+transitions:
+- status: in-progress
+  at: 2026-02-06T04:03:35.532247888Z
 ---
+
 # UI Consolidation: Merge Packages, Standardize Naming, Eliminate Duplication
 
 ## Overview
@@ -90,13 +94,13 @@ Component **exports remain PascalCase** (only file names change). Barrel `index.
 ## Plan
 
 ### Phase 1: DRY Elimination (within current structure)
-- [ ] Centralize badge config into `ui-components`, export it
-- [ ] Add `editable` + `onChange` to PriorityBadge/StatusBadge in `ui-components`
-- [ ] Add callback props (i18n, API) to editors in `ui-components`
-- [ ] Replace `ui` duplicates with imports from `ui-components`
-- [ ] Remove inlined color utils from ProjectAvatar, import from `ui-components`
-- [ ] Consolidate Tooltip to single implementation
-- [ ] Consolidate BackToTop and EmptyState
+- [x] Centralize badge config into `ui-components`, export it
+- [x] Add `editable` + `onChange` to PriorityBadge/StatusBadge in `ui-components`
+- [x] Add callback props (i18n, API) to editors in `ui-components`
+- [x] Replace `ui` duplicates with imports from `ui-components`
+- [x] Remove inlined color utils from ProjectAvatar, import from `ui-components`
+- [x] Consolidate Tooltip to single implementation
+- [x] Consolidate BackToTop and EmptyState
 
 ### Phase 2: File Naming Standardization
 - [ ] Rename all PascalCase component files in `ui/src/components` to kebab-case
