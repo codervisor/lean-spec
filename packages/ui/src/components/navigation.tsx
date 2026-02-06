@@ -12,6 +12,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tool
 import { useChat } from '../contexts';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 
+// Injected by Vite at build time
+declare const __DEV_BUILD__: string;
+const isDevBuild = typeof __DEV_BUILD__ !== 'undefined' && __DEV_BUILD__ === 'true';
+
+// Use dev logos in dev server or when LEANSPEC_DEV_BUILD=true
+const logoLight = import.meta.env.DEV || isDevBuild ? '/logo-with-bg-dev.svg' : '/logo-with-bg.svg';
+const logoDark = import.meta.env.DEV || isDevBuild ? '/logo-dark-bg-dev.svg' : '/logo-dark-bg.svg';
+
 interface BreadcrumbItem {
   label: string;
   to?: string;
@@ -188,12 +196,12 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
             data-tauri-drag-region="false"
           >
             <img
-              src="/logo-with-bg.svg"
+              src={logoLight}
               alt={t('navigation.logoAlt')}
               className="h-7 w-7 sm:h-8 sm:w-8 dark:hidden"
             />
             <img
-              src="/logo-dark-bg.svg"
+              src={logoDark}
               alt={t('navigation.logoAlt')}
               className="h-7 w-7 sm:h-8 sm:w-8 hidden dark:block"
             />

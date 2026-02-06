@@ -49,5 +49,7 @@ export default defineConfig({
   define: {
     // Make environment variables available
     __API_URL__: JSON.stringify(process.env.VITE_API_URL || ''),
+    // Flag for dev builds (local dev server or LEANSPEC_DEV_BUILD=true)
+    __DEV_BUILD__: JSON.stringify(process.env.LEANSPEC_DEV_BUILD === 'true'),
   },
 })
