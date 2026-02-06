@@ -12,15 +12,16 @@ import {
   TooltipTrigger,
 } from "../ui/tooltip";
 import { cn } from "@/lib/utils";
-import { cjk } from "@streamdown/cjk";
-import { code } from "@streamdown/code";
-import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
 import type { UIMessage } from "ai";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import { createContext, memo, useContext, useEffect, useState } from "react";
-import { Streamdown } from "streamdown";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
+import rehypeSlug from 'rehype-slug';
+import rehypeHighlight from 'rehype-highlight';
+import { useMarkdownComponents } from '../../shared/markdown';
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
@@ -303,20 +304,27 @@ export const MessageBranchPage = ({
   );
 };
 
-export type MessageResponseProps = ComponentProps<typeof Streamdown>;
+export type MessageResponseProps = { className?: string; children: string } & Omit<ComponentProps<typeof ReactMarkdown>, "children">;
 
 export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => (
-    <Streamdown
-      className={cn(
-        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className
-      )}
-      plugins={{ code, mermaid, math, cjk }}
-      {...props}
-    />
-  ),
-  (prevProps, nextProps) => prevProps.children === nextProps.children
+  ({ className, children, ...props }: MessageResponseProps) => {
+    const markdownComponents = useMarkdownComponents("", "");
+
+    return (
+      <div className={cn("prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm, remarkBreaks]}
+          rehypePlugins={[rehypeSlug, rehypeHighlight]}
+          components={markdownComponents}
+          {...props}
+        >
+          {children}
+        </ReactMarkdown>
+      </div>
+    );
+  },
+  (prevProps: MessageResponseProps, nextProps: MessageResponseProps) =>
+    prevProps.children === nextProps.children
 );
 
 MessageResponse.displayName = "MessageResponse";

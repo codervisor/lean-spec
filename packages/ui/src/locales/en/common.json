@@ -763,7 +763,8 @@
       "toggleChatSidebar": "Toggle AI chat sidebar",
       "focusChatInput": "Focus chat input",
       "newConversation": "New conversation",
-      "viewHistory": "View history"
+      "viewHistory": "View history",
+      "closeChatSidebar": "Close chat sidebar"
     }
   },
   "tableOfContents": {

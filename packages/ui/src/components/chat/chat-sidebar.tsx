@@ -206,7 +206,7 @@ export function ChatSidebar() {
               </PopoverContent>
             </Popover>
 
-            <Button variant="ghost" size="icon" className="h-8 w-8" title={t('navigation.settings')} onClick={() => navigate('/settings?tab=models')}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" title={t('navigation.settings')} onClick={() => navigate('/settings/models')}>
               <Settings className="h-4 w-4" />
             </Button>
             <Button

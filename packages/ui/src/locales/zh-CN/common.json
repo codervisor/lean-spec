@@ -763,7 +763,8 @@
       "toggleChatSidebar": "切换 AI 聊天侧边栏",
       "focusChatInput": "聚焦聊天输入框",
       "newConversation": "新建对话",
-      "viewHistory": "查看历史记录"
+      "viewHistory": "查看历史记录",
+      "closeChatSidebar": "关闭聊天侧边栏"
     }
   },
   "tableOfContents": {

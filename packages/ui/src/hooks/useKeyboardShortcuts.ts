@@ -49,7 +49,7 @@ export function useGlobalShortcuts() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useCurrentProject();
-  const { toggleChat, createConversation, toggleHistory, isOpen, openChat } = useChat();
+  const { toggleChat, createConversation, toggleHistory, isOpen, openChat, closeChat } = useChat();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : null;
 
@@ -137,6 +137,14 @@ export function useGlobalShortcuts() {
         if (!isOpen) openChat();
         toggleHistory();
       }, [isOpen, openChat, toggleHistory]),
+    },
+    {
+      key: 'escape',
+      description: t('keyboardShortcuts.items.closeChatSidebar'),
+      action: useCallback(() => {
+        if (!isOpen) return;
+        closeChat();
+      }, [isOpen, closeChat]),
     },
     {
       key: ',',
