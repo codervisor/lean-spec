@@ -91,7 +91,14 @@ pub async fn generate_text(context: GenerateTextContext) -> Result<GenerateTextR
 
     let text = match selection.provider {
         ProviderClient::OpenAI(client) | ProviderClient::OpenRouter(client) => {
-            generate_text_openai(&client, &selection.model_id, &system_prompt, &user_prompt).await?
+            generate_text_openai(
+                &client,
+                &selection.model_id,
+                &system_prompt,
+                &user_prompt,
+                selection.use_openai_compat,
+            )
+            .await?
         }
         ProviderClient::Anthropic(client) => {
             generate_text_anthropic(client, &selection.model_id, &system_prompt, &user_prompt)
@@ -111,6 +118,7 @@ async fn generate_text_openai(
     model_id: &str,
     system_prompt: &str,
     user_prompt: &str,
+    use_openai_compat: bool,
 ) -> Result<String, AiError> {
     let messages = vec![
         ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
@@ -123,10 +131,16 @@ async fn generate_text_openai(
         }),
     ];
 
-    let request = CreateChatCompletionRequestArgs::default()
-        .model(model_id)
-        .messages(messages)
-        .max_completion_tokens(100u32)
+    let mut builder = CreateChatCompletionRequestArgs::default();
+    builder.model(model_id);
+    builder.messages(messages);
+    if use_openai_compat {
+        builder.max_tokens(100u32);
+    } else {
+        builder.max_completion_tokens(100u32);
+    }
+
+    let request = builder
         .build()
         .map_err(|e| AiError::Provider(e.to_string()))?;
 
@@ -215,6 +229,7 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
     let selected_provider_id = selection.provider_id.clone();
     let selected_model_id = selection.model_id.clone();
     let selected_model_id_for_task = selected_model_id.clone();
+    let use_openai_compat = selection.use_openai_compat;
     let max_steps = config.settings.max_steps;
     let max_tokens = selection.model_max_tokens;
 
@@ -231,6 +246,7 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
                     tools,
                     max_steps,
                     max_tokens,
+                    use_openai_compat,
                     sender: &sender,
                     text_id: &text_id,
                 })
@@ -245,6 +261,7 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
                     tools,
                     max_steps,
                     max_tokens,
+                    use_openai_compat,
                     sender: &sender,
                     text_id: &text_id,
                 })
@@ -387,6 +404,7 @@ struct OpenAiConversationParams<'a> {
     tools: ToolRegistry,
     max_steps: u32,
     max_tokens: Option<u32>,
+    use_openai_compat: bool,
     sender: &'a mpsc::UnboundedSender<StreamEvent>,
     text_id: &'a str,
 }
@@ -399,6 +417,7 @@ async fn run_openai_conversation(
         tools,
         max_steps,
         max_tokens,
+        use_openai_compat,
         sender,
         text_id,
     }: OpenAiConversationParams<'_>,
@@ -414,6 +433,7 @@ async fn run_openai_conversation(
             messages,
             tools.tools(),
             max_tokens,
+            use_openai_compat,
             sender,
             text_id,
         )
@@ -507,6 +527,7 @@ async fn stream_openai_round(
     messages: &[ChatCompletionRequestMessage],
     tools: &[async_openai::types::chat::ChatCompletionTools],
     max_tokens: Option<u32>,
+    use_openai_compat: bool,
     sender: &mpsc::UnboundedSender<StreamEvent>,
     text_id: &str,
 ) -> Result<OpenAiRoundResult, AiError> {
@@ -516,10 +537,16 @@ async fn stream_openai_round(
     builder.stream(true);
     if !tools.is_empty() {
         builder.tools(tools.to_vec());
-        builder.parallel_tool_calls(true);
+        if !use_openai_compat {
+            builder.parallel_tool_calls(true);
+        }
     }
     if let Some(max_tokens) = max_tokens {
-        builder.max_completion_tokens(max_tokens);
+        if use_openai_compat {
+            builder.max_tokens(max_tokens);
+        } else {
+            builder.max_completion_tokens(max_tokens);
+        }
     }
     let request = builder
         .build()

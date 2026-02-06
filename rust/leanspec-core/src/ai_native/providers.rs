@@ -39,7 +39,24 @@ pub struct ProviderSelection {
     pub provider_id: String,
     pub model_id: String,
     pub model_max_tokens: Option<u32>,
+    pub use_openai_compat: bool,
+    pub provider_base_url: Option<String>,
     pub provider: ProviderClient,
+}
+
+fn use_openai_compat(provider_id: &str, base_url: &Option<String>) -> bool {
+    if provider_id == "openrouter" {
+        return true;
+    }
+
+    if provider_id != "openai" {
+        return false;
+    }
+
+    base_url
+        .as_ref()
+        .map(|url| !url.contains("openai.com"))
+        .unwrap_or(false)
 }
 
 pub fn select_provider(
@@ -64,12 +81,16 @@ pub fn select_provider(
         return Err(AiError::MissingApiKey(provider.name.clone()));
     }
 
+    let provider_base_url = provider.base_url.clone();
     let provider_client = build_provider(provider, &api_key)?;
+    let use_openai_compat = use_openai_compat(&provider.id, &provider_base_url);
 
     Ok(ProviderSelection {
         provider_id: provider.id.clone(),
         model_id: model.id.clone(),
         model_max_tokens: model.max_tokens,
+        use_openai_compat,
+        provider_base_url,
         provider: provider_client,
     })
 }

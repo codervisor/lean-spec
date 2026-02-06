@@ -33,16 +33,29 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
   const baseUrl = import.meta.env.VITE_API_URL || '';
   const api = `${baseUrl}/api/chat`;
 
-  // Create transport with proper options
+  // Use a ref to always provide the latest body values to the transport.
+  // The Chat instance from @ai-sdk/react is only recreated when 'id' changes,
+  // NOT when transport changes. By passing body as a function that reads from
+  // a ref, the transport always resolves the current model/provider values
+  // at request time (HttpChatTransport calls resolve(this.body) which supports functions).
+  const bodyRef = useRef({
+    projectId: currentProject?.id,
+    sessionId: options.threadId,
+    providerId: options.providerId,
+    modelId: options.modelId,
+  });
+  bodyRef.current = {
+    projectId: currentProject?.id,
+    sessionId: options.threadId,
+    providerId: options.providerId,
+    modelId: options.modelId,
+  };
+
+  // Create transport once per api endpoint — body is resolved dynamically via the ref
   const transport = useMemo(() => new DefaultChatTransport({
     api,
-    body: {
-      projectId: currentProject?.id,
-      sessionId: options.threadId,
-      providerId: options.providerId,
-      modelId: options.modelId,
-    },
-  }), [api, currentProject?.id, options.providerId, options.modelId, options.threadId]);
+    body: () => bodyRef.current,
+  }), [api]);
 
   const chatHook = useAIChat({
     id: options.threadId || 'new-chat',
