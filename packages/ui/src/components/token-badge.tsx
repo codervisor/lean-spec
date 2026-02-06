@@ -1,6 +1,6 @@
 import { Coins } from 'lucide-react';
 import { tokenStatusClasses, formatCompactTokenCount, formatFullTokenCount, resolveTokenStatus } from '../lib/token-utils';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 import { useTranslation } from 'react-i18next';
 

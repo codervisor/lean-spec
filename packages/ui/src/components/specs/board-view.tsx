@@ -5,7 +5,7 @@ import type { Spec } from '../../types/api';
 import { PriorityBadge } from '../priority-badge';
 import { TokenBadge } from '../token-badge';
 import { ValidationBadge } from '../validation-badge';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 
 type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';

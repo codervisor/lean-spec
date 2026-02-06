@@ -1,1 +1,1 @@
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@leanspec/ui-components';
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/library';

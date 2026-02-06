@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button, cn } from '@leanspec/ui-components';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button, cn } from '@/library';
 import type { SpecValidationResponse } from '../../types/api';
 import { CheckCircle2, AlertTriangle, XCircle, Info, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';

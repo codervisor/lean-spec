@@ -1,20 +1,20 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+const dtsPlugin = dts({
+  insertTypesEntry: true,
+  outDir: 'dist/lib',
+  include: ['src/**/*'],
+  exclude: ['**/*.stories.tsx', '**/*.test.ts', '**/*.test.tsx'],
+  tsconfigPath: './tsconfig.app.json',
+}) as unknown as PluginOption;
+
 export default defineConfig({
-  plugins: [
-    react(),
-    dts({
-      insertTypesEntry: true,
-      outputDir: 'dist/lib',
-      include: ['src/**/*'],
-      exclude: ['**/*.stories.tsx', '**/*.test.ts', '**/*.test.tsx'],
-    }),
-  ],
+  plugins: [react(), dtsPlugin],
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),

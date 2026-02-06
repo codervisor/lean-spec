@@ -3,19 +3,16 @@ import dagre from '@dagrejs/dagre';
 import ReactFlow, {
   Background,
   Controls,
-  Edge,
   Handle,
   MarkerType,
-  Node,
-  NodeProps,
   Position,
-  ReactFlowInstance,
   ReactFlowProvider,
 } from 'reactflow';
+import type { Edge, Node, NodeProps, ReactFlowInstance } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
-import type { CompleteSpecRelationships, SpecRelationshipNode } from '../../types/specs';
-import { cn } from '../../lib/utils';
+import type { CompleteSpecRelationships, SpecRelationshipNode } from '../../../types/specs';
+import { cn } from '../../../lib/utils';
 
 const NODE_WIDTH = 280;
 const NODE_HEIGHT = 110;
@@ -382,23 +379,26 @@ function DependencyGraphInner({
 }: DependencyGraphProps) {
   const [instance, setInstance] = React.useState<ReactFlowInstance | null>(null);
 
-  const copy: GraphCopy = {
-    currentBadge: labels?.currentBadge || 'Current Spec',
-    currentSubtitle: labels?.currentSubtitle || 'Currently viewing',
-    dependsOnBadge: labels?.dependsOnBadge || 'Depends On',
-    dependsOnSubtitle: labels?.dependsOnSubtitle || 'Upstream dependency',
-    requiredByBadge: labels?.requiredByBadge || 'Required By',
-    requiredBySubtitle: labels?.requiredBySubtitle || 'Downstream dependency',
-    completedSubtitle: labels?.completedSubtitle,
-    inProgressSubtitle: labels?.inProgressSubtitle,
-    plannedBlockingSubtitle: labels?.plannedBlockingSubtitle,
-    plannedCanProceedSubtitle: labels?.plannedCanProceedSubtitle,
-    archivedSubtitle: labels?.archivedSubtitle,
-  };
+  const copy = React.useMemo<GraphCopy>(
+    () => ({
+      currentBadge: labels?.currentBadge || 'Current Spec',
+      currentSubtitle: labels?.currentSubtitle || 'Currently viewing',
+      dependsOnBadge: labels?.dependsOnBadge || 'Depends On',
+      dependsOnSubtitle: labels?.dependsOnSubtitle || 'Upstream dependency',
+      requiredByBadge: labels?.requiredByBadge || 'Required By',
+      requiredBySubtitle: labels?.requiredBySubtitle || 'Downstream dependency',
+      completedSubtitle: labels?.completedSubtitle,
+      inProgressSubtitle: labels?.inProgressSubtitle,
+      plannedBlockingSubtitle: labels?.plannedBlockingSubtitle,
+      plannedCanProceedSubtitle: labels?.plannedCanProceedSubtitle,
+      archivedSubtitle: labels?.archivedSubtitle,
+    }),
+    [labels]
+  );
 
   const graph = React.useMemo(
     () => buildGraph(relationships, specNumber, specTitle, copy),
-    [relationships, specNumber, specTitle, labels]
+    [relationships, specNumber, specTitle, copy]
   );
 
   const nodeTypes = React.useMemo(

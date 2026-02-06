@@ -3,8 +3,8 @@
  */
 
 import { Clock, PlayCircle, CheckCircle2, Archive, Circle } from 'lucide-react';
-import { formatRelativeTime, formatDuration } from '../../lib/date-utils';
-import { cn } from '../../lib/utils';
+import { formatRelativeTime, formatDuration } from '../../../lib/date-utils';
+import { cn } from '../../../lib/utils';
 
 interface TimelineEvent {
   label: string;

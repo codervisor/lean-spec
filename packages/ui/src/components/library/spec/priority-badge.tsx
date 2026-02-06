@@ -4,13 +4,13 @@
  * Supports editable mode with dropdown
  */
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '../ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/components/ui/select';
+} from '../ui/select';
 import { cn } from '@/lib/utils';
 import { priorityConfig as defaultPriorityConfig } from '@/lib/badge-config';
 import type { SpecPriority } from '@/types/specs';
@@ -43,7 +43,7 @@ export function PriorityBadge({
   const config = defaultPriorityConfig[priority as SpecPriority] || defaultPriorityConfig.medium;
   
   // Warn in development if an unknown priority is provided
-  if (process.env.NODE_ENV === 'development' && !(priority in defaultPriorityConfig)) {
+  if (import.meta.env.DEV && !(priority in defaultPriorityConfig)) {
     console.warn(`PriorityBadge: Unknown priority "${priority}", falling back to "medium"`);
   }
   

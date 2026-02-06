@@ -31,7 +31,7 @@ import type { DependencyGraph } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { DependenciesSkeleton } from '../components/shared/skeletons';
 
-import { nodeTypes } from '../components/dependencies/spec-node';
+import { nodeTypes } from '../components/dependencies/spec-node-types';
 import { SpecSidebar } from '../components/dependencies/spec-sidebar';
 import { getConnectionDepths, layoutGraph } from '../components/dependencies/utils';
 import { DEPENDS_ON_COLOR, toneBgColors } from '../components/dependencies/constants';

@@ -107,13 +107,13 @@ Component **exports remain PascalCase** (only file names change). Barrel `index.
 - [x] Verify build and tests pass
 
 ### Phase 3: Package Merge
-- [ ] Move `ui-components/src/` contents into `ui/src/components/` and `ui/src/lib/`
-- [ ] Add Vite library build config (`vite.lib.config.ts`)
-- [ ] Update `package.json` exports for library consumers
-- [ ] Update `desktop` package imports from `@leanspec/ui-components` → `@leanspec/ui`
-- [ ] Publish deprecation shim for `@leanspec/ui-components`
-- [ ] Remove `packages/ui-components/` from monorepo
-- [ ] Update pnpm-workspace.yaml and turbo.json
+- [x] Move `ui-components/src/` contents into `ui/src/components/` and `ui/src/lib/`
+- [x] Add Vite library build config (`vite.lib.config.ts`)
+- [x] Update `package.json` exports for library consumers
+- [x] Update `desktop` package imports from `@leanspec/ui-components` → `@leanspec/ui`
+- [x] Publish deprecation shim for `@leanspec/ui-components`
+- [x] Remove `packages/ui-components/` from monorepo
+- [x] Update pnpm-workspace.yaml and turbo.json
 
 
 ### Implementation Mapping (validated)
@@ -138,6 +138,7 @@ Component **exports remain PascalCase** (only file names change). Barrel `index.
 - **Desktop impact**: Desktop only imports types and CSS from `ui-components`. Migration is low-effort (update import paths + CSS import).
 - **Package count**: `ui` has 81 component files, `ui-components` has 99. Merged total ~150 after dedup.
 - **Duplicate elimination**: ~400-500 lines of redundant code removed (6 true dupes + 3 divergent dupes + 3x config).
+- **Shim status**: `@leanspec/ui-components` now serves as a deprecation shim re-exporting `@leanspec/ui` and is excluded from the workspace.
 
 - **Behavior deltas to resolve in merge**:
   - `TagsEditor`: ui-components normalizes tags to lowercase and lacks compact/overflow display; UI preserves user casing, supports `compact` and hidden tags count, and fetches tags from API. Decide whether to extend the library component or keep a UI wrapper.

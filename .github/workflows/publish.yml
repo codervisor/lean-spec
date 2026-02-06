@@ -34,9 +34,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Build dependencies
-        run: pnpm --filter @leanspec/ui-components build
-
       - name: Build UI
         run: pnpm --filter @leanspec/ui build
 
@@ -425,7 +422,7 @@ jobs:
           echo "Published:"
           echo "  - CLI with platform binaries (darwin-x64, darwin-arm64, linux-x64, windows-x64)"
           echo "  - MCP with platform binaries"
-          echo "  - UI Components"
+          echo "  - UI Components (deprecated shim)"
           echo "  - HTTP Server"
           echo "  - UI"
           echo ""

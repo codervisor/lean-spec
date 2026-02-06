@@ -4,9 +4,9 @@
  */
 
 import { Star, FileText, MoreHorizontal } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardFooter } from '../ui/card';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import { ProjectAvatar } from './project-avatar';
 import { cn } from '@/lib/utils';
 import { formatRelativeTime } from '@/lib/date-utils';

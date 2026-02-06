@@ -12,9 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { cn } from '../../lib/utils';
-import { statusConfig as defaultStatusConfig } from '../../lib/badge-config';
-import type { SpecStatus } from '../../types/specs';
+import { cn } from '../../../lib/utils';
+import { statusConfig as defaultStatusConfig } from '../../../lib/badge-config';
+import type { SpecStatus } from '../../../types/specs';
 
 const STATUSES: SpecStatus[] = ['planned', 'in-progress', 'complete', 'archived'];
 

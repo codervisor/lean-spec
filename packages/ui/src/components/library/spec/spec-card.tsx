@@ -3,10 +3,10 @@
  */
 
 import { FileText, Umbrella, CornerDownRight, Layers } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '../ui/card';
 import { StatusBadge } from './status-badge';
 import { PriorityBadge } from './priority-badge';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { formatRelativeTime } from '@/lib/date-utils';
 import type { LightweightSpec } from '@/types/specs';

@@ -1,4 +1,4 @@
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import { TOKEN_THRESHOLDS, getTokenProgressPercent, tokenProgressClasses } from '../../lib/token-utils';
 import type { TokenStatus } from '../../types/api';
 

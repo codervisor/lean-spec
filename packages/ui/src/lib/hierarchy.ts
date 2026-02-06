@@ -1,4 +1,4 @@
-import { LightweightSpec } from '../types/specs';
+import type { LightweightSpec } from '../types/specs';
 
 export type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'title-desc' | 'priority-desc' | 'priority-asc';
 

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
-import { cn, priorityConfig } from '@leanspec/ui-components';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, cn, priorityConfig } from '@/library';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';

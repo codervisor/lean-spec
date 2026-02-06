@@ -4,13 +4,13 @@
  * Supports editable mode with dropdown
  */
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '../ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/components/ui/select';
+} from '../ui/select';
 import { cn } from '@/lib/utils';
 import { statusConfig as defaultStatusConfig } from '@/lib/badge-config';
 import type { SpecStatus } from '@/types/specs';
@@ -43,7 +43,7 @@ export function StatusBadge({
   const config = defaultStatusConfig[status as SpecStatus] || defaultStatusConfig.planned;
   
   // Warn in development if an unknown status is provided
-  if (process.env.NODE_ENV === 'development' && !(status in defaultStatusConfig)) {
+  if (import.meta.env.DEV && !(status in defaultStatusConfig)) {
     console.warn(`StatusBadge: Unknown status "${status}", falling back to "planned"`);
   }
   

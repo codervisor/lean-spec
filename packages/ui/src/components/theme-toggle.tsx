@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Sun, Moon, Monitor, Check } from 'lucide-react';
 import { useThemeStore } from '../stores/theme';
-import { Button, cn } from '@leanspec/ui-components';
+import { Button, cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 
 export function ThemeToggle() {

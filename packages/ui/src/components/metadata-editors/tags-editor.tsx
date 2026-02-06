@@ -12,8 +12,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@leanspec/ui-components';
-import { cn } from '@leanspec/ui-components';
+} from '@/library';
+import { cn } from '@/library';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';

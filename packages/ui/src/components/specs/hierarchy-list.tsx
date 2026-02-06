@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, FolderTree } from 'lucide-react';
 import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
-import { cn, buildHierarchy, type HierarchyNode as UiHierarchyNode } from '@leanspec/ui-components';
+import { cn, buildHierarchy, type HierarchyNode as UiHierarchyNode } from '@/library';
 import type { Spec, HierarchyNode, SpecStatus } from '../../types/api';
 import type { SpecsSortOption } from '../../stores/specs-preferences';
 import { StatusBadge } from '../status-badge';
@@ -10,7 +10,7 @@ import { PriorityBadge } from '../priority-badge';
 import { TokenBadge } from '../token-badge';
 import { ValidationBadge } from '../validation-badge';
 
-// Use the API HierarchyNode or the ui-components one (they're compatible)
+// Use the API HierarchyNode or the shared UI one (they're compatible)
 type TreeNode = HierarchyNode | UiHierarchyNode;
 
 interface HierarchyListProps {

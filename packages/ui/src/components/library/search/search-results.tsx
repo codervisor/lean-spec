@@ -2,7 +2,7 @@ import { Card } from '../ui/card';
 import { SpecCard } from '../spec/spec-card';
 import { EmptyState } from '../layout/empty-state';
 import { Search } from 'lucide-react';
-import type { LightweightSpec } from '../../types/specs';
+import type { LightweightSpec } from '../../../types/specs';
 
 export interface SearchResultsProps {
   results: LightweightSpec[];

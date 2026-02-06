@@ -12,9 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { cn } from '../../lib/utils';
-import { priorityConfig as defaultPriorityConfig } from '../../lib/badge-config';
-import type { SpecPriority } from '../../types/specs';
+import { cn } from '../../../lib/utils';
+import { priorityConfig as defaultPriorityConfig } from '../../../lib/badge-config';
+import type { SpecPriority } from '../../../types/specs';
 
 const PRIORITIES: SpecPriority[] = ['low', 'medium', 'high', 'critical'];
 

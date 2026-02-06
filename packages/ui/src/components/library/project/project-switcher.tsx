@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronsUpDown, Plus, Star, Settings, Loader2 } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn } from '../../../lib/utils';
 import { Button } from '../ui/button';
 import {
   Command,

@@ -5,8 +5,8 @@
  * All skeletons follow a unified pattern with consistent spacing and structure.
  */
 
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Skeleton } from '../ui/skeleton';
+import { Card, CardContent, CardHeader } from '../ui/card';
 
 // Pre-computed widths for content lines to avoid Math.random() hydration issues
 const CONTENT_LINE_WIDTHS = ['92%', '88%', '95%', '85%', '90%', '87%', '93%', '89%'];

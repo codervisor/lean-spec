@@ -23,13 +23,13 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import {
   KeyboardShortcutsProvider,
   ChatProvider,
-} from '@leanspec/ui/src/contexts';
-import { queryClient } from '@leanspec/ui/src/lib/query-client';
-import { useProjectMutations } from '@leanspec/ui/src/hooks/useProjectQuery';
-import { Layout } from '@leanspec/ui/src/components/layout';
-import { Navigation } from '@leanspec/ui/src/components/navigation';
-import { ProjectsPage } from '@leanspec/ui/src/pages/ProjectsPage';
-import { createProjectRoutes } from '@leanspec/ui/src/router/projectRoutes';
+} from '../../ui/src/contexts';
+import { queryClient } from '../../ui/src/lib/query-client';
+import { useProjectMutations } from '../../ui/src/hooks/useProjectQuery';
+import { Layout } from '../../ui/src/components/layout';
+import { Navigation } from '../../ui/src/components/navigation';
+import { ProjectsPage } from '../../ui/src/pages/ProjectsPage';
+import { createProjectRoutes } from '../../ui/src/router/projectRoutes';
 import { useProjects } from './hooks/useProjects';
 import { DesktopProjectProvider } from './contexts/DesktopProjectContext';
 import DesktopLayout from './components/DesktopLayout';

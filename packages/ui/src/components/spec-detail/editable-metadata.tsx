@@ -1,5 +1,5 @@
 import { Calendar, GitBranch, Tag, User, ExternalLink } from 'lucide-react';
-import { Card, CardContent, formatDate, formatRelativeTime } from '@leanspec/ui-components';
+import { Card, CardContent, formatDate, formatRelativeTime } from '@/library';
 import { StatusBadge } from '../status-badge';
 import { PriorityBadge } from '../priority-badge';
 import { StatusEditor } from '../metadata-editors/status-editor';

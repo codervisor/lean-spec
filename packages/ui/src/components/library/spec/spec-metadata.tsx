@@ -4,9 +4,9 @@
  */
 
 import { Calendar, User, Tag, GitBranch, ExternalLink } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Card, CardContent } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 import { StatusBadge } from './status-badge';
 import { PriorityBadge } from './priority-badge';
 import { formatDate, formatRelativeTime } from '@/lib/date-utils';

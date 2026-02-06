@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
 import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import type { SpecNodeData } from './types';
 import {
   NODE_WIDTH,
@@ -123,6 +123,3 @@ export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNod
 
 SpecNode.displayName = 'SpecNode';
 
-export const nodeTypes = {
-  specNode: SpecNode,
-};

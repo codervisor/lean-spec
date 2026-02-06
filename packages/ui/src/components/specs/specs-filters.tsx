@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   cn,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { useTranslation } from 'react-i18next';
 
 type ViewMode = 'list' | 'board';

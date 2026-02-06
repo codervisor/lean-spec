@@ -20,7 +20,7 @@ import {
   CommandItem,
   CommandList,
 } from '../ui/command';
-import { cn } from '../../lib/utils';
+import { cn } from '../../../lib/utils';
 
 export interface TagsEditorProps {
   currentTags: string[];

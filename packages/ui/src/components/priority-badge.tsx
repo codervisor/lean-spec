@@ -1,4 +1,4 @@
-import { PriorityBadge as UIPriorityBadge, cn } from '@leanspec/ui-components';
+import { PriorityBadge as UIPriorityBadge, cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 import { priorityConfig } from './badge-config';
 

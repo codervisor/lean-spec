@@ -3,7 +3,7 @@
  * Displays a project avatar with initials and custom color
  */
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { getInitials, getContrastColor, getColorFromString } from '@/lib/color-utils';
 
 export interface ProjectAvatarProps {
