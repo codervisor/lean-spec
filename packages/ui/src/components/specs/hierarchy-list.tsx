@@ -5,10 +5,10 @@ import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
 import { cn, buildHierarchy, type HierarchyNode as UiHierarchyNode } from '@leanspec/ui-components';
 import type { Spec, HierarchyNode, SpecStatus } from '../../types/api';
 import type { SpecsSortOption } from '../../stores/specs-preferences';
-import { StatusBadge } from '../StatusBadge';
-import { PriorityBadge } from '../PriorityBadge';
-import { TokenBadge } from '../TokenBadge';
-import { ValidationBadge } from '../ValidationBadge';
+import { StatusBadge } from '../status-badge';
+import { PriorityBadge } from '../priority-badge';
+import { TokenBadge } from '../token-badge';
+import { ValidationBadge } from '../validation-badge';
 
 // Use the API HierarchyNode or the ui-components one (they're compatible)
 type TreeNode = HierarchyNode | UiHierarchyNode;

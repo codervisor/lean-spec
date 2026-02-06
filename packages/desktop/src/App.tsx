@@ -26,8 +26,8 @@ import {
 } from '@leanspec/ui/src/contexts';
 import { queryClient } from '@leanspec/ui/src/lib/query-client';
 import { useProjectMutations } from '@leanspec/ui/src/hooks/useProjectQuery';
-import { Layout } from '@leanspec/ui/src/components/Layout';
-import { Navigation } from '@leanspec/ui/src/components/Navigation';
+import { Layout } from '@leanspec/ui/src/components/layout';
+import { Navigation } from '@leanspec/ui/src/components/navigation';
 import { ProjectsPage } from '@leanspec/ui/src/pages/ProjectsPage';
 import { createProjectRoutes } from '@leanspec/ui/src/router/projectRoutes';
 import { useProjects } from './hooks/useProjects';

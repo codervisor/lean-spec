@@ -10,10 +10,10 @@ import {
   PopoverTrigger,
   Button 
 } from '@leanspec/ui-components';
-import { ResizeHandle } from './ResizeHandle';
-import { ChatContainer } from './ChatContainer';
-import { ChatHistory } from './ChatHistory';
-import { InlineModelSelector } from './InlineModelSelector';
+import { ResizeHandle } from './resize-handle';
+import { ChatContainer } from './chat-container';
+import { ChatHistory } from './chat-history';
+import { InlineModelSelector } from './inline-model-selector';
 import { useLeanSpecChat } from '../../lib/use-chat';
 import { useModelsRegistry } from '../../lib/use-models-registry';
 import { useAutoTitle } from '../../hooks/useAutoTitle';

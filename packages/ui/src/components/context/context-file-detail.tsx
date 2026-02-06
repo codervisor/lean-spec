@@ -6,11 +6,11 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeSlug from 'rehype-slug';
 import { ArrowLeft, Clock, Copy, ExternalLink, FileText, Hash, Layers, Type } from 'lucide-react';
 import { Badge, Button, formatDate } from '@leanspec/ui-components';
-import { TableOfContents, TableOfContentsSidebar } from '../spec-detail/TableOfContents';
-import { MermaidDiagram } from '../MermaidDiagram';
+import { TableOfContents, TableOfContentsSidebar } from '../spec-detail/table-of-contents';
+import { MermaidDiagram } from '../mermaid-diagram';
 import type { ContextFileContent } from '../../types/api';
 import { useTranslation } from 'react-i18next';
-import { PageContainer } from '../shared/PageContainer';
+import { PageContainer } from '../shared/page-container';
 
 interface ContextFileDetailProps {
   file: ContextFileContent;

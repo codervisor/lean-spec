@@ -1,6 +1,6 @@
-export { ChatMessage } from './ChatMessage';
-export { ChatInput } from './ChatInput';
-export { ChatContainer } from './ChatContainer';
-export { ModelPicker } from './ModelPicker';
-export { InlineModelSelector } from './InlineModelSelector';
-export { EnhancedModelSelector } from './EnhancedModelSelector';
+export { ChatMessage } from './chat-message';
+export { ChatInput } from './chat-input';
+export { ChatContainer } from './chat-container';
+export { ModelPicker } from './model-picker';
+export { InlineModelSelector } from './inline-model-selector';
+export { EnhancedModelSelector } from './enhanced-model-selector';

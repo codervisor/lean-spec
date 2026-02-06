@@ -10,9 +10,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, Badge, Butto
 import type { ProjectContext, ContextFile } from '../../types/api';
 import { cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
-import { ContextFileDetail } from './ContextFileDetail';
-import { PageHeader } from '../shared/PageHeader';
-import { PageContainer } from '../shared/PageContainer';
+import { ContextFileDetail } from './context-file-detail';
+import { PageHeader } from '../shared/page-header';
+import { PageContainer } from '../shared/page-container';
 
 interface ContextClientProps {
   context: ProjectContext;

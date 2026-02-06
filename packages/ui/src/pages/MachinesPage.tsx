@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import { Cpu, Pencil, PlugZap, WifiOff, Zap } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, cn, Input } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
-import { PageHeader } from '../components/shared/PageHeader';
-import { MachinesSkeleton } from '../components/shared/Skeletons';
-import { PageContainer } from '../components/shared/PageContainer';
+import { PageHeader } from '../components/shared/page-header';
+import { MachinesSkeleton } from '../components/shared/skeletons';
+import { PageContainer } from '../components/shared/page-container';
 import { useMachineStore } from '../stores/machine';
 
 export function MachinesPage() {

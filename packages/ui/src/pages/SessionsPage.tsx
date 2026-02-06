@@ -7,12 +7,12 @@ import type { Session, SessionStatus, Spec } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useSessions, useSessionMutations } from '../hooks/useSessionsQuery';
 import { useSpecsList } from '../hooks/useSpecsQuery';
-import { EmptyState } from '../components/shared/EmptyState';
-import { PageHeader } from '../components/shared/PageHeader';
-import { PageTransition } from '../components/shared/PageTransition';
-import { PageContainer } from '../components/shared/PageContainer';
+import { EmptyState } from '../components/shared/empty-state';
+import { PageHeader } from '../components/shared/page-header';
+import { PageTransition } from '../components/shared/page-transition';
+import { PageContainer } from '../components/shared/page-container';
 import { SESSION_STATUS_DOT_STYLES, SESSION_STATUS_STYLES, formatSessionDuration } from '../lib/session-utils';
-import { SessionCreateDialog } from '../components/sessions/SessionCreateDialog';
+import { SessionCreateDialog } from '../components/sessions/session-create-dialog';
 import { cn } from '@leanspec/ui-components';
 
 const PAGE_SIZE = 20;

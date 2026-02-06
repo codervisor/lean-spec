@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import type { UIMessage } from '@ai-sdk/react';
 import type { ReactNode } from 'react';
-import { ChatMessage } from './ChatMessage';
-import { ThinkingIndicator } from './ThinkingIndicator';
+import { ChatMessage } from './chat-message';
+import { ThinkingIndicator } from './thinking-indicator';
 import {
   cn,
   Conversation,

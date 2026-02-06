@@ -13,7 +13,7 @@ import {
   ChevronRight,
   Link2
 } from 'lucide-react';
-import { useSpecDetailLayoutContext } from '../components/SpecDetailLayout.context';
+import { useSpecDetailLayoutContext } from '../components/spec-detail-layout.context';
 import {
   Button,
   cn,
@@ -30,31 +30,31 @@ import {
 } from '@leanspec/ui-components';
 import { APIError } from '../lib/api';
 import { getBackend } from '../lib/backend-adapter';
-import { StatusEditor } from '../components/metadata-editors/StatusEditor';
-import { PriorityEditor } from '../components/metadata-editors/PriorityEditor';
-import { TagsEditor } from '../components/metadata-editors/TagsEditor';
+import { StatusEditor } from '../components/metadata-editors/status-editor';
+import { PriorityEditor } from '../components/metadata-editors/priority-editor';
+import { TagsEditor } from '../components/metadata-editors/tags-editor';
 import type { SubSpec, SpecTokenResponse, SpecValidationResponse } from '../types/api';
-import { TableOfContents, TableOfContentsSidebar } from '../components/spec-detail/TableOfContents';
-import { SpecDetailSkeleton } from '../components/shared/Skeletons';
-import { EmptyState } from '../components/shared/EmptyState';
-import { MarkdownRenderer } from '../components/spec-detail/MarkdownRenderer';
-import { BackToTop } from '../components/shared/BackToTop';
+import { TableOfContents, TableOfContentsSidebar } from '../components/spec-detail/table-of-contents';
+import { SpecDetailSkeleton } from '../components/shared/skeletons';
+import { EmptyState } from '../components/shared/empty-state';
+import { MarkdownRenderer } from '../components/spec-detail/markdown-renderer';
+import { BackToTop } from '../components/shared/back-to-top';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useSpecDetail } from '../hooks/useSpecsQuery';
 import { useSessions } from '../hooks/useSessionsQuery';
-import { PageContainer } from '../components/shared/PageContainer';
+import { PageContainer } from '../components/shared/page-container';
 import { useMachineStore } from '../stores/machine';
 import { useSessionsUiStore } from '../stores/sessions-ui';
 import { useTranslation } from 'react-i18next';
 import type { SpecDetail } from '../types/api';
-import { PageTransition } from '../components/shared/PageTransition';
+import { PageTransition } from '../components/shared/page-transition';
 import { getSubSpecStyle, formatSubSpecName } from '../lib/sub-spec-utils';
 import type { LucideIcon } from 'lucide-react';
-import { RelationshipsEditor } from '../components/relationships/RelationshipsEditor';
-import { TokenBadge } from '../components/TokenBadge';
-import { ValidationBadge } from '../components/ValidationBadge';
-import { TokenDetailsDialog } from '../components/specs/TokenDetailsDialog';
-import { ValidationDialog } from '../components/specs/ValidationDialog';
+import { RelationshipsEditor } from '../components/relationships/relationships-editor';
+import { TokenBadge } from '../components/token-badge';
+import { ValidationBadge } from '../components/validation-badge';
+import { TokenDetailsDialog } from '../components/specs/token-details-dialog';
+import { ValidationDialog } from '../components/specs/validation-dialog';
 
 // Sub-spec with frontend-assigned styling
 interface EnrichedSubSpec extends SubSpec {

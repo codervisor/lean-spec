@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { SpecsNavSidebar } from './SpecsNavSidebar';
+import { SpecsNavSidebar } from './specs-nav-sidebar';
 
 export function SpecDetailLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);

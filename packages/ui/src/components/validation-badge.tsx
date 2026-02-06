@@ -1,6 +1,6 @@
 import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { cn } from '@leanspec/ui-components';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 import type { ValidationStatus } from '../types/api';
 import { useTranslation } from 'react-i18next';
 

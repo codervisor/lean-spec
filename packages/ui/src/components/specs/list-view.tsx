@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 import type { Spec, HierarchyNode, SpecStatus } from '../../types/api';
 import type { SpecsSortOption } from '../../stores/specs-preferences';
-import { StatusBadge } from '../StatusBadge';
-import { PriorityBadge } from '../PriorityBadge';
+import { StatusBadge } from '../status-badge';
+import { PriorityBadge } from '../priority-badge';
 import { useTranslation } from 'react-i18next';
-import { HierarchyList } from './HierarchyList';
-import { TokenBadge } from '../TokenBadge';
-import { ValidationBadge } from '../ValidationBadge';
+import { HierarchyList } from './hierarchy-list';
+import { TokenBadge } from '../token-badge';
+import { ValidationBadge } from '../validation-badge';
 import { memo } from 'react';
 
 interface SpecListItemProps {

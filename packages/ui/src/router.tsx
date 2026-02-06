@@ -1,12 +1,12 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { Layout } from './components/Layout';
+import { Layout } from './components/layout';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { MachinesPage } from './pages/MachinesPage';
 import { SettingsLayout } from './layouts/SettingsLayout';
 import { ModelsSettingsPage } from './pages/settings/ModelsSettingsPage';
 import { RunnersSettingsPage } from './pages/settings/RunnersSettingsPage';
 import { AppearanceSettingsPage } from './pages/settings/AppearanceSettingsPage';
-import { RootRedirect } from './components/RootRedirect';
+import { RootRedirect } from './components/root-redirect';
 import { createProjectRoutes } from './router/projectRoutes';
 
 /**

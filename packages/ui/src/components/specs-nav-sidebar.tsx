@@ -41,15 +41,15 @@ import {
   List,
   type ListImperativeAPI,
 } from 'react-window';
-import { StatusBadge } from './StatusBadge';
-import { PriorityBadge } from './PriorityBadge';
+import { StatusBadge } from './status-badge';
+import { PriorityBadge } from './priority-badge';
 import { getStatusLabel, getPriorityLabel } from './badge-config';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 import type { Spec } from '../types/api';
 import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useSpecsList } from '../hooks/useSpecsQuery';
-import { SpecsNavSidebarSkeleton } from './shared/Skeletons';
+import { SpecsNavSidebarSkeleton } from './shared/skeletons';
 import { useSpecsPreferencesStore, useSpecsSidebarStore } from '../stores/specs-preferences';
 import { storage, STORAGE_KEYS } from '../lib/storage';
 

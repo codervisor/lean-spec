@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { ChatContainer } from '../components/chat';
-import { EnhancedModelSelector } from '../components/chat/EnhancedModelSelector';
-import { InlineModelSelector } from '../components/chat/InlineModelSelector';
-import { ChatSidebar } from '../components/chat/sidebar/ChatSidebar';
-import { ChatSkeleton } from '../components/shared/Skeletons';
+import { EnhancedModelSelector } from '../components/chat/enhanced-model-selector';
+import { InlineModelSelector } from '../components/chat/inline-model-selector';
+import { ChatSidebar } from '../components/chat/sidebar/chat-sidebar';
+import { ChatSkeleton } from '../components/shared/skeletons';
 import { useLeanSpecChat } from '../lib/use-chat';
 import { useModelsRegistry } from '../lib/use-models-registry';
 import { useCurrentProject } from '../hooks/useProjectQuery';
@@ -12,7 +12,7 @@ import { useAutoTitle } from '../hooks/useAutoTitle';
 import { useChatThreadMutations, useChatThreads } from '../hooks/useChatQuery';
 import { Trash2, Settings2 } from 'lucide-react';
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { PageContainer } from '../components/shared/PageContainer';
+import { PageContainer } from '../components/shared/page-container';
 
 export function ChatPage() {
   const { t } = useTranslation('common');

@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button } from '@leanspec/ui-components';
 import { formatFullTokenCount, resolveTokenStatus, TOKEN_THRESHOLDS } from '../../lib/token-utils';
-import { TokenProgressBar } from '../TokenProgressBar';
+import { TokenProgressBar } from '../token-progress-bar';
 import type { SpecTokenResponse } from '../../types/api';
 import { FileText, Code, AlignLeft, ListChecks, FileCode2, Heading2, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';

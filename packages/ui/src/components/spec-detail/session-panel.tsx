@@ -6,7 +6,7 @@ import { api } from '../../lib/api';
 import type { Session, SessionLog, SessionStatus } from '../../types/api';
 import { useTranslation } from 'react-i18next';
 import { SESSION_STATUS_STYLES } from '../../lib/session-utils';
-import { SessionCreateDialog } from '../sessions/SessionCreateDialog';
+import { SessionCreateDialog } from '../sessions/session-create-dialog';
 import { useCurrentProject } from '../../hooks/useProjectQuery';
 
 interface SessionPanelProps {

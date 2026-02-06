@@ -23,8 +23,8 @@ import {
 } from '@leanspec/ui-components';
 import { Skeleton } from '@leanspec/ui-components';
 import { useCurrentProject, useProjectMutations, useProjects } from '../hooks/useProjectQuery';
-import { CreateProjectDialog } from './projects/CreateProjectDialog';
-import { ProjectAvatar } from './shared/ProjectAvatar';
+import { CreateProjectDialog } from './projects/create-project-dialog';
+import { ProjectAvatar } from './shared/project-avatar';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 

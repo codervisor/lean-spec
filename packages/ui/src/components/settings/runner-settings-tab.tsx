@@ -37,7 +37,7 @@ import {
 import { api } from '../../lib/api';
 import type { RunnerDefinition, RunnerListResponse, RunnerScope } from '../../types/api';
 import { useCurrentProject } from '../../hooks/useProjectQuery';
-import { SearchFilterBar } from '../shared/SearchFilterBar';
+import { SearchFilterBar } from '../shared/search-filter-bar';
 import { useToast } from '../../contexts';
 import { useRunnerFiltersStore } from '../../stores/settings-filters';
 

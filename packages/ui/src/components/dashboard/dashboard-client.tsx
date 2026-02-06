@@ -16,11 +16,11 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import type { Stats } from '../../types/api';
-import { StatCard } from './StatCard';
-import { SpecListItem, type DashboardSpec } from './SpecListItem';
-import { ActivityItem } from './ActivityItem';
+import { StatCard } from './stat-card';
+import { SpecListItem, type DashboardSpec } from './spec-list-item';
+import { ActivityItem } from './activity-item';
 import { useTranslation } from 'react-i18next';
-import { PageContainer } from '../shared/PageContainer';
+import { PageContainer } from '../shared/page-container';
 
 interface DashboardClientProps {
   specs: DashboardSpec[];

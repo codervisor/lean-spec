@@ -12,8 +12,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import type { Spec, SpecDetail } from '../../types/api';
 import { api } from '../../lib/api';
-import { SpecSearchPicker } from './SpecSearchPicker';
-import { RelationshipSection } from './RelationshipSection';
+import { SpecSearchPicker } from './spec-search-picker';
+import { RelationshipSection } from './relationship-section';
 
 type RelationshipSpec = {
   specName: string;

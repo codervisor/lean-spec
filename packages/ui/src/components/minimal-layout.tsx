@@ -1,8 +1,8 @@
 import { Outlet } from 'react-router-dom';
-import { Navigation } from './Navigation';
-import { ErrorBoundary } from './shared/ErrorBoundary';
-import { PageTransition } from './shared/PageTransition';
-import { BackToTop } from './shared/BackToTop';
+import { Navigation } from './navigation';
+import { ErrorBoundary } from './shared/error-boundary';
+import { PageTransition } from './shared/page-transition';
+import { BackToTop } from './shared/back-to-top';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useKeyboardShortcuts } from '../contexts';
 import { useLayoutStore } from '../stores/layout';

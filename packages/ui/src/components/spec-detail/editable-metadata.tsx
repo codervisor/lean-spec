@@ -1,10 +1,10 @@
 import { Calendar, GitBranch, Tag, User, ExternalLink } from 'lucide-react';
 import { Card, CardContent, formatDate, formatRelativeTime } from '@leanspec/ui-components';
-import { StatusBadge } from '../StatusBadge';
-import { PriorityBadge } from '../PriorityBadge';
-import { StatusEditor } from '../metadata-editors/StatusEditor';
-import { PriorityEditor } from '../metadata-editors/PriorityEditor';
-import { TagsEditor } from '../metadata-editors/TagsEditor';
+import { StatusBadge } from '../status-badge';
+import { PriorityBadge } from '../priority-badge';
+import { StatusEditor } from '../metadata-editors/status-editor';
+import { PriorityEditor } from '../metadata-editors/priority-editor';
+import { TagsEditor } from '../metadata-editors/tags-editor';
 import type { SpecDetail } from '../../types/api';
 import { useTranslation } from 'react-i18next';
 import { useMachineStore } from '../../stores/machine';

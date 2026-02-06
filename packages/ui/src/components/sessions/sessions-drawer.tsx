@@ -6,10 +6,10 @@ import { useMediaQuery } from '../../hooks/use-media-query';
 import { cn } from '@leanspec/ui-components';
 import { Button } from '@leanspec/ui-components';
 import { X, Plus } from 'lucide-react';
-import { ResizeHandle } from '../chat/ResizeHandle';
-import { SessionCard } from './SessionCard';
-import { SessionCreateForm } from './SessionCreateForm';
-import { SessionLogsPanel } from './SessionLogsPanel';
+import { ResizeHandle } from '../chat/resize-handle';
+import { SessionCard } from './session-card';
+import { SessionCreateForm } from './session-create-form';
+import { SessionLogsPanel } from './session-logs-panel';
 import { useTranslation } from 'react-i18next';
 
 export function SessionsDrawer() {

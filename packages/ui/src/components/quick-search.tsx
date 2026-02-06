@@ -12,8 +12,8 @@ import {
   CommandSeparator,
   Button,
 } from '@leanspec/ui-components';
-import { StatusBadge } from './StatusBadge';
-import { PriorityBadge } from './PriorityBadge';
+import { StatusBadge } from './status-badge';
+import { PriorityBadge } from './priority-badge';
 import { useTranslation } from 'react-i18next';
 import type { Spec } from '../types/api';
 import { api } from '../lib/api';

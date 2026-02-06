@@ -19,12 +19,12 @@ import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
-import { CreateProjectDialog } from '../components/projects/CreateProjectDialog';
-import { ProjectAvatar, getColorForName } from '../components/shared/ProjectAvatar';
-import { ColorPicker } from '../components/shared/ColorPicker';
-import { PageHeader } from '../components/shared/PageHeader';
-import { ProjectsSkeleton } from '../components/shared/Skeletons';
-import { PageContainer } from '../components/shared/PageContainer';
+import { CreateProjectDialog } from '../components/projects/create-project-dialog';
+import { ProjectAvatar, getColorForName } from '../components/shared/project-avatar';
+import { ColorPicker } from '../components/shared/color-picker';
+import { PageHeader } from '../components/shared/page-header';
+import { ProjectsSkeleton } from '../components/shared/skeletons';
+import { PageContainer } from '../components/shared/page-container';
 import { useProjects, useProjectMutations } from '../hooks/useProjectQuery';
 import { useMachineStore } from '../stores/machine';
 import { api } from '../lib/api';

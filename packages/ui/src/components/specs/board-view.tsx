@@ -2,9 +2,9 @@ import { useState, useMemo, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, PlayCircle, CheckCircle2, Archive, FolderTree, CornerDownRight, Layers, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Spec } from '../../types/api';
-import { PriorityBadge } from '../PriorityBadge';
-import { TokenBadge } from '../TokenBadge';
-import { ValidationBadge } from '../ValidationBadge';
+import { PriorityBadge } from '../priority-badge';
+import { TokenBadge } from '../token-badge';
+import { ValidationBadge } from '../validation-badge';
 import { cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 

@@ -25,7 +25,7 @@ import {
 import { Plus, Trash2, CheckCircle, AlertCircle, Settings, RefreshCw, ChevronDown, Wrench, Eye, EyeOff, Zap, Brain, ImageIcon, MoreVertical, Star, ListFilter, Check, Key, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Provider } from '../../types/chat-config';
 import type { RegistryProvider } from '../../types/models-registry';
-import { SearchFilterBar } from '../shared/SearchFilterBar';
+import { SearchFilterBar } from '../shared/search-filter-bar';
 import { useToast } from '../../contexts';
 import { useModelsRegistry } from '../../lib/use-models-registry';
 import { useAIFiltersStore } from '../../stores/settings-filters';
