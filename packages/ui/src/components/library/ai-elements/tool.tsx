@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -17,8 +18,16 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
-import { isValidElement } from "react";
-import { CodeBlock } from "./code-block";
+import { isValidElement, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  CodeBlock,
+  CodeBlockActions,
+  CodeBlockCopyButton,
+  CodeBlockHeader,
+  CodeBlockTitle,
+} from "./code-block";
+import { getTruncatedText } from "../../chat/tool-result-utils";
 
 export type ToolProps = ComponentProps<typeof Collapsible>;
 
@@ -35,13 +44,13 @@ export type ToolHeaderProps = {
   title?: string;
   className?: string;
 } & (
-  | { type: ToolUIPart["type"]; state: ToolUIPart["state"]; toolName?: never }
-  | {
+    | { type: ToolUIPart["type"]; state: ToolUIPart["state"]; toolName?: never }
+    | {
       type: DynamicToolUIPart["type"];
       state: DynamicToolUIPart["state"];
       toolName: string;
     }
-);
+  );
 
 export const getStatusBadge = (status: ToolPart["state"]) => {
   const labels: Record<ToolPart["state"], string> = {
@@ -117,20 +126,69 @@ export type ToolInputProps = ComponentProps<"div"> & {
   input: ToolPart["input"];
 };
 
-export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
-  <div className={cn("space-y-2 overflow-hidden p-4", className)} {...props}>
-    <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-      Parameters
-    </h4>
-    <div className="rounded-md bg-muted/50">
-      <CodeBlock code={JSON.stringify(input, null, 2)} language="json" />
+type ToolCodeBlockProps = {
+  label: string;
+  value: unknown;
+  language: ComponentProps<typeof CodeBlock>["language"];
+};
+
+const ToolCodeBlock = ({ label, value, language }: ToolCodeBlockProps) => {
+  const { t } = useTranslation("common");
+  const [showAll, setShowAll] = useState(false);
+  const truncated = useMemo(() => getTruncatedText(value), [value]);
+  const code = showAll || !truncated.isTruncated
+    ? truncated.fullText
+    : truncated.truncatedText;
+
+  return (
+    <CodeBlock code={code} language={language}>
+      <CodeBlockHeader>
+        <CodeBlockTitle>{label}</CodeBlockTitle>
+        <CodeBlockActions>
+          {truncated.isTruncated && (
+            <Button
+              className="h-6 px-2 text-[10px]"
+              onClick={() => setShowAll((prev) => !prev)}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              {showAll
+                ? t("chat.toolExecution.actions.showLess")
+                : t("chat.toolExecution.actions.showAll")}
+            </Button>
+          )}
+          <CodeBlockCopyButton
+            aria-label={t("chat.toolExecution.actions.copy")}
+            size="icon-sm"
+          />
+        </CodeBlockActions>
+      </CodeBlockHeader>
+    </CodeBlock>
+  );
+};
+
+export const ToolInput = ({ className, input, ...props }: ToolInputProps) => {
+  const { t } = useTranslation("common");
+
+  if (input === undefined || input === null) {
+    return null;
+  }
+
+  return (
+    <div className={cn("space-y-2 overflow-hidden p-4", className)} {...props}>
+      <ToolCodeBlock
+        label={t("chat.toolExecution.labels.input")}
+        language="json"
+        value={input}
+      />
     </div>
-  </div>
-);
+  );
+};
 
 export type ToolOutputProps = ComponentProps<"div"> & {
-  output: ToolPart["output"];
-  errorText: ToolPart["errorText"];
+  output?: ToolPart["output"];
+  errorText?: ToolPart["errorText"];
 };
 
 export const ToolOutput = ({
@@ -139,25 +197,17 @@ export const ToolOutput = ({
   errorText,
   ...props
 }: ToolOutputProps) => {
+  const { t } = useTranslation("common");
+
   if (!(output || errorText)) {
     return null;
   }
 
-  let Output = <div>{output as ReactNode}</div>;
-
-  if (typeof output === "object" && !isValidElement(output)) {
-    Output = (
-      <CodeBlock code={JSON.stringify(output, null, 2)} language="json" />
-    );
-  } else if (typeof output === "string") {
-    Output = <CodeBlock code={output} language="json" />;
-  }
+  const hasOutput = output !== undefined && output !== null;
+  const isCustomOutput = hasOutput && isValidElement(output);
 
   return (
     <div className={cn("space-y-2 p-4", className)} {...props}>
-      <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-        {errorText ? "Error" : "Result"}
-      </h4>
       <div
         className={cn(
           "overflow-x-auto rounded-md text-xs [&_table]:w-full",
@@ -165,9 +215,37 @@ export const ToolOutput = ({
             ? "bg-destructive/10 text-destructive"
             : "bg-muted/50 text-foreground"
         )}
+        style={
+          isCustomOutput
+            ? {
+              contentVisibility: "auto",
+              containIntrinsicSize: "auto 200px",
+            }
+            : undefined
+        }
       >
-        {errorText && <div>{errorText}</div>}
-        {Output}
+        {errorText && (
+          <ToolCodeBlock
+            label={t("chat.toolExecution.labels.error")}
+            language="json"
+            value={errorText}
+          />
+        )}
+        {hasOutput &&
+          (isCustomOutput ? (
+            <div className="space-y-2">
+              <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                {t("chat.toolExecution.labels.output")}
+              </h4>
+              <div className="text-foreground">{output as ReactNode}</div>
+            </div>
+          ) : (
+            <ToolCodeBlock
+              label={t("chat.toolExecution.labels.output")}
+              language="json"
+              value={output}
+            />
+          ))}
       </div>
     </div>
   );

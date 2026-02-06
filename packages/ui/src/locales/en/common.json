@@ -294,6 +294,11 @@
         "input": "Input",
         "output": "Output",
         "error": "Error"
+      },
+      "actions": {
+        "showAll": "Show all",
+        "showLess": "Show less",
+        "copy": "Copy"
       }
     },
     "settings": {

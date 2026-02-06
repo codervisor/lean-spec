@@ -5,8 +5,14 @@ import {
   Message,
   MessageContent,
   MessageResponse,
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+  type ToolPart,
 } from '@/library';
-import { ToolExecution } from './tool-execution';
+import { ToolResultRegistry } from './tool-result-registry';
 
 interface ChatMessageProps {
   message: UIMessage;
@@ -21,6 +27,40 @@ interface ToolCallInfo {
   output?: unknown;
   state?: string;
   errorMessage?: string; // added error message
+}
+
+const toolStates = new Set<ToolPart['state']>([
+  'input-streaming',
+  'input-available',
+  'approval-requested',
+  'approval-responded',
+  'output-available',
+  'output-error',
+  'output-denied',
+]);
+
+function mapToolState(
+  state: string | undefined,
+  output: unknown,
+  errorMessage?: string
+): ToolPart['state'] {
+  if (state && toolStates.has(state as ToolPart['state'])) {
+    return state as ToolPart['state'];
+  }
+
+  if (state === 'error' || errorMessage) {
+    return 'output-error';
+  }
+
+  if (state === 'result' || output !== undefined) {
+    return 'output-available';
+  }
+
+  if (state === 'call' || state === 'running' || state === 'pending') {
+    return 'input-available';
+  }
+
+  return 'input-streaming';
 }
 
 function extractToolCalls(parts: UIMessage['parts']): ToolCallInfo[] {
@@ -38,12 +78,20 @@ function extractToolCalls(parts: UIMessage['parts']): ToolCallInfo[] {
     if (partType === 'tool-invocation') {
       const invocation = partObj.toolInvocation as Record<string, unknown> | undefined;
       if (invocation) {
+        const errorMessage =
+          typeof invocation.error === 'string'
+            ? invocation.error
+            : typeof invocation.errorMessage === 'string'
+              ? invocation.errorMessage
+              : undefined;
+
         toolCalls.push({
           toolCallId: String(invocation.toolCallId ?? ''),
           toolName: String(invocation.toolName ?? ''),
           input: invocation.args,
           output: invocation.result,
           state: invocation.state as string | undefined,
+          errorMessage,
         });
       }
     } else if (partType === 'tool-call') {
@@ -105,10 +153,35 @@ export const ChatMessage = memo(function ChatMessage({ message, isLast }: ChatMe
         {toolCalls.length > 0 && (
           <div className="space-y-1 mt-2">
             {toolCalls.map((toolCall, index) => (
-              <ToolExecution
-                key={toolCall.toolCallId || index}
-                {...toolCall}
-              />
+              <Tool key={toolCall.toolCallId || index}>
+                <ToolHeader
+                  state={mapToolState(
+                    toolCall.state,
+                    toolCall.output,
+                    toolCall.errorMessage
+                  )}
+                  toolName={toolCall.toolName}
+                  type="dynamic-tool"
+                />
+                <ToolContent>
+                  {toolCall.input !== undefined && (
+                    <ToolInput input={toolCall.input} />
+                  )}
+                  {(toolCall.output !== undefined || toolCall.errorMessage) && (
+                    <ToolOutput
+                      errorText={toolCall.errorMessage}
+                      output={
+                        toolCall.output !== undefined
+                          ? ToolResultRegistry.render(
+                            toolCall.toolName,
+                            toolCall.output
+                          )
+                          : undefined
+                      }
+                    />
+                  )}
+                </ToolContent>
+              </Tool>
             ))}
           </div>
         )}
