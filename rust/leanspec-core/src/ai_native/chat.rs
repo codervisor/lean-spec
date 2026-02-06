@@ -521,6 +521,7 @@ async fn run_openai_conversation(
     Ok(assistant_text)
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn stream_openai_round(
     client: &async_openai::Client<async_openai::config::OpenAIConfig>,
     model_id: &str,
