@@ -36,6 +36,8 @@ jobs:
 
       - name: Build UI
         run: pnpm --filter @leanspec/ui build
+        env:
+          LEANSPEC_DEV_BUILD: ${{ github.event_name == 'workflow_dispatch' && inputs.dev == true && 'true' || 'false' }}
 
       - name: Upload UI dist artifact
         uses: actions/upload-artifact@v4

@@ -6,15 +6,19 @@ const API_PROXY_TARGET =
   process.env.LEANSPEC_API_URL || process.env.VITE_API_URL || 'http://localhost:3000';
 
 /**
- * Swaps the favicon based on the Vite mode (development vs production).
- * Place a `favicon-dev.ico` and/or `logo-dev.svg` in `public/` for the dev variant.
+ * Swaps the favicon based on mode:
+ * - Dev server (`pnpm dev`): uses dev favicons
+ * - Dev build (`LEANSPEC_DEV_BUILD=true`): uses dev favicons for npm dev publish
+ * - Production build: uses standard favicons
  */
 function faviconPlugin(): Plugin {
+  const isDevBuild = process.env.LEANSPEC_DEV_BUILD === 'true';
+
   return {
     name: 'lean-spec-favicon',
     transformIndexHtml(html, ctx) {
-      if (ctx.server) {
-        // Development mode — use dev favicons
+      if (ctx.server || isDevBuild) {
+        // Development mode or dev npm publish — use dev favicons
         return html
           .replace('href="/favicon.ico"', 'href="/favicon-dev.ico"')
           .replace('href="/logo.svg"', 'href="/logo-dev.svg"');
