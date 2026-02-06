@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router-dom';
 
-import { SpecDetailLayout } from '../components/SpecDetailLayout';
+import { SpecDetailLayout } from '../components/spec-detail-layout';
 import { ContextPage } from '../pages/ContextPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { DependenciesPage } from '../pages/DependenciesPage';

@@ -1,44 +1,21 @@
 /**
  * Status badge component with icons
  * Framework-agnostic - no i18n dependency, labels passed as props or using defaults
+ * Supports editable mode with dropdown
  */
 
-import { Clock, PlayCircle, CheckCircle2, Archive, type LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { statusConfig as defaultStatusConfig } from '@/lib/badge-config';
 import type { SpecStatus } from '@/types/specs';
 
-export interface StatusConfig {
-  icon: LucideIcon;
-  label: string;
-  className: string;
-}
-
-/**
- * Default status configuration
- */
-export const defaultStatusConfig: Record<SpecStatus, StatusConfig> = {
-  planned: {
-    icon: Clock,
-    label: 'Planned',
-    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  },
-  'in-progress': {
-    icon: PlayCircle,
-    label: 'In Progress',
-    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-  },
-  complete: {
-    icon: CheckCircle2,
-    label: 'Complete',
-    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  },
-  archived: {
-    icon: Archive,
-    label: 'Archived',
-    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
-  },
-};
+export { defaultStatusConfig };
 
 export interface StatusBadgeProps {
   /** The status to display */
@@ -49,8 +26,10 @@ export interface StatusBadgeProps {
   iconOnly?: boolean;
   /** Custom label override */
   label?: string;
-  /** Custom status configuration */
-  statusConfig?: Record<string, StatusConfig>;
+  /** Enable editable mode with dropdown */
+  editable?: boolean;
+  /** Callback when status changes (editable mode only) */
+  onChange?: (status: SpecStatus) => void;
 }
 
 export function StatusBadge({
@@ -58,35 +37,62 @@ export function StatusBadge({
   className,
   iconOnly = false,
   label,
-  statusConfig = defaultStatusConfig,
+  editable = false,
+  onChange,
 }: StatusBadgeProps) {
-  const config = statusConfig[status as SpecStatus] || statusConfig.planned;
+  const config = defaultStatusConfig[status as SpecStatus] || defaultStatusConfig.planned;
   
   // Warn in development if an unknown status is provided
-  if (process.env.NODE_ENV === 'development' && !(status in statusConfig)) {
+  if (process.env.NODE_ENV === 'development' && !(status in defaultStatusConfig)) {
     console.warn(`StatusBadge: Unknown status "${status}", falling back to "planned"`);
   }
   
   const Icon = config.icon;
   const displayLabel = label ?? config.label;
 
-  return (
+  const badgeContent = (
     <Badge
-      className={cn('flex items-center w-fit', !iconOnly && 'gap-1.5', config.className, className)}
+      className={cn(
+        'flex items-center w-fit',
+        !iconOnly && 'gap-1.5',
+        config.className,
+        editable && 'cursor-pointer hover:opacity-80 transition-opacity',
+        className
+      )}
     >
       <Icon className="h-3.5 w-3.5" />
       {!iconOnly && displayLabel}
     </Badge>
   );
-}
 
-/**
- * Get the default label for a status
- */
-export function getStatusLabel(
-  status: string,
-  statusConfig: Record<string, StatusConfig> = defaultStatusConfig
-): string {
-  const config = statusConfig[status as SpecStatus] || defaultStatusConfig.planned;
-  return config.label;
+  if (!editable || !onChange) {
+    return badgeContent;
+  }
+
+  return (
+    <Select value={status} onValueChange={(value) => onChange(value as SpecStatus)}>
+      <SelectTrigger 
+        className={cn(
+          'h-7 w-fit border-0 px-0 text-xs font-medium hover:bg-transparent focus:ring-0',
+          config.className
+        )}
+        asChild
+      >
+        {badgeContent}
+      </SelectTrigger>
+      <SelectContent>
+        {Object.entries(defaultStatusConfig).map(([key, cfg]) => {
+          const ItemIcon = cfg.icon;
+          return (
+            <SelectItem key={key} value={key} className="pl-2">
+              <div className="flex items-center gap-2">
+                <ItemIcon className="h-4 w-4" />
+                <span>{cfg.label}</span>
+              </div>
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
+  );
 }

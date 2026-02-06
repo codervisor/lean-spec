@@ -3,9 +3,9 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Settings, Palette, Cpu, Server, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { cn } from '@leanspec/ui-components';
-import { SettingsSkeleton } from '../components/shared/Skeletons';
-import { SidebarLink } from '../components/shared/SidebarLink';
-import { PageContainer } from '../components/shared/PageContainer';
+import { SettingsSkeleton } from '../components/shared/skeletons';
+import { SidebarLink } from '../components/shared/sidebar-link';
+import { PageContainer } from '../components/shared/page-container';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useLayoutStore } from '../stores/layout';
 

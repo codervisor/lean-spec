@@ -1,4 +1,4 @@
-import { ModelsSettingsTab } from '../../components/settings/ModelsSettingsTab';
+import { ModelsSettingsTab } from '../../components/settings/models-settings-tab';
 
 export function ModelsSettingsPage() {
   return <ModelsSettingsTab />;

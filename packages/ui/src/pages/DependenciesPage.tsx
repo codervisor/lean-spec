@@ -29,15 +29,15 @@ import { cn } from '@leanspec/ui-components';
 import { api } from '../lib/api';
 import type { DependencyGraph } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
-import { DependenciesSkeleton } from '../components/shared/Skeletons';
+import { DependenciesSkeleton } from '../components/shared/skeletons';
 
-import { nodeTypes } from '../components/dependencies/SpecNode';
-import { SpecSidebar } from '../components/dependencies/SpecSidebar';
+import { nodeTypes } from '../components/dependencies/spec-node';
+import { SpecSidebar } from '../components/dependencies/spec-sidebar';
 import { getConnectionDepths, layoutGraph } from '../components/dependencies/utils';
 import { DEPENDS_ON_COLOR, toneBgColors } from '../components/dependencies/constants';
 import type { SpecNodeData, GraphTone, FocusedNodeDetails, ConnectionStats } from '../components/dependencies/types';
-import { PageHeader } from '../components/shared/PageHeader';
-import { PageContainer } from '../components/shared/PageContainer';
+import { PageHeader } from '../components/shared/page-header';
+import { PageContainer } from '../components/shared/page-container';
 
 export function DependenciesPage() {
   const { specName, projectId } = useParams<{ specName?: string; projectId?: string }>();

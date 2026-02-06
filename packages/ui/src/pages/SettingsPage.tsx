@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings, Palette, Cpu, Server } from 'lucide-react';
 import { Button, cn } from '@leanspec/ui-components';
-import { ModelsSettingsTab } from '../components/settings/ModelsSettingsTab';
-import { AppearanceSettingsTab } from '../components/settings/AppearanceSettingsTab';
-import { RunnerSettingsTab } from '../components/settings/RunnerSettingsTab';
-import { SettingsSkeleton } from '../components/shared/Skeletons';
+import { ModelsSettingsTab } from '../components/settings/models-settings-tab';
+import { AppearanceSettingsTab } from '../components/settings/appearance-settings-tab';
+import { RunnerSettingsTab } from '../components/settings/runner-settings-tab';
+import { SettingsSkeleton } from '../components/shared/skeletons';
 import { useCurrentProject } from '../hooks/useProjectQuery';
-import { PageContainer } from '../components/shared/PageContainer';
+import { PageContainer } from '../components/shared/page-container';
 
 export function SettingsPage() {
   const { t } = useTranslation('common');

@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import { AlertCircle, ArrowUp, Minus, ArrowDown, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -13,44 +13,17 @@ import {
   SelectValue,
 } from '../ui/select';
 import { cn } from '../../lib/utils';
+import { priorityConfig as defaultPriorityConfig } from '../../lib/badge-config';
 import type { SpecPriority } from '../../types/specs';
 
 const PRIORITIES: SpecPriority[] = ['low', 'medium', 'high', 'critical'];
 
-export interface PriorityConfig {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  className: string;
-}
-
-export const defaultPriorityConfig: Record<SpecPriority, PriorityConfig> = {
-  'critical': {
-    icon: AlertCircle,
-    label: 'Critical',
-    className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-  },
-  'high': {
-    icon: ArrowUp,
-    label: 'High',
-    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-  },
-  'medium': {
-    icon: Minus,
-    label: 'Medium',
-    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-  },
-  'low': {
-    icon: ArrowDown,
-    label: 'Low',
-    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-  }
-};
+export { defaultPriorityConfig };
 
 export interface PriorityEditorProps {
   currentPriority: SpecPriority;
   onPriorityChange: (newPriority: SpecPriority) => Promise<void> | void;
   disabled?: boolean;
-  config?: Partial<Record<SpecPriority, Partial<PriorityConfig>>>;
   className?: string;
   ariaLabel?: string;
 }
@@ -59,25 +32,12 @@ export function PriorityEditor({
   currentPriority, 
   onPriorityChange,
   disabled = false,
-  config: customConfig,
   className,
   ariaLabel = 'Change priority',
 }: PriorityEditorProps) {
   const [priority, setPriority] = React.useState<SpecPriority>(currentPriority);
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-
-  // Merge custom config with defaults
-  const config = React.useMemo(() => {
-    const merged = { ...defaultPriorityConfig };
-    if (customConfig) {
-      for (const key in customConfig) {
-        const priorityKey = key as SpecPriority;
-        merged[priorityKey] = { ...merged[priorityKey], ...customConfig[priorityKey] };
-      }
-    }
-    return merged;
-  }, [customConfig]);
 
   // Update local state when prop changes
   React.useEffect(() => {
@@ -104,7 +64,7 @@ export function PriorityEditor({
     }
   };
 
-  const currentConfig = config[priority];
+  const currentConfig = defaultPriorityConfig[priority];
   const Icon = currentConfig.icon;
   const label = currentConfig.label;
 
@@ -136,7 +96,7 @@ export function PriorityEditor({
         </SelectTrigger>
         <SelectContent>
           {PRIORITIES.map((p) => {
-            const cfg = config[p];
+            const cfg = defaultPriorityConfig[p];
             const ItemIcon = cfg.icon;
             return (
               <SelectItem key={p} value={p} className="pl-2">

@@ -5,10 +5,10 @@ import { Link } from 'react-router-dom';
 import type { Stats } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useProjectStats, useSpecsList } from '../hooks/useSpecsQuery';
-import { DashboardClient } from '../components/dashboard/DashboardClient';
-import type { DashboardSpec } from '../components/dashboard/SpecListItem';
-import { DashboardSkeleton } from '../components/shared/Skeletons';
-import { PageContainer } from '../components/shared/PageContainer';
+import { DashboardClient } from '../components/dashboard/dashboard-client';
+import type { DashboardSpec } from '../components/dashboard/spec-list-item';
+import { DashboardSkeleton } from '../components/shared/skeletons';
+import { PageContainer } from '../components/shared/page-container';
 import { useTranslation } from 'react-i18next';
 
 export function DashboardPage() {

@@ -1,9 +1,9 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ChatInput } from './ChatInput';
-import { ChatMessage } from './ChatMessage';
-import { ChatContainer } from './ChatContainer';
+import { ChatInput } from './chat-input';
+import { ChatMessage } from './chat-message';
+import { ChatContainer } from './chat-container';
 
 // Mock scrollIntoView
 beforeAll(() => {
