@@ -10,7 +10,6 @@ tags:
 created_at: 2026-02-06T01:51:49.885954530Z
 updated_at: 2026-02-06T01:51:49.885954530Z
 ---
-
 # UI Consolidation: Merge Packages, Standardize Naming, Eliminate Duplication
 
 ## Overview
@@ -113,6 +112,14 @@ Component **exports remain PascalCase** (only file names change). Barrel `index.
 - [ ] Remove `packages/ui-components/` from monorepo
 - [ ] Update pnpm-workspace.yaml and turbo.json
 
+
+### Implementation Mapping (validated)
+- UI duplicates: packages/ui/src/components/PriorityBadge.tsx, StatusBadge.tsx, ThemeToggle.tsx, Tooltip.tsx, shared/BackToTop.tsx, shared/EmptyState.tsx, shared/ProjectAvatar.tsx, metadata-editors/PriorityEditor.tsx, StatusEditor.tsx, TagsEditor.tsx, badge-config.ts.
+- Library equivalents: packages/ui-components/src/components/spec/priority-badge.tsx, status-badge.tsx, priority-editor.tsx, status-editor.tsx, tags-editor.tsx; layout/empty-state.tsx; navigation/back-to-top.tsx, navigation/theme-toggle.tsx; project/project-avatar.tsx; ui/tooltip.tsx.
+- Shared utils already in library: packages/ui-components/src/lib/color-utils.ts (getInitials/getContrastColor/getColorFromString). UI duplicates them in ProjectAvatar today.
+- Badge config duplication: UI uses packages/ui/src/components/badge-config.ts with i18n label keys; ui-components embeds default configs inside the badge/editor files listed above. Plan is to hoist configs into a single ui-components file and have UI layer add i18n label mapping.
+- Desktop integration points: packages/desktop/src/main.tsx (styles import), packages/desktop/src/types.ts (type re-exports), packages/desktop/package.json (build script depends on @leanspec/ui-components).
+
 ## Test
 
 - [ ] All existing tests pass in `ui` and `desktop` after each phase
@@ -128,3 +135,8 @@ Component **exports remain PascalCase** (only file names change). Barrel `index.
 - **Desktop impact**: Desktop only imports types and CSS from `ui-components`. Migration is low-effort (update import paths + CSS import).
 - **Package count**: `ui` has 81 component files, `ui-components` has 99. Merged total ~150 after dedup.
 - **Duplicate elimination**: ~400-500 lines of redundant code removed (6 true dupes + 3 divergent dupes + 3x config).
+
+- **Behavior deltas to resolve in merge**:
+  - `TagsEditor`: ui-components normalizes tags to lowercase and lacks compact/overflow display; UI preserves user casing, supports `compact` and hidden tags count, and fetches tags from API. Decide whether to extend the library component or keep a UI wrapper.
+  - `PriorityEditor`/`StatusEditor`: ui versions call API and invalidate queries; library versions are callback-based with configurable labels. Plan to wrap library editors in UI app (or extend with optional async handlers + i18n labels) without leaking API details into the library.
+  - `Tooltip`: ui uses popover colors/z-index (`bg-popover`, `border`, `z-[100]`) vs library `bg-primary` and `z-50`. Choose a unified style or switch to CSS variables so app can theme safely.
