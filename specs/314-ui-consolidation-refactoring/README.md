@@ -151,3 +151,9 @@ Component **exports remain PascalCase** (only file names change). Barrel `index.
 - Pending: `packages/ui-components/` directory still exists with `src/` content; spec item “Remove `packages/ui-components/` from monorepo” not fully verified.
 - Tests: not run/verified; `pnpm typecheck` currently failing (exit code 2).
 - Open question: tags editor behavior divergence (library lowercases tags; app preserves casing + compact/overflow logic) remains as two implementations.
+
+### Progress Check (2026-02-06, follow-up)
+
+- Verified: `pnpm typecheck` succeeds (no TypeScript errors).
+- Verified: `pnpm --filter @leanspec/ui test` passes (87 tests).
+- Verified: `pnpm --filter @leanspec/desktop build` succeeds; warnings about large chunks and Tauri dynamic/static import overlap were emitted, but build completed.
