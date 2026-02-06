@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
   cn,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { useThemeStore } from '../../stores/theme';
 import { useDisplayStore } from '../../stores/display';
 import { Sun, Moon, Monitor, Scan } from 'lucide-react';

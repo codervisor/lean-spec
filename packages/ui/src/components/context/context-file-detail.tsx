@@ -5,7 +5,7 @@ import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSlug from 'rehype-slug';
 import { ArrowLeft, Clock, Copy, ExternalLink, FileText, Hash, Layers, Type } from 'lucide-react';
-import { Badge, Button, formatDate } from '@leanspec/ui-components';
+import { Badge, Button, formatDate } from '@/library';
 import { TableOfContents, TableOfContentsSidebar } from '../spec-detail/table-of-contents';
 import { MermaidDiagram } from '../mermaid-diagram';
 import type { ContextFileContent } from '../../types/api';

@@ -21,7 +21,7 @@ import {
   ModelSelectorLogo,
   Switch,
   cn,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { Plus, Trash2, CheckCircle, AlertCircle, Settings, RefreshCw, ChevronDown, Wrench, Eye, EyeOff, Zap, Brain, ImageIcon, MoreVertical, Star, ListFilter, Check, Key, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Provider } from '../../types/chat-config';
 import type { RegistryProvider } from '../../types/models-registry';
@@ -735,7 +735,7 @@ function CustomProviderCard({ provider, isDefault, onSetDefault, onEdit, onDelet
 
 
 
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@leanspec/ui-components';
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/library';
 
 interface ProviderApiKeyDialogProps {
   provider: RegistryProvider;

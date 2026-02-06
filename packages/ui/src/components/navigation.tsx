@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { BookOpen, ChevronRight, Menu, BotMessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@leanspec/ui-components';
+import { Button } from '@/library';
 import { QuickSearch } from './quick-search';
 import { ThemeToggle } from './theme-toggle';
 import { LanguageSwitcher } from './language-switcher';

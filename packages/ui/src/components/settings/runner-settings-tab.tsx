@@ -33,7 +33,7 @@ import {
   HoverCardTrigger,
   RunnerLogo,
   cn,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { api } from '../../lib/api';
 import type { RunnerDefinition, RunnerListResponse, RunnerScope } from '../../types/api';
 import { useCurrentProject } from '../../hooks/useProjectQuery';

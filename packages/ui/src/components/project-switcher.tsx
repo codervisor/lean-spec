@@ -5,8 +5,7 @@
 
 import { useState } from 'react';
 import { ChevronsUpDown, Plus, Star, Settings, Loader2, Check } from 'lucide-react';
-import { cn } from '@leanspec/ui-components';
-import { Button } from '@leanspec/ui-components';
+import { Button, cn } from '@/library';
 import {
   Command,
   CommandEmpty,
@@ -15,13 +14,13 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from '@leanspec/ui-components';
+} from '@/library';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@leanspec/ui-components';
-import { Skeleton } from '@leanspec/ui-components';
+} from '@/library';
+import { Skeleton } from '@/library';
 import { useCurrentProject, useProjectMutations, useProjects } from '../hooks/useProjectQuery';
 import { CreateProjectDialog } from './projects/create-project-dialog';
 import { ProjectAvatar } from './shared/project-avatar';

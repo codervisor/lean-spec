@@ -6,9 +6,9 @@
 
 import * as React from 'react';
 import { BookOpen, Settings, FileText, Copy, Check, AlertCircle, Coins, Info, Search, X } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Badge, Button, Input } from '@leanspec/ui-components';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Badge, Button, Input } from '@/library';
 import type { ProjectContext, ContextFile } from '../../types/api';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 import { ContextFileDetail } from './context-file-detail';
 import { PageHeader } from '../shared/page-header';

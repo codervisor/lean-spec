@@ -13,10 +13,10 @@ import {
   CommandEmpty,
   Badge,
   ModelSelectorLogo
-} from '@leanspec/ui-components';
+} from '@/library';
 import { useModelsRegistry } from '../../lib/use-models-registry';
 import { Check, ChevronsUpDown, Cpu, Zap, Coins, Eye, Wrench, ChevronRight } from 'lucide-react';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 
 interface EnhancedModelSelectorProps {
   value?: { providerId: string; modelId: string };

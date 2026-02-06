@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { formatRelativeTime } from '@leanspec/ui-components';
+import { formatRelativeTime } from '@/library';
 import type { DashboardSpec } from './spec-list-item';
 import { useTranslation } from 'react-i18next';
 

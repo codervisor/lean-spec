@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, cn } from '@leanspec/ui-components';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, cn } from '@/library';
 import { Play, Square, Terminal, Plus, Loader2, ArrowUpRight } from 'lucide-react';
 import { api } from '../../lib/api';
 import type { Session, SessionLog, SessionStatus } from '../../types/api';

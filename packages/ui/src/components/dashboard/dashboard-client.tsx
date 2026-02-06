@@ -5,7 +5,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from '@leanspec/ui-components';
+} from '@/library';
 import {
   Calendar,
   CheckCircle2,

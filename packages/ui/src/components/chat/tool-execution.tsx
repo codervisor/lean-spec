@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { 
   Badge 
-} from '@leanspec/ui-components';
+} from '@/library';
 import { 
   Loader2, 
   ChevronDown, 
@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 
 export interface ToolExecutionProps {

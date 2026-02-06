@@ -1,4 +1,4 @@
-import { Message, MessageContent } from '@leanspec/ui-components';
+import { Message, MessageContent } from '@/library';
 
 export function ThinkingIndicator() {
   return (

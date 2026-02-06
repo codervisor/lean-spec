@@ -5,7 +5,7 @@ import {
   Button,
   Input,
   Separator
-} from '@leanspec/ui-components';
+} from '@/library';
 import {
   PanelLeftClose,
   PanelLeftOpen,
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import type { ChatThread, ChatStorageInfo } from '../../../lib/chat-api';
 import { ChatApi } from '../../../lib/chat-api';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import isYesterday from 'dayjs/plugin/isYesterday';

@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '../stores/theme';
-import { Dialog, DialogContent } from '@leanspec/ui-components';
-import { cn } from '@leanspec/ui-components';
+import { Dialog, DialogContent, cn } from '@/library';
 
 interface MermaidDiagramProps {
   chart: string;

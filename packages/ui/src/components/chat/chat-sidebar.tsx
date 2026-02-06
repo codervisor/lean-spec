@@ -9,7 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   Button 
-} from '@leanspec/ui-components';
+} from '@/library';
 import { ResizeHandle } from './resize-handle';
 import { ChatContainer } from './chat-container';
 import { ChatHistory } from './chat-history';

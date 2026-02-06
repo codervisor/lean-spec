@@ -15,7 +15,7 @@ import {
   PromptInputSubmit,
   Alert,
   AlertDescription,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { MessageSquare, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ChatContainerProps {

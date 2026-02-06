@@ -12,10 +12,10 @@ import {
   CommandEmpty,
   Button,
   ModelSelectorLogo,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { useModelsRegistry } from '../../lib/use-models-registry';
 import { Check, ChevronDown, Loader2 } from 'lucide-react';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 
 interface InlineModelSelectorProps {
   value?: { providerId: string; modelId: string };

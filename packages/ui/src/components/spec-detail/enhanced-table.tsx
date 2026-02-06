@@ -1,6 +1,6 @@
 import React from 'react';
 import { ClipboardIcon, DownloadIcon, CheckIcon } from 'lucide-react';
-import { Button } from '@leanspec/ui-components';
+import { Button } from '@/library';
 import { extractTableData } from './utils';
 import { useTranslation } from 'react-i18next';
 

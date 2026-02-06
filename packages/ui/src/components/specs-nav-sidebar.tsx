@@ -36,7 +36,7 @@ import {
   getAllParentIds,
   SearchInput,
   type SortOption
-} from '@leanspec/ui-components';
+} from '@/library';
 import {
   List,
   type ListImperativeAPI,

@@ -1,7 +1,6 @@
 import { MessageSquare, Trash2, Search } from 'lucide-react';
 import { useChat } from '../../contexts/ChatContext';
-import { Input } from '@leanspec/ui-components';
-import { cn } from '@leanspec/ui-components';
+import { Input, cn } from '@/library';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

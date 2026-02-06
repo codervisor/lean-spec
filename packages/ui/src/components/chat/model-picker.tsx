@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/library';
 import { selectDefaultModelForProvider, useModelsRegistry } from '../../lib/use-models-registry';
 
 interface ModelPickerProps {

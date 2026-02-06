@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   cn,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { useTranslation } from 'react-i18next';
 import GithubSlugger from 'github-slugger';
 

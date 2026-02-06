@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@leanspec/ui-components';
-import { cn } from '@leanspec/ui-components';
+import { Card, CardContent, CardHeader, CardTitle, cn } from '@/library';
 
 interface StatCardProps {
   title: string;

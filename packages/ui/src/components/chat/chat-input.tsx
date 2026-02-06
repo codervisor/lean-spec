@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, type FormEvent, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@leanspec/ui-components';
-import { cn } from '@leanspec/ui-components';
+import { Button, cn } from '@/library';
 import { Send, Loader2 } from 'lucide-react';
 
 interface ChatInputProps {

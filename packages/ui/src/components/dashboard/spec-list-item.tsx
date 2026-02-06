@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Badge } from '@leanspec/ui-components';
+import { Badge } from '@/library';
 import { StatusBadge } from '../status-badge';
 import { PriorityBadge } from '../priority-badge';
 import type { Spec } from '../../types/api';

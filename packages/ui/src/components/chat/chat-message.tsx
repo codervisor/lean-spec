@@ -5,7 +5,7 @@ import {
   Message,
   MessageContent,
   MessageResponse,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { ToolExecution } from './tool-execution';
 
 interface ChatMessageProps {

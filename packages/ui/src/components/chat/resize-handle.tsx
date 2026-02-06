@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 
 interface ResizeHandleProps {
   onResize: (width: number) => void;
@@ -48,7 +48,7 @@ export function ResizeHandle({
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-  }, [isDragging, minWidth, maxWidth, onResize]);
+  }, [isDragging, minWidth, maxWidth, onResize, onResizeEnd]);
 
   return (
     <div
