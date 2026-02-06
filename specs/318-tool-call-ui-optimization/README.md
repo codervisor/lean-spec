@@ -10,7 +10,6 @@ parent: 094-ai-chatbot-web-integration
 created_at: 2026-02-06T14:12:40.736315Z
 updated_at: 2026-02-06T14:20:41.906671Z
 ---
-
 # Tool Call Result UI Performance Optimization
 
 ## Overview
@@ -43,13 +42,13 @@ ToolResult (container)
 
 ## Plan
 
-- [ ] Add size guard to tool result rendering — truncate JSON to first N lines with "Show all" toggle
-- [ ] Migrate chat `ToolExecution` to use library `Tool` component (eliminate Prism duplication)
-- [ ] Add `contentVisibility: auto` and `containIntrinsicSize` to tool output containers
-- [ ] Create `ToolResultRegistry` — maps tool names to specialized renderers with JSON fallback
-- [ ] Build 2-3 specialized tool result renderers (e.g., `search` → list view, `board` → table, `view` → markdown)
-- [ ] Defer rendering of collapsed tool call content (don't mount until expanded)
-- [ ] Add "Copy result" button to tool output
+- [ ] Add `ToolResultRegistry` in `packages/ui/src/components/chat/tool-result-registry.tsx` to map tool names to specialized renderers, with a `JsonResultView` fallback.
+- [ ] Implement `safeStringify` + line truncation helper in `packages/ui/src/components/chat/tool-result-utils.ts` (default max 500 lines, "Show all" toggle) and reuse it for input/output views.
+- [ ] Update `ToolInput`/`ToolOutput` in `packages/ui/src/components/library/ai-elements/tool.tsx` to support truncation + copy action using `CodeBlockHeader` + `CodeBlockCopyButton`.
+- [ ] Migrate `packages/ui/src/components/chat/chat-message.tsx` to render `Tool`, `ToolHeader`, `ToolContent`, `ToolInput`, `ToolOutput` instead of `ToolExecution`; map `toolInvocation.state` into `ToolPart["state"]` values and use `type="dynamic-tool"` with `toolName`.
+- [ ] Add specialized renderers for MCP tools: `search` (`results` list), `board` (`groups` table), `view` (render `content` markdown plus metadata summary).
+- [ ] Apply `contentVisibility: auto` + `containIntrinsicSize` on tool output containers when output is not a `CodeBlock`.
+- [ ] Remove `packages/ui/src/components/chat/tool-execution.tsx` if unused post-migration.
 
 ## Test
 
@@ -69,3 +68,14 @@ ToolResult (container)
 ### Existing Optimizations to Leverage
 - `CodeBlock` highlighter/token caching, async tokenization, `contentVisibility: auto`
 - `ChatMessage` wrapped in `memo()` with content comparison
+
+### Research Findings
+- `ToolExecution` is only used in `ChatMessage` and performs `JSON.stringify` + Prism rendering for input/output with no truncation or safe-stringify guard ([packages/ui/src/components/chat/tool-execution.tsx](packages/ui/src/components/chat/tool-execution.tsx#L1-L120)).
+- Library `Tool` components rely on Radix `Collapsible`; `ToolInput`/`ToolOutput` currently `JSON.stringify` full objects with `CodeBlock` and no truncation ([packages/ui/src/components/library/ai-elements/tool.tsx](packages/ui/src/components/library/ai-elements/tool.tsx#L24-L173)).
+- `CodeBlock` already applies `contentVisibility: auto` + `containIntrinsicSize` and provides `CodeBlockCopyButton` for copy actions ([packages/ui/src/components/library/ai-elements/code-block.tsx](packages/ui/src/components/library/ai-elements/code-block.tsx#L170-L347)).
+
+### MCP Tool Output Shapes (for specialized renderers)
+- `search` → `{ "query": string, "count": number, "results": [...] }` ([rust/leanspec-mcp/src/tools/specs.rs](rust/leanspec-mcp/src/tools/specs.rs#L520-L640)).
+- `board` → `{ "groupBy": string, "total": number, "groups": [{ "name": string, "count": number, "specs": [...] }] }` ([rust/leanspec-mcp/src/tools/board.rs](rust/leanspec-mcp/src/tools/board.rs#L1-L78)).
+- `view` → `{ "path": string, "title": string, "status": string, "tags": [...], "content": string, ... }` ([rust/leanspec-mcp/src/tools/specs.rs](rust/leanspec-mcp/src/tools/specs.rs#L36-L96)).
+- `tokens` / `validate` / `stats` return JSON objects or plain success strings; specialized rendering should handle string output gracefully ([rust/leanspec-mcp/src/tools/validation.rs](rust/leanspec-mcp/src/tools/validation.rs#L1-L132), [rust/leanspec-mcp/src/tools/board.rs](rust/leanspec-mcp/src/tools/board.rs#L40-L78)).
