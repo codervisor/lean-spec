@@ -118,7 +118,7 @@ impl CompletionVerifier {
 
     /// Verify if an umbrella spec is ready to be marked as complete
     ///
-    /// Checks that all child specs have status "complete".
+    /// Checks that all child specs have status "complete" or "archived".
     /// Returns a verification result containing:
     /// - Whether all children are complete
     /// - List of incomplete child specs
@@ -140,7 +140,10 @@ impl CompletionVerifier {
 
         let incomplete: Vec<IncompleteChildSpec> = children
             .iter()
-            .filter(|s| s.frontmatter.status != SpecStatus::Complete)
+            .filter(|s| {
+                s.frontmatter.status != SpecStatus::Complete
+                    && s.frontmatter.status != SpecStatus::Archived
+            })
             .map(|s| IncompleteChildSpec {
                 path: s.path.clone(),
                 title: s.title.clone(),
@@ -444,6 +447,68 @@ No checkboxes here.
         assert!(!result.suggestions.is_empty());
         assert!(result.suggestions[0].contains("Complete 1 child spec"));
         assert!(result.suggestions.iter().any(|s| s.contains("force=true")));
+    }
+
+    #[test]
+    fn test_umbrella_archived_children_count_as_done() {
+        let specs = vec![
+            create_test_spec("001-parent", "Parent Spec", SpecStatus::InProgress, None),
+            create_test_spec(
+                "002-child-a",
+                "Child A",
+                SpecStatus::Complete,
+                Some("001-parent"),
+            ),
+            create_test_spec(
+                "003-child-b",
+                "Child B",
+                SpecStatus::Archived,
+                Some("001-parent"),
+            ),
+            create_test_spec(
+                "004-child-c",
+                "Child C",
+                SpecStatus::Archived,
+                Some("001-parent"),
+            ),
+        ];
+
+        let result = CompletionVerifier::verify_umbrella_completion("001-parent", &specs);
+        assert!(result.is_complete);
+        assert!(result.incomplete_children.is_empty());
+        assert_eq!(result.progress.completed, 3);
+        assert_eq!(result.progress.total, 3);
+    }
+
+    #[test]
+    fn test_umbrella_mix_of_archived_and_incomplete() {
+        let specs = vec![
+            create_test_spec("001-parent", "Parent Spec", SpecStatus::InProgress, None),
+            create_test_spec(
+                "002-child-a",
+                "Child A",
+                SpecStatus::Complete,
+                Some("001-parent"),
+            ),
+            create_test_spec(
+                "003-child-b",
+                "Child B",
+                SpecStatus::Archived,
+                Some("001-parent"),
+            ),
+            create_test_spec(
+                "004-child-c",
+                "Child C",
+                SpecStatus::Planned,
+                Some("001-parent"),
+            ),
+        ];
+
+        let result = CompletionVerifier::verify_umbrella_completion("001-parent", &specs);
+        assert!(!result.is_complete);
+        assert_eq!(result.incomplete_children.len(), 1);
+        assert_eq!(result.progress.completed, 2);
+        assert_eq!(result.progress.total, 3);
     }
 
     #[test]
