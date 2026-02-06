@@ -12,7 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   cn,
-} from '@leanspec/ui-components';
+} from '@/library';
 import type { Spec } from '../../types/api';
 
 interface SpecSearchPickerProps {

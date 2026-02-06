@@ -15,12 +15,12 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import type { Session, SessionMode } from '../../types/api';
 import { api } from '../../lib/api';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 
 const MODES: SessionMode[] = ['guided', 'autonomous', 'ralph'];
 

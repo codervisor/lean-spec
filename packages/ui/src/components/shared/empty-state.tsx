@@ -1,4 +1,4 @@
-import { EmptyState as UIEmptyState } from '@leanspec/ui-components';
+import { EmptyState as UIEmptyState } from '@/library';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 

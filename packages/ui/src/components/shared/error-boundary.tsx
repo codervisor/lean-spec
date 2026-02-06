@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
 import { AlertTriangle } from 'lucide-react';
-import { Button } from '@leanspec/ui-components';
+import { Button } from '@/library';
 import { EmptyState } from './empty-state';
 import i18n from '../../lib/i18n';
 

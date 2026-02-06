@@ -1,5 +1,5 @@
 import type { Session } from '../../types/api';
-import { Button, Card, cn, formatRelativeTime } from '@leanspec/ui-components';
+import { Button, Card, cn, formatRelativeTime } from '@/library';
 import { Play, Square, Pause, RotateCcw, FileText, Check, X, Clock } from 'lucide-react';
 import { useSessionMutations } from '../../hooks/useSessionsQuery';
 import { useSessionsUiStore } from '../../stores/sessions-ui';

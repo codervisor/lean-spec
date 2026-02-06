@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Monitor, Scan, Check } from 'lucide-react';
 import { useDisplayStore } from '../stores/display';
-import { Button, cn } from '@leanspec/ui-components';
+import { Button, cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 
 export function WideModeToggle() {

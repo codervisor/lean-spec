@@ -1,5 +1,5 @@
 import { TOKEN_THRESHOLDS, tokenProgressClasses, getTokenProgressPercent, resolveTokenStatus } from '../lib/token-utils';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 
 interface TokenProgressBarProps {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
-import { Button, Card, CardContent } from '@leanspec/ui-components';
+import { Button, Card, CardContent } from '@/library';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import type { Spec, SpecStatus, ValidationStatus } from '../types/api';

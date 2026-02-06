@@ -5,7 +5,7 @@ import type {
   SpecStatus as UiSpecStatus,
   SpecWithMetadata as UiSpecWithMetadata,
   SubSpec as UiSubSpec,
-} from '@leanspec/ui-components';
+} from './specs';
 
 export type SpecStatus = UiSpecStatus;
 export type SpecPriority = UiSpecPriority;

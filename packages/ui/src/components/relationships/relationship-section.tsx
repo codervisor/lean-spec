@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Badge, Button, cn } from '@leanspec/ui-components';
+import { Badge, Button, cn } from '@/library';
 
 interface RelationshipItem {
   specName: string;

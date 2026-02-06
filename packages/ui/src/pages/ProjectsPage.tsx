@@ -13,7 +13,7 @@ import {
   Trash2,
   X
 } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, Input, Popover, PopoverContent, PopoverTrigger } from '@leanspec/ui-components';
+import { Button, Card, CardContent, CardHeader, Input, Popover, PopoverContent, PopoverTrigger } from '@/library';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';

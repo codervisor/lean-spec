@@ -590,8 +590,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                         "description": "Filter by priority: low, medium, high, critical",
                         "enum": ["low", "medium", "high", "critical"]
                     }
-                },
-                "additionalProperties": false
+                }
             }),
         },
         ToolDefinition {
@@ -605,8 +604,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                         "description": "Spec path or number (e.g., '170' or '170-cli-mcp')"
                     }
                 },
-                "required": ["specPath"],
-                "additionalProperties": false
+                "required": ["specPath"]
             }),
         },
         ToolDefinition {
@@ -625,15 +623,13 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                     },
                     "status": {
                         "type": "string",
-                        "description": "Initial status",
-                        "enum": ["planned", "in-progress"],
-                        "default": "planned"
+                        "description": "Initial status (defaults to 'planned')",
+                        "enum": ["planned", "in-progress"]
                     },
                     "priority": {
                         "type": "string",
-                        "description": "Priority level",
-                        "enum": ["low", "medium", "high", "critical"],
-                        "default": "medium"
+                        "description": "Priority level (defaults to 'medium')",
+                        "enum": ["low", "medium", "high", "critical"]
                     },
                     "template": {
                         "type": "string",
@@ -658,8 +654,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                         "description": "Specs this new spec depends on (blocking dependencies)"
                     }
                 },
-                "required": ["name"],
-                "additionalProperties": false
+                "required": ["name"]
             }),
         },
         ToolDefinition {
@@ -707,8 +702,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                                 "matchMode": {
                                     "type": "string",
                                     "enum": ["unique", "all", "first"],
-                                    "default": "unique",
-                                    "description": "unique=error if multiple matches, all=replace all, first=first only"
+                                    "description": "unique=error if multiple matches, all=replace all, first=first only (defaults to 'unique')"
                                 }
                             },
                             "required": ["oldString", "newString"]
@@ -725,7 +719,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                                 "mode": {
                                     "type": "string",
                                     "enum": ["replace", "append", "prepend"],
-                                    "default": "replace"
+                                    "description": "Section update mode (defaults to 'replace')"
                                 }
                             },
                             "required": ["section", "content"]
@@ -753,12 +747,10 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                     },
                     "force": {
                         "type": "boolean",
-                        "description": "Skip completion verification when setting status to complete",
-                        "default": false
+                        "description": "Skip completion verification when setting status to complete (defaults to false)"
                     }
                 },
-                "required": ["specPath"],
-                "additionalProperties": false
+                "required": ["specPath"]
             }),
         },
         ToolDefinition {
@@ -772,13 +764,11 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                         "description": "Search query"
                     },
                     "limit": {
-                        "type": "integer",
-                        "description": "Maximum results",
-                        "default": 10
+                        "type": "number",
+                        "description": "Maximum results (defaults to 10)"
                     }
                 },
-                "required": ["query"],
-                "additionalProperties": false
+                "required": ["query"]
             }),
         },
     ]

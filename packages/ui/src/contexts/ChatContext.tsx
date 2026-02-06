@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { useLocalStorage } from '@leanspec/ui-components';
+import { useLocalStorage } from '@/library';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useProjectScopedStorage } from '../hooks/useProjectScopedStorage';
 import { useChatThreadMutations, useChatThreads, chatKeys } from '../hooks/useChatQuery';

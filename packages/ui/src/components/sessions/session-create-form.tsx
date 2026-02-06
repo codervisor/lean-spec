@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSessionMutations } from '../../hooks/useSessionsQuery';
 import { useCurrentProject } from '../../hooks/useProjectQuery';
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/library';
 import { Play } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useTranslation } from 'react-i18next';

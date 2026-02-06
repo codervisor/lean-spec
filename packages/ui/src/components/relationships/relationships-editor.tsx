@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { useTranslation } from 'react-i18next';
 import type { Spec, SpecDetail } from '../../types/api';
 import { api } from '../../lib/api';

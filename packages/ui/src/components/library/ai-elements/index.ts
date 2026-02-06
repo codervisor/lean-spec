@@ -1,0 +1,54 @@
+/**
+ * AI Elements components
+ * Installed via shadcn CLI from @ai-elements registry
+ */
+
+export * from './agent';
+export * from './artifact';
+export * from './attachments';
+export * from './audio-player';
+export * from './canvas';
+export * from './chain-of-thought';
+export * from './checkpoint';
+export * from './code-block';
+export * from './commit';
+export * from './confirmation';
+export * from './connection';
+export * from './context';
+export * from './controls';
+export * from './conversation';
+export * from './edge';
+export * from './environment-variables';
+export * from './file-tree';
+export * from './image';
+export * from './inline-citation';
+export * from './loader';
+export * from './message';
+export * from './mic-selector';
+export * from './model-selector';
+export * from './node';
+export * from './open-in-chat';
+export * from './package-info';
+export * from './panel';
+export * from './persona';
+export * from './plan';
+export * from './prompt-input';
+export * from './queue';
+export * from './reasoning';
+export * from './runner-logo';
+export * from './sandbox';
+export * from './schema-display';
+export * from './shimmer';
+export * from './snippet';
+export * from './sources';
+export * from './speech-input';
+export * from './stack-trace';
+export * from './suggestion';
+export * from './task';
+export * from './terminal';
+export * from './test-results';
+export * from './tool';
+export * from './toolbar';
+export * from './transcription';
+export * from './voice-selector';
+export * from './web-preview';

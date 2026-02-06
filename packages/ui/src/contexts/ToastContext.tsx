@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 import { useTranslation } from 'react-i18next';
 import * as ToastPrimitive from '@radix-ui/react-toast';
 import { X } from 'lucide-react';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import { nanoid } from 'nanoid';
 
 export type ToastVariant = 'default' | 'success' | 'error';

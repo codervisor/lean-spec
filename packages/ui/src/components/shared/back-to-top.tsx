@@ -1,4 +1,4 @@
-import { BackToTop as UIBackToTop } from '@leanspec/ui-components';
+import { BackToTop as UIBackToTop } from '@/library';
 
 export function BackToTop() {
   return (

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings, Palette, Cpu, Server } from 'lucide-react';
-import { Button, cn } from '@leanspec/ui-components';
+import { Button, cn } from '@/library';
 import { ModelsSettingsTab } from '../components/settings/models-settings-tab';
 import { AppearanceSettingsTab } from '../components/settings/appearance-settings-tab';
 import { RunnerSettingsTab } from '../components/settings/runner-settings-tab';

@@ -1,8 +1,8 @@
 /**
- * Re-export all skeleton components from @leanspec/ui-components
+ * Re-export all skeleton components from the shared UI library
  *
  * This file serves as a convenience re-export for the UI package.
- * All skeleton implementations are centralized in the ui-components package
+ * All skeleton implementations are centralized in the UI library
  * to ensure consistent loading states across the application.
  */
 export {
@@ -26,4 +26,4 @@ export {
   // Generic/utility skeletons
   ContentSkeleton,
   type ContentSkeletonProps,
-} from '@leanspec/ui-components';
+} from '@/library';

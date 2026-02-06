@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import { useDisplayStore } from '../../stores/display';
 
 type PageContainerPadding = 'default' | 'compact' | 'none';

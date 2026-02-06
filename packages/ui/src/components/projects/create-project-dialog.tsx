@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { useProjectMutations } from '../../hooks/useProjectQuery';
 import { DirectoryPicker } from './directory-picker';
 import { useTranslation } from 'react-i18next';

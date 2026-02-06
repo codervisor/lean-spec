@@ -13,7 +13,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@leanspec/ui-components';
+} from '@/library';
 import ReactFlow, {
   Background,
   Controls,
@@ -25,7 +25,7 @@ import ReactFlow, {
   type ReactFlowInstance,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import { api } from '../lib/api';
 import type { DependencyGraph } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';

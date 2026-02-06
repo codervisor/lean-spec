@@ -13,7 +13,7 @@ import {
   Legend
 } from 'recharts';
 import { AlertCircle, FileText, Clock, PlayCircle, CheckCircle2, TrendingUp } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle, cn } from '@leanspec/ui-components';
+import { Button, Card, CardContent, CardHeader, CardTitle, cn } from '@/library';
 import { Link } from 'react-router-dom';
 import { StatCard } from '../components/dashboard/stat-card';
 import type { Stats, Spec } from '../types/api';

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { Button, Card, CardContent } from '@leanspec/ui-components';
+import { Button, Card, CardContent } from '@/library';
 import { Link } from 'react-router-dom';
 import type { Stats } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';

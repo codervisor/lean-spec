@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   Badge,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { ArrowLeft, Plus, Trash2, Edit2, CheckCircle, AlertCircle } from 'lucide-react';
 import type { Provider, Model } from '../types/chat-config';
 import { PageContainer } from '../components/shared/page-container';

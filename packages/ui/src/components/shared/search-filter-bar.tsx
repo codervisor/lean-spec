@@ -13,7 +13,7 @@ import {
   DropdownMenuRadioItem,
   Badge,
   cn
-} from '@leanspec/ui-components';
+} from '@/library';
 import { useTranslation } from 'react-i18next';
 
 export interface FilterOption {

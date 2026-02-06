@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { Card, CardContent } from '@leanspec/ui-components';
+import { Card, CardContent } from '@/library';
 import { ContextClient } from '../components/context/context-client';
 import { ContextPageSkeleton } from '../components/shared/skeletons';
 import { useCurrentProject } from '../hooks/useProjectQuery';

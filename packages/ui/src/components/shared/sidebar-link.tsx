@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 import type { LucideIcon } from 'lucide-react';
 
 export interface SidebarLinkProps {

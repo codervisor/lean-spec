@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Button, Card, CardContent } from '@leanspec/ui-components';
+import { Button, Card, CardContent } from '@/library';
 import { ChatContainer } from '../components/chat';
 import { EnhancedModelSelector } from '../components/chat/enhanced-model-selector';
 import { InlineModelSelector } from '../components/chat/inline-model-selector';

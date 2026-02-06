@@ -1,4 +1,4 @@
-import { StatusBadge as UIStatusBadge, cn } from '@leanspec/ui-components';
+import { StatusBadge as UIStatusBadge, cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 import { statusConfig } from './badge-config';
 

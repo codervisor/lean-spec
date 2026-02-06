@@ -27,7 +27,7 @@ import {
   SpecTimeline,
   StatusBadge,
   PriorityBadge,
-} from '@leanspec/ui-components';
+} from '@/library';
 import { APIError } from '../lib/api';
 import { getBackend } from '../lib/backend-adapter';
 import { StatusEditor } from '../components/metadata-editors/status-editor';

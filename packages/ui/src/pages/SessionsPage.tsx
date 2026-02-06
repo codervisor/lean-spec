@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { FilterX, RefreshCcw, FileQuestion, Play, Square, RotateCcw, ArrowUpRight, Plus, Pause } from 'lucide-react';
-import { Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
+import { Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/library';
 import { useTranslation } from 'react-i18next';
 import type { Session, SessionStatus, Spec } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
@@ -13,7 +13,7 @@ import { PageTransition } from '../components/shared/page-transition';
 import { PageContainer } from '../components/shared/page-container';
 import { SESSION_STATUS_DOT_STYLES, SESSION_STATUS_STYLES, formatSessionDuration } from '../lib/session-utils';
 import { SessionCreateDialog } from '../components/sessions/session-create-dialog';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 
 const PAGE_SIZE = 20;
 

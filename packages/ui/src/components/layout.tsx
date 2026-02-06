@@ -13,7 +13,7 @@ import { useKeyboardShortcuts } from '../contexts';
 import { useCurrentProject, useProjectMutations } from '../hooks/useProjectQuery';
 import { useLayoutStore } from '../stores/layout';
 import { useMachineStore } from '../stores/machine';
-import { cn } from '@leanspec/ui-components';
+import { cn } from '@/library';
 
 /**
  * Layout component that wraps all project-scoped pages.

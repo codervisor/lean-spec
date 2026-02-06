@@ -7,7 +7,7 @@ import type {
   StatsResult as UiStatsResult,
   ValidationIssue as UiValidationIssue,
   ValidationResult as UiValidationResult,
-} from '@leanspec/ui-components';
+} from '@leanspec/ui';
 
 export interface DesktopWindowPreferences {
   width: number;

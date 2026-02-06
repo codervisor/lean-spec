@@ -1,11 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
-import { Button } from '@leanspec/ui-components';
 import { ArrowLeft, Pause, Square, Download } from 'lucide-react';
 import { api } from '../../lib/api';
 import type { SessionLog, Session } from '../../types/api';
 import { useSessionMutations } from '../../hooks/useSessionsQuery';
 import { useCurrentProject } from '../../hooks/useProjectQuery';
-import { cn } from '@leanspec/ui-components';
+import { Button, cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 
 interface SessionLogsPanelProps {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Cpu, Pencil, PlugZap, WifiOff, Zap } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, cn, Input } from '@leanspec/ui-components';
+import { Button, Card, CardContent, CardHeader, cn, Input } from '@/library';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../components/shared/page-header';
 import { MachinesSkeleton } from '../components/shared/skeletons';

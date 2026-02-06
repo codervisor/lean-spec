@@ -1,4 +1,4 @@
-import { ProjectAvatar as UIProjectAvatar, getColorFromString } from '@leanspec/ui-components';
+import { ProjectAvatar as UIProjectAvatar, getColorFromString } from '@/library';
 
 interface ProjectAvatarProps {
   name: string;

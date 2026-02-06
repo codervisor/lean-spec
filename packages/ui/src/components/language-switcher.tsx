@@ -1,7 +1,7 @@
 import { useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Languages } from 'lucide-react';
-import { Button, cn } from '@leanspec/ui-components';
+import { Button, cn } from '@/library';
 
 const languages = [
   { code: 'en', labelKey: 'language.english', shortLabel: 'EN' },
