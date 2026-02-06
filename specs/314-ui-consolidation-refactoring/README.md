@@ -13,7 +13,6 @@ transitions:
 - status: in-progress
   at: 2026-02-06T04:03:35.532247888Z
 ---
-
 # UI Consolidation: Merge Packages, Standardize Naming, Eliminate Duplication
 
 ## Overview
@@ -103,9 +102,9 @@ Component **exports remain PascalCase** (only file names change). Barrel `index.
 - [x] Consolidate BackToTop and EmptyState
 
 ### Phase 2: File Naming Standardization
-- [ ] Rename all PascalCase component files in `ui/src/components` to kebab-case
-- [ ] Update all import paths across the codebase
-- [ ] Verify build and tests pass
+- [x] Rename all PascalCase component files in `ui/src/components` to kebab-case
+- [x] Update all import paths across the codebase
+- [x] Verify build and tests pass
 
 ### Phase 3: Package Merge
 - [ ] Move `ui-components/src/` contents into `ui/src/components/` and `ui/src/lib/`
