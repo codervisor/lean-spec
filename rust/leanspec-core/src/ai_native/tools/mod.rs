@@ -560,15 +560,15 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
             let project_id = ensure_project_id(p.project_id, &pid)?;
 
             let has_content_ops = p.content.is_some()
-                || p.replacements.as_ref().map_or(false, |r| !r.is_empty())
-                || p.section_updates.as_ref().map_or(false, |s| !s.is_empty())
-                || p.checklist_toggles.as_ref().map_or(false, |c| !c.is_empty());
+                || p.replacements.as_ref().is_some_and(|r| !r.is_empty())
+                || p.section_updates.as_ref().is_some_and(|s| !s.is_empty())
+                || p.checklist_toggles.as_ref().is_some_and(|c| !c.is_empty());
 
             let has_metadata = p.status.is_some()
                 || p.priority.is_some()
                 || p.assignee.is_some()
-                || p.add_tags.as_ref().map_or(false, |t| !t.is_empty())
-                || p.remove_tags.as_ref().map_or(false, |t| !t.is_empty());
+                || p.add_tags.as_ref().is_some_and(|t| !t.is_empty())
+                || p.remove_tags.as_ref().is_some_and(|t| !t.is_empty());
 
             if !has_content_ops && !has_metadata {
                 return Ok("No updates specified".to_string());
