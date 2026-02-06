@@ -45,18 +45,25 @@ pub struct ProviderSelection {
 }
 
 fn use_openai_compat(provider_id: &str, base_url: &Option<String>) -> bool {
-    if provider_id == "openrouter" {
-        return true;
+    // Any provider that isn't native OpenAI uses OpenAI-compatible mode
+    // (i.e., uses max_tokens instead of max_completion_tokens, no parallel_tool_calls)
+    match provider_id {
+        "openai" => {
+            // OpenAI with a custom base_url (e.g., Azure) is OpenAI-compatible
+            base_url
+                .as_ref()
+                .map(|url| !url.contains("openai.com"))
+                .unwrap_or(false)
+        }
+        "anthropic" => false, // Anthropic has its own client, not OpenAI-compatible
+        _ => true,            // All other providers (openrouter, deepseek, google, moonshot, etc.)
     }
+}
 
-    if provider_id != "openai" {
-        return false;
-    }
-
-    base_url
-        .as_ref()
-        .map(|url| !url.contains("openai.com"))
-        .unwrap_or(false)
+/// Providers that act as aggregators/proxies and support arbitrary model IDs
+/// beyond what's explicitly listed in the config.
+fn is_aggregator_provider(provider_id: &str) -> bool {
+    matches!(provider_id, "openrouter")
 }
 
 pub fn select_provider(
@@ -70,14 +77,17 @@ pub fn select_provider(
         .find(|p| p.id == provider_id)
         .ok_or_else(|| AiError::InvalidProvider(provider_id.to_string()))?;
 
-    let model = provider
-        .models
-        .iter()
-        .find(|m| m.id == model_id)
-        .ok_or_else(|| AiError::InvalidModel {
+    // Try to find the model in the config for max_tokens info.
+    // For aggregator providers (e.g. OpenRouter), allow any model ID
+    // since they proxy to hundreds of upstream providers.
+    let model = provider.models.iter().find(|m| m.id == model_id);
+
+    if model.is_none() && !is_aggregator_provider(provider_id) {
+        return Err(AiError::InvalidModel {
             provider_id: provider_id.to_string(),
             model_id: model_id.to_string(),
-        })?;
+        });
+    }
 
     let api_key = resolve_api_key(&provider.api_key);
     if api_key.is_empty() {
@@ -90,8 +100,8 @@ pub fn select_provider(
 
     Ok(ProviderSelection {
         provider_id: provider.id.clone(),
-        model_id: model.id.clone(),
-        model_max_tokens: model.max_tokens,
+        model_id: model_id.to_string(),
+        model_max_tokens: model.and_then(|m| m.max_tokens),
         use_openai_compat,
         provider_base_url,
         provider: provider_client,
@@ -137,7 +147,24 @@ fn build_provider(provider: &ChatProvider, api_key: &str) -> Result<ProviderClie
                 config,
             )))
         }
-        other => Err(AiError::InvalidProvider(other.to_string())),
+        _ => {
+            // Fallback: treat any provider with a base_url as OpenAI-compatible.
+            // Most providers (DeepSeek, Google AI, Moonshot/Kimi, Mistral, Groq, xAI, etc.)
+            // expose OpenAI-compatible REST APIs.
+            if let Some(base_url) = provider.base_url.clone().filter(|u| !u.is_empty()) {
+                let config = OpenAIConfig::new()
+                    .with_api_key(api_key.to_string())
+                    .with_api_base(base_url);
+                Ok(ProviderClient::OpenRouter(OpenAIClient::with_config(
+                    config,
+                )))
+            } else {
+                Err(AiError::InvalidProvider(format!(
+                    "{} (no base_url configured for OpenAI-compatible fallback)",
+                    provider.id
+                )))
+            }
+        }
     }
 }
 

@@ -18,6 +18,7 @@ import { InlineModelSelector } from './inline-model-selector';
 import { useLeanSpecChat } from '../../lib/use-chat';
 import { useModelsRegistry } from '../../lib/use-models-registry';
 import { useAutoTitle } from '../../hooks/useAutoTitle';
+import { useChatPreferencesStore } from '../../stores/chat-preferences';
 import { X, Plus, Settings, History } from 'lucide-react';
 
 export function ChatSidebar() {
@@ -42,11 +43,11 @@ export function ChatSidebar() {
 
   // Use registry for model selection
   const { defaultSelection } = useModelsRegistry();
-  const [model, setModel] = useState<{ providerId: string; modelId: string } | null>(null);
+  const { selectedModel, setSelectedModel } = useChatPreferencesStore();
   const pendingMessageRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const effectiveModel = model ?? defaultSelection ?? null;
+  const effectiveModel = selectedModel ?? defaultSelection ?? null;
   const defaultTitle = t('chat.newChat');
   const currentTitle = activeConversationId
     ? conversations.find(c => c.id === activeConversationId)?.title
@@ -239,7 +240,7 @@ export function ChatSidebar() {
               effectiveModel ? (
                 <InlineModelSelector
                   value={effectiveModel}
-                  onChange={setModel}
+                  onChange={setSelectedModel}
                   disabled={isLoading}
                 />
               ) : null

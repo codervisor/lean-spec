@@ -50,10 +50,6 @@ export function ProjectsPage() {
   const { switchProject, toggleFavorite, removeProject, updateProject } = useProjectMutations();
   const { machineModeEnabled, currentMachine } = useMachineStore();
 
-  if (loading) {
-    return <ProjectsSkeleton />;
-  }
-
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
@@ -222,6 +218,10 @@ export function ProjectsPage() {
     }
     return null;
   };
+
+  if (loading) {
+    return <ProjectsSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
