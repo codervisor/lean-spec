@@ -139,15 +139,19 @@ export function ChatSidebar() {
     }
   };
 
-  // Prevent keyboard shortcuts from triggering when typing in the chat sidebar
+  // Only stop propagation for plain typing keys in inputs.
+  // Modifier-based shortcuts (Ctrl/Cmd+Shift+…) and Escape always bubble
+  // so global shortcuts fire from anywhere — matching VS Code UX.
   const handleSidebarKeyDown = (e: KeyboardEvent<HTMLElement>) => {
     const target = e.target as HTMLElement;
-    // Stop propagation for inputs/textareas to prevent global shortcuts
-    if (
+    const isInput =
       target instanceof HTMLInputElement ||
       target instanceof HTMLTextAreaElement ||
-      target.isContentEditable
-    ) {
+      target.isContentEditable;
+    if (!isInput) return;
+
+    const isModified = e.metaKey || e.ctrlKey || e.altKey;
+    if (!isModified && e.key !== 'Escape') {
       e.stopPropagation();
     }
   };

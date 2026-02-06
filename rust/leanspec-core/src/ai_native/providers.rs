@@ -74,7 +74,10 @@ pub fn select_provider(
         .models
         .iter()
         .find(|m| m.id == model_id)
-        .ok_or_else(|| AiError::InvalidModel(model_id.to_string()))?;
+        .ok_or_else(|| AiError::InvalidModel {
+            provider_id: provider_id.to_string(),
+            model_id: model_id.to_string(),
+        })?;
 
     let api_key = resolve_api_key(&provider.api_key);
     if api_key.is_empty() {
@@ -246,7 +249,7 @@ mod tests {
 
         let result = select_provider(&config, "openai", "invalid-model");
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), AiError::InvalidModel(_)));
+        assert!(matches!(result.unwrap_err(), AiError::InvalidModel { .. }));
     }
 
     #[test]

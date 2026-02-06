@@ -148,9 +148,9 @@ function SpecCardCompact({ spec, basePath, canEdit = true, draggingId, onDragSta
               );
             })()}
             {spec.priority && (
-              <PriorityBadge 
-                priority={spec.priority} 
-                className="h-5 text-[10px] px-1.5" 
+              <PriorityBadge
+                priority={spec.priority}
+                className="h-5 text-[10px] px-1.5"
                 editable={!!onPriorityChange && canEdit}
                 onChange={(priority) => onPriorityChange?.(spec, priority)}
               />
@@ -433,12 +433,12 @@ export function BoardView({ specs, onStatusChange, onPriorityChange, basePath = 
         {/* Bottom: Priority & Stats */}
         <div className="flex items-center justify-between gap-2 mt-auto">
           {spec.priority && (
-            <PriorityBadge 
-                priority={spec.priority} 
-                className={cn("rounded-md", isChild ? "h-5 text-[10px] px-1.5 scale-90 origin-left" : "h-6 px-2.5")} 
-                iconOnly={isChild} 
-                editable={!!onPriorityChange && canEdit}
-                onChange={(priority) => onPriorityChange?.(spec, priority)}
+            <PriorityBadge
+              priority={spec.priority}
+              className={cn("rounded-md", isChild ? "h-5 text-[10px] px-1.5 scale-90 origin-left" : "h-6 px-2.5")}
+              iconOnly={isChild}
+              editable={!!onPriorityChange && canEdit}
+              onChange={(priority) => onPriorityChange?.(spec, priority)}
             />
           )}
 

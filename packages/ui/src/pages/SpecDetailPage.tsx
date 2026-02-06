@@ -28,6 +28,7 @@ import {
   StatusBadge,
   PriorityBadge,
 } from '@/library';
+import { UmbrellaBadge } from '../components/umbrella-badge';
 import { APIError } from '../lib/api';
 import { getBackend } from '../lib/backend-adapter';
 import { StatusEditor } from '../components/metadata-editors/status-editor';
@@ -414,6 +415,9 @@ export function SpecDetailPage() {
                   </h1>
                   <StatusBadge status={spec.status || 'planned'} />
                   <PriorityBadge priority={spec.priority || 'medium'} />
+                  {spec.children && spec.children.length > 0 && (
+                    <UmbrellaBadge count={spec.children.length} />
+                  )}
                   <TokenBadge
                     count={currentTokenCount}
                     size="sm"
@@ -459,7 +463,10 @@ export function SpecDetailPage() {
                 )}
 
                 {/* Line 1: Spec number + H1 Title */}
-                <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
+                <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                  {spec.children && spec.children.length > 0 && (
+                    <UmbrellaBadge iconOnly />
+                  )}
                   <h1 className="text-lg sm:text-xl font-bold tracking-tight">
                     {spec.specNumber && (
                       <span className="text-muted-foreground">#{spec.specNumber} </span>

@@ -43,6 +43,7 @@ import {
 } from 'react-window';
 import { StatusBadge } from './status-badge';
 import { PriorityBadge } from './priority-badge';
+import { UmbrellaBadge } from './umbrella-badge';
 import { getStatusLabel, getPriorityLabel } from './badge-config';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 import type { Spec } from '../types/api';
@@ -66,11 +67,11 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const resolvedProjectId = projectId ?? currentProject?.id;
   const specsQuery = useSpecsList(resolvedProjectId ?? null);
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
-  
+
   // Derive specs and loading from query (avoids cascading renders)
   const specs = useMemo(() => (specsQuery.data as Spec[]) ?? [], [specsQuery.data]);
   const loading = !currentProject || specsQuery.isLoading;
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [tagSearchQuery, setTagSearchQuery] = useState('');
 
@@ -383,6 +384,18 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                       </TooltipTrigger>
                       <TooltipContent side="right">
                         {getPriorityLabel(spec.priority, t)}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {spec.children && spec.children.length > 0 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <UmbrellaBadge iconOnly className="h-3 w-3 text-muted-600 dark:text-muted-400" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        {t('specs.hierarchy.umbrella')}
                       </TooltipContent>
                     </Tooltip>
                   )}
