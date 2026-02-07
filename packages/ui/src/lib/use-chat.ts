@@ -99,10 +99,11 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
   messagesRef.current = chatHook.messages;
 
   // Sync messages when initialMessages change (e.g. loading a different thread)
-  // Only sync when threadId or initialMessages actually change, NOT on status changes
-  // to avoid overwriting streamed messages when streaming finishes
+  // Only sync when threadId or initialMessages actually change, NOT while
+  // actively streaming — otherwise the onFinish → invalidateQueries → refetch
+  // cycle overwrites live streaming messages with (potentially stale) DB data.
   useEffect(() => {
-    if (options.threadId) {
+    if (options.threadId && chatHook.status !== 'streaming' && chatHook.status !== 'submitted') {
       chatHook.setMessages(initialMessages);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

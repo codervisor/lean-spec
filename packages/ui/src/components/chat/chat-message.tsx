@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import type { UIMessage } from '@ai-sdk/react';
 import {
   cn,
@@ -96,7 +95,7 @@ function renderToolPart(
   );
 }
 
-export const ChatMessage = memo(function ChatMessage({ message, isLast }: ChatMessageProps) {
+export function ChatMessage({ message, isLast }: ChatMessageProps) {
   // Build a lookup of tool-result parts by toolCallId so that tool-call parts
   // rendered from persisted messages can find the matching output.
   const toolResultMap = new Map<string, Record<string, unknown>>();
@@ -190,4 +189,4 @@ export const ChatMessage = memo(function ChatMessage({ message, isLast }: ChatMe
       </MessageContent>
     </Message>
   );
-});
+}
