@@ -471,10 +471,14 @@ async fn run_openai_conversation(
         ));
 
         for call in round.tool_calls {
-            let input =
-                serde_json::from_str::<serde_json::Value>(&call.arguments).map_err(|e| {
-                    AiError::Tool(format!("Invalid tool input JSON for {}: {}", call.name, e))
-                })?;
+            let arguments = if call.arguments.trim().is_empty() {
+                "{}"
+            } else {
+                call.arguments.as_str()
+            };
+            let input = serde_json::from_str::<serde_json::Value>(arguments).map_err(|e| {
+                AiError::Tool(format!("Invalid tool input JSON for {}: {}", call.name, e))
+            })?;
 
             let _ = sender.send(StreamEvent::ToolInputStart {
                 tool_call_id: call.id.clone(),

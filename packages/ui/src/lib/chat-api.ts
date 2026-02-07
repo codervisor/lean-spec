@@ -4,11 +4,11 @@ import type { UIMessage } from '@ai-sdk/react';
 function extractTextFromMessage(message: UIMessage): string {
   if (!message.parts) return '';
   return message.parts
-    .filter((p): p is { type: 'text'; text: string } => 
-      typeof p === 'object' && 
-      p !== null && 
-      'type' in p && 
-      (p as { type: unknown }).type === 'text' && 
+    .filter((p): p is { type: 'text'; text: string } =>
+      typeof p === 'object' &&
+      p !== null &&
+      'type' in p &&
+      (p as { type: unknown }).type === 'text' &&
       'text' in p
     )
     .map(p => p.text)
@@ -49,6 +49,7 @@ interface ChatMessageDto {
   role: UIMessage['role'];
   content: string;
   timestamp: number;
+  parts?: UIMessage['parts'];
   metadata?: Record<string, unknown> | null;
 }
 
@@ -70,10 +71,14 @@ function toThread(session: ChatSessionDto): ChatThread {
 }
 
 function toUIMessage(message: ChatMessageDto): UIMessage {
+  const parts = message.parts?.length
+    ? message.parts
+    : [{ type: 'text', text: message.content }];
   return {
     id: message.id,
     role: message.role,
-    parts: [{ type: 'text', text: message.content }],
+    parts,
+    metadata: message.metadata ?? undefined,
   } as UIMessage;
 }
 
@@ -82,6 +87,8 @@ function toMessageInput(messages: UIMessage[]) {
     id: message.id,
     role: message.role,
     content: extractTextFromMessage(message),
+    parts: message.parts,
+    metadata: message.metadata ?? null,
   }));
 }
 

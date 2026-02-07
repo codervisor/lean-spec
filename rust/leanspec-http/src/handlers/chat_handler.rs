@@ -108,11 +108,16 @@ pub async fn chat_stream(
                     return;
                 }
                 let mut persisted = to_chat_messages(messages);
+                let parts = serde_json::to_value(vec![UIMessagePart::Text {
+                    text: trimmed.to_string(),
+                }])
+                .ok();
                 persisted.push(ChatMessageInput {
                     id: None,
                     role: "assistant".to_string(),
                     content: trimmed.to_string(),
                     timestamp: None,
+                    parts,
                     metadata: None,
                 });
 
@@ -203,6 +208,7 @@ fn to_chat_messages(messages: Vec<UIMessage>) -> Vec<ChatMessageInput> {
                 role: role.to_string(),
                 content: text,
                 timestamp: None,
+                parts: serde_json::to_value(message.parts).ok(),
                 metadata: message.metadata,
             })
         })
