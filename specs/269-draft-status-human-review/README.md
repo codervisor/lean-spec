@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-01-31
-priority: medium
+priority: high
 tags:
 - lifecycle
 - workflow
@@ -9,9 +9,8 @@ tags:
 - mcp
 parent: 319-spec-lifecycle-enhancements
 created_at: 2026-01-31T06:11:02.684844Z
-updated_at: 2026-02-06T14:20:48.566292Z
+updated_at: 2026-02-07T03:18:27.892788Z
 ---
-
 # Draft Status for Human-Reviewed Spec Refinement
 
 ## Overview
@@ -87,16 +86,37 @@ When user tries to change status from `draft` directly to `in-progress` or `comp
 
 This ensures the proper lifecycle is followed unless explicitly overridden.
 
+### Configuration Flag
+
+Draft status is **opt-in** via `.lean-spec/config.json`:
+
+```json
+{
+  "draftStatus": {
+    "enabled": true
+  }
+}
+```
+
+- When `enabled: false` (default): `create` defaults to `planned`, draft status is hidden from board/UI
+- When `enabled: true`: `create` defaults to `draft`, full lifecycle enforced
+- CLI override: `lean-spec create <name> --status draft` works regardless of config
+- `lean-spec init` prompt: "Enable draft status for human review workflow? (y/N)"
+
 ### Default Behavior
 
-- New specs created via `create` command default to `draft` status
+- **Feature is disabled by default** — no breaking change for existing projects
+- When enabled, new specs created via `create` default to `draft` status
 - Existing specs with other statuses are unaffected
 - Normal lifecycle transitions work without force
+- Setting `draft` status manually (via `--status draft`) always works, even when disabled
 
 ## Plan
 
 - [ ] Update status enum to include `draft` before `planned`
-- [ ] Modify `create` command to default status to `draft`
+- [ ] Add `draftStatus.enabled` config option to `.lean-spec/config.json`
+- [ ] Add draft status prompt to `lean-spec init`
+- [ ] Modify `create` command to default status to `draft` when enabled
 - [ ] Add `--force` flag to CLI update command
 - [ ] Add `force` parameter to MCP update tool
 - [ ] Implement draft→in-progress/complete guard requiring force
@@ -108,7 +128,9 @@ This ensures the proper lifecycle is followed unless explicitly overridden.
 
 ## Test
 
-- [ ] `lean-spec create "test"` creates spec with `draft` status
+- [ ] `lean-spec create "test"` creates spec with `planned` status (default, disabled)
+- [ ] `lean-spec create "test"` creates spec with `draft` status when `draftStatus.enabled: true`
+- [ ] `lean-spec create "test" --status draft` works regardless of config
 - [ ] `lean-spec update <spec> --status planned` succeeds
 - [ ] `lean-spec update <spec> --status archived` succeeds
 - [ ] `lean-spec update <spec> --status in-progress` fails with helpful error
