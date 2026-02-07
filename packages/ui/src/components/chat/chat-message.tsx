@@ -70,10 +70,16 @@ function renderToolPart(
       ? ToolResultRegistry.render(toolName, output)
       : undefined;
 
+  // Extract title/description from input if available
+  const inputObj = typeof input === 'object' && input !== null ? (input as Record<string, unknown>) : {};
+  const displayTitle = typeof inputObj.title === 'string' ? inputObj.title : undefined;
+  const displayDescription = typeof inputObj.description === 'string' ? inputObj.description : description;
+
   return (
     <Tool key={toolCallId || key}>
       <ToolHeader
-        description={description}
+        title={displayTitle}
+        description={displayDescription}
         state={mapToolState(state, output, errorMessage)}
         toolName={toolName}
         type="dynamic-tool"

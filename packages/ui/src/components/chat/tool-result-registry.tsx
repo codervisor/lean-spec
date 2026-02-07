@@ -35,12 +35,12 @@ const JsonResultView = ({ output }: { output: unknown }) => {
   const code = toDisplayString(output);
 
   return (
-    <CodeBlock code={code} language="json" className="max-h-80 overflow-auto">
+    <CodeBlock code={code} language="json" maxHeight={300}>
       <CodeBlockHeader>
-        <CodeBlockTitle className="sr-only">
+        <CodeBlockTitle>
           {t("chat.toolExecution.labels.output")}
         </CodeBlockTitle>
-        <CodeBlockActions className="sticky top-0">
+        <CodeBlockActions>
           <CodeBlockCopyButton
             aria-label={t("chat.toolExecution.actions.copy")}
             size="icon-sm"

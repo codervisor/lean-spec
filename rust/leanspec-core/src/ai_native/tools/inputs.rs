@@ -13,6 +13,8 @@ pub struct ListInput {
     pub tags: Option<Vec<String>>,
     /// Filter by priority: low, medium, high, critical
     pub priority: Option<String>,
+    /// Human-readable title for this action
+    pub title: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -21,6 +23,8 @@ pub struct ViewInput {
     pub project_id: Option<String>,
     /// Spec path or number (e.g., '170' or '170-cli-mcp')
     pub spec_path: String,
+    /// Human-readable title for this action
+    pub title: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -104,6 +108,8 @@ pub struct UpdateInput {
     pub expected_content_hash: Option<String>,
     /// Skip completion verification when setting status to complete
     pub force: Option<bool>,
+    /// Human-readable title for this action
+    pub title: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -114,6 +120,8 @@ pub struct SearchInput {
     pub query: String,
     /// Maximum results
     pub limit: Option<u64>,
+    /// Human-readable title for this action
+    pub title: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -122,6 +130,8 @@ pub struct ValidateInput {
     pub project_id: Option<String>,
     /// Specific spec to validate (validates all if not provided)
     pub spec_path: Option<String>,
+    /// Human-readable title for this action
+    pub title: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -140,12 +150,16 @@ pub struct BoardInput {
     pub project_id: Option<String>,
     /// Group by: status, priority, assignee, tag, parent
     pub group_by: Option<String>,
+    /// Human-readable title for this action
+    pub title: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct StatsInput {
     pub project_id: Option<String>,
+    /// Human-readable title for this action
+    pub title: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -161,6 +175,8 @@ pub struct RelationshipsInput {
     pub rel_type: Option<String>,
     /// Target spec path or number
     pub target: Option<String>,
+    /// Human-readable title for this action
+    pub title: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -170,6 +186,8 @@ pub struct RunSubagentInput {
     pub spec_id: Option<String>,
     pub runner_id: Option<String>,
     pub task: String,
+    /// Human-readable title for this action
+    pub title: Option<String>,
 }
 
 // ---------------------------------------------------------------------------

@@ -7,11 +7,11 @@ import type { ToolPart } from "./tool";
 
 /**
  * Formats milliseconds into a human-readable duration string.
- * <1s → "<1s", 1-59s → "Xs", ≥60s → "Xm Ys"
+ * <1s → "Xms", 1-59s → "Xs", ≥60s → "Xm Ys"
  */
 function formatElapsed(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
   const totalSeconds = Math.floor(ms / 1000);
-  if (totalSeconds < 1) return "<1s";
   if (totalSeconds < 60) return `${totalSeconds}s`;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
@@ -47,10 +47,14 @@ export const ToolDuration = ({ state }: ToolDurationProps) => {
 
     const interval = setInterval(() => {
       setElapsed(Date.now() - startTime);
-    }, 1000);
+    }, 100);
 
     return () => clearInterval(interval);
   }, [isRunning, startTime]);
+
+  // Don't render if we couldn't measure any duration
+  // (tool completed before component mounted, e.g. streamed results)
+  if (elapsed === 0 && !isRunning) return null;
 
   return (
     <Badge

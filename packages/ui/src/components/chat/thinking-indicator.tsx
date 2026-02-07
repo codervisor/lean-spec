@@ -17,8 +17,8 @@ export function ThinkingIndicator({
       <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
       <Shimmer
         className={cn('text-sm', className)}
-        duration={3}
-        spread={5}
+        duration={1}
+        spread={2}
         {...props}
       >
         {text || t('chat.thinking')}

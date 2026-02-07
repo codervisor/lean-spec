@@ -99,6 +99,7 @@ type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
   code: string;
   language: BundledLanguage;
   showLineNumbers?: boolean;
+  maxHeight?: number;
 };
 
 interface TokenizedCode {
@@ -247,10 +248,12 @@ const CodeBlockBody = memo(
   ({
     tokenized,
     showLineNumbers,
+    maxHeight,
     className,
   }: {
     tokenized: TokenizedCode;
     showLineNumbers: boolean;
+    maxHeight?: number;
     className?: string;
   }) => {
     const preStyle = useMemo(
@@ -270,6 +273,8 @@ const CodeBlockBody = memo(
       <pre
         className={cn(
           "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 p-4 text-sm",
+          maxHeight ? "overflow-auto" : "",
+          maxHeight ? `max-h-[${maxHeight}px]` : "",
           className
         )}
         style={preStyle}
@@ -368,10 +373,12 @@ export const CodeBlockContent = ({
   code,
   language,
   showLineNumbers = false,
+  maxHeight,
 }: {
   code: string;
   language: BundledLanguage;
   showLineNumbers?: boolean;
+  maxHeight?: number;
 }) => {
   // Memoized raw tokens for immediate display
   const rawTokens = useMemo(() => createRawTokens(code), [code]);
@@ -390,8 +397,8 @@ export const CodeBlockContent = ({
   }, [code, language, rawTokens]);
 
   return (
-    <div className="relative overflow-auto">
-      <CodeBlockBody showLineNumbers={showLineNumbers} tokenized={tokenized} />
+    <div className="relative">
+      <CodeBlockBody showLineNumbers={showLineNumbers} tokenized={tokenized} maxHeight={maxHeight} />
     </div>
   );
 };
@@ -400,6 +407,7 @@ export const CodeBlock = ({
   code,
   language,
   showLineNumbers = false,
+  maxHeight,
   className,
   children,
   ...props
@@ -411,6 +419,7 @@ export const CodeBlock = ({
         code={code}
         language={language}
         showLineNumbers={showLineNumbers}
+        maxHeight={maxHeight}
       />
     </CodeBlockContainer>
   </CodeBlockContext.Provider>
