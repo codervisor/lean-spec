@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-31
 priority: high
 tags:
@@ -9,8 +9,12 @@ tags:
 - mcp
 parent: 319-spec-lifecycle-enhancements
 created_at: 2026-01-31T06:11:02.684844Z
-updated_at: 2026-02-07T03:18:27.892788Z
+updated_at: 2026-02-07T03:19:39.523558Z
+transitions:
+- status: in-progress
+  at: 2026-02-07T03:19:39.523558Z
 ---
+
 # Draft Status for Human-Reviewed Spec Refinement
 
 ## Overview

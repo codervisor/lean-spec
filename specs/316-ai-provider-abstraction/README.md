@@ -11,7 +11,6 @@ parent: 168-leanspec-orchestration-platform
 created_at: 2026-02-06T13:19:22.393941Z
 updated_at: 2026-02-06T14:20:41.880201Z
 ---
-
 # AI Provider Abstraction Layer (Inspired by Vercel AI SDK)
 
 ## Overview
@@ -67,15 +66,24 @@ struct ProviderRegistry {
 
 **Key insight from AI SDK**: providers like Groq, Together, Fireworks, and DeepInfra all extend `OpenAICompatibleChatLanguageModel` — they share 90% of the code. Same pattern applies in Rust: an `OpenAiCompatModel` struct that works for any OpenAI-compatible API.
 
+
+### Codebase Alignment
+
+- Current AI entrypoints live in [rust/leanspec-core/src/ai_native/chat.rs](rust/leanspec-core/src/ai_native/chat.rs) (`generate_text()`, `stream_chat()`), which dispatch via `ProviderClient` matches.
+- Provider selection and client construction are in [rust/leanspec-core/src/ai_native/providers.rs](rust/leanspec-core/src/ai_native/providers.rs) (`select_provider()`, `build_provider()`, `use_openai_compat()`), and rely on `ChatConfig` from storage.
+- API key resolution already exists in [rust/leanspec-core/src/storage/chat_config.rs](rust/leanspec-core/src/storage/chat_config.rs) (`resolve_api_key()`), but is duplicated in `providers.rs`.
+- Tool registry is built in [rust/leanspec-core/src/ai_native/tools/registry.rs](rust/leanspec-core/src/ai_native/tools/registry.rs); OpenAI tool calls are handled in `chat.rs`, while Anthropic tool calling is currently absent.
+- Streaming events are defined in [rust/leanspec-core/src/ai_native/streaming.rs](rust/leanspec-core/src/ai_native/streaming.rs) and should remain provider-agnostic.
+
 ## Plan
 
-- [ ] Define `LanguageModel` and `Provider` traits in `ai_native/`
-- [ ] Create `OpenAiCompatModel` — reusable impl for OpenAI-compatible APIs
-- [ ] Implement `AnthropicModel` with full tool-calling support (currently missing)
-- [ ] Build `ProviderRegistry` to resolve `"provider:model"` IDs
-- [ ] Migrate `stream_chat()` and `generate_text()` from match-based to trait-based dispatch
-- [ ] Deduplicate `resolve_api_key()` (exists in both `chat_config.rs` and `providers.rs`)
-- [ ] Add retry/backoff for provider API calls
+- [ ] Define `LanguageModel` + `Provider` traits and a `ProviderRegistry` module in `rust/leanspec-core/src/ai_native/` (new files ok) and re-export from [rust/leanspec-core/src/ai_native/mod.rs](rust/leanspec-core/src/ai_native/mod.rs).
+- [ ] Implement `OpenAiCompatModel` for OpenAI-compatible providers (OpenAI, OpenRouter, fallback `base_url` providers). Centralize OpenAI-compat flags (`max_tokens` vs `max_completion_tokens`, `parallel_tool_calls`) based on provider config, not URL heuristics in `use_openai_compat()`.
+- [ ] Implement `AnthropicModel` with tool calling support (map `ToolRegistry` -> Anthropic tool schema, handle tool call results -> tool output messages).
+- [ ] Replace enum dispatch in [rust/leanspec-core/src/ai_native/chat.rs](rust/leanspec-core/src/ai_native/chat.rs) with trait-based calls (`generate()` / `stream()`) and keep `StreamEvent` output consistent.
+- [ ] Refactor provider selection in [rust/leanspec-core/src/ai_native/providers.rs](rust/leanspec-core/src/ai_native/providers.rs): remove duplicate `resolve_api_key()` and reuse [rust/leanspec-core/src/storage/chat_config.rs](rust/leanspec-core/src/storage/chat_config.rs) implementation; feed registry from `ChatConfig`.
+- [ ] Add retry/backoff helper for provider HTTP calls (429/5xx); apply to OpenAI-compatible and Anthropic request paths.
+- [ ] Tests: add registry resolution tests, add `OpenAiCompatModel` mock HTTP test, and add Anthropic tool-calling coverage. Add a mock server dev-dependency (e.g. `wiremock` or `httpmock`) to [rust/leanspec-core/Cargo.toml](rust/leanspec-core/Cargo.toml).
 
 ## Test
 
@@ -112,3 +120,9 @@ struct ProviderRegistry {
 - Provider registry: `packages/ai/src/registry/provider-registry.ts`
 - OpenAI-compatible base: `packages/openai-compatible/src/chat/openai-compatible-chat-language-model.ts`
 - OpenAI provider: `packages/openai/src/openai-provider.ts`
+
+### Implementation Notes
+
+- `stream_chat()` currently handles tool calls only for OpenAI-compatible responses via `stream_openai_round()`; `run_anthropic_conversation()` streams text only and needs tool-call parity.
+- `ProviderClient::OpenRouter` is also used as the generic OpenAI-compatible fallback in `build_provider()`; ensure the new model abstraction preserves this behavior.
+- No retry/backoff helper exists in `ai_native` today; adding one will be net-new.

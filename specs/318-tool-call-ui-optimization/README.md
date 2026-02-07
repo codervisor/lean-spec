@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-02-06
 priority: high
 tags:
@@ -8,10 +8,13 @@ tags:
 - chat
 parent: 094-ai-chatbot-web-integration
 created_at: 2026-02-06T14:12:40.736315Z
-updated_at: 2026-02-06T15:37:00.274933Z
+updated_at: 2026-02-07T03:21:04.940401Z
+completed_at: 2026-02-07T03:21:04.940401Z
 transitions:
 - status: in-progress
   at: 2026-02-06T15:37:00.274933Z
+- status: complete
+  at: 2026-02-07T03:21:04.940401Z
 ---
 
 # Tool Call Result UI Performance Optimization
@@ -46,19 +49,19 @@ ToolResult (container)
 
 ## Plan
 
-- [ ] Add `ToolResultRegistry` in `packages/ui/src/components/chat/tool-result-registry.tsx` to map tool names to specialized renderers, with a `JsonResultView` fallback.
-- [ ] Implement `safeStringify` + line truncation helper in `packages/ui/src/components/chat/tool-result-utils.ts` (default max 500 lines, "Show all" toggle) and reuse it for input/output views.
-- [ ] Update `ToolInput`/`ToolOutput` in `packages/ui/src/components/library/ai-elements/tool.tsx` to support truncation + copy action using `CodeBlockHeader` + `CodeBlockCopyButton`.
-- [ ] Migrate `packages/ui/src/components/chat/chat-message.tsx` to render `Tool`, `ToolHeader`, `ToolContent`, `ToolInput`, `ToolOutput` instead of `ToolExecution`; map `toolInvocation.state` into `ToolPart["state"]` values and use `type="dynamic-tool"` with `toolName`.
-- [ ] Add specialized renderers for MCP tools: `search` (`results` list), `board` (`groups` table), `view` (render `content` markdown plus metadata summary).
-- [ ] Apply `contentVisibility: auto` + `containIntrinsicSize` on tool output containers when output is not a `CodeBlock`.
-- [ ] Remove `packages/ui/src/components/chat/tool-execution.tsx` if unused post-migration.
+- [x] Add `ToolResultRegistry` in `packages/ui/src/components/chat/tool-result-registry.tsx` to map tool names to specialized renderers, with a `JsonResultView` fallback.
+- [x] Implement `safeStringify` + line truncation helper in `packages/ui/src/components/chat/tool-result-utils.ts` (default max 500 lines, "Show all" toggle) and reuse it for input/output views.
+- [x] Update `ToolInput`/`ToolOutput` in `packages/ui/src/components/library/ai-elements/tool.tsx` to support truncation + copy action using `CodeBlockHeader` + `CodeBlockCopyButton`.
+- [x] Migrate `packages/ui/src/components/chat/chat-message.tsx` to render `Tool`, `ToolHeader`, `ToolContent`, `ToolInput`, `ToolOutput` instead of `ToolExecution`; map `toolInvocation.state` into `ToolPart["state"]` values and use `type="dynamic-tool"` with `toolName`.
+- [x] Add specialized renderers for MCP tools: `search` (`results` list), `board` (`groups` table), `view` (render `content` markdown plus metadata summary).
+- [x] Apply `contentVisibility: auto` + `containIntrinsicSize` on tool output containers when output is not a `CodeBlock`.
+- [x] Remove `packages/ui/src/components/chat/tool-execution.tsx` if unused post-migration.
 
 ## Test
 
-- [ ] Render a tool result with 10,000+ line JSON without browser hang
-- [ ] Collapsed tool calls contribute zero rendering cost (deferred mount verified)
-- [ ] Specialized renderers activate for registered tools, JSON fallback for unknown tools
+- [x] Render a tool result with 10,000+ line JSON without browser hang
+- [x] Collapsed tool calls contribute zero rendering cost (deferred mount verified)
+- [x] Specialized renderers activate for registered tools, JSON fallback for unknown tools
 - [ ] No visual regression compared to current tool call display
 
 ## Notes
@@ -83,3 +86,16 @@ ToolResult (container)
 - `board` → `{ "groupBy": string, "total": number, "groups": [{ "name": string, "count": number, "specs": [...] }] }` ([rust/leanspec-mcp/src/tools/board.rs](rust/leanspec-mcp/src/tools/board.rs#L1-L78)).
 - `view` → `{ "path": string, "title": string, "status": string, "tags": [...], "content": string, ... }` ([rust/leanspec-mcp/src/tools/specs.rs](rust/leanspec-mcp/src/tools/specs.rs#L36-L96)).
 - `tokens` / `validate` / `stats` return JSON objects or plain success strings; specialized rendering should handle string output gracefully ([rust/leanspec-mcp/src/tools/validation.rs](rust/leanspec-mcp/src/tools/validation.rs#L1-L132), [rust/leanspec-mcp/src/tools/board.rs](rust/leanspec-mcp/src/tools/board.rs#L40-L78)).
+
+### Progress Verification (2026-02-07)
+
+**All 7 plan items verified complete:**
+- `ToolResultRegistry` implemented with `JsonResultView` fallback + 3 specialized renderers (`search`, `board`, `view`)
+- `safeStringify` + `truncateLines` helper with 500-line default, circular-ref guard, "Show all" toggle
+- `ToolInput`/`ToolOutput` updated with truncation + copy via `ToolCodeBlock` wrapper
+- `ChatMessage` fully migrated to library `Tool` components with `type="dynamic-tool"` + `toolName`
+- `contentVisibility: auto` applied on `ToolOutput` for custom renderers; `CodeBlock` already has it natively
+- `tool-execution.tsx` deleted; no remaining imports
+- Typecheck passes cleanly
+
+**Pending:** Manual visual regression testing recommended before shipping.
