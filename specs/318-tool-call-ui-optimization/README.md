@@ -16,7 +16,6 @@ transitions:
 - status: complete
   at: 2026-02-07T03:21:04.940401Z
 ---
-
 # Tool Call Result UI Performance Optimization
 
 ## Overview
@@ -62,7 +61,7 @@ ToolResult (container)
 - [x] Render a tool result with 10,000+ line JSON without browser hang
 - [x] Collapsed tool calls contribute zero rendering cost (deferred mount verified)
 - [x] Specialized renderers activate for registered tools, JSON fallback for unknown tools
-- [ ] No visual regression compared to current tool call display
+- [x] No visual regression compared to current tool call display
 
 ## Notes
 
