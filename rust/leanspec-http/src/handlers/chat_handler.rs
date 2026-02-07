@@ -55,20 +55,15 @@ pub async fn chat_stream(
     let mut provider_id = payload.provider_id.clone();
     let mut model_id = payload.model_id.clone();
 
-    // Only fall back to session-stored provider/model when the request doesn't
-    // include them. The payload values represent the user's current selection
-    // (e.g. after switching models in the UI) and must take precedence.
     if let Some(session_id) = payload.session_id.as_deref() {
-        if provider_id.is_none() || model_id.is_none() {
-            if let Some((session_provider, session_model)) =
-                fetch_session_context(state.clone(), session_id).await
-            {
-                if provider_id.is_none() && session_provider.is_some() {
-                    provider_id = session_provider;
-                }
-                if model_id.is_none() && session_model.is_some() {
-                    model_id = session_model;
-                }
+        if let Some((session_provider, session_model)) =
+            fetch_session_context(state.clone(), session_id).await
+        {
+            if session_provider.is_some() {
+                provider_id = session_provider;
+            }
+            if session_model.is_some() {
+                model_id = session_model;
             }
         }
     }

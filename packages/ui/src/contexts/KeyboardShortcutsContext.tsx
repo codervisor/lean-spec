@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/library';
+import { Button } from '@leanspec/ui-components';
 
 /**
  * Context value for keyboard shortcuts help dialog state.

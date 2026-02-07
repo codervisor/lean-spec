@@ -13,29 +13,19 @@ export interface KeyboardShortcut {
   action: () => void;
 }
 
-/**
- * Returns true if the shortcut requires a modifier key (Ctrl/Cmd, Shift, etc.).
- * Modifier-based shortcuts always fire, even inside inputs — matching VS Code UX.
- */
-function hasModifier(shortcut: KeyboardShortcut): boolean {
-  return !!(shortcut.ctrl || shortcut.meta || shortcut.shift);
-}
-
 export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      const isInputTarget =
+      // Don't trigger shortcuts when typing in inputs
+      if (
         event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLTextAreaElement ||
-        event.target instanceof HTMLSelectElement ||
-        (event.target instanceof HTMLElement && event.target.isContentEditable);
+        event.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
 
       for (const shortcut of shortcuts) {
-        // Plain keys (no modifier) are skipped when typing in inputs.
-        // Modifier-based shortcuts and Escape always fire — like VS Code.
-        if (isInputTarget && !hasModifier(shortcut) && shortcut.key !== 'Escape') {
-          continue;
-        }
         const keyMatch = event.key.toLowerCase() === shortcut.key.toLowerCase();
         const ctrlMatch = shortcut.ctrl ? (event.ctrlKey || event.metaKey) : !(event.ctrlKey || event.metaKey);
         const metaMatch = shortcut.meta ? event.metaKey : !event.metaKey;
@@ -59,7 +49,7 @@ export function useGlobalShortcuts() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useCurrentProject();
-  const { toggleChat, createConversation, toggleHistory, isOpen, openChat, closeChat } = useChat();
+  const { toggleChat, createConversation, toggleHistory, isOpen, openChat } = useChat();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : null;
 
@@ -147,14 +137,6 @@ export function useGlobalShortcuts() {
         if (!isOpen) openChat();
         toggleHistory();
       }, [isOpen, openChat, toggleHistory]),
-    },
-    {
-      key: 'escape',
-      description: t('keyboardShortcuts.items.closeChatSidebar'),
-      action: useCallback(() => {
-        if (!isOpen) return;
-        closeChat();
-      }, [isOpen, closeChat]),
     },
     {
       key: ',',

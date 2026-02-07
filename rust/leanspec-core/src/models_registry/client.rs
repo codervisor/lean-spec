@@ -102,7 +102,7 @@ mod tests {
                 // Check openai has expected models
                 let openai = registry.providers.get("openai").unwrap();
                 assert!(!openai.models.is_empty());
-                assert!(openai.models.contains_key("gpt-4o") || !openai.models.is_empty());
+                assert!(openai.models.contains_key("gpt-4o") || openai.models.len() > 0);
             }
             Err(e) => {
                 // Network may be unavailable in CI

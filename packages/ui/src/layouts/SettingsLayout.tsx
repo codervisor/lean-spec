@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Settings, Palette, Cpu, Server, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { cn } from '@/library';
-import { SettingsSkeleton } from '../components/shared/skeletons';
-import { SidebarLink } from '../components/shared/sidebar-link';
-import { PageContainer } from '../components/shared/page-container';
+import { cn } from '@leanspec/ui-components';
+import { SettingsSkeleton } from '../components/shared/Skeletons';
+import { SidebarLink } from '../components/shared/SidebarLink';
+import { PageContainer } from '../components/shared/PageContainer';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useLayoutStore } from '../stores/layout';
 
@@ -26,7 +26,7 @@ export function SettingsLayout() {
   }
 
   const tabs = [
-    { id: 'models', path: '/settings/models', label: t('settings.tabs.models'), icon: Cpu },
+    { id: 'ai', path: '/settings/ai', label: t('settings.tabs.ai'), icon: Cpu },
     { id: 'runners', path: '/settings/runners', label: t('settings.tabs.runners'), icon: Server },
     { id: 'appearance', path: '/settings/appearance', label: t('settings.tabs.appearance'), icon: Palette },
   ];

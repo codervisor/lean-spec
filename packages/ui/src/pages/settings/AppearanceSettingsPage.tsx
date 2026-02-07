@@ -1,4 +1,4 @@
-import { AppearanceSettingsTab } from '../../components/settings/appearance-settings-tab';
+import { AppearanceSettingsTab } from '../../components/settings/AppearanceSettingsTab';
 
 export function AppearanceSettingsPage() {
   return <AppearanceSettingsTab />;

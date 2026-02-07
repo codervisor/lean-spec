@@ -1,5 +1,5 @@
 ---
-status: archived
+status: planned
 created: 2025-11-11
 priority: low
 tags:
@@ -15,12 +15,8 @@ depends_on:
 - 035-live-specs-showcase
 - 075-intelligent-search-engine
 created_at: 2025-11-11T06:41:08.335Z
-updated_at: 2026-02-06T14:19:16.854252Z
-transitions:
-- status: archived
-  at: 2026-02-06T14:19:16.854252Z
+updated_at: 2026-02-02T08:21:24.864416762Z
 ---
-
 # LeanSpec v0.3 - Performance & AI Agent Optimization
 
 > **Status**: 🗓️ Planned · **Priority**: Critical · **Created**: 2025-11-11 · **Tags**: release, planning, milestone, v0.3.0, performance, ai-agents

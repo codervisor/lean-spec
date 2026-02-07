@@ -9,11 +9,9 @@ tags:
 - archiving
 depends_on:
 - 077-archiving-strategy
-parent: 319-spec-lifecycle-enhancements
 created_at: 2026-01-14T13:42:47.864515Z
-updated_at: 2026-02-06T14:20:48.567508Z
+updated_at: 2026-02-01T15:40:40.122199Z
 ---
-
 # Restore/Unarchive Command for Spec Lifecycle Management
 
 ## Overview

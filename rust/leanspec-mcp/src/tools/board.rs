@@ -106,10 +106,12 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                 "properties": {
                     "groupBy": {
                         "type": "string",
-                        "description": "Group by: status, priority, assignee, tag, parent (defaults to 'status')",
-                        "enum": ["status", "priority", "assignee", "tag", "parent"]
+                        "description": "Group by: status, priority, assignee, tag, parent",
+                        "enum": ["status", "priority", "assignee", "tag", "parent"],
+                        "default": "status"
                     }
-                }
+                },
+                "additionalProperties": false
             }),
         },
         ToolDefinition {
@@ -117,7 +119,8 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
             description: "Show spec statistics and insights".to_string(),
             input_schema: json!({
                 "type": "object",
-                "properties": {}
+                "properties": {},
+                "additionalProperties": false
             }),
         },
     ]

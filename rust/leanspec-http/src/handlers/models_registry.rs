@@ -5,9 +5,8 @@ use leanspec_core::models_registry::{
     get_configured_providers, get_providers_with_availability, load_bundled_registry,
     load_registry, registry_to_chat_config, ModelsDevClient, ProviderWithAvailability,
 };
-use leanspec_core::storage::chat_config::{resolve_api_key, ChatModel, ChatProvider};
+use leanspec_core::storage::chat_config::{ChatModel, ChatProvider};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 
 use crate::error::{ApiError, ApiResult};
 use crate::state::AppState;
@@ -67,7 +66,7 @@ pub struct ProvidersQuery {
 
 /// Get list of available providers and their configuration status
 pub async fn list_providers(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<ProvidersQuery>,
 ) -> ApiResult<Json<ProvidersResponse>> {
     // Load registry (try bundled first for quick response)
@@ -83,21 +82,7 @@ pub async fn list_providers(
 
     let mut providers = get_providers_with_availability(&registry);
 
-    let config = state.chat_config.read().await.config();
-    let configured_from_config: HashSet<String> = config
-        .providers
-        .iter()
-        .filter(|provider| !resolve_api_key(&provider.api_key).is_empty())
-        .map(|provider| provider.id.clone())
-        .collect();
-
     // Apply filters
-    for provider_entry in providers.iter_mut() {
-        if configured_from_config.contains(&provider_entry.provider.id) {
-            provider_entry.is_configured = true;
-        }
-    }
-
     if query.configured_only {
         providers.retain(|p| p.is_configured);
     }
@@ -110,14 +95,13 @@ pub async fn list_providers(
         });
     }
 
-    let mut configured_ids: HashSet<String> = get_configured_providers().into_iter().collect();
-    configured_ids.extend(configured_from_config);
+    let configured_ids = get_configured_providers();
     let configured_count = providers.iter().filter(|p| p.is_configured).count();
 
     Ok(Json(ProvidersResponse {
         total: providers.len(),
         configured_count,
-        configured_provider_ids: configured_ids.into_iter().collect(),
+        configured_provider_ids: configured_ids,
         providers,
     }))
 }

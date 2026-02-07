@@ -8,47 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Tool Registry for LeanSpec AI** - New hook infrastructure for AI tool management
-  - `useChatConfig` and models registry hooks
-
-- **Auto Title Generation** - Automatic title generation for chat conversations
-  - Conversations now auto-generate titles based on first message
-
-- **Models Settings Enhancements** - Enhanced model configuration and management
-  - Clear API key functionality
-  - Improved toast notifications for model operations
-  - Renamed AI settings to Models settings for clarity
-
-### Changed
-- **UI Components Consolidation** ([spec 314](https://web.lean-spec.dev/specs/314)) - Major refactoring of UI package
-  - Phase 1: DRY elimination with consolidated badge config and removed duplicates
-  - Phase 2: Renamed 80 component files to kebab-case naming convention
-  - Removed `@leanspec/ui-components` package entirely
-  - Updated all import paths to use `@/library` instead of `@leanspec/ui-components`
-
-- **Chat Transport Enhancements** - Dynamic body values and improved provider compatibility
-
-- **Project-Scoped Storage** - Project-scoped localStorage for user preferences and chat settings
-  - Zustand store synchronization improvements
-  - Models registry fetching optimizations
-
-- **Skill Installation** - Enhanced to target detected AI tools and streamline MCP configuration
-
-### Fixed
-- **CI/CD Linux Build** - Pinned Linux build runner to ubuntu-22.04 for GLIBC 2.35 compatibility
-- **Chat Sidebar Conversation History** - Fixed layout sidebar race conditions
-- **TypeScript Deprecation** - Removed deprecated `ignoreDeprecations` option from tsconfig
-- **Spec Prompt Clarity** - Clarified spec loading instructions and dependency checks
-- **Clippy Warnings** - Added allowance for too many arguments in stream_openai_round function
-
-### Technical
-- Consolidated script references and updated skill documentation
-- Removed Makefile, updated build scripts for Rust binaries
-- Refactored merge_frontmatter function to use input struct for better readability
-
-## [0.2.23] - 2026-02-03
-
-### Added
 - **AI Chat Model Whitelisting** ([spec 307](https://web.lean-spec.dev/specs/307)) - Control which models appear in the chat selector
   - New `enabledModels` field in chat config to filter model list per provider
   - Smart default selection uses first configured provider's tool-enabled model
@@ -87,6 +46,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chat sidebar now properly creates session before sending first message
 - Model selector initializes from registry defaults instead of hardcoded values
 - Status and priority editors sync with prop changes correctly
+
+## [0.2.23] - 2026-02-03
+
+### Added
+- **State Management Migration** - Migrated from React Context to Zustand + TanStack Query
+  - New `useProjectQuery`, `useSessionsQuery`, `useSpecsQuery` hooks with caching
+  - BackendAdapter for unified API communication
+  - Improved state management with `QueryClientProvider`
+
+- **AI Sessions & Chat** - Re-enabled AI Sessions and Chat functionality in navigation and routing
+  - Session management with runner integration
+  - Enhanced chat handler and spec update tool
+  - Unified Update Tool for combined metadata and content changes
+
+- **Runner Management** - Expanded agent runner support
+  - Runner management API and UI integration
+  - Settings pages for AI, runners, and appearance configuration
+  - Unified RunnerDefinition with detection config for IDE-based tools
+  - Environment variable interpolation fixes
+
+- **HierarchyTree Enhancements** - Improved hierarchy navigation
+  - Controlled expansion with `getAllParentIds` utility
+  - Sorting options integration
+  - Optimized scrolling with `requestAnimationFrame`
+
+- **UI Improvements**
+  - Responsive PriorityBadge and StatusBadge components
+  - Enhanced loading states in TokenDetailsDialog and ValidationDialog
+  - Skeleton components consolidation for better maintainability
+  - Unique IDs for navigation items in MainSidebar
+
+### Changed
+- **Session Management Terminology** - Replaced 'tool' with 'runner' across session management
+- **Skills Directory** - Removed symlink, now uses `.github/skills` directly
+- **Sorting Logic** - Enhanced sorting across components with parent references
+
+### Fixed
 - Icon swap for normal/wide modes in WideModeToggle component
 - Clippy errors in leanspec-http resolved
 - Better error handling for undefined response in `listAvailableRunners`

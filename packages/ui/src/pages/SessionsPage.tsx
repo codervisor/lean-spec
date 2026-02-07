@@ -1,19 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { FilterX, RefreshCcw, FileQuestion, Play, Square, RotateCcw, ArrowUpRight, Plus, Pause } from 'lucide-react';
-import { Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/library';
+import { Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 import type { Session, SessionStatus, Spec } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useSessions, useSessionMutations } from '../hooks/useSessionsQuery';
 import { useSpecsList } from '../hooks/useSpecsQuery';
-import { EmptyState } from '../components/shared/empty-state';
-import { PageHeader } from '../components/shared/page-header';
-import { PageTransition } from '../components/shared/page-transition';
-import { PageContainer } from '../components/shared/page-container';
+import { EmptyState } from '../components/shared/EmptyState';
+import { PageHeader } from '../components/shared/PageHeader';
+import { PageTransition } from '../components/shared/PageTransition';
+import { PageContainer } from '../components/shared/PageContainer';
 import { SESSION_STATUS_DOT_STYLES, SESSION_STATUS_STYLES, formatSessionDuration } from '../lib/session-utils';
-import { SessionCreateDialog } from '../components/sessions/session-create-dialog';
-import { cn } from '@/library';
+import { SessionCreateDialog } from '../components/sessions/SessionCreateDialog';
+import { cn } from '@leanspec/ui-components';
 
 const PAGE_SIZE = 20;
 

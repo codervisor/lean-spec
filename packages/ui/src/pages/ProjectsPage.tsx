@@ -13,18 +13,18 @@ import {
   Trash2,
   X
 } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, Input, Popover, PopoverContent, PopoverTrigger } from '@/library';
+import { Button, Card, CardContent, CardHeader, Input, Popover, PopoverContent, PopoverTrigger } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
-import { CreateProjectDialog } from '../components/projects/create-project-dialog';
-import { ProjectAvatar, getColorForName } from '../components/shared/project-avatar';
-import { ColorPicker } from '../components/shared/color-picker';
-import { PageHeader } from '../components/shared/page-header';
-import { ProjectsSkeleton } from '../components/shared/skeletons';
-import { PageContainer } from '../components/shared/page-container';
+import { CreateProjectDialog } from '../components/projects/CreateProjectDialog';
+import { ProjectAvatar, getColorForName } from '../components/shared/ProjectAvatar';
+import { ColorPicker } from '../components/shared/ColorPicker';
+import { PageHeader } from '../components/shared/PageHeader';
+import { ProjectsSkeleton } from '../components/shared/Skeletons';
+import { PageContainer } from '../components/shared/PageContainer';
 import { useProjects, useProjectMutations } from '../hooks/useProjectQuery';
 import { useMachineStore } from '../stores/machine';
 import { api } from '../lib/api';
@@ -49,6 +49,10 @@ export function ProjectsPage() {
   const { projects, isLoading: loading } = useProjects();
   const { switchProject, toggleFavorite, removeProject, updateProject } = useProjectMutations();
   const { machineModeEnabled, currentMachine } = useMachineStore();
+
+  if (loading) {
+    return <ProjectsSkeleton />;
+  }
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -219,10 +223,6 @@ export function ProjectsPage() {
     return null;
   };
 
-  if (loading) {
-    return <ProjectsSkeleton />;
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header Section */}
@@ -256,7 +256,7 @@ export function ProjectsPage() {
       </div>
 
       <PageContainer className="py-8">
-        <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProjects.map((project) => {
             const stats = statsCache[project.id];
             return (

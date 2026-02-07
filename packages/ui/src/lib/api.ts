@@ -15,9 +15,6 @@ import type {
   RunnerScope,
   RunnerValidateResponse,
 } from "../types/api";
-import type { ChatConfig } from "../types/chat-config";
-import type { ModelsRegistryResponse } from "../types/models-registry";
-import type { ChatStorageInfo } from "./backend-adapter/core";
 
 /**
  * Project-aware API wrapper
@@ -157,8 +154,8 @@ class ProjectAPI {
     return this.backend.listAvailableRunners(projectPath);
   }
 
-  listRunners(projectPath?: string, options?: { skipValidation?: boolean }): Promise<RunnerListResponse> {
-    return this.backend.listRunners(projectPath, options);
+  listRunners(projectPath?: string): Promise<RunnerListResponse> {
+    return this.backend.listRunners(projectPath);
   }
 
   getRunner(runnerId: string, projectPath?: string): Promise<RunnerDefinition> {
@@ -210,18 +207,6 @@ class ProjectAPI {
   }): Promise<RunnerListResponse> {
     return this.backend.setDefaultRunner(payload);
   }
-
-  // Chat operations (not project-scoped)
-  getChatConfig = (): Promise<ChatConfig> => this.backend.getChatConfig();
-  updateChatConfig = (config: ChatConfig): Promise<ChatConfig> => this.backend.updateChatConfig(config);
-  getChatStorageInfo = (): Promise<ChatStorageInfo> => this.backend.getChatStorageInfo();
-
-  // Models operations (not project-scoped)
-  getModelsProviders = (options?: { agenticOnly?: boolean }): Promise<ModelsRegistryResponse> =>
-    this.backend.getModelsProviders(options);
-  refreshModelsRegistry = (): Promise<void> => this.backend.refreshModelsRegistry();
-  setProviderApiKey = (providerId: string, apiKey: string, baseUrl?: string): Promise<void> =>
-    this.backend.setProviderApiKey(providerId, apiKey, baseUrl);
 }
 
 export const api = new ProjectAPI();

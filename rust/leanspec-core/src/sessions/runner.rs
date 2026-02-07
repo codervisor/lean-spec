@@ -332,23 +332,6 @@ impl RunnerRegistry {
             },
         );
         runners.insert(
-            "antigravity".to_string(),
-            RunnerDefinition {
-                id: "antigravity".to_string(),
-                name: Some("Antigravity".to_string()),
-                command: None,
-                args: Vec::new(),
-                env: HashMap::new(),
-                detection: Some(DetectionConfig {
-                    commands: vec!["antigravity".to_string()],
-                    config_dirs: vec![".antigravity".to_string()],
-                    env_vars: Vec::new(),
-                    extensions: Vec::new(),
-                }),
-                symlink_file: None,
-            },
-        );
-        runners.insert(
             "droid".to_string(),
             RunnerDefinition {
                 id: "droid".to_string(),
@@ -974,7 +957,6 @@ mod tests {
         assert!(registry.get("gemini").is_some());
         assert!(registry.get("cursor").is_some());
         assert!(registry.get("windsurf").is_some());
-        assert!(registry.get("antigravity").is_some());
         assert!(registry.get("droid").is_some());
         assert!(registry.get("kiro").is_some());
         assert!(registry.get("kimi").is_some());

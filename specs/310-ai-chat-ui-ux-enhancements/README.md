@@ -1,5 +1,5 @@
 ---
-status: complete
+status: planned
 created: 2026-02-05
 priority: high
 tags:
@@ -9,10 +9,7 @@ tags:
 - enhancement
 parent: 094-ai-chatbot-web-integration
 created_at: 2026-02-05T07:52:28.925855315Z
-updated_at: 2026-02-06T14:04:22.017984Z
-transitions:
-- status: in-progress
-  at: 2026-02-06T13:49:23.050156Z
+updated_at: 2026-02-05T07:52:45.836507706Z
 ---
 # AI Chat UI/UX Enhancements
 
@@ -198,14 +195,6 @@ Benefits:
 - Full-text search across all chats
 - Multi-select/bulk operations on history
 - Streaming progress percentage
-
-## Progress Notes
-
-- 2026-02-06: Verified in code: history button + popover using `ChatHistory` with `toggleHistory`, static title display in sidebar header, `ThinkingIndicator` replaces loader, `useAutoTitle` hook with `/api/chat/generate-title`, shortcuts for toggle/focus/new/history plus input guard.
-- Pending: settings gear routes to `/settings?tab=models` (no tab handling; spec calls for AI settings route), missing `Escape` shortcut to close sidebar, no tests found for history panel/auto-title/shortcuts/mobile access/layout shift, tests not run.
-
-
-- 2026-02-06: Updated settings gear route to `/settings/models`, added Escape shortcut to close sidebar, added tests for `ChatHistory`, `useAutoTitle`, and Escape shortcut handling.
 
 ## References
 

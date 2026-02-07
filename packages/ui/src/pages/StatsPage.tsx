@@ -13,13 +13,13 @@ import {
   Legend
 } from 'recharts';
 import { AlertCircle, FileText, Clock, PlayCircle, CheckCircle2, TrendingUp } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle, cn } from '@/library';
+import { Button, Card, CardContent, CardHeader, CardTitle, cn } from '@leanspec/ui-components';
 import { Link } from 'react-router-dom';
-import { StatCard } from '../components/dashboard/stat-card';
+import { StatCard } from '../components/dashboard/StatCard';
 import type { Stats, Spec } from '../types/api';
-import { StatsSkeleton } from '../components/shared/skeletons';
-import { PageHeader } from '../components/shared/page-header';
-import { PageContainer } from '../components/shared/page-container';
+import { StatsSkeleton } from '../components/shared/Skeletons';
+import { PageHeader } from '../components/shared/PageHeader';
+import { PageContainer } from '../components/shared/PageContainer';
 import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useProjectStats, useSpecsList } from '../hooks/useSpecsQuery';

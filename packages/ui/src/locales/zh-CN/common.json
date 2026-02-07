@@ -21,7 +21,7 @@
     "analytics": "数据分析",
     "projectContext": "项目上下文",
     "settings": "设置",
-    "settingsDescription": "偏好和配置",
+    "settingsDescription": "配置 AI 模型、外观和偏好",
     "toggleMenu": "切换菜单",
     "docsTooltip": "查看文档",
     "githubTooltip": "GitHub 仓库",
@@ -291,11 +291,6 @@
         "input": "输入",
         "output": "输出",
         "error": "错误"
-      },
-      "actions": {
-        "showAll": "显示全部",
-        "showLess": "收起",
-        "copy": "复制"
       }
     },
     "settings": {
@@ -418,7 +413,7 @@
     "collapseSidebar": "收起侧边栏",
     "expandSidebar": "展开侧边栏",
     "tabs": {
-      "models": "模型",
+      "ai": "AI 模型",
       "runners": "运行器",
       "appearance": "外观"
     },
@@ -465,7 +460,6 @@
       "hideModels": "隐藏模型",
       "showModels": "显示模型",
       "moreModels": "更多模型",
-      "modelsAvailable": "个可用模型",
       "capabilities": {
         "toolCall": "工具调用",
         "reasoning": "推理",
@@ -477,25 +471,11 @@
       "noCustomProviders": "无自定义提供商",
       "custom": "自定义",
       "configureApiKey": "配置 API 密钥",
-      "clearApiKey": "清除 API 密钥",
-      "configureModels": "配置 {{provider}} 模型",
-      "configureModelsDescription": "选择为此提供商启用的模型",
       "apiKeyDialogDescription": "输入 {{provider}} 的 API 密钥",
       "azureApiKeyDialogDescription": "配置 Azure OpenAI 的资源名称和 API 密钥",
       "azureResourceName": "Azure 资源名称",
       "azureResourceNameHelp": "您的 Azure OpenAI 资源名称（例如 'my-openai-resource'）",
       "apiKeyStorageNote": "API 密钥将本地存储在配置文件中",
-      "configureProvider": "配置 {{provider}}",
-      "configureProviderDescription": "配置提供商详情和模型访问权限",
-      "restrictModels": "限制可用模型",
-      "allModelsEnabled": "所有模型均已启用",
-      "allModelsEnabledDesc": "此提供商的所有模型目前均可在聊天中使用。",
-      "enableRestriction": "启用限制",
-      "selectedOf": "已选择，共",
-      "selectAll": "全选",
-      "deselectAll": "取消全选",
-      "restricted": "已限制",
-      "outOfTotal": "，共 {{total}} 个",
       "placeholders": {
         "azureResourceName": "my-openai-resource",
         "apiKeyEnv": "{{provider}}_API_KEY",
@@ -518,11 +498,6 @@
         "name": "名称",
         "models": "模型数量",
         "configured": "已配置优先"
-      },
-      "modelSort": {
-        "sortBy": "排序方式",
-        "name": "名称",
-        "tokens": "令牌数"
       },
       "filters": {
         "status": "状态",
@@ -549,7 +524,6 @@
       "toasts": {
         "defaultProvider": "默认提供商已设置为 {{provider}}",
         "apiKeySaved": "API 密钥已保存",
-        "apiKeyCleared": "API 密钥已清除",
         "modelsSaved": "模型偏好已保存"
       },
       "errors": {
@@ -768,8 +742,7 @@
       "toggleChatSidebar": "切换 AI 聊天侧边栏",
       "focusChatInput": "聚焦聊天输入框",
       "newConversation": "新建对话",
-      "viewHistory": "查看历史记录",
-      "closeChatSidebar": "关闭聊天侧边栏"
+      "viewHistory": "查看历史记录"
     }
   },
   "tableOfContents": {

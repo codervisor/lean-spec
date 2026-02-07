@@ -1,8 +1,7 @@
 packages:
   - packages/*
-  - '!packages/ui-components'
-  # NOTE: packages/cli/binaries/* and packages/http-server/binaries/* are NOT workspace packages
-  # They are published independently via npm publish in CI (see scripts/publish-platform-packages.ts)
+  - packages/cli/binaries/*
+  - packages/http-server/binaries/*
 
 ignoredBuiltDependencies:
   - core-js

@@ -149,9 +149,11 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                     },
                     "checkDeps": {
                         "type": "boolean",
-                        "description": "Check dependency alignment (defaults to false)"
+                        "description": "Check dependency alignment",
+                        "default": false
                     }
-                }
+                },
+                "additionalProperties": false
             }),
         },
         ToolDefinition {
@@ -168,7 +170,8 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                         "type": "string",
                         "description": "Path to any file (markdown, code, text) to count tokens"
                     }
-                }
+                },
+                "additionalProperties": false
             }),
         },
     ]

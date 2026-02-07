@@ -84,6 +84,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-index-
       
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: rust/target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-
+      
       - name: Check formatting
         working-directory: rust
         run: cargo fmt -- --check

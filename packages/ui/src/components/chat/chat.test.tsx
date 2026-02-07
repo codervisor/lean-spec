@@ -1,9 +1,9 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ChatInput } from './chat-input';
-import { ChatMessage } from './chat-message';
-import { ChatContainer } from './chat-container';
+import { ChatInput } from './ChatInput';
+import { ChatMessage } from './ChatMessage';
+import { ChatContainer } from './ChatContainer';
 
 // Mock scrollIntoView
 beforeAll(() => {
@@ -105,7 +105,7 @@ describe('ChatMessage', () => {
       parts: [
         { type: 'text' as const, text: 'Looking up specs...' },
         {
-          type: 'tool-list' as const,
+          type: 'tool-list_specs' as const,
           toolCallId: 'tc1',
           state: 'output-available' as const,
           input: { status: 'in-progress' },
@@ -116,8 +116,8 @@ describe('ChatMessage', () => {
 
     render(<ChatMessage message={message} />);
 
-    expect(screen.getByText('list')).toBeInTheDocument();
-    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByText('list_specs')).toBeInTheDocument();
+    expect(screen.getByText('chat.toolExecution.status.completed')).toBeInTheDocument();
   });
 });
 

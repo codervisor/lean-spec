@@ -73,9 +73,7 @@ pub fn is_provider_configured(provider_id: &str) -> bool {
     // Check predefined env vars first
     for (id, env_vars) in PROVIDER_ENV_VARS {
         if *id == provider_id {
-            return env_vars
-                .iter()
-                .any(|var| std::env::var(var).map(|v| !v.is_empty()).unwrap_or(false));
+            return env_vars.iter().any(|var| std::env::var(var).is_ok());
         }
     }
     false
@@ -83,20 +81,14 @@ pub fn is_provider_configured(provider_id: &str) -> bool {
 
 /// Check provider configuration with custom env var list
 pub fn is_provider_configured_with_env(env_vars: &[String]) -> bool {
-    env_vars
-        .iter()
-        .any(|var| std::env::var(var).map(|v| !v.is_empty()).unwrap_or(false))
+    env_vars.iter().any(|var| std::env::var(var).is_ok())
 }
 
 /// Get list of configured providers from environment
 pub fn get_configured_providers() -> Vec<String> {
     PROVIDER_ENV_VARS
         .iter()
-        .filter(|(_, env_vars)| {
-            env_vars
-                .iter()
-                .any(|var| std::env::var(var).map(|v| !v.is_empty()).unwrap_or(false))
-        })
+        .filter(|(_, env_vars)| env_vars.iter().any(|var| std::env::var(var).is_ok()))
         .map(|(id, _)| id.to_string())
         .collect()
 }
@@ -163,7 +155,7 @@ pub fn get_providers_with_availability(registry: &ModelRegistry) -> Vec<Provider
                     provider
                         .env
                         .iter()
-                        .filter(|var| std::env::var(var).map(|v| !v.is_empty()).unwrap_or(false))
+                        .filter(|var| std::env::var(var).is_ok())
                         .cloned()
                         .collect()
                 } else {

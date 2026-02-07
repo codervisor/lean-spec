@@ -1,4 +1,4 @@
-import { RunnerSettingsTab } from '../../components/settings/runner-settings-tab';
+import { RunnerSettingsTab } from '../../components/settings/RunnerSettingsTab';
 
 export function RunnersSettingsPage() {
   return <RunnerSettingsTab />;

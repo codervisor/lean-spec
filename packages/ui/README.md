@@ -38,7 +38,7 @@ Visit `http://localhost:3000` to access the UI.
 - **Build Tool**: Vite 7 (fast HMR, optimized builds)
 - **Framework**: React 19 + TypeScript 5
 - **Routing**: React Router 7 (client-side)
-- **Components**: Shared UI library exported from `@leanspec/ui`
+- **Components**: `@leanspec/ui-components` (shared library)
 - **Styling**: Tailwind CSS 3
 - **Backend**: Same-origin API served by the Rust HTTP server at `http://localhost:3000`
 

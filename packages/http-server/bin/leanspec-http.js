@@ -30,7 +30,7 @@ const debug = (...args) => DEBUG && console.error('[leanspec-http debug]', ...ar
 const PLATFORM_MAP = {
   darwin: { x64: 'darwin-x64', arm64: 'darwin-arm64' },
   linux: { x64: 'linux-x64' },
-  win32: { x64: 'windows-x64' }
+  win32: { x64: 'windows-x64', arm64: 'windows-arm64' }
 };
 
 function getBinaryPath() {
@@ -42,7 +42,7 @@ function getBinaryPath() {
   const platformKey = PLATFORM_MAP[platform]?.[arch];
   if (!platformKey) {
     console.error(`Unsupported platform: ${platform}-${arch}`);
-    console.error('Supported: macOS (x64/arm64), Linux (x64), Windows (x64)');
+    console.error('Supported: macOS (x64/arm64), Linux (x64/arm64), Windows (x64)');
     process.exit(1);
   }
 

@@ -157,18 +157,6 @@ describe('useKeyboardShortcuts', () => {
     expect(action).toHaveBeenCalledTimes(1);
   });
 
-  it('should trigger action for escape key', () => {
-    const action = vi.fn();
-    const shortcuts: KeyboardShortcut[] = [
-      { key: 'escape', description: 'Close chat', action },
-    ];
-
-    renderHook(() => useKeyboardShortcuts(shortcuts));
-    simulateKeydown({ key: 'Escape' });
-
-    expect(action).toHaveBeenCalledTimes(1);
-  });
-
   it('should not trigger when typing in input', () => {
     const action = vi.fn();
     const shortcuts: KeyboardShortcut[] = [
