@@ -184,6 +184,50 @@ export function ChatMessage({ message, isLast }: ChatMessageProps) {
             return null;
           }
 
+          // skip step-start markers
+          if (partType === 'step-start') {
+            return null;
+          }
+
+          // Dynamic tool part (AI SDK UI Message Stream v1 with dynamic: true)
+          if (partType === 'dynamic-tool') {
+            return renderToolPart(
+              {
+                toolCallId: String(partObj.toolCallId ?? ''),
+                toolName: String(partObj.toolName ?? ''),
+                description: undefined,
+                input: partObj.input,
+                output: partObj.output,
+                state: partObj.state as string | undefined,
+                errorMessage:
+                  typeof partObj.errorText === 'string'
+                    ? partObj.errorText
+                    : undefined,
+              },
+              index
+            );
+          }
+
+          // Static tool part (AI SDK UI Message Stream v1: type = "tool-{name}")
+          if (typeof partType === 'string' && partType.startsWith('tool-')) {
+            const toolName = partType.slice(5); // strip "tool-" prefix
+            return renderToolPart(
+              {
+                toolCallId: String(partObj.toolCallId ?? ''),
+                toolName,
+                description: undefined,
+                input: partObj.input,
+                output: partObj.output,
+                state: partObj.state as string | undefined,
+                errorMessage:
+                  typeof partObj.errorText === 'string'
+                    ? partObj.errorText
+                    : undefined,
+              },
+              index
+            );
+          }
+
           return null;
         })}
       </MessageContent>

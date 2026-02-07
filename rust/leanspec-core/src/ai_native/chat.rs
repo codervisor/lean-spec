@@ -440,6 +440,12 @@ async fn run_openai_conversation(
         )
         .await?;
 
+        if !round.reasoning.is_empty() {
+            assistant_parts.push(UIMessagePart::Reasoning {
+                text: round.reasoning.clone(),
+            });
+        }
+
         if !round.text.is_empty() {
             assistant_parts.push(UIMessagePart::Text {
                 text: round.text.clone(),
@@ -486,11 +492,13 @@ async fn run_openai_conversation(
             let _ = sender.send(StreamEvent::ToolInputStart {
                 tool_call_id: call.id.clone(),
                 tool_name: call.name.clone(),
+                dynamic: true,
             });
             let _ = sender.send(StreamEvent::ToolInputAvailable {
                 tool_call_id: call.id.clone(),
                 tool_name: call.name.clone(),
                 input: input.clone(),
+                dynamic: true,
             });
 
             // Record the tool-call part
@@ -513,6 +521,7 @@ async fn run_openai_conversation(
             let _ = sender.send(StreamEvent::ToolOutputAvailable {
                 tool_call_id: call.id.clone(),
                 output: output_value.clone(),
+                dynamic: true,
             });
 
             // Record the tool-result part
@@ -582,11 +591,34 @@ async fn stream_openai_round(
 
     let mut text_started = false;
     let mut text = String::new();
+    let mut reasoning_started = false;
+    let mut reasoning_text = String::new();
+    let reasoning_id = format!("reasoning_{}", text_id);
     let mut tool_calls: Vec<ToolCallAccumulator> = Vec::new();
     let mut finish_reason: Option<FinishReason> = None;
 
     while let Some(chunk) = stream.next().await {
         let chunk = chunk.map_err(|e| AiError::Stream(e.to_string()))?;
+
+        // Some OpenAI-compatible providers (e.g. DeepSeek via OpenRouter) send
+        // `reasoning_content` as an extra field in the delta. Because async-openai
+        // does not model this field we extract it from the raw JSON choices.
+        if let Some(raw_choices) = extract_reasoning_from_raw_chunk(&chunk) {
+            for reasoning_content in raw_choices {
+                if !reasoning_started {
+                    reasoning_started = true;
+                    let _ = sender.send(StreamEvent::ReasoningStart {
+                        id: reasoning_id.clone(),
+                    });
+                }
+                reasoning_text.push_str(&reasoning_content);
+                let _ = sender.send(StreamEvent::ReasoningDelta {
+                    id: reasoning_id.clone(),
+                    delta: reasoning_content,
+                });
+            }
+        }
+
         for choice in chunk.choices {
             if finish_reason.is_none() {
                 finish_reason = choice.finish_reason;
@@ -594,6 +626,13 @@ async fn stream_openai_round(
 
             let delta = choice.delta;
             if let Some(content) = delta.content {
+                // Close reasoning before text starts (reasoning always precedes text)
+                if reasoning_started && !text_started {
+                    reasoning_started = false;
+                    let _ = sender.send(StreamEvent::ReasoningEnd {
+                        id: reasoning_id.clone(),
+                    });
+                }
                 if !text_started {
                     text_started = true;
                     let _ = sender.send(StreamEvent::TextStart {
@@ -611,6 +650,13 @@ async fn stream_openai_round(
                 collect_tool_call_chunks(&mut tool_calls, tool_chunks);
             }
         }
+    }
+
+    // Close any open reasoning stream
+    if reasoning_started {
+        let _ = sender.send(StreamEvent::ReasoningEnd {
+            id: reasoning_id.clone(),
+        });
     }
 
     if text_started {
@@ -640,6 +686,7 @@ async fn stream_openai_round(
 
     Ok(OpenAiRoundResult {
         text,
+        reasoning: reasoning_text,
         tool_calls: completed_tool_calls,
     })
 }
@@ -672,7 +719,36 @@ fn collect_tool_call_chunks(
 
 struct OpenAiRoundResult {
     text: String,
+    reasoning: String,
     tool_calls: Vec<ToolCall>,
+}
+
+/// Extract `reasoning_content` from the raw JSON representation of a streamed
+/// chunk. Some OpenAI-compatible providers (e.g. DeepSeek via OpenRouter) emit
+/// this field but async-openai's typed struct silently drops it during
+/// deserialization. We serialise the chunk back to JSON and inspect it.
+fn extract_reasoning_from_raw_chunk(
+    chunk: &async_openai::types::chat::CreateChatCompletionStreamResponse,
+) -> Option<Vec<String>> {
+    let json = serde_json::to_value(chunk).ok()?;
+    let choices = json.get("choices")?.as_array()?;
+    let mut results = Vec::new();
+    for choice in choices {
+        if let Some(reasoning) = choice
+            .get("delta")
+            .and_then(|d| d.get("reasoning_content"))
+            .and_then(|r| r.as_str())
+        {
+            if !reasoning.is_empty() {
+                results.push(reasoning.to_string());
+            }
+        }
+    }
+    if results.is_empty() {
+        None
+    } else {
+        Some(results)
+    }
 }
 
 async fn run_anthropic_conversation(
@@ -701,6 +777,12 @@ async fn run_anthropic_conversation(
 
     let mut text_started = false;
     let mut text = String::new();
+    let reasoning_id = format!("reasoning_{}", text_id);
+    // NOTE: The anthropic crate (v0.0.8) only exposes TextDelta in ContentBlockDelta.
+    // Thinking/reasoning content blocks (`type: "thinking"`) are not modelled yet.
+    // When the crate is updated to support ContentBlockDelta::ThinkingDelta, emit
+    // ReasoningStart/ReasoningDelta/ReasoningEnd events using `reasoning_id` here.
+    let _ = &reasoning_id; // suppress unused warning until crate supports thinking
     let _ = sender.send(StreamEvent::StartStep);
 
     while let Some(event) = stream.next().await {
