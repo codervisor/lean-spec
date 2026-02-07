@@ -39,6 +39,7 @@
     "searchSpecs": "Search Specs"
   },
   "status": {
+    "draft": "Draft",
     "planned": "Planned",
     "inProgress": "In Progress",
     "in-progress": "In Progress",
@@ -1279,6 +1280,10 @@
     "changeStatus": "Change spec status",
     "statusSuccess": "Status updated",
     "statusError": "Failed to update status",
+    "draftSkipTitle": "Skip planned stage?",
+    "draftSkipDescription": "This spec is still in draft. Move it to Planned before starting work, or skip planning with force.",
+    "draftSkipPlanned": "Go to Planned",
+    "draftSkipForce": "Skip Anyway",
     "changePriority": "Change spec priority",
     "prioritySuccess": "Priority updated",
     "priorityError": "Failed to update priority",

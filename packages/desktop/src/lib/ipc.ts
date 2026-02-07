@@ -137,6 +137,11 @@ export async function validateAllSpecs(projectId: string): Promise<ValidationRes
  * Update spec status
  * Replaces: POST /api/projects/[id]/specs/[spec]/status
  */
-export async function updateSpecStatus(projectId: string, specId: string, newStatus: string): Promise<Spec> {
-  return invoke<Spec>('update_spec_status', { projectId, specId, newStatus });
+export async function updateSpecStatus(
+  projectId: string,
+  specId: string,
+  newStatus: string,
+  force?: boolean
+): Promise<Spec> {
+  return invoke<Spec>('update_spec_status', { projectId, specId, newStatus, force });
 }

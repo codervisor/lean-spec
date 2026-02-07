@@ -21,6 +21,7 @@ pub fn run(
         .map(|s| vec![s.parse().unwrap_or(SpecStatus::Planned)])
         .unwrap_or_else(|| {
             vec![
+                SpecStatus::Draft,
                 SpecStatus::Planned,
                 SpecStatus::InProgress,
                 SpecStatus::Complete,
@@ -105,6 +106,7 @@ fn print_detailed(specs: &[&SpecInfo]) {
     for spec in specs {
         let status_icon = spec.frontmatter.status_emoji();
         let status_color = match spec.frontmatter.status {
+            SpecStatus::Draft => "cyan",
             SpecStatus::Planned => "blue",
             SpecStatus::InProgress => "yellow",
             SpecStatus::Complete => "green",

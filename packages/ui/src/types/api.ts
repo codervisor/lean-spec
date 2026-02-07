@@ -222,6 +222,9 @@ export interface ContextFile {
 export interface LeanSpecConfig {
   template?: string;
   specsDir?: string;
+  draftStatus?: {
+    enabled?: boolean;
+  };
   structure?: {
     pattern?: string;
     prefix?: string;

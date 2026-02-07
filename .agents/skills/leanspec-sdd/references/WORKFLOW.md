@@ -32,11 +32,12 @@ This guide expands the workflow from SKILL.md with practical steps and decision 
 
 **Goal:** Execute work while keeping the spec current.
 
-1. Update status to `in-progress` before coding
+1. If draft is enabled, move `draft` → `planned` after review
+2. Update status to `in-progress` before coding
    - MCP: `update`
    - CLI: `lean-spec update <spec> --status in-progress`
-2. Record decisions, constraints, and progress in the spec.
-3. Link dependencies as they emerge
+3. Record decisions, constraints, and progress in the spec.
+4. Link dependencies as they emerge
    - MCP: `link` / `unlink`
    - CLI: `lean-spec link <spec> --depends-on <other>`
 

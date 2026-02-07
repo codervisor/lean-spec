@@ -4,15 +4,17 @@ import remarkBreaks from 'remark-breaks';
 import rehypeSlug from 'rehype-slug';
 import rehypeHighlight from 'rehype-highlight';
 import { useMarkdownComponents } from '../shared/markdown';
+import type { ChecklistToggleHandler } from '../shared/markdown/markdown-components';
 
 interface MarkdownRendererProps {
   content: string;
   specName?: string;
   basePath?: string;
+  onChecklistToggle?: ChecklistToggleHandler;
 }
 
-export function MarkdownRenderer({ content, specName = '', basePath = '' }: MarkdownRendererProps) {
-  const markdownComponents = useMarkdownComponents(specName, basePath);
+export function MarkdownRenderer({ content, specName = '', basePath = '', onChecklistToggle }: MarkdownRendererProps) {
+  const markdownComponents = useMarkdownComponents(specName, basePath, onChecklistToggle);
 
   return (
     <article className="prose prose-sm sm:prose-base dark:prose-invert max-w-none">

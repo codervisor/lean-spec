@@ -35,7 +35,7 @@ Never translate these terms - they are technical concepts with established Engli
 
 - **Core terms**: Spec, LeanSpec, CLI, Token, README, frontmatter, MCP
 - **Commands**: `lean-spec create`, `lean-spec update`, `lean-spec board`, etc.
-- **Status values**: `planned`, `in-progress`, `complete`, `archived`
+- **Status values**: `draft`, `planned`, `in-progress`, `complete`, `archived`
 - **File types**: `.md`, `.mdx`, `.json`, `.yaml`
 - **Technical terms**: SDD (Spec-Driven Development), API, JWT, URL, JSON
 

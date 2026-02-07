@@ -110,6 +110,7 @@ fn print_json(specs: &[leanspec_core::SpecInfo], group_by: &str) -> Result<(), B
 
 fn print_by_status(specs: &[leanspec_core::SpecInfo]) {
     let statuses = [
+        (SpecStatus::Draft, "Draft", "📝"),
         (SpecStatus::InProgress, "In Progress", "⏳"),
         (SpecStatus::Planned, "Planned", "📅"),
         (SpecStatus::Complete, "Complete", "✅"),

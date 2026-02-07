@@ -202,6 +202,7 @@ pub async fn update_spec_status(
     project_id: String,
     spec_id: String,
     new_status: String,
+    force: Option<bool>,
 ) -> Result<Spec, String> {
     use std::fs;
     use chrono::Utc;
@@ -224,6 +225,14 @@ pub async fn update_spec_status(
     let spec = reader
         .load_spec(&spec_id)
         .ok_or_else(|| format!("Spec '{}' not found", spec_id))?;
+
+    let skip_force = force.unwrap_or(false);
+    if spec.status == "draft"
+        && (new_status == "in-progress" || new_status == "complete")
+        && !skip_force
+    {
+        return Err("Cannot skip 'planned' stage. Use force to override.".to_string());
+    }
 
     // Read the spec file - construct proper path from specs_dir and spec_name
     // The file_path is relative like "specs/169-name/README.md"

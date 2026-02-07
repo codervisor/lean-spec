@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
-import { Button, Card, CardContent } from '@/library';
+import { Button, Card, CardContent, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/library';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import type { Spec, SpecStatus, ValidationStatus } from '../types/api';
@@ -128,6 +128,7 @@ export function SpecsPage() {
   const [loadingValidation, setLoadingValidation] = useState(false);
   const validationFetchedRef = useRef(false);
   const metadataFetchedRef = useRef(false);
+  const [draftGuard, setDraftGuard] = useState<{ spec: Spec; nextStatus: SpecStatus } | null>(null);
 
   // Fetch batch metadata (tokens, validation) after specs load
   useEffect(() => {
@@ -212,7 +213,7 @@ export function SpecsPage() {
     void fetchValidation();
   }, [showValidationIssuesOnly, specs, resolvedProjectId]);
 
-  const handleStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus) => {
+  const applyStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus, force = false) => {
     if (machineModeEnabled && !isMachineAvailable()) {
       return;
     }
@@ -224,7 +225,11 @@ export function SpecsPage() {
     );
 
     try {
-      await api.updateSpec(spec.specName, { status: newStatus, expectedContentHash: spec.contentHash });
+      await api.updateSpec(spec.specName, {
+        status: newStatus,
+        expectedContentHash: spec.contentHash,
+        force,
+      });
       queryClient.invalidateQueries({ queryKey: specKeys.lists() });
     } catch (err) {
       // Revert on error
@@ -236,6 +241,14 @@ export function SpecsPage() {
       console.error('Failed to update status:', err);
     }
   }, [isMachineAvailable, machineModeEnabled, queryClient, updateSpecsCache]);
+
+  const handleStatusChange = useCallback((spec: Spec, newStatus: SpecStatus) => {
+    if (spec.status === 'draft' && (newStatus === 'in-progress' || newStatus === 'complete')) {
+      setDraftGuard({ spec, nextStatus: newStatus });
+      return;
+    }
+    void applyStatusChange(spec, newStatus);
+  }, [applyStatusChange]);
 
   const handlePriorityChange = useCallback(async (spec: Spec, newPriority: string) => {
     if (machineModeEnabled && !isMachineAvailable()) {
@@ -274,6 +287,7 @@ export function SpecsPage() {
     const uniqueSet = Array.from(new Set(statuses)).filter(s => showArchived || s !== 'archived');
     // Sort by defined order: planned -> in-progress -> complete -> archived
     const statusOrder: Record<SpecStatus, number> = {
+      'draft': 0,
       'planned': 1,
       'in-progress': 2,
       'complete': 3,
@@ -601,6 +615,36 @@ export function SpecsPage() {
           loading={validationDialogLoading}
         />
       )}
+
+      <Dialog open={Boolean(draftGuard)} onOpenChange={(open) => !open && setDraftGuard(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('editors.draftSkipTitle')}</DialogTitle>
+            <DialogDescription>{t('editors.draftSkipDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!draftGuard) return;
+                void applyStatusChange(draftGuard.spec, 'planned');
+                setDraftGuard(null);
+              }}
+            >
+              {t('editors.draftSkipPlanned')}
+            </Button>
+            <Button
+              onClick={() => {
+                if (!draftGuard) return;
+                void applyStatusChange(draftGuard.spec, draftGuard.nextStatus, true);
+                setDraftGuard(null);
+              }}
+            >
+              {t('editors.draftSkipForce')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

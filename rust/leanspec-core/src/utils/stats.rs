@@ -99,6 +99,7 @@ impl SpecStats {
 
     /// Get active specs (planned + in-progress)
     pub fn active_count(&self) -> usize {
+        let draft = self.by_status.get(&SpecStatus::Draft).copied().unwrap_or(0);
         let planned = self
             .by_status
             .get(&SpecStatus::Planned)
@@ -109,7 +110,7 @@ impl SpecStats {
             .get(&SpecStatus::InProgress)
             .copied()
             .unwrap_or(0);
-        planned + in_progress
+        draft + planned + in_progress
     }
 
     /// Get top tags by count

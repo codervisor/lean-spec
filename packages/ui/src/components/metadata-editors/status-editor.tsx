@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, cn, statusConfig } from '@/library';
+import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, cn, statusConfig } from '@/library';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
@@ -35,6 +35,7 @@ export function StatusEditor({
   const [status, setStatus] = useState<NonNullable<Spec['status']>>(initial as NonNullable<Spec['status']>);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingStatus, setPendingStatus] = useState<NonNullable<Spec['status']> | null>(null);
   const { t } = useTranslation('common');
   const invalidateSpecs = useInvalidateSpecs();
 
@@ -46,7 +47,7 @@ export function StatusEditor({
 
   const option = STATUS_OPTIONS.find((opt) => opt.value === status) || STATUS_OPTIONS[0];
 
-  const handleChange = async (next: NonNullable<Spec['status']>) => {
+  const applyChange = async (next: NonNullable<Spec['status']>, force = false) => {
     if (next === status) return;
     const previous = status;
     setStatus(next);
@@ -54,7 +55,7 @@ export function StatusEditor({
     setError(null);
 
     try {
-      await api.updateSpec(specName, { status: next, expectedContentHash });
+      await api.updateSpec(specName, { status: next, expectedContentHash, force });
       onChange?.(next);
       invalidateSpecs();
     } catch (err) {
@@ -64,6 +65,15 @@ export function StatusEditor({
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleChange = (next: NonNullable<Spec['status']>) => {
+    if (next === status) return;
+    if (status === 'draft' && (next === 'in-progress' || next === 'complete')) {
+      setPendingStatus(next);
+      return;
+    }
+    void applyChange(next);
   };
 
   return (
@@ -97,6 +107,39 @@ export function StatusEditor({
         </SelectContent>
       </Select>
       {error && <p className="text-xs text-destructive">{error}</p>}
+      <Dialog open={pendingStatus !== null} onOpenChange={(open) => !open && setPendingStatus(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('editors.draftSkipTitle')}</DialogTitle>
+            <DialogDescription>{t('editors.draftSkipDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setPendingStatus(null);
+                void applyChange('planned');
+              }}
+            >
+              {t('editors.draftSkipPlanned')}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                if (!pendingStatus) return;
+                const next = pendingStatus;
+                setPendingStatus(null);
+                void applyChange(next, true);
+              }}
+            >
+              {t('editors.draftSkipForce')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

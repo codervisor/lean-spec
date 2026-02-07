@@ -1,8 +1,9 @@
 //! Spec management tools (list, view, create, update, search)
 
 use super::helpers::{
-    create_content_description, get_next_spec_number, load_config, merge_frontmatter,
-    resolve_project_root, resolve_template_variables, to_title_case, MergeFrontmatterInput,
+    create_content_description, get_next_spec_number, is_draft_status_enabled, load_config,
+    merge_frontmatter, resolve_project_root, resolve_template_variables, to_title_case,
+    MergeFrontmatterInput,
 };
 use chrono::Utc;
 use leanspec_core::hash_content;
@@ -118,10 +119,7 @@ pub(crate) fn tool_create(specs_dir: &str, args: Value) -> Result<String, String
         .ok_or("Missing required parameter: name")?;
 
     let title_input = args.get("title").and_then(|v| v.as_str());
-    let status = args
-        .get("status")
-        .and_then(|v| v.as_str())
-        .unwrap_or("planned");
+    let status_input = args.get("status").and_then(|v| v.as_str());
     let priority = args
         .get("priority")
         .and_then(|v| v.as_str())
@@ -157,21 +155,29 @@ pub(crate) fn tool_create(specs_dir: &str, args: Value) -> Result<String, String
     let now = Utc::now();
     let created_date = now.format("%Y-%m-%d").to_string();
 
+    let project_root = resolve_project_root(specs_dir)?;
+    let resolved_status = status_input.unwrap_or_else(|| {
+        if is_draft_status_enabled(&project_root) {
+            "draft"
+        } else {
+            "planned"
+        }
+    });
+
     let base_content = if let Some(content) = content_override {
         content.to_string()
     } else {
-        let project_root = resolve_project_root(specs_dir)?;
         let config = load_config(&project_root);
         let loader = TemplateLoader::with_config(&project_root, config);
         let template = loader
             .load(template_name)
             .map_err(|e| format!("Failed to load template: {}", e))?;
-        resolve_template_variables(&template, &title, status, priority, &created_date)
+        resolve_template_variables(&template, &title, resolved_status, priority, &created_date)
     };
 
     let content = merge_frontmatter(&MergeFrontmatterInput {
         content: &base_content,
-        status,
+        status: resolved_status,
         priority,
         tags: &tags,
         created_date: &created_date,
@@ -349,6 +355,12 @@ pub(crate) fn tool_update(specs_dir: &str, args: Value) -> Result<String, String
     }
 
     if let Some(new_status) = args.get("status").and_then(|v| v.as_str()) {
+        if spec.frontmatter.status == leanspec_core::SpecStatus::Draft
+            && (new_status == "in-progress" || new_status == "complete")
+            && !force
+        {
+            return Err("Cannot skip 'planned' stage. Use force to override.".to_string());
+        }
         if new_status == "complete" && !force {
             let verification =
                 CompletionVerifier::verify_content(&rebuilt).map_err(|e| e.to_string())?;
@@ -577,8 +589,8 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                 "properties": {
                     "status": {
                         "type": "string",
-                        "description": "Filter by status: planned, in-progress, complete, archived",
-                        "enum": ["planned", "in-progress", "complete", "archived"]
+                        "description": "Filter by status: draft, planned, in-progress, complete, archived",
+                        "enum": ["draft", "planned", "in-progress", "complete", "archived"]
                     },
                     "tags": {
                         "type": "array",
@@ -623,8 +635,8 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                     },
                     "status": {
                         "type": "string",
-                        "description": "Initial status (defaults to 'planned')",
-                        "enum": ["planned", "in-progress"]
+                        "description": "Initial status (defaults to config or 'planned')",
+                        "enum": ["draft", "planned", "in-progress", "complete", "archived"]
                     },
                     "priority": {
                         "type": "string",
@@ -670,7 +682,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                     "status": {
                         "type": "string",
                         "description": "New status",
-                        "enum": ["planned", "in-progress", "complete", "archived"]
+                        "enum": ["draft", "planned", "in-progress", "complete", "archived"]
                     },
                     "priority": {
                         "type": "string",

@@ -1,4 +1,4 @@
-import { isValidElement, type ComponentPropsWithoutRef, type AnchorHTMLAttributes } from 'react';
+import { isValidElement, useRef, type ComponentPropsWithoutRef, type AnchorHTMLAttributes } from 'react';
 import type { Components } from 'react-markdown';
 import { Link } from 'react-router-dom';
 import { MermaidDiagram } from '../../mermaid-diagram';
@@ -123,20 +123,63 @@ export function MarkdownLink({ href, children, specName, basePath, ...props }: M
   }
 }
 
-export function Checkbox(props: ComponentPropsWithoutRef<'input'>) {
+export function Checkbox({
+  onChange,
+  disabled: _disabled,
+  ...props
+}: ComponentPropsWithoutRef<'input'> & { onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
+  const isInteractive = !!onChange;
   return (
     <input
       type="checkbox"
       {...props}
-      className="appearance-none h-4 w-4 shrink-0 rounded-sm border border-input bg-background disabled:cursor-default checked:bg-primary checked:border-primary relative mr-2 top-[3px] after:content-[''] after:hidden checked:after:block after:absolute after:left-[5px] after:top-[1px] after:w-[4px] after:h-[8px] after:border-r-[2px] after:border-b-[2px] after:border-primary-foreground after:rotate-45"
+      disabled={!isInteractive}
+      onChange={onChange}
+      className={`appearance-none h-4 w-4 shrink-0 rounded-sm border border-input bg-background checked:bg-primary checked:border-primary relative mr-2 top-[3px] after:content-[''] after:hidden checked:after:block after:absolute after:left-[5px] after:top-[1px] after:w-[4px] after:h-[8px] after:border-r-[2px] after:border-b-[2px] after:border-primary-foreground after:rotate-45 ${isInteractive ? 'cursor-pointer hover:border-primary/70 transition-colors' : 'disabled:cursor-default'}`}
     />
   );
 }
 
-export function useMarkdownComponents(specName: string = '', basePath: string = ''): Components {
+export interface ChecklistToggleHandler {
+  (itemText: string, checked: boolean): void;
+}
+
+export function useMarkdownComponents(
+  specName: string = '',
+  basePath: string = '',
+  onChecklistToggle?: ChecklistToggleHandler
+): Components {
+  // Use a ref counter to track which checkbox is being rendered
+  const checkboxIndexRef = useRef(0);
+
+  // Reset checkbox index on each render cycle
+  checkboxIndexRef.current = 0;
+
   return {
     input(props) {
       if (props.type === 'checkbox') {
+        // Extract text from the parent li element to identify this checkbox
+        // We pass the onClick through and extract context from the DOM
+        const currentIndex = checkboxIndexRef.current++;
+        const isChecked = !!props.checked;
+
+        if (onChecklistToggle) {
+          return (
+            <Checkbox
+              {...props}
+              data-checkbox-index={currentIndex}
+              onChange={(e) => {
+                // Walk up to find the <li> parent and extract its text
+                const li = e.target.closest('li');
+                if (li) {
+                  // Extract text content, excluding the checkbox itself
+                  const textContent = li.textContent?.trim() || '';
+                  onChecklistToggle(textContent, !isChecked);
+                }
+              }}
+            />
+          );
+        }
         return <Checkbox {...props} />;
       }
       return <input {...props} />;

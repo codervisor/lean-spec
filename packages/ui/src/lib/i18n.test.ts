@@ -31,6 +31,7 @@ describe('i18n configuration', () => {
 
   it('should translate status terms', async () => {
     await i18n.changeLanguage('zh-CN');
+    expect(i18n.t('status.draft', { ns: 'common' })).toBe('草稿');
     expect(i18n.t('status.planned', { ns: 'common' })).toBe('已计划');
     expect(i18n.t('status.inProgress', { ns: 'common' })).toBe('进行中');
     expect(i18n.t('status.complete', { ns: 'common' })).toBe('已完成');

@@ -36,6 +36,7 @@
     "searchSpecs": "搜索规范"
   },
   "status": {
+    "draft": "草稿",
     "planned": "已计划",
     "inProgress": "进行中",
     "in-progress": "进行中",
@@ -1278,6 +1279,10 @@
     "changeStatus": "修改规范状态",
     "statusSuccess": "状态已更新",
     "statusError": "无法更新状态",
+    "draftSkipTitle": "跳过已计划阶段？",
+    "draftSkipDescription": "该规范仍处于草稿阶段。建议先移至已计划再开始工作，或强制跳过规划。",
+    "draftSkipPlanned": "先移至已计划",
+    "draftSkipForce": "仍然跳过",
     "changePriority": "修改规范优先级",
     "prioritySuccess": "优先级已更新",
     "priorityError": "无法更新优先级",

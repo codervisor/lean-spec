@@ -1,4 +1,4 @@
-import { Search, Filter, X, Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown, Settings, List, LayoutGrid, FolderTree, AlertTriangle, Check, ChevronDown, Loader2 } from 'lucide-react';
+import { Search, Filter, X, Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown, Settings, List, LayoutGrid, FolderTree, AlertTriangle, Check, ChevronDown, Loader2, FileText } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -79,6 +79,7 @@ export function SpecsFilters({
 
   // Status icons mapping
   const statusIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+    draft: FileText,
     planned: Clock,
     'in-progress': PlayCircle,
     complete: CheckCircle2,
@@ -94,6 +95,7 @@ export function SpecsFilters({
   };
 
   const statusKeyMap: Record<string, `status.${string}`> = {
+    draft: 'status.draft',
     planned: 'status.planned',
     'in-progress': 'status.inProgress',
     complete: 'status.complete',

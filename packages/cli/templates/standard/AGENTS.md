@@ -36,7 +36,7 @@
 |------|---------|
 | **NEVER edit frontmatter manually** | Use `update`, `link`, `unlink` for: `status`, `priority`, `tags`, `assignee`, `transitions`, timestamps, `depends_on` |
 | **ALWAYS link spec references** | Content mentions another spec → `lean-spec link <spec> --depends-on <other>` |
-| **Track status transitions** | `planned` → `in-progress` (before coding) → `complete` (after done) |
+| **Track status transitions** | `draft` → `planned` → `in-progress` (before coding) → `complete` (after done) |
 | **Keep specs current** | Document progress, decisions, and learnings as work happens. Obsolete specs mislead both humans and AI |
 | **No nested code blocks** | Use indentation instead |
 
@@ -46,7 +46,7 @@
 |----------|---------------|
 | Create spec files manually | Use `create` tool |
 | Skip discovery | Run `board` and `search` first |
-| Leave status as "planned" | Update to `in-progress` before coding |
+| Leave status as "draft" or "planned" | Update to `in-progress` before coding |
 | Edit frontmatter manually | Use `update` tool |
 | Complete spec without documentation | Document progress, prompts, learnings first |
 

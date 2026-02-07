@@ -2,22 +2,43 @@
 
 use chrono::Utc;
 use colored::Colorize;
+use serde::Deserialize;
 use std::error::Error;
 use std::fs;
 use std::path::Path;
+use std::path::PathBuf;
 
 // Embedded spec template
 const SPEC_TEMPLATE: &str = include_str!("../../templates/spec-template.md");
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DraftStatusConfig {
+    enabled: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectConfig {
+    draft_status: Option<DraftStatusConfig>,
+}
 
 pub fn run(
     specs_dir: &str,
     name: &str,
     title: Option<String>,
     _template: Option<String>,
-    status: &str,
+    status: Option<String>,
     priority: &str,
     tags: Option<String>,
 ) -> Result<(), Box<dyn Error>> {
+    let resolved_status = status.unwrap_or_else(|| {
+        if is_draft_status_enabled(specs_dir) {
+            "draft".to_string()
+        } else {
+            "planned".to_string()
+        }
+    });
     // Generate spec number
     let next_number = get_next_spec_number(specs_dir)?;
     let spec_name = format!("{:03}-{}", next_number, name);
@@ -50,7 +71,7 @@ pub fn run(
         .unwrap_or_default();
 
     // Generate content from template
-    let content = load_and_populate_template(&title, status, Some(priority), &tags_vec)?;
+    let content = load_and_populate_template(&title, &resolved_status, Some(priority), &tags_vec)?;
 
     // Write file
     let readme_path = spec_dir.join("README.md");
@@ -59,7 +80,7 @@ pub fn run(
     println!("{} {}", "✓".green(), "Created spec:".green());
     println!("  {}: {}", "Path".bold(), spec_name);
     println!("  {}: {}", "Title".bold(), title);
-    println!("  {}: {}", "Status".bold(), status);
+    println!("  {}: {}", "Status".bold(), resolved_status);
     println!("  {}: {}", "Priority".bold(), priority);
     if !tags_vec.is_empty() {
         println!("  {}: {}", "Tags".bold(), tags_vec.join(", "));
@@ -138,6 +159,30 @@ fn load_and_populate_template(
     content.insert_str(frontmatter_end, &format!("created_at: '{}'\n", created_at));
 
     Ok(content)
+}
+
+fn resolve_project_root(specs_dir: &str) -> Option<PathBuf> {
+    let path = Path::new(specs_dir);
+    let absolute = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir().ok()?.join(path)
+    };
+    absolute.parent().map(PathBuf::from)
+}
+
+fn is_draft_status_enabled(specs_dir: &str) -> bool {
+    let Some(project_root) = resolve_project_root(specs_dir) else {
+        return false;
+    };
+    let config_path = project_root.join(".lean-spec").join("config.json");
+    let Ok(content) = fs::read_to_string(config_path) else {
+        return false;
+    };
+    serde_json::from_str::<ProjectConfig>(&content)
+        .ok()
+        .and_then(|config| config.draft_status.and_then(|draft| draft.enabled))
+        .unwrap_or(false)
 }
 
 #[cfg(test)]

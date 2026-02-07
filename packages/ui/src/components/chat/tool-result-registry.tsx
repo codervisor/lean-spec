@@ -14,7 +14,7 @@ import {
   MessageResponse,
   cn,
 } from "@/library";
-import { getTruncatedText } from "./tool-result-utils";
+import { getTruncatedText, toDisplayString } from "./tool-result-utils";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -32,32 +32,15 @@ const getNumber = (value: unknown): number | undefined =>
 
 const JsonResultView = ({ output }: { output: unknown }) => {
   const { t } = useTranslation("common");
-  const [showAll, setShowAll] = useState(false);
-  const truncated = useMemo(() => getTruncatedText(output), [output]);
-  const code = showAll || !truncated.isTruncated
-    ? truncated.fullText
-    : truncated.truncatedText;
+  const code = toDisplayString(output);
 
   return (
-    <CodeBlock code={code} language="json">
+    <CodeBlock code={code} language="json" className="max-h-80 overflow-auto">
       <CodeBlockHeader>
         <CodeBlockTitle className="sr-only">
           {t("chat.toolExecution.labels.output")}
         </CodeBlockTitle>
-        <CodeBlockActions>
-          {truncated.isTruncated && (
-            <Button
-              className="h-6 px-2 text-[10px]"
-              onClick={() => setShowAll((prev) => !prev)}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              {showAll
-                ? t("chat.toolExecution.actions.showLess")
-                : t("chat.toolExecution.actions.showAll")}
-            </Button>
-          )}
+        <CodeBlockActions className="sticky top-0">
           <CodeBlockCopyButton
             aria-label={t("chat.toolExecution.actions.copy")}
             size="icon-sm"

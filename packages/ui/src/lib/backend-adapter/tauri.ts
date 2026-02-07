@@ -158,6 +158,7 @@ export class TauriBackendAdapter implements BackendAdapter {
       parent?: string | null;
       addDependsOn?: string[];
       removeDependsOn?: string[];
+      force?: boolean;
     }
   ): Promise<void> {
     // For now, only status update is supported
@@ -166,10 +167,24 @@ export class TauriBackendAdapter implements BackendAdapter {
         projectId,
         specId: specName,
         newStatus: updates.status,
+        force: updates.force ?? false,
       });
       return;
     }
     throw new Error('Relationship updates are not implemented for the Tauri backend yet');
+  }
+
+  async toggleSpecChecklist(
+    projectId: string,
+    specName: string,
+    toggles: { itemText: string; checked: boolean }[],
+    options?: { expectedContentHash?: string; subspec?: string }
+  ): Promise<{ success: boolean; contentHash: string; toggled: { itemText: string; checked: boolean; line: number }[] }> {
+    void projectId;
+    void specName;
+    void toggles;
+    void options;
+    throw new Error('toggleSpecChecklist is not implemented for the Tauri backend yet');
   }
 
   async getStats(projectId: string): Promise<Stats> {

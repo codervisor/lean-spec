@@ -680,6 +680,7 @@ export function DependenciesPage() {
                           <span
                             className={cn(
                               'text-[9px] px-1 py-0.5 rounded uppercase font-medium ml-2 shrink-0',
+                              spec.status === 'draft' && 'bg-slate-500/20 text-slate-600 dark:text-slate-300',
                               spec.status === 'planned' && 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
                               spec.status === 'in-progress' && 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
                               spec.status === 'complete' && 'bg-green-500/20 text-green-600 dark:text-green-400',
@@ -728,7 +729,7 @@ export function DependenciesPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {(['planned', 'in-progress', 'complete', 'archived'] as const).map((status) => {
+          {(['draft', 'planned', 'in-progress', 'complete', 'archived'] as const).map((status) => {
             const isActive = statusFilter.length === 0 || statusFilter.includes(status);
             const label = t(`status.${status}`);
             const count = statusCounts[status] || 0;
@@ -738,6 +739,7 @@ export function DependenciesPage() {
                 onClick={() => toggleStatus(status)}
                 className={cn(
                   'rounded border px-2 py-1 font-medium transition-colors',
+                  isActive && status === 'draft' && 'border-slate-500/60 bg-slate-500/20 text-slate-700 dark:text-slate-200',
                   isActive && status === 'planned' && 'border-blue-500/60 bg-blue-500/20 text-blue-700 dark:text-blue-300',
                   isActive && status === 'in-progress' && 'border-orange-500/60 bg-orange-500/20 text-orange-700 dark:text-orange-300',
                   isActive && status === 'complete' && 'border-green-500/60 bg-green-500/20 text-green-700 dark:text-green-300',

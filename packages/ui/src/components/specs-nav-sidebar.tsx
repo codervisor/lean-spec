@@ -426,6 +426,18 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     return Array.from(set).sort();
   }, [specs]);
 
+  const statusOptions = useMemo(() => {
+    const options: Array<'draft' | 'planned' | 'in-progress' | 'complete'> = [
+      'planned',
+      'in-progress',
+      'complete',
+    ];
+    if (specs.some((spec) => spec.status === 'draft')) {
+      options.unshift('draft');
+    }
+    return options;
+  }, [specs]);
+
   const hasActiveFilters =
     statusFilter.length > 0 || priorityFilter.length > 0 || tagFilter.length > 0;
 
@@ -624,7 +636,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                           </AccordionTrigger>
                           <AccordionContent className="pb-2">
                             <div className="space-y-1 px-2">
-                              {(['planned', 'in-progress', 'complete'] as const).map((status) => (
+                              {statusOptions.map((status) => (
                                 <div
                                   key={status}
                                   className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"

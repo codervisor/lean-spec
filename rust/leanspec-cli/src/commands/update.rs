@@ -4,7 +4,7 @@ use colored::Colorize;
 use leanspec_core::{
     apply_checklist_toggles, apply_replacements, apply_section_updates, preserve_title_heading,
     rebuild_content, split_frontmatter, ChecklistToggle, CompletionVerifier, FrontmatterParser,
-    MatchMode, Replacement, SectionMode, SectionUpdate, SpecLoader,
+    MatchMode, Replacement, SectionMode, SectionUpdate, SpecLoader, SpecStatus,
 };
 use std::collections::HashMap;
 use std::error::Error;
@@ -198,6 +198,17 @@ pub fn run(
         }
 
         if let Some(new_status) = status.as_deref() {
+            let current_status = spec_info.frontmatter.status;
+            if current_status == SpecStatus::Draft
+                && (new_status == "in-progress" || new_status == "complete")
+                && !force
+            {
+                errors.push(format!(
+                    "Cannot skip 'planned' stage from draft for {}. Use --force to override.",
+                    spec_info.path
+                ));
+                continue;
+            }
             if new_status == "complete" && !force {
                 let verification = match CompletionVerifier::verify_content(&new_content) {
                     Ok(result) => result,

@@ -219,12 +219,32 @@ export class HttpBackendAdapter implements BackendAdapter {
       parent?: string | null;
       addDependsOn?: string[];
       removeDependsOn?: string[];
+      force?: boolean;
     }
   ): Promise<void> {
     await this.fetchAPI(`/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}/metadata`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
     });
+  }
+
+  async toggleSpecChecklist(
+    projectId: string,
+    specName: string,
+    toggles: { itemText: string; checked: boolean }[],
+    options?: { expectedContentHash?: string; subspec?: string }
+  ): Promise<{ success: boolean; contentHash: string; toggled: { itemText: string; checked: boolean; line: number }[] }> {
+    return this.fetchAPI(
+      `/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}/checklist-toggle`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          toggles,
+          expectedContentHash: options?.expectedContentHash,
+          subspec: options?.subspec,
+        }),
+      }
+    );
   }
 
   async getStats(projectId: string): Promise<Stats> {

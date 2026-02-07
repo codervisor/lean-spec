@@ -88,8 +88,15 @@ export interface BackendAdapter {
       parent?: string | null;
       addDependsOn?: string[];
       removeDependsOn?: string[];
+      force?: boolean;
     }
   ): Promise<void>;
+  toggleSpecChecklist(
+    projectId: string,
+    specName: string,
+    toggles: { itemText: string; checked: boolean }[],
+    options?: { expectedContentHash?: string; subspec?: string }
+  ): Promise<{ success: boolean; contentHash: string; toggled: { itemText: string; checked: boolean; line: number }[] }>;
 
   // Stats and dependencies
   getStats(projectId: string): Promise<Stats>;

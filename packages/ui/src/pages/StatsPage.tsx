@@ -26,6 +26,7 @@ import { useProjectStats, useSpecsList } from '../hooks/useSpecsQuery';
 import { resolveTokenStatus, tokenProgressClasses } from '../lib/token-utils';
 
 const STATUS_COLORS = {
+  draft: '#94A3B8',
   planned: '#3B82F6',
   'in-progress': '#F59E0B',
   complete: '#10B981',

@@ -1,6 +1,6 @@
 import { useState, useMemo, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, PlayCircle, CheckCircle2, Archive, FolderTree, CornerDownRight, Layers, ChevronDown, ChevronRight } from 'lucide-react';
+import { Clock, PlayCircle, CheckCircle2, Archive, FolderTree, CornerDownRight, Layers, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 import type { Spec } from '../../types/api';
 import { PriorityBadge } from '../priority-badge';
 import { TokenBadge } from '../token-badge';
@@ -8,7 +8,7 @@ import { ValidationBadge } from '../validation-badge';
 import { cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 
-type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
+type SpecStatus = 'draft' | 'planned' | 'in-progress' | 'complete' | 'archived';
 
 interface BoardViewProps {
   specs: Spec[];
@@ -31,6 +31,13 @@ const STATUS_CONFIG: Record<SpecStatus, {
   bgClass: string;
   borderClass: string;
 }> = {
+  'draft': {
+    icon: FileText,
+    titleKey: 'status.draft',
+    colorClass: 'text-slate-600 dark:text-slate-300',
+    bgClass: 'bg-slate-50 dark:bg-slate-900/20',
+    borderClass: 'border-slate-200 dark:border-slate-800'
+  },
   'planned': {
     icon: Clock,
     titleKey: 'status.planned',
@@ -300,15 +307,19 @@ export function BoardView({ specs, onStatusChange, onPriorityChange, basePath = 
   }, [specs]);
 
   const columns = useMemo(() => {
-    const cols: SpecStatus[] = ['planned', 'in-progress', 'complete'];
+    const hasDraft = specs.some((spec) => spec.status === 'draft');
+    const cols: SpecStatus[] = hasDraft
+      ? ['draft', 'planned', 'in-progress', 'complete']
+      : ['planned', 'in-progress', 'complete'];
     if (showArchived) {
       cols.push('archived');
     }
     return cols;
-  }, [showArchived]);
+  }, [showArchived, specs]);
 
   const specsByStatus = useMemo(() => {
     const grouped: Record<SpecStatus, Spec[]> = {
+      'draft': [],
       'planned': [],
       'in-progress': [],
       'complete': [],

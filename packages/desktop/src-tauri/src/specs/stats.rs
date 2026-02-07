@@ -70,7 +70,8 @@ pub fn calculate_stats(specs: &[Spec]) -> StatsResult {
         0.0
     };
 
-    let active_specs = status_counts.get("planned").copied().unwrap_or(0)
+    let active_specs = status_counts.get("draft").copied().unwrap_or(0)
+        + status_counts.get("planned").copied().unwrap_or(0)
         + status_counts.get("in-progress").copied().unwrap_or(0);
 
     let avg_tags_per_spec = if total_specs > 0 {

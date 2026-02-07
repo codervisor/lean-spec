@@ -16,7 +16,7 @@ import { cn } from '../../../lib/utils';
 import { statusConfig as defaultStatusConfig } from '../../../lib/badge-config';
 import type { SpecStatus } from '../../../types/specs';
 
-const STATUSES: SpecStatus[] = ['planned', 'in-progress', 'complete', 'archived'];
+const STATUSES: SpecStatus[] = ['draft', 'planned', 'in-progress', 'complete', 'archived'];
 
 export { defaultStatusConfig };
 

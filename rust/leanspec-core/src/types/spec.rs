@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum SpecStatus {
+    Draft,
     Planned,
     #[serde(rename = "in-progress")]
     InProgress,
@@ -17,6 +18,7 @@ pub enum SpecStatus {
 impl std::fmt::Display for SpecStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            SpecStatus::Draft => write!(f, "draft"),
             SpecStatus::Planned => write!(f, "planned"),
             SpecStatus::InProgress => write!(f, "in-progress"),
             SpecStatus::Complete => write!(f, "complete"),
@@ -30,12 +32,13 @@ impl std::str::FromStr for SpecStatus {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
+            "draft" => Ok(SpecStatus::Draft),
             "planned" => Ok(SpecStatus::Planned),
             "in-progress" | "in_progress" | "inprogress" => Ok(SpecStatus::InProgress),
             "complete" | "completed" => Ok(SpecStatus::Complete),
             "archived" => Ok(SpecStatus::Archived),
             _ => Err(format!(
-                "Invalid status: {}. Valid values: planned, in-progress, complete, archived",
+                "Invalid status: {}. Valid values: draft, planned, in-progress, complete, archived",
                 s
             )),
         }
@@ -154,6 +157,7 @@ impl SpecFrontmatter {
     /// Get the status emoji for display
     pub fn status_emoji(&self) -> &'static str {
         match self.status {
+            SpecStatus::Draft => "📝",
             SpecStatus::Planned => "📅",
             SpecStatus::InProgress => "⏳",
             SpecStatus::Complete => "✅",
@@ -164,6 +168,7 @@ impl SpecFrontmatter {
     /// Get the status label for display
     pub fn status_label(&self) -> &'static str {
         match self.status {
+            SpecStatus::Draft => "Draft",
             SpecStatus::Planned => "Planned",
             SpecStatus::InProgress => "In Progress",
             SpecStatus::Complete => "Complete",
@@ -276,6 +281,7 @@ mod tests {
 
     #[test]
     fn test_spec_status_from_str() {
+        assert_eq!("draft".parse::<SpecStatus>().unwrap(), SpecStatus::Draft);
         assert_eq!(
             "planned".parse::<SpecStatus>().unwrap(),
             SpecStatus::Planned
@@ -312,6 +318,7 @@ mod tests {
 
     #[test]
     fn test_status_display() {
+        assert_eq!(SpecStatus::Draft.to_string(), "draft");
         assert_eq!(SpecStatus::Planned.to_string(), "planned");
         assert_eq!(SpecStatus::InProgress.to_string(), "in-progress");
     }

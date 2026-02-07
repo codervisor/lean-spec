@@ -92,9 +92,18 @@ class ProjectAPI {
       parent?: string | null;
       addDependsOn?: string[];
       removeDependsOn?: string[];
+      force?: boolean;
     }
   ): Promise<void> {
     return this.backend.updateSpec(this.getCurrentProjectId(), specName, updates);
+  }
+
+  async toggleSpecChecklist(
+    specName: string,
+    toggles: { itemText: string; checked: boolean }[],
+    options?: { expectedContentHash?: string; subspec?: string }
+  ): Promise<{ success: boolean; contentHash: string; toggled: { itemText: string; checked: boolean; line: number }[] }> {
+    return this.backend.toggleSpecChecklist(this.getCurrentProjectId(), specName, toggles, options);
   }
 
   async getStats(): Promise<Stats> {
