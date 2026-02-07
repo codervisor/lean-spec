@@ -1,15 +1,28 @@
-import { Message, MessageContent } from '@/library';
+import { Shimmer } from '@/library';
+import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
-export function ThinkingIndicator() {
+export interface ThinkingIndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
+  text?: string;
+}
+
+export function ThinkingIndicator({
+  className, text, ...props
+}: ThinkingIndicatorProps) {
+  const { t } = useTranslation('common');
+
   return (
-    <Message from="assistant" className="animate-in fade-in duration-300" data-testid="thinking-indicator">
-      <MessageContent className="min-w-[60px] py-3 px-4">
-        <div className="flex space-x-1.5 items-center justify-center">
-           <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both] [animation-delay:-0.32s]"></span>
-           <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both] [animation-delay:-0.16s]"></span>
-           <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both]"></span>
-        </div>
-      </MessageContent>
-    </Message>
+    <div className={cn('flex items-center gap-2', className)}>
+      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      <Shimmer
+        className={cn('text-sm', className)}
+        duration={3}
+        spread={5}
+        {...props}
+      >
+        {text || t('chat.thinking')}
+      </Shimmer>
+    </div>
   );
 }

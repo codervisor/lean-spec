@@ -297,6 +297,14 @@
         "showAll": "显示全部",
         "showLess": "收起",
         "copy": "复制"
+      },
+      "tabs": {
+        "input": "输入",
+        "output": "输出"
+      },
+      "viewToggle": {
+        "ui": "界面",
+        "json": "JSON"
       }
     },
     "settings": {

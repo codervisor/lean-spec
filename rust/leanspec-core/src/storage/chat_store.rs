@@ -310,6 +310,90 @@ impl ChatStore {
         self.get_session(session_id)
     }
 
+    /// Append messages to a session without deleting existing ones.
+    pub fn append_messages(
+        &self,
+        session_id: &str,
+        provider_id: Option<String>,
+        model_id: Option<String>,
+        messages: Vec<ChatMessageInput>,
+    ) -> Result<Option<ChatSession>, String> {
+        if messages.is_empty() {
+            return self.get_session(session_id);
+        }
+        let now = now_ms();
+        let mut conn = self.conn.lock().map_err(|_| "Failed to lock database")?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+
+        let session_project_id: Option<String> = tx
+            .query_row(
+                "SELECT project_id FROM conversations WHERE id = ?1",
+                params![session_id],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
+
+        let Some(project_id) = session_project_id else {
+            return Ok(None);
+        };
+
+        for message in &messages {
+            let id = message
+                .id
+                .clone()
+                .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+            let timestamp = message.timestamp.unwrap_or_else(now_ms);
+            let parts = message
+                .parts
+                .as_ref()
+                .map(|value| serde_json::to_string(value).unwrap_or_default());
+            let metadata = message
+                .metadata
+                .as_ref()
+                .map(|value| serde_json::to_string(value).unwrap_or_default());
+            tx.execute(
+                "INSERT INTO messages (id, conversation_id, project_id, role, content, timestamp, parts, metadata)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                params![
+                    id,
+                    session_id,
+                    project_id,
+                    message.role,
+                    message.content,
+                    timestamp,
+                    parts,
+                    metadata
+                ],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+
+        let last_message = messages.last().map(|msg| msg.content.clone());
+        tx.execute(
+            "UPDATE conversations
+             SET message_count = message_count + ?2,
+                 last_message = COALESCE(?3, last_message),
+                 updated_at = ?4,
+                 provider_id = COALESCE(?5, provider_id),
+                 model_id = COALESCE(?6, model_id)
+             WHERE id = ?1",
+            params![
+                session_id,
+                messages.len() as i64,
+                last_message,
+                now,
+                provider_id,
+                model_id
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+
+        tx.commit().map_err(|e| e.to_string())?;
+        drop(conn);
+        self.get_session(session_id)
+    }
+
     fn init_schema(&self) -> CoreResult<()> {
         let conn = self
             .conn

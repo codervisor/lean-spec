@@ -45,10 +45,19 @@ impl ToolRegistry {
     }
 
     pub fn execute(&self, name: &str, input: Value) -> Result<String, AiError> {
-        let executor = self
-            .executors
-            .get(name)
-            .ok_or_else(|| AiError::Tool(format!("Unknown tool: {}", name)))?;
+        if name.trim().is_empty() {
+            return Err(AiError::Tool(
+                "Tool call received with empty name".to_string(),
+            ));
+        }
+        let available: Vec<&str> = self.executors.keys().map(|k| k.as_str()).collect();
+        let executor = self.executors.get(name).ok_or_else(|| {
+            AiError::Tool(format!(
+                "Unknown tool: '{}'. Available tools: {}",
+                name,
+                available.join(", ")
+            ))
+        })?;
         executor(input).map_err(|e| AiError::ToolExecution {
             tool_name: name.to_string(),
             message: e,

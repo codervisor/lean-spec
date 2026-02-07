@@ -300,6 +300,14 @@
         "showAll": "Show all",
         "showLess": "Show less",
         "copy": "Copy"
+      },
+      "tabs": {
+        "input": "Input",
+        "output": "Output"
+      },
+      "viewToggle": {
+        "ui": "UI",
+        "json": "JSON"
       }
     },
     "settings": {

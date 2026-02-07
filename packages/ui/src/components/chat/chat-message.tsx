@@ -6,10 +6,9 @@ import {
   MessageContent,
   MessageResponse,
   Tool,
+  ToolBody,
   ToolContent,
   ToolHeader,
-  ToolInput,
-  ToolOutput,
   type ToolPart,
 } from '@/library';
 import { ToolResultRegistry } from './tool-result-registry';
@@ -53,87 +52,63 @@ function mapToolState(
   return 'input-streaming';
 }
 
-function renderToolInvocation(
-  partObj: Record<string, unknown>,
+function renderToolPart(
+  props: {
+    toolCallId: string;
+    toolName: string;
+    description: string | undefined;
+    input: unknown;
+    output: unknown;
+    state: string | undefined;
+    errorMessage: string | undefined;
+  },
   key: string | number
 ) {
-  const invocation = partObj.toolInvocation as Record<string, unknown> | undefined;
-  if (!invocation) return null;
-
-  const errorMessage =
-    typeof invocation.error === 'string'
-      ? invocation.error
-      : typeof invocation.errorMessage === 'string'
-        ? invocation.errorMessage
-        : undefined;
-
-  const toolCallId = String(invocation.toolCallId ?? '');
-  const toolName = String(invocation.toolName ?? '');
-  const input = invocation.args;
-  const output = invocation.result;
-  const state = invocation.state as string | undefined;
+  const { toolCallId, toolName, description, input, output, state, errorMessage } = props;
+  const renderedOutput =
+    output !== undefined
+      ? ToolResultRegistry.render(toolName, output)
+      : undefined;
 
   return (
     <Tool key={toolCallId || key}>
       <ToolHeader
+        description={description}
         state={mapToolState(state, output, errorMessage)}
         toolName={toolName}
         type="dynamic-tool"
       />
       <ToolContent>
-        {input !== undefined && <ToolInput input={input} />}
-        {(output !== undefined || errorMessage) && (
-          <ToolOutput
-            errorText={errorMessage}
-            output={
-              output !== undefined
-                ? ToolResultRegistry.render(toolName, output)
-                : undefined
-            }
-          />
-        )}
-      </ToolContent>
-    </Tool>
-  );
-}
-
-function renderLegacyToolPart(
-  partObj: Record<string, unknown>,
-  key: string | number
-) {
-  const toolCallId = String(partObj.toolCallId ?? '');
-  const partType = String(partObj.type);
-  const toolName =
-    partType === 'tool-call'
-      ? String(partObj.toolName ?? '')
-      : partType.slice(5);
-  const input = partType === 'tool-call' ? partObj.args : partObj.input;
-  const output = partObj.output;
-  const state =
-    partType === 'tool-call'
-      ? 'call'
-      : (partObj.state as string | undefined);
-
-  return (
-    <Tool key={toolCallId || key}>
-      <ToolHeader
-        state={mapToolState(state, output)}
-        toolName={toolName}
-        type="dynamic-tool"
-      />
-      <ToolContent>
-        {input !== undefined && <ToolInput input={input} />}
-        {output !== undefined && (
-          <ToolOutput
-            output={ToolResultRegistry.render(toolName, output)}
-          />
-        )}
+        <ToolBody
+          input={input}
+          output={renderedOutput}
+          rawOutput={output}
+          errorText={errorMessage}
+        />
       </ToolContent>
     </Tool>
   );
 }
 
 export const ChatMessage = memo(function ChatMessage({ message, isLast }: ChatMessageProps) {
+  // Build a lookup of tool-result parts by toolCallId so that tool-call parts
+  // rendered from persisted messages can find the matching output.
+  const toolResultMap = new Map<string, Record<string, unknown>>();
+  if (message.parts) {
+    for (const part of message.parts) {
+      if (
+        typeof part === 'object' &&
+        part !== null &&
+        'type' in part &&
+        (part as Record<string, unknown>).type === 'tool-result'
+      ) {
+        const p = part as Record<string, unknown>;
+        const id = String(p.toolCallId ?? '');
+        if (id) toolResultMap.set(id, p);
+      }
+    }
+  }
+
   return (
     <Message from={message.role} className={cn(isLast && 'pb-2')}>
       <MessageContent>
@@ -152,27 +127,56 @@ export const ChatMessage = memo(function ChatMessage({ message, isLast }: ChatMe
             return <MessageResponse key={index}>{text}</MessageResponse>;
           }
 
-          // Tool invocation (AI SDK 3.1+)
+          // Tool invocation (AI SDK streaming format)
           if (partType === 'tool-invocation') {
-            return renderToolInvocation(partObj, index);
+            const invocation = partObj.toolInvocation as Record<string, unknown> | undefined;
+            if (!invocation) return null;
+
+            return renderToolPart(
+              {
+                toolCallId: String(invocation.toolCallId ?? ''),
+                toolName: String(invocation.toolName ?? ''),
+                description:
+                  typeof invocation.description === 'string'
+                    ? invocation.description
+                    : undefined,
+                input: invocation.args,
+                output: invocation.result,
+                state: invocation.state as string | undefined,
+                errorMessage:
+                  typeof invocation.error === 'string'
+                    ? invocation.error
+                    : typeof invocation.errorMessage === 'string'
+                      ? invocation.errorMessage
+                      : undefined,
+              },
+              index
+            );
           }
 
-          // Legacy tool-call part
+          // Persisted tool-call part — merge with matching tool-result
           if (partType === 'tool-call') {
-            return renderLegacyToolPart(partObj, index);
+            const callId = String(partObj.toolCallId ?? '');
+            const matchingResult = callId ? toolResultMap.get(callId) : undefined;
+            const output = matchingResult?.output;
+
+            return renderToolPart(
+              {
+                toolCallId: callId,
+                toolName: String(partObj.toolName ?? ''),
+                description: undefined,
+                input: partObj.input,
+                output,
+                state: output !== undefined ? 'result' : 'call',
+                errorMessage: undefined,
+              },
+              index
+            );
           }
 
-          // tool-result is handled inline within tool-invocation; skip standalone
+          // tool-result is merged into tool-call above; skip standalone
           if (partType === 'tool-result') {
             return null;
-          }
-
-          // Fallback: custom tool-* parts
-          if (
-            String(partType).startsWith('tool-') &&
-            'toolCallId' in partObj
-          ) {
-            return renderLegacyToolPart(partObj, index);
           }
 
           return null;

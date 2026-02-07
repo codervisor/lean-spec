@@ -62,8 +62,8 @@ function toThread(session: ChatSessionDto): ChatThread {
     createdAt: new Date(session.createdAt).toISOString(),
     updatedAt: new Date(session.updatedAt).toISOString(),
     model: {
-      providerId: session.providerId ?? 'openai',
-      modelId: session.modelId ?? 'gpt-4o',
+      providerId: session.providerId!,
+      modelId: session.modelId!,
     },
     messageCount: session.messageCount ?? 0,
     preview: session.preview ?? '',
@@ -82,12 +82,25 @@ function toUIMessage(message: ChatMessageDto): UIMessage {
   } as UIMessage;
 }
 
+// Only persist content part types — exclude transient stream metadata (step-start, etc.)
+const PERSISTABLE_PART_TYPES = new Set([
+  'text',
+  'tool-call',
+  'tool-result',
+  'file',
+  'reasoning',
+  'source-url',
+  'source-document',
+]);
+
 function toMessageInput(messages: UIMessage[]) {
   return messages.map((message) => ({
     id: message.id,
     role: message.role,
     content: extractTextFromMessage(message),
-    parts: message.parts,
+    parts: message.parts?.filter(
+      (p) => PERSISTABLE_PART_TYPES.has((p as { type: string }).type)
+    ),
     metadata: message.metadata ?? null,
   }));
 }

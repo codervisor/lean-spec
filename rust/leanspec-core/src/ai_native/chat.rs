@@ -37,7 +37,8 @@ pub struct ChatRequestContext {
 
 pub struct StreamChatResult {
     pub stream: mpsc::UnboundedReceiver<StreamEvent>,
-    pub completion: oneshot::Receiver<Option<String>>,
+    /// The full assistant message parts (text + tool calls + tool results).
+    pub completion: oneshot::Receiver<Option<Vec<UIMessagePart>>>,
     pub selected_provider_id: String,
     pub selected_model_id: String,
 }
@@ -288,9 +289,9 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
         };
 
         match result {
-            Ok(text) => {
+            Ok(parts) => {
                 let _ = sender.send(StreamEvent::Finish);
-                let _ = done_tx.send(Some(text));
+                let _ = done_tx.send(Some(parts));
             }
             Err(err) => {
                 let _ = sender.send(StreamEvent::Error {
@@ -421,8 +422,8 @@ async fn run_openai_conversation(
         sender,
         text_id,
     }: OpenAiConversationParams<'_>,
-) -> Result<String, AiError> {
-    let mut assistant_text = String::new();
+) -> Result<Vec<UIMessagePart>, AiError> {
+    let mut assistant_parts: Vec<UIMessagePart> = Vec::new();
 
     for step in 0..max_steps {
         let _ = sender.send(StreamEvent::StartStep);
@@ -440,12 +441,14 @@ async fn run_openai_conversation(
         .await?;
 
         if !round.text.is_empty() {
-            assistant_text.push_str(&round.text);
+            assistant_parts.push(UIMessagePart::Text {
+                text: round.text.clone(),
+            });
         }
 
         if round.tool_calls.is_empty() {
             let _ = sender.send(StreamEvent::FinishStep);
-            return Ok(assistant_text);
+            return Ok(assistant_parts);
         }
 
         let assistant_tool_calls = round
@@ -490,6 +493,13 @@ async fn run_openai_conversation(
                 input: input.clone(),
             });
 
+            // Record the tool-call part
+            assistant_parts.push(UIMessagePart::ToolCall {
+                tool_call_id: call.id.clone(),
+                tool_name: call.name.clone(),
+                input: input.clone(),
+            });
+
             let registry = tools.clone();
             let tool_name = call.name.clone();
             let exec_input = input.clone();
@@ -503,6 +513,13 @@ async fn run_openai_conversation(
             let _ = sender.send(StreamEvent::ToolOutputAvailable {
                 tool_call_id: call.id.clone(),
                 output: output_value.clone(),
+            });
+
+            // Record the tool-result part
+            assistant_parts.push(UIMessagePart::ToolResult {
+                tool_call_id: call.id.clone(),
+                tool_name: call.name.clone(),
+                output: output_value,
             });
 
             messages.push(ChatCompletionRequestMessage::Tool(
@@ -522,7 +539,7 @@ async fn run_openai_conversation(
         }
     }
 
-    Ok(assistant_text)
+    Ok(assistant_parts)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -606,7 +623,7 @@ async fn stream_openai_round(
         tool_calls
             .into_iter()
             .filter_map(|call| {
-                let name = call.name?;
+                let name = call.name.filter(|n| !n.trim().is_empty())?;
                 let id = call
                     .id
                     .unwrap_or_else(|| format!("tool_{}", uuid::Uuid::new_v4()));
@@ -666,7 +683,7 @@ async fn run_anthropic_conversation(
     max_tokens: Option<u32>,
     sender: &mpsc::UnboundedSender<StreamEvent>,
     text_id: &str,
-) -> Result<String, AiError> {
+) -> Result<Vec<UIMessagePart>, AiError> {
     let max_tokens = max_tokens.unwrap_or(4096) as usize;
     let request = anthropic::types::MessagesRequestBuilder::default()
         .model(model_id.to_string())
@@ -711,7 +728,11 @@ async fn run_anthropic_conversation(
     }
 
     let _ = sender.send(StreamEvent::FinishStep);
-    Ok(text)
+    let mut parts = Vec::new();
+    if !text.is_empty() {
+        parts.push(UIMessagePart::Text { text });
+    }
+    Ok(parts)
 }
 
 #[cfg(test)]

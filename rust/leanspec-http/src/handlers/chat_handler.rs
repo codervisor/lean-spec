@@ -18,7 +18,12 @@ use crate::state::AppState;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChatRequest {
+    /// Full message history — only used when no session_id is provided (stateless mode).
+    #[serde(default)]
     pub messages: Vec<UIMessage>,
+    /// The new user message text. When session_id is set, history is fetched from DB
+    /// and this message is appended.
+    pub message: Option<String>,
     pub project_id: Option<String>,
     pub provider_id: Option<String>,
     pub model_id: Option<String>,
@@ -30,15 +35,6 @@ pub async fn chat_stream(
     State(state): State<AppState>,
     axum::Json(payload): axum::Json<ChatRequest>,
 ) -> ApiResult<Response> {
-    if payload.messages.is_empty() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            axum::Json(ApiError::invalid_request(
-                "messages must be a non-empty array",
-            )),
-        ));
-    }
-
     let base_url = resolve_http_base_url(&state);
     let project_path = if let Some(project_id) = payload.project_id.as_deref() {
         let registry = state.registry.read().await;
@@ -73,9 +69,81 @@ pub async fn chat_stream(
         }
     }
 
+    // Build the message list:
+    // - With session_id: fetch history from DB + append the new user message
+    // - Without session_id: use messages array from the request (stateless/AI SDK default)
+    let messages = if let Some(session_id) = payload.session_id.as_deref() {
+        let user_text = payload.message.clone().or_else(|| {
+            // Fallback: extract from the last user message in the messages array
+            // (for backward compatibility with the AI SDK transport)
+            payload.messages.iter().rev().find_map(|m| {
+                if matches!(m.role, MessageRole::User) {
+                    Some(extract_text(m))
+                } else {
+                    None
+                }
+            })
+        });
+
+        let user_text = user_text.filter(|t| !t.trim().is_empty()).ok_or_else(|| {
+            (
+                StatusCode::BAD_REQUEST,
+                axum::Json(ApiError::invalid_request(
+                    "message text is required when using a session",
+                )),
+            )
+        })?;
+
+        // Fetch existing messages from DB
+        let store = state.chat_store.clone();
+        let sid = session_id.to_string();
+        let db_messages = tokio::task::spawn_blocking(move || store.get_messages(&sid))
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    axum::Json(ApiError::internal_error(&e.to_string())),
+                )
+            })?
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    axum::Json(ApiError::internal_error(&e)),
+                )
+            })?;
+
+        let mut messages: Vec<UIMessage> = db_messages
+            .into_iter()
+            .filter_map(|m| chat_message_to_ui_message(&m))
+            .collect();
+
+        // Append the new user message
+        messages.push(UIMessage {
+            id: uuid::Uuid::new_v4().to_string(),
+            role: MessageRole::User,
+            parts: vec![UIMessagePart::Text {
+                text: user_text.clone(),
+            }],
+            metadata: None,
+        });
+
+        messages
+    } else {
+        // Stateless mode — use messages from request
+        if payload.messages.is_empty() {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                axum::Json(ApiError::invalid_request(
+                    "messages must be a non-empty array",
+                )),
+            ));
+        }
+        payload.messages.clone()
+    };
+
     let config = state.chat_config.read().await.config();
     let request_context = ChatRequestContext {
-        messages: payload.messages.clone(),
+        messages: messages.clone(),
         project_id: payload.project_id.clone(),
         project_path,
         provider_id: provider_id.clone(),
@@ -97,36 +165,62 @@ pub async fn chat_stream(
 
     if let Some(session_id) = payload.session_id.clone() {
         let store = state.chat_store.clone();
-        let messages = payload.messages.clone();
+        // Only persist the new user message + assistant response (append, not replace).
+        // The user message is the last one in our built messages list.
+        let user_message = messages.last().cloned();
         let completion = result.completion;
         let provider_id_for_store = selected_provider_id.clone();
         let model_id_for_store = selected_model_id.clone();
         tokio::spawn(async move {
-            if let Ok(Some(assistant_text)) = completion.await {
-                let trimmed = assistant_text.trim();
-                if trimmed.is_empty() {
-                    return;
-                }
-                let mut persisted = to_chat_messages(messages);
-                let parts = serde_json::to_value(vec![UIMessagePart::Text {
-                    text: trimmed.to_string(),
-                }])
-                .ok();
-                persisted.push(ChatMessageInput {
-                    id: None,
-                    role: "assistant".to_string(),
-                    content: trimmed.to_string(),
-                    timestamp: None,
-                    parts,
-                    metadata: None,
-                });
+            let mut new_messages: Vec<ChatMessageInput> = Vec::new();
 
+            // Persist the user message
+            if let Some(user_msg) = user_message {
+                let text = extract_text(&user_msg);
+                if !text.trim().is_empty() {
+                    let parts = serde_json::to_value(&user_msg.parts).ok();
+                    new_messages.push(ChatMessageInput {
+                        id: Some(user_msg.id),
+                        role: "user".to_string(),
+                        content: text,
+                        timestamp: None,
+                        parts,
+                        metadata: user_msg.metadata,
+                    });
+                }
+            }
+
+            // Wait for the assistant response and persist it
+            if let Ok(Some(assistant_parts)) = completion.await {
+                if !assistant_parts.is_empty() {
+                    // Extract text content for the content column
+                    let content = assistant_parts
+                        .iter()
+                        .filter_map(|p| match p {
+                            UIMessagePart::Text { text } => Some(text.as_str()),
+                            _ => None,
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n");
+                    let parts = serde_json::to_value(&assistant_parts).ok();
+                    new_messages.push(ChatMessageInput {
+                        id: None,
+                        role: "assistant".to_string(),
+                        content,
+                        timestamp: None,
+                        parts,
+                        metadata: None,
+                    });
+                }
+            }
+
+            if !new_messages.is_empty() {
                 let _ = tokio::task::spawn_blocking(move || {
-                    store.replace_messages(
+                    store.append_messages(
                         &session_id,
                         Some(provider_id_for_store),
                         Some(model_id_for_store),
-                        persisted,
+                        new_messages,
                     )
                 })
                 .await;
@@ -189,30 +283,32 @@ async fn fetch_session_context(
     Some((session.provider_id, session.model_id))
 }
 
-fn to_chat_messages(messages: Vec<UIMessage>) -> Vec<ChatMessageInput> {
-    messages
-        .into_iter()
-        .filter_map(|message| {
-            let text = extract_text(&message);
-            if text.trim().is_empty() {
-                return None;
-            }
-            let role = match message.role {
-                MessageRole::System => "system",
-                MessageRole::User => "user",
-                MessageRole::Assistant => "assistant",
-            };
+/// Convert a stored ChatMessage (from DB) to a UIMessage for the AI context.
+fn chat_message_to_ui_message(msg: &crate::chat_store::ChatMessage) -> Option<UIMessage> {
+    let role = match msg.role.as_str() {
+        "system" => MessageRole::System,
+        "user" => MessageRole::User,
+        "assistant" => MessageRole::Assistant,
+        _ => return None,
+    };
 
-            Some(ChatMessageInput {
-                id: Some(message.id),
-                role: role.to_string(),
-                content: text,
-                timestamp: None,
-                parts: serde_json::to_value(message.parts).ok(),
-                metadata: message.metadata,
-            })
-        })
-        .collect()
+    // If parts were stored, deserialize them; otherwise fall back to a text part
+    let parts: Vec<UIMessagePart> = msg
+        .parts
+        .as_ref()
+        .and_then(|v| serde_json::from_value(v.clone()).ok())
+        .unwrap_or_else(|| {
+            vec![UIMessagePart::Text {
+                text: msg.content.clone(),
+            }]
+        });
+
+    Some(UIMessage {
+        id: msg.id.clone(),
+        role,
+        parts,
+        metadata: msg.metadata.clone(),
+    })
 }
 
 fn extract_text(message: &UIMessage) -> String {
