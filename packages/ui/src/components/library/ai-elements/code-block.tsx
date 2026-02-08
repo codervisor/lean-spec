@@ -22,6 +22,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { List, type RowComponentProps } from "react-window";
 import {
   type BundledLanguage,
   type BundledTheme,
@@ -29,6 +30,27 @@ import {
   type HighlighterGeneric,
   type ThemedToken,
 } from "shiki";
+
+/* -------------------------------------------------------------------------- */
+/*  Performance constants                                                     */
+/* -------------------------------------------------------------------------- */
+
+/** Use react-window virtualised rendering above this many lines */
+const VIRTUALIZATION_LINE_THRESHOLD = 200;
+
+/** Fixed row height (px) for virtualised lines – monospace @ text-sm */
+const VIRTUAL_LINE_HEIGHT = 20;
+
+/** Default max visible height (px) for the virtualised viewport */
+const VIRTUAL_MAX_HEIGHT = 400;
+
+/**
+ * Number of lines per chunk for progressive Shiki highlighting.
+ * Content with fewer lines is highlighted in one pass (fast enough).
+ * Larger content is tokenised chunk-by-chunk during idle time so the
+ * main thread never blocks for more than one chunk's worth of work.
+ */
+const HIGHLIGHT_CHUNK_LINES = 500;
 
 // Shiki uses bitflags for font styles: 1=italic, 2=bold, 4=underline
 // biome-ignore lint/suspicious/noBitwiseOperators: shiki bitflag check
@@ -190,7 +212,29 @@ export function highlightCode(
     subscribers.get(tokensCacheKey)?.add(callback);
   }
 
-  // Start highlighting in background
+  // Count lines to decide single-pass vs chunked
+  const lines = code.split("\n");
+
+  if (lines.length > HIGHLIGHT_CHUNK_LINES) {
+    // Large content → progressive chunked highlighting
+    highlightCodeChunked(lines, language, tokensCacheKey);
+  } else {
+    // Small content → single-pass (existing fast path)
+    highlightCodeSinglePass(code, language, tokensCacheKey);
+  }
+
+  return null;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Single-pass highlighting (small content)                                  */
+/* -------------------------------------------------------------------------- */
+
+function highlightCodeSinglePass(
+  code: string,
+  language: BundledLanguage,
+  cacheKey: string
+): void {
   getHighlighter(language)
     .then((highlighter) => {
       const availableLangs = highlighter.getLoadedLanguages();
@@ -210,24 +254,132 @@ export function highlightCode(
         bg: result.bg,
       };
 
-      // Cache the result
-      tokensCache.set(tokensCacheKey, tokenized);
-
-      // Notify all subscribers
-      const subs = subscribers.get(tokensCacheKey);
-      if (subs) {
-        for (const sub of subs) {
-          sub(tokenized);
-        }
-        subscribers.delete(tokensCacheKey);
-      }
+      tokensCache.set(cacheKey, tokenized);
+      notifySubscribers(cacheKey, tokenized, true);
     })
     .catch((error) => {
       console.error("Failed to highlight code:", error);
-      subscribers.delete(tokensCacheKey);
+      subscribers.delete(cacheKey);
     });
+}
 
-  return null;
+/* -------------------------------------------------------------------------- */
+/*  Chunked progressive highlighting (large content)                          */
+/* -------------------------------------------------------------------------- */
+
+/** Track in-progress chunked jobs to avoid duplicates */
+const chunkingInProgress = new Set<string>();
+
+function highlightCodeChunked(
+  lines: string[],
+  language: BundledLanguage,
+  cacheKey: string
+): void {
+  // Don't start a second job for the same content
+  if (chunkingInProgress.has(cacheKey)) return;
+  chunkingInProgress.add(cacheKey);
+
+  const totalLines = lines.length;
+  const numChunks = Math.ceil(totalLines / HIGHLIGHT_CHUNK_LINES);
+
+  // Start with raw (unhighlighted) tokens for every line
+  const mergedTokens: ThemedToken[][] = lines.map((line) =>
+    line === ""
+      ? []
+      : [{ content: line, color: "inherit" } as ThemedToken]
+  );
+  let fg: string | undefined;
+  let bg: string | undefined;
+  let currentChunk = 0;
+
+  const processNextChunk = () => {
+    if (currentChunk >= numChunks) {
+      chunkingInProgress.delete(cacheKey);
+      return;
+    }
+
+    const startLine = currentChunk * HIGHLIGHT_CHUNK_LINES;
+    const endLine = Math.min(startLine + HIGHLIGHT_CHUNK_LINES, totalLines);
+    const chunkCode = lines.slice(startLine, endLine).join("\n");
+
+    getHighlighter(language)
+      .then((highlighter) => {
+        const availableLangs = highlighter.getLoadedLanguages();
+        const langToUse = availableLangs.includes(language)
+          ? language
+          : "text";
+
+        const result = highlighter.codeToTokens(chunkCode, {
+          lang: langToUse,
+          themes: { light: "github-light", dark: "github-dark" },
+        });
+
+        // Merge highlighted tokens into the full array
+        for (let i = 0; i < result.tokens.length; i++) {
+          mergedTokens[startLine + i] = result.tokens[i];
+        }
+        if (!fg) {
+          fg = result.fg;
+          bg = result.bg;
+        }
+
+        currentChunk++;
+        const isFinal = currentChunk >= numChunks;
+
+        // New object + array ref so React detects the change
+        const tokenized: TokenizedCode = {
+          tokens: mergedTokens.slice(),
+          fg,
+          bg,
+        };
+
+        if (isFinal) {
+          tokensCache.set(cacheKey, tokenized);
+        }
+
+        // Notify subscribers after each chunk (progressive update)
+        notifySubscribers(cacheKey, tokenized, isFinal);
+
+        // Schedule next chunk during browser idle time
+        if (!isFinal) {
+          if (typeof requestIdleCallback === "function") {
+            requestIdleCallback(processNextChunk);
+          } else {
+            setTimeout(processNextChunk, 16);
+          }
+        } else {
+          chunkingInProgress.delete(cacheKey);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to highlight code chunk:", error);
+        chunkingInProgress.delete(cacheKey);
+        subscribers.delete(cacheKey);
+      });
+  };
+
+  // Kick off the first chunk immediately
+  processNextChunk();
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Subscriber helpers                                                        */
+/* -------------------------------------------------------------------------- */
+
+function notifySubscribers(
+  cacheKey: string,
+  tokenized: TokenizedCode,
+  isFinal: boolean
+): void {
+  const subs = subscribers.get(cacheKey);
+  if (subs) {
+    for (const sub of subs) {
+      sub(tokenized);
+    }
+    if (isFinal) {
+      subscribers.delete(cacheKey);
+    }
+  }
 }
 
 // Line number styles using CSS counters
@@ -243,6 +395,32 @@ const LINE_NUMBER_CLASSES = cn(
   "before:font-mono",
   "before:select-none"
 );
+
+/* -------------------------------------------------------------------------- */
+/*  Virtualised row component for react-window                                */
+/* -------------------------------------------------------------------------- */
+
+interface VirtualRowData {
+  keyedLines: KeyedLine[];
+  showLineNumbers: boolean;
+}
+
+const VirtualRow = ({
+  index,
+  style,
+  ...rest
+}: RowComponentProps & VirtualRowData) => {
+  const { keyedLines, showLineNumbers } = rest;
+  return (
+    <div style={style} className="whitespace-pre">
+      <LineSpan keyedLine={keyedLines[index]} showLineNumbers={showLineNumbers} />
+    </div>
+  );
+};
+
+/* -------------------------------------------------------------------------- */
+/*  CodeBlockBody - uses virtualisation for large content                      */
+/* -------------------------------------------------------------------------- */
 
 const CodeBlockBody = memo(
   ({
@@ -269,15 +447,44 @@ const CodeBlockBody = memo(
       [tokenized.tokens]
     );
 
+    const useVirtualisation = keyedLines.length > VIRTUALIZATION_LINE_THRESHOLD;
+
+    if (useVirtualisation) {
+      const resolvedMax = maxHeight || VIRTUAL_MAX_HEIGHT;
+      const totalHeight = keyedLines.length * VIRTUAL_LINE_HEIGHT;
+      const viewportHeight = Math.min(totalHeight, resolvedMax);
+
+      return (
+        <div
+          className={cn(
+            "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 text-sm font-mono",
+            className
+          )}
+          style={preStyle}
+        >
+          <List
+            rowCount={keyedLines.length}
+            rowHeight={VIRTUAL_LINE_HEIGHT}
+            style={{ height: viewportHeight, width: "100%" }}
+            className="px-4 py-2"
+            rowComponent={VirtualRow}
+            rowProps={{ keyedLines, showLineNumbers }}
+          />
+        </div>
+      );
+    }
+
     return (
       <pre
         className={cn(
           "dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)] m-0 p-4 text-sm",
           maxHeight ? "overflow-auto" : "",
-          maxHeight ? `max-h-[${maxHeight}px]` : "",
           className
         )}
-        style={preStyle}
+        style={{
+          ...preStyle,
+          ...(maxHeight ? { maxHeight: `${maxHeight}px` } : {}),
+        }}
       >
         <code
           className={cn(

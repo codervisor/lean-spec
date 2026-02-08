@@ -24,7 +24,7 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
-import { isValidElement, useMemo, useState } from "react";
+import { isValidElement, useMemo, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import {
   CodeBlock,
@@ -45,7 +45,7 @@ export type ToolProps = ComponentProps<typeof Collapsible>;
 
 export const Tool = ({ className, ...props }: ToolProps) => (
   <Collapsible
-    className={cn("group not-prose mb-4 w-full rounded-md border", className)}
+    className={cn("group not-prose w-full rounded-md border", className)}
     {...props}
   />
 );
@@ -181,27 +181,33 @@ type ToolCodeBlockProps = {
 const ToolCodeBlock = ({ label, value, language }: ToolCodeBlockProps) => {
   const { t } = useTranslation("common");
   const [showAll, setShowAll] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const truncated = useMemo(() => getTruncatedText(value), [value]);
   const code = showAll || !truncated.isTruncated
     ? truncated.fullText
     : truncated.truncatedText;
 
   return (
-    <CodeBlock code={code} language={language}>
+    <CodeBlock code={code} language={language} maxHeight={400}>
       <CodeBlockHeader>
         <CodeBlockTitle>{label}</CodeBlockTitle>
         <CodeBlockActions>
           {truncated.isTruncated && (
             <Button
               className="h-6 px-2 text-[10px]"
-              onClick={() => setShowAll((prev) => !prev)}
+              disabled={isPending}
+              onClick={() =>
+                startTransition(() => setShowAll((prev) => !prev))
+              }
               size="sm"
               type="button"
               variant="ghost"
             >
-              {showAll
-                ? t("chat.toolExecution.actions.showLess")
-                : t("chat.toolExecution.actions.showAll")}
+              {isPending
+                ? "…"
+                : showAll
+                  ? t("chat.toolExecution.actions.showLess")
+                  : t("chat.toolExecution.actions.showAll")}
             </Button>
           )}
           <CodeBlockCopyButton

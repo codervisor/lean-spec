@@ -8,7 +8,7 @@ use async_openai::types::chat::{
     ChatCompletionRequestSystemMessage, ChatCompletionRequestSystemMessageContent,
     ChatCompletionRequestToolMessage, ChatCompletionRequestToolMessageContent,
     ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
-    CreateChatCompletionRequestArgs, FinishReason, FunctionCall, FunctionCallStream,
+    CreateChatCompletionRequestArgs, FunctionCall, FunctionCallStream,
 };
 use async_openai::Client as OpenAIClient;
 use futures_util::StreamExt;
@@ -595,7 +595,6 @@ async fn stream_openai_round(
     let mut reasoning_text = String::new();
     let reasoning_id = format!("reasoning_{}", text_id);
     let mut tool_calls: Vec<ToolCallAccumulator> = Vec::new();
-    let mut finish_reason: Option<FinishReason> = None;
 
     while let Some(chunk) = stream.next().await {
         let chunk = chunk.map_err(|e| AiError::Stream(e.to_string()))?;
@@ -620,10 +619,6 @@ async fn stream_openai_round(
         }
 
         for choice in chunk.choices {
-            if finish_reason.is_none() {
-                finish_reason = choice.finish_reason;
-            }
-
             let delta = choice.delta;
             if let Some(content) = delta.content {
                 // Close reasoning before text starts (reasoning always precedes text)
@@ -665,24 +660,24 @@ async fn stream_openai_round(
         });
     }
 
-    let completed_tool_calls = if matches!(finish_reason, Some(FinishReason::ToolCalls)) {
-        tool_calls
-            .into_iter()
-            .filter_map(|call| {
-                let name = call.name.filter(|n| !n.trim().is_empty())?;
-                let id = call
-                    .id
-                    .unwrap_or_else(|| format!("tool_{}", uuid::Uuid::new_v4()));
-                Some(ToolCall {
-                    id,
-                    name,
-                    arguments: call.arguments,
-                })
+    // Don't gate on finish_reason == ToolCalls — some OpenAI-compatible providers
+    // (e.g. certain models via OpenRouter) return finish_reason "stop" even when
+    // the response contains tool calls. Instead, check if accumulated tool call
+    // chunks have valid data (a non-empty name).
+    let completed_tool_calls: Vec<ToolCall> = tool_calls
+        .into_iter()
+        .filter_map(|call| {
+            let name = call.name.filter(|n| !n.trim().is_empty())?;
+            let id = call
+                .id
+                .unwrap_or_else(|| format!("tool_{}", uuid::Uuid::new_v4()));
+            Some(ToolCall {
+                id,
+                name,
+                arguments: call.arguments,
             })
-            .collect()
-    } else {
-        Vec::new()
-    };
+        })
+        .collect();
 
     Ok(OpenAiRoundResult {
         text,
