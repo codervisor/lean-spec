@@ -33,31 +33,60 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
   const baseUrl = import.meta.env.VITE_API_URL || '';
   const api = `${baseUrl}/api/chat`;
 
-  // Create transport with proper options
+  // Use a ref to always provide the latest body values to the transport.
+  // The Chat instance from @ai-sdk/react is only recreated when 'id' changes,
+  // NOT when transport changes. By passing body as a function that reads from
+  // a ref, the transport always resolves the current model/provider values
+  // at request time (HttpChatTransport calls resolve(this.body) which supports functions).
+  const bodyRef = useRef({
+    projectId: currentProject?.id,
+    sessionId: options.threadId,
+    providerId: options.providerId,
+    modelId: options.modelId,
+  });
+  bodyRef.current = {
+    projectId: currentProject?.id,
+    sessionId: options.threadId,
+    providerId: options.providerId,
+    modelId: options.modelId,
+  };
+
+  // Create transport once per api endpoint — body is resolved dynamically via the ref.
+  // Use prepareSendMessagesRequest to send only the latest user message text
+  // instead of the full message history — the backend fetches history from DB.
   const transport = useMemo(() => new DefaultChatTransport({
     api,
-    body: {
-      projectId: currentProject?.id,
-      sessionId: options.threadId,
-      providerId: options.providerId,
-      modelId: options.modelId,
+    body: () => bodyRef.current,
+    prepareSendMessagesRequest: ({ messages, body }) => {
+      // Extract the latest user message text
+      const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+      const messageText = lastUserMessage?.parts
+        ?.filter((p): p is { type: 'text'; text: string } => (p as { type: string }).type === 'text')
+        .map(p => p.text)
+        .join('') ?? '';
+
+      return {
+        body: {
+          ...body,
+          // Send only the user message text — backend fetches history from DB
+          message: messageText,
+          // Clear messages array to avoid sending full history
+          messages: [],
+        },
+      };
     },
-  }), [api, currentProject?.id, options.providerId, options.modelId, options.threadId]);
+  }), [api]);
 
   const chatHook = useAIChat({
     id: options.threadId || 'new-chat',
     transport,
-    onFinish: async ({ messages }) => {
-      // Store messages after each completion
+    onFinish: async () => {
+      // Backend persists messages (user + assistant) to DB.
+      // Invalidate the query cache so the sidebar/thread list picks up the changes.
       if (options.threadId) {
-        try {
-          await ChatApi.saveMessages(options.threadId, messages, {
-            providerId: options.providerId,
-            modelId: options.modelId,
-          });
-          queryClient.setQueryData(chatKeys.messages(options.threadId), messages);
-        } catch (error) {
-          console.warn('[LeanSpec Chat] Failed to persist messages:', error);
+        queryClient.invalidateQueries({ queryKey: chatKeys.messages(options.threadId) });
+        if (currentProject?.id) {
+          queryClient.invalidateQueries({ queryKey: chatKeys.threads(currentProject.id) });
         }
       }
     },
@@ -70,24 +99,25 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
   messagesRef.current = chatHook.messages;
 
   // Sync messages when initialMessages change (e.g. loading a different thread)
-  // Only sync when threadId or initialMessages actually change, NOT on status changes
-  // to avoid overwriting streamed messages when streaming finishes
+  // Only sync when threadId or initialMessages actually change, NOT while
+  // actively streaming — otherwise the onFinish → invalidateQueries → refetch
+  // cycle overwrites live streaming messages with (potentially stale) DB data.
   useEffect(() => {
-     if (options.threadId) {
-         chatHook.setMessages(initialMessages);
-     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (options.threadId && chatHook.status !== 'streaming' && chatHook.status !== 'submitted') {
+      chatHook.setMessages(initialMessages);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMessages, options.threadId]);
 
   const clearChat = useCallback(() => {
     chatHook.setMessages([]);
     if (options.threadId) {
-        ChatApi.saveMessages(options.threadId, [], {
-          providerId: options.providerId,
-          modelId: options.modelId,
-        }).catch((error) => {
-          console.warn('[LeanSpec Chat] Failed to clear messages:', error);
-        });
+      ChatApi.saveMessages(options.threadId, [], {
+        providerId: options.providerId,
+        modelId: options.modelId,
+      }).catch((error) => {
+        console.warn('[LeanSpec Chat] Failed to clear messages:', error);
+      });
     }
   }, [chatHook, options.modelId, options.providerId, options.threadId]);
 

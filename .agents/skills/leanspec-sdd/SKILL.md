@@ -40,7 +40,8 @@ Activate this skill when any of the following are true:
 - Validate token count using `tokens` (or `lean-spec tokens`).
 
 ### 3) Implement
-- Update spec status to `in-progress` **before coding**.
+- If `draft` is enabled, move `draft` → `planned` once the spec is reviewed, then set `in-progress` **before coding**.
+- Skipping `planned` from `draft` requires a `--force` override (CLI/MCP/UI).
 - Document decisions and progress **inside the spec** as work happens.
 - Link dependencies using `link`/`unlink` as they are discovered.
 

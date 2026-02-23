@@ -21,16 +21,15 @@ const REPOSITORY_URL = 'https://github.com/codervisor/lean-spec.git';
 
 // Platform mapping
 const PLATFORM_MAP = {
-  linux: { x64: 'linux-x64', arm64: 'linux-arm64' },
+  linux: { x64: 'linux-x64' },
   darwin: { x64: 'darwin-x64', arm64: 'darwin-arm64' },
-  win32: { x64: 'windows-x64', arm64: 'windows-arm64' }
+  win32: { x64: 'windows-x64' }
 };
 
 const PLATFORM_INFO = {
   'darwin-x64': { os: 'darwin', cpu: 'x64', label: 'macOS x64' },
   'darwin-arm64': { os: 'darwin', cpu: 'arm64', label: 'macOS ARM64' },
   'linux-x64': { os: 'linux', cpu: 'x64', label: 'Linux x64' },
-  'linux-arm64': { os: 'linux', cpu: 'arm64', label: 'Linux ARM64' },
   'windows-x64': { os: 'win32', cpu: 'x64', label: 'Windows x64' }
 };
 

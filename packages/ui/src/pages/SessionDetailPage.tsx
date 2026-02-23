@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, Download, Copy, Play, Square, RotateCcw, Pause } from 'lucide-react';
-import { Button, Card, CardContent, cn } from '@leanspec/ui-components';
+import { Button, Card, CardContent, cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import type { Session, SessionEvent, SessionLog } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
-import { EmptyState } from '../components/shared/EmptyState';
-import { PageHeader } from '../components/shared/PageHeader';
-import { PageTransition } from '../components/shared/PageTransition';
-import { PageContainer } from '../components/shared/PageContainer';
+import { EmptyState } from '../components/shared/empty-state';
+import { PageHeader } from '../components/shared/page-header';
+import { PageTransition } from '../components/shared/page-transition';
+import { PageContainer } from '../components/shared/page-container';
 import {
   SESSION_STATUS_STYLES,
   estimateSessionCost,

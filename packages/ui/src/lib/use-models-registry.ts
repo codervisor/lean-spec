@@ -1,31 +1,12 @@
 import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import i18next from 'i18next';
+import { api } from './api';
 import type {
-  ModelsRegistryResponse,
   ModelsRegistryProviderRaw,
   ModelsRegistryModelRaw,
   RegistryProvider,
   RegistryModel,
 } from '../types/models-registry';
-
-const API_URL = '/api/models/providers?agenticOnly=true';
-const CHAT_CONFIG_URL = '/api/chat/config';
-
-interface ChatConfigSettings {
-  defaultProviderId: string;
-  defaultModelId: string;
-  enabledModels?: Record<string, string[]>;
-}
-
-interface ChatConfigResponse {
-  settings: ChatConfigSettings;
-}
-
-interface UseModelsRegistryOptions {
-  /** Include unconfigured providers in the list (default: false) */
-  showUnconfigured?: boolean;
-}
 
 const toRegistryModel = (model: ModelsRegistryModelRaw): RegistryModel => {
   const inputModalities = model.modalities?.input ?? [];
@@ -97,11 +78,7 @@ const fetchProviders = async (): Promise<{
   providers: RegistryProvider[];
   summary: { total: number; configuredCount: number; configuredProviderIds: string[] };
 }> => {
-  const res = await fetch(API_URL);
-  if (!res.ok) {
-    throw new Error(i18next.t('chat.modelsLoadError'));
-  }
-  const data: ModelsRegistryResponse = await res.json();
+  const data = await api.getModelsProviders({ agenticOnly: true });
   return {
     providers: data.providers.map(toRegistryProvider),
     summary: {
@@ -116,22 +93,21 @@ const fetchChatConfig = async (): Promise<{
   savedDefaults: { providerId: string; modelId: string } | null;
   enabledModels: Record<string, string[]> | null;
 }> => {
-  const res = await fetch(CHAT_CONFIG_URL);
-  if (!res.ok) {
+  try {
+    const data = await api.getChatConfig();
+    return {
+      savedDefaults:
+        data.settings?.defaultProviderId && data.settings?.defaultModelId
+          ? { providerId: data.settings.defaultProviderId, modelId: data.settings.defaultModelId }
+          : null,
+      enabledModels: data.settings?.enabledModels ?? null,
+    };
+  } catch {
     return { savedDefaults: null, enabledModels: null };
   }
-  const data: ChatConfigResponse = await res.json();
-  return {
-    savedDefaults:
-      data.settings?.defaultProviderId && data.settings?.defaultModelId
-        ? { providerId: data.settings.defaultProviderId, modelId: data.settings.defaultModelId }
-        : null,
-    enabledModels: data.settings?.enabledModels ?? null,
-  };
 };
 
-export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
-  const { showUnconfigured = false } = options;
+export const useModelsRegistry = () => {
   const queryClient = useQueryClient();
 
   // Fetch providers
@@ -148,6 +124,7 @@ export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  // All providers from the registry (unfiltered) - use for Settings page
   const allProviders = useMemo(
     () => providersQuery.data?.providers ?? [],
     [providersQuery.data?.providers]
@@ -167,10 +144,11 @@ export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.chatConfig });
   };
 
-  // Filter providers based on showUnconfigured option and enabled models
+  // Configured providers with enabled models filter applied - use for Chat components
+  // These are the providers that are actually usable (have API keys)
   const providers = useMemo(() => {
-    let filteredProviders = showUnconfigured ? allProviders : allProviders.filter((p) => p.isConfigured);
-    
+    let filteredProviders = allProviders.filter((p) => p.isConfigured);
+
     // Apply enabled models filter if specified
     if (enabledModels) {
       filteredProviders = filteredProviders.map(provider => {
@@ -186,11 +164,11 @@ export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
         return provider;
       }).filter(provider => provider.models.length > 0); // Remove providers with no models
     }
-    
-    return filteredProviders;
-  }, [allProviders, showUnconfigured, enabledModels]);
 
-  // Use saved defaults if available and valid, otherwise compute from providers
+    return filteredProviders;
+  }, [allProviders, enabledModels]);
+
+  // Use saved defaults if available and valid, otherwise compute from configured providers
   const defaultSelection = useMemo(() => {
     if (savedDefaults) {
       // Validate that the saved defaults are still valid (provider exists and is configured)
@@ -217,12 +195,14 @@ export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
         );
       }
     }
-    // Fall back to computed default from filtered providers
+    // Fall back to computed default from configured providers
     return selectDefaultModel(providers);
   }, [providers, savedDefaults]);
 
   return {
+    /** Configured providers with enabled models filter - use for Chat components */
     providers,
+    /** All providers from registry (unfiltered) - use for Settings page */
     allProviders,
     loading,
     error,

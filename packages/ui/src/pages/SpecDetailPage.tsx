@@ -13,7 +13,7 @@ import {
   ChevronRight,
   Link2
 } from 'lucide-react';
-import { useSpecDetailLayoutContext } from '../components/SpecDetailLayout.context';
+import { useSpecDetailLayoutContext } from '../components/spec-detail-layout.context';
 import {
   Button,
   cn,
@@ -27,34 +27,60 @@ import {
   SpecTimeline,
   StatusBadge,
   PriorityBadge,
-} from '@leanspec/ui-components';
-import { APIError } from '../lib/api';
+} from '@/library';
+import { UmbrellaBadge } from '../components/umbrella-badge';
+import { api, APIError } from '../lib/api';
 import { getBackend } from '../lib/backend-adapter';
-import { StatusEditor } from '../components/metadata-editors/StatusEditor';
-import { PriorityEditor } from '../components/metadata-editors/PriorityEditor';
-import { TagsEditor } from '../components/metadata-editors/TagsEditor';
+import { StatusEditor } from '../components/metadata-editors/status-editor';
+import { PriorityEditor } from '../components/metadata-editors/priority-editor';
+import { TagsEditor } from '../components/metadata-editors/tags-editor';
 import type { SubSpec, SpecTokenResponse, SpecValidationResponse } from '../types/api';
-import { TableOfContents, TableOfContentsSidebar } from '../components/spec-detail/TableOfContents';
-import { SpecDetailSkeleton } from '../components/shared/Skeletons';
-import { EmptyState } from '../components/shared/EmptyState';
-import { MarkdownRenderer } from '../components/spec-detail/MarkdownRenderer';
-import { BackToTop } from '../components/shared/BackToTop';
+import { TableOfContents, TableOfContentsSidebar } from '../components/spec-detail/table-of-contents';
+import { SpecDetailSkeleton } from '../components/shared/skeletons';
+import { EmptyState } from '../components/shared/empty-state';
+import { MarkdownRenderer } from '../components/spec-detail/markdown-renderer';
+import { BackToTop } from '../components/shared/back-to-top';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useSpecDetail } from '../hooks/useSpecsQuery';
 import { useSessions } from '../hooks/useSessionsQuery';
-import { PageContainer } from '../components/shared/PageContainer';
+import { PageContainer } from '../components/shared/page-container';
 import { useMachineStore } from '../stores/machine';
 import { useSessionsUiStore } from '../stores/sessions-ui';
 import { useTranslation } from 'react-i18next';
 import type { SpecDetail } from '../types/api';
-import { PageTransition } from '../components/shared/PageTransition';
+import { PageTransition } from '../components/shared/page-transition';
 import { getSubSpecStyle, formatSubSpecName } from '../lib/sub-spec-utils';
 import type { LucideIcon } from 'lucide-react';
-import { RelationshipsEditor } from '../components/relationships/RelationshipsEditor';
-import { TokenBadge } from '../components/TokenBadge';
-import { ValidationBadge } from '../components/ValidationBadge';
-import { TokenDetailsDialog } from '../components/specs/TokenDetailsDialog';
-import { ValidationDialog } from '../components/specs/ValidationDialog';
+import { RelationshipsEditor } from '../components/relationships/relationships-editor';
+import { TokenBadge } from '../components/token-badge';
+import { ValidationBadge } from '../components/validation-badge';
+import { TokenDetailsDialog } from '../components/specs/token-details-dialog';
+import { ValidationDialog } from '../components/specs/validation-dialog';
+
+/**
+ * Optimistically toggle a checkbox in markdown content.
+ * Finds the checklist line containing the item text and toggles its state.
+ */
+function toggleCheckboxInContent(content: string, itemText: string, checked: boolean): string {
+  const lines = content.split('\n');
+  const target = itemText.trim().toLowerCase();
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim().toLowerCase();
+    if (
+      (trimmed.startsWith('- [ ]') || trimmed.startsWith('- [x]')) &&
+      trimmed.includes(target)
+    ) {
+      lines[i] = checked
+        ? line.replace(/- \[[ ]\]/, '- [x]')
+        : line.replace(/- \[[xX]\]/, '- [ ]');
+      break;
+    }
+  }
+
+  return lines.join('\n');
+}
 
 // Sub-spec with frontend-assigned styling
 interface EnrichedSubSpec extends SubSpec {
@@ -282,6 +308,52 @@ export function SpecDetailPage() {
     setSpec((prev) => (prev ? { ...prev, ...updates } : prev));
   };
 
+  // Handle checklist checkbox toggle
+  const handleChecklistToggle = useCallback(async (itemText: string, checked: boolean) => {
+    if (!spec?.specName) return;
+
+    // Optimistically update the displayed content
+    const contentField = currentSubSpec ? null : 'contentMd';
+    if (contentField) {
+      setSpec((prev) => {
+        if (!prev) return prev;
+        const oldContent = prev.contentMd || '';
+        const updatedContent = toggleCheckboxInContent(oldContent, itemText, checked);
+        return { ...prev, contentMd: updatedContent };
+      });
+    } else if (currentSubSpec) {
+      // For sub-specs, optimistically update the sub-spec content
+      setSpec((prev) => {
+        if (!prev || !prev.subSpecs) return prev;
+        const updatedSubSpecs = (prev.subSpecs as SubSpec[]).map((ss: SubSpec) => {
+          if (ss.file === currentSubSpec) {
+            const oldContent = ss.content || ss.contentMd || '';
+            const updatedContent = toggleCheckboxInContent(oldContent, itemText, checked);
+            return { ...ss, content: updatedContent, contentMd: updatedContent };
+          }
+          return ss;
+        });
+        return { ...prev, subSpecs: updatedSubSpecs };
+      });
+    }
+
+    try {
+      await api.toggleSpecChecklist(
+        spec.specName,
+        [{ itemText, checked }],
+        {
+          subspec: currentSubSpec || undefined,
+        }
+      );
+      // Refetch to get the updated content hash and server state
+      void specQuery.refetch();
+    } catch (err) {
+      console.error('Failed to toggle checklist item:', err);
+      // Revert on failure by refetching
+      void specQuery.refetch();
+    }
+  }, [spec?.specName, currentSubSpec, specQuery]);
+
   // Handle sub-spec switching
   const handleSubSpecSwitch = (file: string | null) => {
     const newUrl = file
@@ -414,6 +486,9 @@ export function SpecDetailPage() {
                   </h1>
                   <StatusBadge status={spec.status || 'planned'} />
                   <PriorityBadge priority={spec.priority || 'medium'} />
+                  {spec.children && spec.children.length > 0 && (
+                    <UmbrellaBadge count={spec.children.length} />
+                  )}
                   <TokenBadge
                     count={currentTokenCount}
                     size="sm"
@@ -459,7 +534,10 @@ export function SpecDetailPage() {
                 )}
 
                 {/* Line 1: Spec number + H1 Title */}
-                <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
+                <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                  {spec.children && spec.children.length > 0 && (
+                    <UmbrellaBadge iconOnly />
+                  )}
                   <h1 className="text-lg sm:text-xl font-bold tracking-tight">
                     {spec.specNumber && (
                       <span className="text-muted-foreground">#{spec.specNumber} </span>
@@ -702,7 +780,7 @@ export function SpecDetailPage() {
         >
           <div ref={mainContentRef} className="flex w-full">
             <main className="flex-1 px-4 sm:px-6 lg:px-8 py-3 sm:py-6 min-w-0">
-              <MarkdownRenderer content={displayContent} specName={specName} basePath={basePath} />
+              <MarkdownRenderer content={displayContent} specName={specName} basePath={basePath} onChecklistToggle={handleChecklistToggle} />
             </main>
 
             {/* Right Sidebar for TOC (Desktop only) */}

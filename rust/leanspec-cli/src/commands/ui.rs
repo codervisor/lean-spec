@@ -114,7 +114,7 @@ fn run_dev_mode(
 
 fn run_published_ui(
     cwd: &Path,
-    specs_dir: &str,
+    _specs_dir: &str,
     port: &str,
     open_browser: bool,
     dry_run: bool,
@@ -124,8 +124,8 @@ fn run_published_ui(
     // Detect package manager
     let package_manager = detect_package_manager(cwd)?;
 
-    // Build command
-    let (cmd, args) = build_ui_command(&package_manager, specs_dir, port, open_browser);
+    // Build command - pass the project root (cwd), not the specs subdirectory
+    let (cmd, args) = build_ui_command(&package_manager, cwd, port, open_browser);
 
     if dry_run {
         println!("{}", "Would run:".cyan());
@@ -160,17 +160,17 @@ fn run_published_ui(
 
 fn build_ui_command(
     package_manager: &str,
-    specs_dir: &str,
+    project_dir: &Path,
     port: &str,
     open_browser: bool,
 ) -> (String, Vec<String>) {
     let mut ui_args = vec!["@leanspec/ui".to_string()];
 
-    // Pass project directory to HTTP server using --project flag
-    if !specs_dir.is_empty() {
-        ui_args.push("--project".to_string());
-        ui_args.push(specs_dir.to_string());
-    }
+    // Pass project root directory to HTTP server using --project flag.
+    // The HTTP server discovers the specs subdirectory automatically from
+    // the project root, so we must not pass the specs dir itself here.
+    ui_args.push("--project".to_string());
+    ui_args.push(project_dir.to_string_lossy().to_string());
 
     ui_args.push("--port".to_string());
     ui_args.push(port.to_string());

@@ -5,7 +5,7 @@ import type {
   SpecStatus as UiSpecStatus,
   SpecWithMetadata as UiSpecWithMetadata,
   SubSpec as UiSubSpec,
-} from '@leanspec/ui-components';
+} from './specs';
 
 export type SpecStatus = UiSpecStatus;
 export type SpecPriority = UiSpecPriority;
@@ -62,7 +62,11 @@ export interface RunnerDefinition {
   command?: string | null;
   args: string[];
   env: Record<string, string>;
-  available: boolean;
+  /** 
+   * True if command is available, false if not, undefined if validation pending.
+   * When skipValidation=true on list request, this will be undefined.
+   */
+  available?: boolean;
   version?: string | null;
   source: RunnerSource;
 }
@@ -218,6 +222,9 @@ export interface ContextFile {
 export interface LeanSpecConfig {
   template?: string;
   specsDir?: string;
+  draftStatus?: {
+    enabled?: boolean;
+  };
   structure?: {
     pattern?: string;
     prefix?: string;

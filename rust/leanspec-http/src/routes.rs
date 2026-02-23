@@ -117,6 +117,10 @@ pub fn create_router(state: AppState) -> Router {
             patch(handlers::update_project_spec_raw),
         )
         .route(
+            "/api/projects/{id}/specs/{spec}/checklist-toggle",
+            post(handlers::toggle_project_spec_checklist),
+        )
+        .route(
             "/api/projects/{id}/specs/{spec}/subspecs/{file}/raw",
             get(handlers::get_project_subspec_raw),
         )

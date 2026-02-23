@@ -8,7 +8,9 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path as FsPath;
 
-use leanspec_core::utils::hash_content;
+use leanspec_core::utils::{
+    apply_checklist_toggles, hash_content, rebuild_content, split_frontmatter, ChecklistToggle,
+};
 use leanspec_core::{
     global_frontmatter_validator, global_structure_validator, global_token_count_validator,
     global_token_counter, CompletionVerifier, DependencyGraph, FrontmatterParser, LeanSpecConfig,
@@ -20,12 +22,14 @@ use crate::error::{ApiError, ApiResult};
 use crate::project_registry::Project;
 use crate::state::AppState;
 use crate::sync_state::{machine_id_from_headers, PendingCommand, SyncCommand};
+
 use crate::types::{
-    BatchMetadataRequest, BatchMetadataResponse, CreateSpecRequest, DetailedBreakdown,
-    ListSpecsQuery, ListSpecsResponse, MetadataUpdate, SearchRequest, SearchResponse,
-    SectionTokenCount, SpecDetail, SpecMetadata, SpecRawResponse, SpecRawUpdateRequest,
-    SpecSummary, SpecTokenResponse, SpecValidationError, SpecValidationResponse, StatsResponse,
-    SubSpec, TokenBreakdown,
+    BatchMetadataRequest, BatchMetadataResponse, ChecklistToggleRequest, ChecklistToggleResponse,
+    ChecklistToggledResult, CreateSpecRequest, DetailedBreakdown, ListSpecsQuery,
+    ListSpecsResponse, MetadataUpdate, SearchRequest, SearchResponse, SectionTokenCount,
+    SpecDetail, SpecMetadata, SpecRawResponse, SpecRawUpdateRequest, SpecSummary,
+    SpecTokenResponse, SpecValidationError, SpecValidationResponse, StatsResponse, SubSpec,
+    TokenBreakdown,
 };
 use crate::utils::resolve_project;
 
@@ -175,6 +179,31 @@ fn render_template(template: &str, name: &str, status: &str, priority: &str, dat
         .replace("{status}", status)
         .replace("{priority}", priority)
         .replace("{date}", date)
+}
+
+/// Check if draft status is enabled in project config.
+/// Uses a local struct since leanspec_core::LeanSpecConfig doesn't have draft_status.
+fn is_draft_status_enabled(project_path: &FsPath) -> bool {
+    #[derive(serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct DraftStatusConfig {
+        enabled: Option<bool>,
+    }
+    #[derive(serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct ProjectConfig {
+        draft_status: Option<DraftStatusConfig>,
+    }
+
+    let config_path = project_path.join(".lean-spec/config.json");
+    let Ok(content) = fs::read_to_string(config_path) else {
+        return false;
+    };
+
+    serde_json::from_str::<ProjectConfig>(&content)
+        .ok()
+        .and_then(|config| config.draft_status.and_then(|draft| draft.enabled))
+        .unwrap_or(false)
 }
 
 fn load_project_config(project_path: &FsPath) -> Option<LeanSpecConfig> {
@@ -648,10 +677,14 @@ pub async fn create_project_spec(
     }
 
     let today = chrono::Utc::now().date_naive().to_string();
-    let status = request
-        .status
-        .clone()
-        .unwrap_or_else(|| "planned".to_string());
+    let draft_enabled = is_draft_status_enabled(&project.path);
+    let status = request.status.clone().unwrap_or_else(|| {
+        if draft_enabled {
+            "draft".to_string()
+        } else {
+            "planned".to_string()
+        }
+    });
     let priority = request
         .priority
         .clone()
@@ -1065,6 +1098,125 @@ pub async fn update_project_spec_raw(
         content: request.content,
         content_hash: new_hash,
         file_path: spec.file_path.to_string_lossy().to_string(),
+    }))
+}
+
+/// POST /api/projects/:projectId/specs/:spec/checklist-toggle - Toggle checklist items
+pub async fn toggle_project_spec_checklist(
+    State(state): State<AppState>,
+    Path((project_id, spec_id)): Path<(String, String)>,
+    headers: HeaderMap,
+    Json(request): Json<ChecklistToggleRequest>,
+) -> ApiResult<Json<ChecklistToggleResponse>> {
+    if machine_id_from_headers(&headers).is_some() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ApiError::invalid_request(
+                "Checklist toggle not supported for synced machines",
+            )),
+        ));
+    }
+
+    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
+    let spec = loader.load(&spec_id).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let spec = spec.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError::spec_not_found(&spec_id)),
+        )
+    })?;
+
+    // Determine file path: main spec or sub-spec
+    let file_path = if let Some(ref subspec_file) = request.subspec {
+        if subspec_file.contains('/') || subspec_file.contains('\\') {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request("Invalid sub-spec file")),
+            ));
+        }
+        let parent_dir = spec.file_path.parent().ok_or_else(|| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error("Missing spec directory")),
+            )
+        })?;
+        let sub_path = parent_dir.join(subspec_file);
+        if !sub_path.exists() {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ApiError::invalid_request("Sub-spec not found")),
+            ));
+        }
+        sub_path
+    } else {
+        spec.file_path.clone()
+    };
+
+    let content = fs::read_to_string(&file_path).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+    let current_hash = hash_raw_content(&content);
+
+    // Verify content hash if provided
+    if let Some(expected) = &request.expected_content_hash {
+        if expected != &current_hash {
+            return Err((
+                StatusCode::CONFLICT,
+                Json(ApiError::invalid_request("Content hash mismatch").with_details(current_hash)),
+            ));
+        }
+    }
+
+    // Split frontmatter from body for main spec files
+    let (frontmatter, body) = split_frontmatter(&content);
+
+    // Convert request toggles to core ChecklistToggle
+    let toggles: Vec<ChecklistToggle> = request
+        .toggles
+        .iter()
+        .map(|t| ChecklistToggle {
+            item_text: t.item_text.clone(),
+            checked: t.checked,
+        })
+        .collect();
+
+    // Apply checklist toggles to the body
+    let (updated_body, results) = apply_checklist_toggles(&body, &toggles)
+        .map_err(|e| (StatusCode::BAD_REQUEST, Json(ApiError::invalid_request(&e))))?;
+
+    // Rebuild the full content
+    let updated_content = rebuild_content(frontmatter, &updated_body);
+
+    // Write updated content back to the file
+    fs::write(&file_path, &updated_content).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let new_hash = hash_raw_content(&updated_content);
+
+    Ok(Json(ChecklistToggleResponse {
+        success: true,
+        content_hash: new_hash,
+        toggled: results
+            .into_iter()
+            .map(|r| ChecklistToggledResult {
+                item_text: r.item_text,
+                checked: r.checked,
+                line: r.line,
+            })
+            .collect(),
     }))
 }
 
@@ -1652,6 +1804,21 @@ pub async fn update_project_metadata(
                 }
             }
 
+            if spec.status == "draft"
+                && matches!(
+                    updates.status.as_deref(),
+                    Some("in-progress") | Some("complete")
+                )
+                && !updates.force.unwrap_or(false)
+            {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ApiError::invalid_request(
+                        "Cannot skip 'planned' stage. Use force to override.",
+                    )),
+                ));
+            }
+
             let command = PendingCommand {
                 id: uuid::Uuid::new_v4().to_string(),
                 command: SyncCommand::ApplyMetadata {
@@ -1818,6 +1985,18 @@ pub async fn update_project_metadata(
                 ))),
             )
         })?;
+
+        if spec_info.frontmatter.status == SpecStatus::Draft
+            && matches!(status, SpecStatus::InProgress | SpecStatus::Complete)
+            && !updates.force.unwrap_or(false)
+        {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request(
+                    "Cannot skip 'planned' stage. Use force to override.",
+                )),
+            ));
+        }
 
         // Check umbrella completion when marking as complete
         if status == SpecStatus::Complete && !updates.force.unwrap_or(false) {

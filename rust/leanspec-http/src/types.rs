@@ -210,6 +210,42 @@ pub struct SpecRawUpdateRequest {
     pub expected_content_hash: Option<String>,
 }
 
+/// Request to toggle checklist items in a spec
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChecklistToggleRequest {
+    pub toggles: Vec<ChecklistToggleItem>,
+    pub expected_content_hash: Option<String>,
+    /// Optional sub-spec filename (e.g., "IMPLEMENTATION.md")
+    pub subspec: Option<String>,
+}
+
+/// A single checklist toggle item
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChecklistToggleItem {
+    pub item_text: String,
+    pub checked: bool,
+}
+
+/// Response from checklist toggle
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChecklistToggleResponse {
+    pub success: bool,
+    pub content_hash: String,
+    pub toggled: Vec<ChecklistToggledResult>,
+}
+
+/// Result of a single checklist toggle
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChecklistToggledResult {
+    pub item_text: String,
+    pub checked: bool,
+    pub line: usize,
+}
+
 /// Create spec request
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -409,6 +445,10 @@ pub struct PriorityCountItem {
 impl StatsResponse {
     pub fn from_project_stats(stats: SpecStats, project_id: &str) -> Self {
         let specs_by_status = vec![
+            StatusCountItem {
+                status: "draft".to_string(),
+                count: *stats.by_status.get(&SpecStatus::Draft).unwrap_or(&0),
+            },
             StatusCountItem {
                 status: "planned".to_string(),
                 count: *stats.by_status.get(&SpecStatus::Planned).unwrap_or(&0),
@@ -730,7 +770,16 @@ pub struct LeanSpecConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub features: Option<ConfigFeatures>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub draft_status: Option<DraftStatusConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub templates: Option<std::collections::HashMap<String, String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DraftStatusConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enabled: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -15,6 +15,9 @@ import type {
   RunnerScope,
   RunnerValidateResponse,
 } from "../types/api";
+import type { ChatConfig } from "../types/chat-config";
+import type { ModelsRegistryResponse } from "../types/models-registry";
+import type { ChatStorageInfo } from "./backend-adapter/core";
 
 /**
  * Project-aware API wrapper
@@ -89,9 +92,18 @@ class ProjectAPI {
       parent?: string | null;
       addDependsOn?: string[];
       removeDependsOn?: string[];
+      force?: boolean;
     }
   ): Promise<void> {
     return this.backend.updateSpec(this.getCurrentProjectId(), specName, updates);
+  }
+
+  async toggleSpecChecklist(
+    specName: string,
+    toggles: { itemText: string; checked: boolean }[],
+    options?: { expectedContentHash?: string; subspec?: string }
+  ): Promise<{ success: boolean; contentHash: string; toggled: { itemText: string; checked: boolean; line: number }[] }> {
+    return this.backend.toggleSpecChecklist(this.getCurrentProjectId(), specName, toggles, options);
   }
 
   async getStats(): Promise<Stats> {
@@ -154,8 +166,8 @@ class ProjectAPI {
     return this.backend.listAvailableRunners(projectPath);
   }
 
-  listRunners(projectPath?: string): Promise<RunnerListResponse> {
-    return this.backend.listRunners(projectPath);
+  listRunners(projectPath?: string, options?: { skipValidation?: boolean }): Promise<RunnerListResponse> {
+    return this.backend.listRunners(projectPath, options);
   }
 
   getRunner(runnerId: string, projectPath?: string): Promise<RunnerDefinition> {
@@ -207,6 +219,18 @@ class ProjectAPI {
   }): Promise<RunnerListResponse> {
     return this.backend.setDefaultRunner(payload);
   }
+
+  // Chat operations (not project-scoped)
+  getChatConfig = (): Promise<ChatConfig> => this.backend.getChatConfig();
+  updateChatConfig = (config: ChatConfig): Promise<ChatConfig> => this.backend.updateChatConfig(config);
+  getChatStorageInfo = (): Promise<ChatStorageInfo> => this.backend.getChatStorageInfo();
+
+  // Models operations (not project-scoped)
+  getModelsProviders = (options?: { agenticOnly?: boolean }): Promise<ModelsRegistryResponse> =>
+    this.backend.getModelsProviders(options);
+  refreshModelsRegistry = (): Promise<void> => this.backend.refreshModelsRegistry();
+  setProviderApiKey = (providerId: string, apiKey: string, baseUrl?: string): Promise<void> =>
+    this.backend.setProviderApiKey(providerId, apiKey, baseUrl);
 }
 
 export const api = new ProjectAPI();

@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { useSpecSync } from '@leanspec/ui-components';
+import { useSpecSync } from '@/library';
 import { useInvalidateSpecs } from './useSpecsQuery';
 import { useMachineStore } from '../stores/machine';
 

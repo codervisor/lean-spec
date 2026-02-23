@@ -4,11 +4,11 @@ import type { UIMessage } from '@ai-sdk/react';
 function extractTextFromMessage(message: UIMessage): string {
   if (!message.parts) return '';
   return message.parts
-    .filter((p): p is { type: 'text'; text: string } => 
-      typeof p === 'object' && 
-      p !== null && 
-      'type' in p && 
-      (p as { type: unknown }).type === 'text' && 
+    .filter((p): p is { type: 'text'; text: string } =>
+      typeof p === 'object' &&
+      p !== null &&
+      'type' in p &&
+      (p as { type: unknown }).type === 'text' &&
       'text' in p
     )
     .map(p => p.text)
@@ -49,6 +49,7 @@ interface ChatMessageDto {
   role: UIMessage['role'];
   content: string;
   timestamp: number;
+  parts?: UIMessage['parts'];
   metadata?: Record<string, unknown> | null;
 }
 
@@ -61,8 +62,8 @@ function toThread(session: ChatSessionDto): ChatThread {
     createdAt: new Date(session.createdAt).toISOString(),
     updatedAt: new Date(session.updatedAt).toISOString(),
     model: {
-      providerId: session.providerId ?? 'openai',
-      modelId: session.modelId ?? 'gpt-4o',
+      providerId: session.providerId!,
+      modelId: session.modelId!,
     },
     messageCount: session.messageCount ?? 0,
     preview: session.preview ?? '',
@@ -70,18 +71,37 @@ function toThread(session: ChatSessionDto): ChatThread {
 }
 
 function toUIMessage(message: ChatMessageDto): UIMessage {
+  const parts = message.parts?.length
+    ? message.parts
+    : [{ type: 'text', text: message.content }];
   return {
     id: message.id,
     role: message.role,
-    parts: [{ type: 'text', text: message.content }],
+    parts,
+    metadata: message.metadata ?? undefined,
   } as UIMessage;
 }
+
+// Only persist content part types — exclude transient stream metadata (step-start, etc.)
+const PERSISTABLE_PART_TYPES = new Set([
+  'text',
+  'tool-call',
+  'tool-result',
+  'file',
+  'reasoning',
+  'source-url',
+  'source-document',
+]);
 
 function toMessageInput(messages: UIMessage[]) {
   return messages.map((message) => ({
     id: message.id,
     role: message.role,
     content: extractTextFromMessage(message),
+    parts: message.parts?.filter(
+      (p) => PERSISTABLE_PART_TYPES.has((p as { type: string }).type)
+    ),
+    metadata: message.metadata ?? null,
   }));
 }
 

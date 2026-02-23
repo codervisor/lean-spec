@@ -1,8 +1,9 @@
 //! Spec management tools (list, view, create, update, search)
 
 use super::helpers::{
-    create_content_description, get_next_spec_number, load_config, merge_frontmatter,
-    resolve_project_root, resolve_template_variables, to_title_case, MergeFrontmatterInput,
+    create_content_description, get_next_spec_number, is_draft_status_enabled, load_config,
+    merge_frontmatter, resolve_project_root, resolve_template_variables, to_title_case,
+    MergeFrontmatterInput,
 };
 use chrono::Utc;
 use leanspec_core::hash_content;
@@ -118,10 +119,7 @@ pub(crate) fn tool_create(specs_dir: &str, args: Value) -> Result<String, String
         .ok_or("Missing required parameter: name")?;
 
     let title_input = args.get("title").and_then(|v| v.as_str());
-    let status = args
-        .get("status")
-        .and_then(|v| v.as_str())
-        .unwrap_or("planned");
+    let status_input = args.get("status").and_then(|v| v.as_str());
     let priority = args
         .get("priority")
         .and_then(|v| v.as_str())
@@ -157,21 +155,29 @@ pub(crate) fn tool_create(specs_dir: &str, args: Value) -> Result<String, String
     let now = Utc::now();
     let created_date = now.format("%Y-%m-%d").to_string();
 
+    let project_root = resolve_project_root(specs_dir)?;
+    let resolved_status = status_input.unwrap_or_else(|| {
+        if is_draft_status_enabled(&project_root) {
+            "draft"
+        } else {
+            "planned"
+        }
+    });
+
     let base_content = if let Some(content) = content_override {
         content.to_string()
     } else {
-        let project_root = resolve_project_root(specs_dir)?;
         let config = load_config(&project_root);
         let loader = TemplateLoader::with_config(&project_root, config);
         let template = loader
             .load(template_name)
             .map_err(|e| format!("Failed to load template: {}", e))?;
-        resolve_template_variables(&template, &title, status, priority, &created_date)
+        resolve_template_variables(&template, &title, resolved_status, priority, &created_date)
     };
 
     let content = merge_frontmatter(&MergeFrontmatterInput {
         content: &base_content,
-        status,
+        status: resolved_status,
         priority,
         tags: &tags,
         created_date: &created_date,
@@ -349,6 +355,12 @@ pub(crate) fn tool_update(specs_dir: &str, args: Value) -> Result<String, String
     }
 
     if let Some(new_status) = args.get("status").and_then(|v| v.as_str()) {
+        if spec.frontmatter.status == leanspec_core::SpecStatus::Draft
+            && (new_status == "in-progress" || new_status == "complete")
+            && !force
+        {
+            return Err("Cannot skip 'planned' stage. Use force to override.".to_string());
+        }
         if new_status == "complete" && !force {
             let verification =
                 CompletionVerifier::verify_content(&rebuilt).map_err(|e| e.to_string())?;
@@ -528,6 +540,8 @@ fn parse_checklist_toggles(args: &Value) -> Result<Vec<ChecklistToggle>, String>
 }
 
 pub(crate) fn tool_search(specs_dir: &str, args: Value) -> Result<String, String> {
+    use leanspec_core::{parse_query_terms, search_specs};
+
     let query = args
         .get("query")
         .and_then(|v| v.as_str())
@@ -538,57 +552,25 @@ pub(crate) fn tool_search(specs_dir: &str, args: Value) -> Result<String, String
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all().map_err(|e| e.to_string())?;
 
-    let query_lower = query.to_lowercase();
+    // Check for empty query
+    let terms = parse_query_terms(query);
+    if terms.is_empty() {
+        return serde_json::to_string_pretty(&json!({
+            "query": query,
+            "count": 0,
+            "results": [],
+            "error": "Empty search query"
+        }))
+        .map_err(|e| e.to_string());
+    }
 
-    let mut results: Vec<_> = specs
-        .iter()
-        .filter_map(|spec| {
-            let mut score = 0.0;
-
-            if spec.title.to_lowercase().contains(&query_lower) {
-                score += 10.0;
-            }
-            if spec.path.to_lowercase().contains(&query_lower) {
-                score += 5.0;
-            }
-            for tag in &spec.frontmatter.tags {
-                if tag.to_lowercase().contains(&query_lower) {
-                    score += 3.0;
-                }
-            }
-            let content_matches = spec.content.to_lowercase().matches(&query_lower).count();
-            if content_matches > 0 {
-                score += (content_matches as f64).min(5.0);
-            }
-
-            if score > 0.0 {
-                Some((spec, score))
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-    results.truncate(limit);
-
-    let output: Vec<_> = results
-        .iter()
-        .map(|(spec, score)| {
-            json!({
-                "path": spec.path,
-                "title": spec.title,
-                "status": spec.frontmatter.status.to_string(),
-                "score": score,
-                "tags": spec.frontmatter.tags,
-            })
-        })
-        .collect();
+    // Use core search module
+    let results = search_specs(&specs, query, limit);
 
     serde_json::to_string_pretty(&json!({
         "query": query,
-        "count": output.len(),
-        "results": output
+        "count": results.len(),
+        "results": results
     }))
     .map_err(|e| e.to_string())
 }
@@ -607,8 +589,8 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                 "properties": {
                     "status": {
                         "type": "string",
-                        "description": "Filter by status: planned, in-progress, complete, archived",
-                        "enum": ["planned", "in-progress", "complete", "archived"]
+                        "description": "Filter by status: draft, planned, in-progress, complete, archived",
+                        "enum": ["draft", "planned", "in-progress", "complete", "archived"]
                     },
                     "tags": {
                         "type": "array",
@@ -620,8 +602,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                         "description": "Filter by priority: low, medium, high, critical",
                         "enum": ["low", "medium", "high", "critical"]
                     }
-                },
-                "additionalProperties": false
+                }
             }),
         },
         ToolDefinition {
@@ -635,8 +616,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                         "description": "Spec path or number (e.g., '170' or '170-cli-mcp')"
                     }
                 },
-                "required": ["specPath"],
-                "additionalProperties": false
+                "required": ["specPath"]
             }),
         },
         ToolDefinition {
@@ -655,15 +635,13 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                     },
                     "status": {
                         "type": "string",
-                        "description": "Initial status",
-                        "enum": ["planned", "in-progress"],
-                        "default": "planned"
+                        "description": "Initial status (defaults to config or 'planned')",
+                        "enum": ["draft", "planned", "in-progress", "complete", "archived"]
                     },
                     "priority": {
                         "type": "string",
-                        "description": "Priority level",
-                        "enum": ["low", "medium", "high", "critical"],
-                        "default": "medium"
+                        "description": "Priority level (defaults to 'medium')",
+                        "enum": ["low", "medium", "high", "critical"]
                     },
                     "template": {
                         "type": "string",
@@ -688,8 +666,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                         "description": "Specs this new spec depends on (blocking dependencies)"
                     }
                 },
-                "required": ["name"],
-                "additionalProperties": false
+                "required": ["name"]
             }),
         },
         ToolDefinition {
@@ -705,7 +682,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                     "status": {
                         "type": "string",
                         "description": "New status",
-                        "enum": ["planned", "in-progress", "complete", "archived"]
+                        "enum": ["draft", "planned", "in-progress", "complete", "archived"]
                     },
                     "priority": {
                         "type": "string",
@@ -737,8 +714,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                                 "matchMode": {
                                     "type": "string",
                                     "enum": ["unique", "all", "first"],
-                                    "default": "unique",
-                                    "description": "unique=error if multiple matches, all=replace all, first=first only"
+                                    "description": "unique=error if multiple matches, all=replace all, first=first only (defaults to 'unique')"
                                 }
                             },
                             "required": ["oldString", "newString"]
@@ -755,7 +731,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                                 "mode": {
                                     "type": "string",
                                     "enum": ["replace", "append", "prepend"],
-                                    "default": "replace"
+                                    "description": "Section update mode (defaults to 'replace')"
                                 }
                             },
                             "required": ["section", "content"]
@@ -783,12 +759,10 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                     },
                     "force": {
                         "type": "boolean",
-                        "description": "Skip completion verification when setting status to complete",
-                        "default": false
+                        "description": "Skip completion verification when setting status to complete (defaults to false)"
                     }
                 },
-                "required": ["specPath"],
-                "additionalProperties": false
+                "required": ["specPath"]
             }),
         },
         ToolDefinition {
@@ -802,13 +776,11 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                         "description": "Search query"
                     },
                     "limit": {
-                        "type": "integer",
-                        "description": "Maximum results",
-                        "default": 10
+                        "type": "number",
+                        "description": "Maximum results (defaults to 10)"
                     }
                 },
-                "required": ["query"],
-                "additionalProperties": false
+                "required": ["query"]
             }),
         },
     ]

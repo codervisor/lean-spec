@@ -24,7 +24,7 @@
     "analytics": "Analytics",
     "projectContext": "Project Context",
     "settings": "Settings",
-    "settingsDescription": "Configure AI models, appearance, and preferences",
+    "settingsDescription": "Preferences and config",
     "toggleMenu": "Toggle menu",
     "docsTooltip": "Documentation",
     "githubTooltip": "GitHub repository",
@@ -39,6 +39,7 @@
     "searchSpecs": "Search Specs"
   },
   "status": {
+    "draft": "Draft",
     "planned": "Planned",
     "inProgress": "In Progress",
     "in-progress": "In Progress",
@@ -294,6 +295,19 @@
         "input": "Input",
         "output": "Output",
         "error": "Error"
+      },
+      "actions": {
+        "showAll": "Show all",
+        "showLess": "Show less",
+        "copy": "Copy"
+      },
+      "tabs": {
+        "input": "Input",
+        "output": "Output"
+      },
+      "viewToggle": {
+        "ui": "UI",
+        "json": "JSON"
       }
     },
     "settings": {
@@ -413,7 +427,7 @@
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
     "tabs": {
-      "ai": "AI Models",
+      "models": "Models",
       "runners": "Runners",
       "appearance": "Appearance"
     },
@@ -465,6 +479,7 @@
       "hideModels": "Hide models",
       "showModels": "Show models",
       "moreModels": "more models",
+      "modelsAvailable": "models available",
       "capabilities": {
         "toolCall": "Tool calling",
         "reasoning": "Reasoning",
@@ -476,11 +491,25 @@
       "noCustomProviders": "No custom providers configured",
       "custom": "Custom",
       "configureApiKey": "Configure API Key",
+      "clearApiKey": "Clear API key",
+      "configureModels": "Configure {{provider}} Models",
+      "configureModelsDescription": "Select which models to enable for this provider",
       "apiKeyDialogDescription": "Enter your API key for {{provider}}",
       "azureApiKeyDialogDescription": "Configure Azure OpenAI with your resource name and API key",
       "azureResourceName": "Azure Resource Name",
       "azureResourceNameHelp": "The name of your Azure OpenAI resource (e.g., 'my-openai-resource')",
       "apiKeyStorageNote": "API key will be stored locally in your config file",
+      "configureProvider": "Configure {{provider}}",
+      "configureProviderDescription": "Configure provider details and model access",
+      "restrictModels": "Restrict available models",
+      "allModelsEnabled": "All models enabled",
+      "allModelsEnabledDesc": "All models from this provider are currently available in the chat.",
+      "enableRestriction": "Enable restriction",
+      "selectedOf": "selected of",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "restricted": "Restricted",
+      "outOfTotal": "of {{total}} total",
       "placeholders": {
         "azureResourceName": "my-openai-resource",
         "apiKeyEnv": "{{provider}}_API_KEY",
@@ -512,6 +541,11 @@
         "models": "Model Count",
         "configured": "Configured First"
       },
+      "modelSort": {
+        "sortBy": "Sort by",
+        "name": "Name",
+        "tokens": "Tokens"
+      },
       "filters": {
         "status": "Status",
         "all": "All",
@@ -524,6 +558,7 @@
       "toasts": {
         "defaultProvider": "Default provider set to {{provider}}",
         "apiKeySaved": "API key saved",
+        "apiKeyCleared": "API key cleared",
         "modelsSaved": "Model preferences saved"
       },
       "errors": {
@@ -742,7 +777,8 @@
       "toggleChatSidebar": "Toggle AI chat sidebar",
       "focusChatInput": "Focus chat input",
       "newConversation": "New conversation",
-      "viewHistory": "View history"
+      "viewHistory": "View history",
+      "closeChatSidebar": "Close chat sidebar"
     }
   },
   "tableOfContents": {
@@ -1252,6 +1288,10 @@
     "changeStatus": "Change spec status",
     "statusSuccess": "Status updated",
     "statusError": "Failed to update status",
+    "draftSkipTitle": "Skip planned stage?",
+    "draftSkipDescription": "This spec is still in draft. Move it to Planned before starting work, or skip planning with force.",
+    "draftSkipPlanned": "Go to Planned",
+    "draftSkipForce": "Skip Anyway",
     "changePriority": "Change spec priority",
     "prioritySuccess": "Priority updated",
     "priorityError": "Failed to update priority",

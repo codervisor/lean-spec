@@ -1,7 +1,9 @@
 //! Search command implementation
+//!
+//! Uses leanspec_core::search for cross-field multi-term search with relevance scoring.
 
 use colored::Colorize;
-use leanspec_core::SpecLoader;
+use leanspec_core::{find_content_snippet, parse_query_terms, search_specs, SpecLoader};
 use std::error::Error;
 
 pub fn run(
@@ -13,74 +15,17 @@ pub fn run(
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all()?;
 
-    let query_lower = query.to_lowercase();
+    let terms = parse_query_terms(query);
+    if terms.is_empty() {
+        println!("{} Empty search query", "⚠️".yellow());
+        return Ok(());
+    }
 
-    // Search and score specs
-    let mut results: Vec<_> = specs
-        .iter()
-        .filter_map(|spec| {
-            let mut score = 0.0;
-
-            // Title match (highest weight)
-            if spec.title.to_lowercase().contains(&query_lower) {
-                score += 10.0;
-            }
-
-            // Path match
-            if spec.path.to_lowercase().contains(&query_lower) {
-                score += 5.0;
-            }
-
-            // Tag match
-            for tag in &spec.frontmatter.tags {
-                if tag.to_lowercase().contains(&query_lower) {
-                    score += 3.0;
-                }
-            }
-
-            // Content match (lowest weight)
-            let content_lower = spec.content.to_lowercase();
-            let content_matches = content_lower.matches(&query_lower).count();
-            if content_matches > 0 {
-                score += (content_matches as f64).min(5.0);
-            }
-
-            if score > 0.0 {
-                Some((spec, score))
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    // Sort by score descending
-    results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-
-    // Limit results
-    results.truncate(limit);
+    // Use core search module
+    let results = search_specs(&specs, query, limit);
 
     if output_format == "json" {
-        #[derive(serde::Serialize)]
-        struct SearchResult {
-            path: String,
-            title: String,
-            status: String,
-            score: f64,
-            tags: Vec<String>,
-        }
-
-        let output: Vec<_> = results
-            .iter()
-            .map(|(spec, score)| SearchResult {
-                path: spec.path.clone(),
-                title: spec.title.clone(),
-                status: spec.frontmatter.status.to_string(),
-                score: *score,
-                tags: spec.frontmatter.tags.clone(),
-            })
-            .collect();
-
-        println!("{}", serde_json::to_string_pretty(&output)?);
+        println!("{}", serde_json::to_string_pretty(&results)?);
         return Ok(());
     }
 
@@ -98,26 +43,30 @@ pub fn run(
     );
     println!();
 
-    for (spec, _score) in &results {
-        let status_emoji = spec.frontmatter.status_emoji();
+    for result in &results {
+        // Find the original spec for additional info
+        let spec = specs.iter().find(|s| s.path == result.path);
+        let status_emoji = spec.map(|s| s.frontmatter.status_emoji()).unwrap_or("📄");
 
-        // Highlight query in title
-        let highlighted_title = highlight_match(&spec.title, query);
+        // Highlight query terms in title
+        let highlighted_title = highlight_match(&result.title, &terms);
 
         println!(
             "{} {} - {}",
             status_emoji,
-            spec.path.cyan(),
+            result.path.cyan(),
             highlighted_title
         );
 
-        if !spec.frontmatter.tags.is_empty() {
-            println!("   🏷️  {}", spec.frontmatter.tags.join(", ").dimmed());
+        if !result.tags.is_empty() {
+            println!("   🏷️  {}", result.tags.join(", ").dimmed());
         }
 
-        // Show snippet if content matched
-        if let Some(snippet) = find_content_snippet(&spec.content, query, 100) {
-            println!("   {}", snippet.dimmed());
+        // Show snippet if content matched any term
+        if let Some(spec) = spec {
+            if let Some(snippet) = find_content_snippet(&spec.content, &terms, 100) {
+                println!("   {}", snippet.dimmed());
+            }
         }
 
         println!();
@@ -126,43 +75,17 @@ pub fn run(
     Ok(())
 }
 
-fn highlight_match(text: &str, query: &str) -> String {
-    let query_lower = query.to_lowercase();
+fn highlight_match(text: &str, terms: &[String]) -> String {
     let text_lower = text.to_lowercase();
 
-    if let Some(pos) = text_lower.find(&query_lower) {
-        let before = &text[..pos];
-        let matched = &text[pos..pos + query.len()];
-        let after = &text[pos + query.len()..];
-        format!("{}{}{}", before, matched.yellow().bold(), after)
-    } else {
-        text.to_string()
-    }
-}
-
-fn find_content_snippet(content: &str, query: &str, max_len: usize) -> Option<String> {
-    let content_lower = content.to_lowercase();
-    let query_lower = query.to_lowercase();
-
-    if let Some(pos) = content_lower.find(&query_lower) {
-        // Find start of line
-        let start = content[..pos].rfind('\n').map(|p| p + 1).unwrap_or(0);
-
-        // Get the line
-        let line_end = content[pos..]
-            .find('\n')
-            .map(|p| pos + p)
-            .unwrap_or(content.len());
-        let line = &content[start..line_end];
-
-        // Truncate if too long
-        if line.len() > max_len {
-            let truncated = &line[..max_len];
-            Some(format!("{}...", truncated.trim()))
-        } else {
-            Some(format!("\"{}\"", line.trim()))
+    // Find the first matching term in the text
+    for term in terms {
+        if let Some(pos) = text_lower.find(term) {
+            let before = &text[..pos];
+            let matched = &text[pos..pos + term.len()];
+            let after = &text[pos + term.len()..];
+            return format!("{}{}{}", before, matched.yellow().bold(), after);
         }
-    } else {
-        None
     }
+    text.to_string()
 }

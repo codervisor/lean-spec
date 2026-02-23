@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import '@leanspec/ui-components/styles.css'
+import './styles.css'
 import './index.css'
 import './lib/i18n'
 import App from './App'

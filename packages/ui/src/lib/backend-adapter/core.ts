@@ -27,6 +27,14 @@ import type {
   RunnerScope,
   RunnerValidateResponse,
 } from '../../types/api';
+import type { ChatConfig } from '../../types/chat-config';
+import type { ModelsRegistryResponse } from '../../types/models-registry';
+
+// Chat storage info
+export interface ChatStorageInfo {
+  path: string;
+  sizeBytes: number;
+}
 
 export class APIError extends Error {
   status: number;
@@ -80,8 +88,15 @@ export interface BackendAdapter {
       parent?: string | null;
       addDependsOn?: string[];
       removeDependsOn?: string[];
+      force?: boolean;
     }
   ): Promise<void>;
+  toggleSpecChecklist(
+    projectId: string,
+    specName: string,
+    toggles: { itemText: string; checked: boolean }[],
+    options?: { expectedContentHash?: string; subspec?: string }
+  ): Promise<{ success: boolean; contentHash: string; toggled: { itemText: string; checked: boolean; line: number }[] }>;
 
   // Stats and dependencies
   getStats(projectId: string): Promise<Stats>;
@@ -112,7 +127,7 @@ export interface BackendAdapter {
   getSessionLogs(sessionId: string): Promise<SessionLog[]>;
   getSessionEvents(sessionId: string): Promise<SessionEvent[]>;
   listAvailableRunners(projectPath?: string): Promise<string[]>;
-  listRunners(projectPath?: string): Promise<RunnerListResponse>;
+  listRunners(projectPath?: string, options?: { skipValidation?: boolean }): Promise<RunnerListResponse>;
   getRunner(runnerId: string, projectPath?: string): Promise<RunnerDefinition>;
   createRunner(payload: {
     projectPath: string;
@@ -148,6 +163,16 @@ export interface BackendAdapter {
     runnerId: string;
     scope?: RunnerScope;
   }): Promise<RunnerListResponse>;
+
+  // Chat operations
+  getChatConfig(): Promise<ChatConfig>;
+  updateChatConfig(config: ChatConfig): Promise<ChatConfig>;
+  getChatStorageInfo(): Promise<ChatStorageInfo>;
+
+  // Models operations
+  getModelsProviders(options?: { agenticOnly?: boolean }): Promise<ModelsRegistryResponse>;
+  refreshModelsRegistry(): Promise<void>;
+  setProviderApiKey(providerId: string, apiKey: string, baseUrl?: string): Promise<void>;
 }
 
 export type {
@@ -178,4 +203,6 @@ export type {
   RunnerListResponse,
   RunnerScope,
   RunnerValidateResponse,
+  ChatConfig,
+  ModelsRegistryResponse,
 };

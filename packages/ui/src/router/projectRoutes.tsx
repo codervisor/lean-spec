@@ -1,10 +1,9 @@
 import type { RouteObject } from 'react-router-dom';
 
-import { SpecDetailLayout } from '../components/SpecDetailLayout';
+import { SpecDetailLayout } from '../components/spec-detail-layout';
 import { ContextPage } from '../pages/ContextPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { DependenciesPage } from '../pages/DependenciesPage';
-import { ChatPage } from '../pages/ChatPage';
 import { ChatSettingsPage } from '../pages/ChatSettingsPage';
 import { SessionDetailPage } from '../pages/SessionDetailPage';
 import { SessionsPage } from '../pages/SessionsPage';
@@ -43,7 +42,6 @@ export function createProjectRoutes(): RouteObject[] {
     { path: 'dependencies', element: <DependenciesPage /> },
     { path: 'dependencies/:specName', element: <DependenciesPage /> },
     { path: 'context', element: <ContextPage /> },
-    { path: 'chat', element: <ChatPage /> },
     { path: 'chat/settings', element: <ChatSettingsPage /> },
   ];
 }

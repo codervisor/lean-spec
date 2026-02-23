@@ -6,7 +6,7 @@ use crate::chat_config::ChatConfigStore;
 use crate::chat_store::ChatStore;
 use crate::config::{config_dir, ServerConfig};
 use crate::error::ServerError;
-use crate::project_registry::ProjectRegistry;
+use crate::project_registry::{Project, ProjectRegistry};
 use crate::sessions::{SessionDatabase, SessionManager};
 use crate::sync_state::SyncState;
 use crate::watcher::{sse_connection_limit, watch_debounce, watch_enabled, FileWatcher};
@@ -129,10 +129,15 @@ impl AppState {
 /// Resolve a default project path by walking up to find a `specs` directory.
 fn default_project_path() -> Option<(PathBuf, PathBuf)> {
     if let Ok(explicit) = std::env::var("LEANSPEC_PROJECT_PATH") {
-        let root = PathBuf::from(explicit);
-        let specs = root.join("specs");
-        if specs.exists() {
-            return Some((root, specs));
+        let root = PathBuf::from(&explicit);
+        if root.exists() {
+            // Use Project::from_path to discover the specs dir with the
+            // standard multi-candidate logic (specs, .lean-spec/specs, etc.)
+            if let Ok(project) = Project::from_path(&root) {
+                if project.specs_dir.exists() {
+                    return Some((root, project.specs_dir));
+                }
+            }
         }
     }
 

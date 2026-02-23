@@ -16,12 +16,21 @@ pub enum StreamEvent {
     TextDelta { id: String, delta: String },
     #[serde(rename = "text-end")]
     TextEnd { id: String },
+    #[serde(rename = "reasoning-start")]
+    ReasoningStart { id: String },
+    #[serde(rename = "reasoning-delta")]
+    ReasoningDelta { id: String, delta: String },
+    #[serde(rename = "reasoning-end")]
+    ReasoningEnd { id: String },
     #[serde(rename = "tool-input-start")]
     ToolInputStart {
         #[serde(rename = "toolCallId")]
         tool_call_id: String,
         #[serde(rename = "toolName")]
         tool_name: String,
+        /// Marks the tool as dynamic so the AI SDK creates `dynamic-tool` parts
+        /// instead of static `tool-{name}` parts.
+        dynamic: bool,
     },
     #[serde(rename = "tool-input-delta")]
     ToolInputDelta {
@@ -37,12 +46,14 @@ pub enum StreamEvent {
         #[serde(rename = "toolName")]
         tool_name: String,
         input: serde_json::Value,
+        dynamic: bool,
     },
     #[serde(rename = "tool-output-available")]
     ToolOutputAvailable {
         #[serde(rename = "toolCallId")]
         tool_call_id: String,
         output: serde_json::Value,
+        dynamic: bool,
     },
     #[serde(rename = "start-step")]
     StartStep,
@@ -108,19 +119,45 @@ mod tests {
         };
         assert!(text_end.to_sse_string().contains("\"type\":\"text-end\""));
 
+        // Test reasoning events
+        let reasoning_start = StreamEvent::ReasoningStart {
+            id: "r1".to_string(),
+        };
+        assert!(reasoning_start
+            .to_sse_string()
+            .contains("\"type\":\"reasoning-start\""));
+
+        let reasoning_delta = StreamEvent::ReasoningDelta {
+            id: "r1".to_string(),
+            delta: "Let me think...".to_string(),
+        };
+        let reasoning_delta_sse = reasoning_delta.to_sse_string();
+        assert!(reasoning_delta_sse.contains("\"type\":\"reasoning-delta\""));
+        assert!(reasoning_delta_sse.contains("\"delta\":\"Let me think...\""));
+
+        let reasoning_end = StreamEvent::ReasoningEnd {
+            id: "r1".to_string(),
+        };
+        assert!(reasoning_end
+            .to_sse_string()
+            .contains("\"type\":\"reasoning-end\""));
+
         // Test tool events
         let tool_start = StreamEvent::ToolInputStart {
             tool_call_id: "call_1".to_string(),
             tool_name: "list_specs".to_string(),
+            dynamic: true,
         };
         let tool_start_sse = tool_start.to_sse_string();
         assert!(tool_start_sse.contains("\"toolCallId\":\"call_1\""));
         assert!(tool_start_sse.contains("\"toolName\":\"list_specs\""));
+        assert!(tool_start_sse.contains("\"dynamic\":true"));
 
         let tool_available = StreamEvent::ToolInputAvailable {
             tool_call_id: "call_2".to_string(),
             tool_name: "get_spec".to_string(),
             input: serde_json::json!({ "id": "test" }),
+            dynamic: true,
         };
         assert!(tool_available
             .to_sse_string()
@@ -129,6 +166,7 @@ mod tests {
         let tool_output = StreamEvent::ToolOutputAvailable {
             tool_call_id: "call_2".to_string(),
             output: serde_json::json!({ "result": "success" }),
+            dynamic: true,
         };
         assert!(tool_output
             .to_sse_string()

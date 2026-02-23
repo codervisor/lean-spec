@@ -139,7 +139,7 @@ Following the terminology glossary in `docs-site/i18n/zh-Hans/TERMINOLOGY_GLOSSA
   - README
   - frontmatter
   - MCP
-  - Status values: `planned`, `in-progress`, `complete`, `archived`
+  - Status values: `draft`, `planned`, `in-progress`, `complete`, `archived`
   - File extensions: `.md`, `.json`, `.yaml`
 
 ### Translation Quality

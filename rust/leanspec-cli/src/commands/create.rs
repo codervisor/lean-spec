@@ -4,16 +4,29 @@ use chrono::Utc;
 use colored::Colorize;
 use leanspec_core::types::LeanSpecConfig;
 use leanspec_core::utils::TemplateLoader;
+use serde::Deserialize;
 use std::error::Error;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DraftStatusConfig {
+    enabled: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectConfig {
+    draft_status: Option<DraftStatusConfig>,
+}
 
 pub fn run(
     specs_dir: &str,
     name: &str,
     title: Option<String>,
     template: Option<String>,
-    status: &str,
+    status: Option<String>,
     priority: &str,
     tags: Option<String>,
 ) -> Result<(), Box<dyn Error>> {
@@ -21,12 +34,22 @@ pub fn run(
     let project_root = find_project_root(specs_dir)?;
     let config = load_config(&project_root)?;
 
-    // 2. Load template from filesystem
+    // 2. Resolve status (with draft detection)
+    let resolved_status = status.unwrap_or_else(|| {
+        if is_draft_status_enabled(&project_root) {
+            "draft".to_string()
+        } else {
+            "planned".to_string()
+        }
+    });
+
+    // 3. Load template from filesystem
     let template_loader = TemplateLoader::with_config(&project_root, config);
     let template_content = template_loader
         .load(template.as_deref())
         .map_err(|e| format!("Failed to load template: {}", e))?;
-    // 3. Generate spec details
+
+    // 4. Generate spec number
     let next_number = get_next_spec_number(specs_dir)?;
     let spec_name = format!("{:03}-{}", next_number, name);
     let spec_dir = Path::new(specs_dir).join(&spec_name);
@@ -37,22 +60,28 @@ pub fn run(
 
     fs::create_dir_all(&spec_dir)?;
 
-    // 4. Generate title and parse tags
+    // 5. Generate title and parse tags
     let title = title.unwrap_or_else(|| generate_title(name));
     let tags_vec: Vec<String> = parse_tags(tags);
 
-    // 5. Apply variable substitution
-    let content = apply_variables(&template_content, &title, status, priority, &tags_vec)?;
+    // 6. Apply variable substitution
+    let content = apply_variables(
+        &template_content,
+        &title,
+        &resolved_status,
+        priority,
+        &tags_vec,
+    )?;
 
-    // 6. Write file
+    // 7. Write file
     let readme_path = spec_dir.join("README.md");
     fs::write(&readme_path, &content)?;
 
-    // 7. Output success message
+    // 8. Output success message
     print_success(
         &spec_name,
         &title,
-        status,
+        &resolved_status,
         priority,
         &tags_vec,
         &readme_path,
@@ -137,6 +166,32 @@ fn load_config(project_root: &Path) -> Result<LeanSpecConfig, Box<dyn Error>> {
 
     // No config found, use defaults
     Ok(LeanSpecConfig::default())
+}
+
+fn is_draft_status_enabled(project_root: &Path) -> bool {
+    // Try config.yaml first
+    let yaml_path = project_root.join(".lean-spec/config.yaml");
+    if yaml_path.exists() {
+        if let Ok(content) = fs::read_to_string(&yaml_path) {
+            if let Ok(config) = serde_yaml::from_str::<ProjectConfig>(&content) {
+                return config
+                    .draft_status
+                    .and_then(|draft| draft.enabled)
+                    .unwrap_or(false);
+            }
+        }
+    }
+
+    // Try config.json (legacy format)
+    let json_path = project_root.join(".lean-spec/config.json");
+    if let Ok(content) = fs::read_to_string(json_path) {
+        return serde_json::from_str::<ProjectConfig>(&content)
+            .ok()
+            .and_then(|config| config.draft_status.and_then(|draft| draft.enabled))
+            .unwrap_or(false);
+    }
+
+    false
 }
 
 fn apply_variables(

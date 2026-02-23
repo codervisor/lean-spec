@@ -1,25 +1,25 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings, Palette, Cpu, Server } from 'lucide-react';
-import { Button, cn } from '@leanspec/ui-components';
-import { AISettingsTab } from '../components/settings/AISettingsTab';
-import { AppearanceSettingsTab } from '../components/settings/AppearanceSettingsTab';
-import { RunnerSettingsTab } from '../components/settings/RunnerSettingsTab';
-import { SettingsSkeleton } from '../components/shared/Skeletons';
+import { Button, cn } from '@/library';
+import { ModelsSettingsTab } from '../components/settings/models-settings-tab';
+import { AppearanceSettingsTab } from '../components/settings/appearance-settings-tab';
+import { RunnerSettingsTab } from '../components/settings/runner-settings-tab';
+import { SettingsSkeleton } from '../components/shared/skeletons';
 import { useCurrentProject } from '../hooks/useProjectQuery';
-import { PageContainer } from '../components/shared/PageContainer';
+import { PageContainer } from '../components/shared/page-container';
 
 export function SettingsPage() {
   const { t } = useTranslation('common');
   const { loading: projectLoading } = useCurrentProject();
-  const [activeTab, setActiveTab] = useState<'ai' | 'appearance' | 'runners'>('ai');
+  const [activeTab, setActiveTab] = useState<'models' | 'appearance' | 'runners'>('models');
 
   if (projectLoading) {
     return <SettingsSkeleton />;
   }
 
   const tabs = [
-    { id: 'ai', label: t('settings.tabs.ai'), icon: Cpu },
+    { id: 'models', label: t('settings.tabs.models'), icon: Cpu },
     { id: 'runners', label: t('settings.tabs.runners'), icon: Server },
     { id: 'appearance', label: t('settings.tabs.appearance'), icon: Palette },
   ] as const;
@@ -75,9 +75,9 @@ export function SettingsPage() {
         </div>
 
         <main className="flex-1 overflow-hidden flex flex-col">
-          {activeTab === 'ai' ? (
+          {activeTab === 'models' ? (
             <PageContainer className="h-full" contentClassName="h-full overflow-hidden">
-              <AISettingsTab />
+              <ModelsSettingsTab />
             </PageContainer>
           ) : (
             <div className="h-full overflow-y-auto">

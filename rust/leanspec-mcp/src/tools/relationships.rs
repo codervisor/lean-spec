@@ -301,9 +301,8 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                 },
                 "action": {
                     "type": "string",
-                    "description": "Action to perform",
-                    "enum": ["view", "add", "remove"],
-                    "default": "view"
+                    "description": "Action to perform (defaults to 'view')",
+                    "enum": ["view", "add", "remove"]
                 },
                 "type": {
                     "type": "string",
@@ -315,8 +314,7 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                     "description": "Target spec path or number"
                 }
             },
-            "required": ["specPath"],
-            "additionalProperties": false
+            "required": ["specPath"]
         }),
     }]
 }

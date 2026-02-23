@@ -131,6 +131,7 @@ pub fn run(
             SpecStatus::Complete => "████████".green(),
             SpecStatus::InProgress => "████░░░░".yellow(),
             SpecStatus::Planned => "░░░░░░░░".blue(),
+            SpecStatus::Draft => "░░░░░░░░".dimmed(),
             SpecStatus::Archived => "--------".dimmed(),
         };
 

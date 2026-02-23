@@ -2,8 +2,8 @@
 @tailwind utilities;
 
 /* 
- * UI-specific styles that extend @leanspec/ui-components/styles.css
- * Theme variables are defined in ui-components; this file only contains
+ * UI-specific styles that extend @leanspec/ui/styles.css
+ * Theme variables are defined in ui styles; this file only contains
  * app-specific overrides and additional styles (prose, syntax highlighting, etc.)
  */
 

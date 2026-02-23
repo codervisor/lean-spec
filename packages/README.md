@@ -9,8 +9,7 @@ packages/
 ├── cli/               - lean-spec: CLI wrapper for Rust binary
 ├── mcp/               - @leanspec/mcp: MCP server wrapper
 ├── desktop/           - @leanspec/desktop: Tauri desktop app
-├── ui/                - @leanspec/ui: Primary Vite SPA (web + desktop)
-└── ui-components/     - Shared component library
+└── ui/                - @leanspec/ui: Primary Vite SPA (web + desktop + shared UI library)
 ```
 
 ## Architecture (Vite + Rust)
@@ -74,7 +73,7 @@ See [MCP Integration docs](https://lean-spec.dev/docs/guide/usage/ai-assisted/mc
 
 Primary UI used by both web and desktop:
 - Vite 7 + React 19 + TypeScript 5
-- Shared components from `@leanspec/ui-components`
+- Shared components exported from `@leanspec/ui`
 - Served by Rust HTTP server or bundled in Tauri
 
 ### Development
@@ -90,7 +89,7 @@ pnpm --filter @leanspec/ui preview   # preview production build
 Tauri desktop application using the Vite SPA:
 - Rust backend commands for spec operations
 - React/Vite frontend reusing `@leanspec/ui`
-- Shared components via `@leanspec/ui-components`
+- Shared components via `@leanspec/ui`
 
 ```bash
 pnpm --filter @leanspec/desktop dev:desktop

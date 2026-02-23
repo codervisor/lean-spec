@@ -148,8 +148,8 @@ enum Commands {
         template: Option<String>,
 
         /// Initial status
-        #[arg(short, long, default_value = "planned")]
-        status: String,
+        #[arg(short, long)]
+        status: Option<String>,
 
         /// Priority level
         #[arg(short, long, default_value = "medium")]
@@ -271,7 +271,7 @@ enum Commands {
 
     /// List all specs with optional filtering
     List {
-        /// Filter by status: planned, in-progress, complete, archived
+        /// Filter by status: draft, planned, in-progress, complete, archived
         #[arg(short, long)]
         status: Option<String>,
 
@@ -493,7 +493,7 @@ enum Commands {
         #[arg(long)]
         content: Option<String>,
 
-        /// Skip completion verification when setting status to complete
+        /// Skip completion verification or stage skipping guard (draft -> in-progress/complete)
         #[arg(short, long)]
         force: bool,
     },
@@ -707,7 +707,7 @@ fn main() -> ExitCode {
             status,
             priority,
             tags,
-        } => commands::create::run(&specs_dir, &name, title, template, &status, &priority, tags),
+        } => commands::create::run(&specs_dir, &name, title, template, status, &priority, tags),
         Commands::Rel {
             args,
             parent,

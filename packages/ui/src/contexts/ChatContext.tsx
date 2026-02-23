@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { useLocalStorage } from '@leanspec/ui-components';
+import { useLocalStorage } from '@/library';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useProjectScopedStorage } from '../hooks/useProjectScopedStorage';
 import { useChatThreadMutations, useChatThreads, chatKeys } from '../hooks/useChatQuery';
@@ -16,7 +16,7 @@ interface ChatContextType {
 
   toggleSidebar: () => void;
   setSidebarWidth: (width: number) => void;
-  selectConversation: (id: string) => void;
+  selectConversation: (id: string | null) => void;
   createConversation: () => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
   toggleHistory: () => void;
@@ -39,7 +39,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // Global preferences (same across all projects)
   const [isOpen, setIsOpen] = useLocalStorage<boolean>('leanspec.chat.isOpen', false);
   const [sidebarWidth, setSidebarWidth] = useLocalStorage<number>('leanspec.chat.sidebarWidth', 400);
-  
+
   // Project-scoped preferences (different per project)
   const [showHistory, setShowHistory] = useProjectScopedStorage<boolean>('leanspec.chat.historyExpanded', false);
   const [activeConversationId, setActiveConversationId] = useProjectScopedStorage<string | null>('leanspec.chat.activeConversationId', null);
@@ -48,7 +48,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const toggleSidebar = () => setIsOpen((prev: boolean) => !prev);
 
-  const selectConversation = (id: string) => {
+  const selectConversation = (id: string | null) => {
     setActiveConversationId(id);
   };
 

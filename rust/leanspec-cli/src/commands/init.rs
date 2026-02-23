@@ -104,13 +104,22 @@ fn run_standard_init(specs_dir: &str, options: InitOptions) -> Result<(), Box<dy
         RunnerRegistry::load(&root).map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
     let ai_detections = detect_ai_tools(&registry, None);
 
+    let draft_status_enabled = if options.yes {
+        false
+    } else {
+        Confirm::new()
+            .with_prompt("Enable draft status for human review workflow?")
+            .default(false)
+            .interact()?
+    };
+
     // Determine if skills will be installed (before actual installation)
     let will_install_skills = decide_skill_install(&options)?;
 
     // Core filesystem scaffolding
     scaffold_specs(&root, &specs_path)?;
     let config_dir = root.join(".lean-spec");
-    scaffold_config(&config_dir)?;
+    scaffold_config(&config_dir, draft_status_enabled)?;
     scaffold_templates(&config_dir)?;
     scaffold_agents(&root, &project_name, will_install_skills)?;
 
@@ -307,6 +316,7 @@ Each spec lives in a numbered directory with a `README.md` file:
 
 ## Spec Status Values
 
+- `draft` - Being authored or refined
 - `planned` - Not yet started
 - `in-progress` - Currently being worked on  
 - `complete` - Finished
@@ -404,23 +414,29 @@ fn copy_example_template(from: &Path, to: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn scaffold_config(config_dir: &Path) -> Result<(), Box<dyn Error>> {
+fn scaffold_config(config_dir: &Path, draft_status_enabled: bool) -> Result<(), Box<dyn Error>> {
     let config_file = config_dir.join("config.json");
     if !config_file.exists() {
-        let default_config = r#"{
+        let default_config = format!(
+            r#"{{
   "specsDir": "specs",
-  "validation": {
+    "draftStatus": {{
+        "enabled": {}
+    }},
+  "validation": {{
     "maxLines": 400,
     "warnLines": 200,
     "maxTokens": 5000,
     "warnTokens": 3500
-  },
-  "features": {
+  }},
+  "features": {{
     "tokenCounting": true,
     "dependencyGraph": true
-  }
-}
-"#;
+  }}
+}}
+"#,
+            draft_status_enabled
+        );
         fs::write(&config_file, default_config)?;
         println!("{} Created config: {}", "✓".green(), config_file.display());
     }

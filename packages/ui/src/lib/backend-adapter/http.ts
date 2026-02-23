@@ -2,6 +2,7 @@ import { APIError } from './core';
 import type {
   BackendAdapter,
   BatchMetadataResponse,
+  ChatStorageInfo,
   ContextFileContent,
   ContextFileListItem,
   DependencyGraph,
@@ -28,6 +29,8 @@ import type {
   RunnerListResponse,
   RunnerScope,
   RunnerValidateResponse,
+  ChatConfig,
+  ModelsRegistryResponse,
 } from './core';
 
 /**
@@ -216,12 +219,32 @@ export class HttpBackendAdapter implements BackendAdapter {
       parent?: string | null;
       addDependsOn?: string[];
       removeDependsOn?: string[];
+      force?: boolean;
     }
   ): Promise<void> {
     await this.fetchAPI(`/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}/metadata`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
     });
+  }
+
+  async toggleSpecChecklist(
+    projectId: string,
+    specName: string,
+    toggles: { itemText: string; checked: boolean }[],
+    options?: { expectedContentHash?: string; subspec?: string }
+  ): Promise<{ success: boolean; contentHash: string; toggled: { itemText: string; checked: boolean; line: number }[] }> {
+    return this.fetchAPI(
+      `/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}/checklist-toggle`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          toggles,
+          expectedContentHash: options?.expectedContentHash,
+          subspec: options?.subspec,
+        }),
+      }
+    );
   }
 
   async getStats(projectId: string): Promise<Stats> {
@@ -361,13 +384,18 @@ export class HttpBackendAdapter implements BackendAdapter {
 
   async listAvailableRunners(projectPath?: string): Promise<string[]> {
     const response = await this.listRunners(projectPath);
-    return (response?.runners ?? []).filter((runner) => runner.available).map((runner) => runner.id);
+    return (response?.runners ?? []).filter((runner) => runner.available === true).map((runner) => runner.id);
   }
 
-  async listRunners(projectPath?: string): Promise<RunnerListResponse> {
-    const endpoint = projectPath
-      ? `/api/runners?project_path=${encodeURIComponent(projectPath)}`
-      : '/api/runners';
+  async listRunners(projectPath?: string, options?: { skipValidation?: boolean }): Promise<RunnerListResponse> {
+    const params = new URLSearchParams();
+    if (projectPath) {
+      params.set('project_path', projectPath);
+    }
+    if (options?.skipValidation) {
+      params.set('skipValidation', 'true');
+    }
+    const endpoint = params.toString() ? `/api/runners?${params.toString()}` : '/api/runners';
     return this.fetchAPI<RunnerListResponse>(endpoint);
   }
 
@@ -454,6 +482,45 @@ export class HttpBackendAdapter implements BackendAdapter {
         runnerId: payload.runnerId,
         scope: payload.scope,
       }),
+    });
+  }
+
+  // Chat operations
+  async getChatConfig(): Promise<ChatConfig> {
+    return this.fetchAPI<ChatConfig>('/api/chat/config');
+  }
+
+  async updateChatConfig(config: ChatConfig): Promise<ChatConfig> {
+    return this.fetchAPI<ChatConfig>('/api/chat/config', {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    });
+  }
+
+  async getChatStorageInfo(): Promise<ChatStorageInfo> {
+    return this.fetchAPI<ChatStorageInfo>('/api/chat/storage');
+  }
+
+  // Models operations
+  async getModelsProviders(options?: { agenticOnly?: boolean }): Promise<ModelsRegistryResponse> {
+    const params = new URLSearchParams();
+    if (options?.agenticOnly) {
+      params.set('agenticOnly', 'true');
+    }
+    const endpoint = params.toString() ? `/api/models/providers?${params.toString()}` : '/api/models/providers';
+    return this.fetchAPI<ModelsRegistryResponse>(endpoint);
+  }
+
+  async refreshModelsRegistry(): Promise<void> {
+    await this.fetchAPI('/api/models/refresh', {
+      method: 'POST',
+    });
+  }
+
+  async setProviderApiKey(providerId: string, apiKey: string, baseUrl?: string): Promise<void> {
+    await this.fetchAPI(`/api/models/providers/${encodeURIComponent(providerId)}/key`, {
+      method: 'PUT',
+      body: JSON.stringify({ apiKey, baseUrl }),
     });
   }
 }

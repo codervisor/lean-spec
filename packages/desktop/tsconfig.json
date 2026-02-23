@@ -3,8 +3,12 @@
   "compilerOptions": {
     "allowJs": false,
     "allowSyntheticDefaultImports": true,
+    "baseUrl": "../ui/src",
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "include": [
     "src"

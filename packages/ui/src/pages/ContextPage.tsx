@@ -6,14 +6,14 @@
 
 import { useEffect, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { Card, CardContent } from '@leanspec/ui-components';
-import { ContextClient } from '../components/context/ContextClient';
-import { ContextPageSkeleton } from '../components/shared/Skeletons';
+import { Card, CardContent } from '@/library';
+import { ContextClient } from '../components/context/context-client';
+import { ContextPageSkeleton } from '../components/shared/skeletons';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import type { ProjectContext } from '../types/api';
-import { PageContainer } from '../components/shared/PageContainer';
+import { PageContainer } from '../components/shared/page-container';
 
 export function ContextPage() {
   const { currentProject, loading: projectLoading, error: projectError } = useCurrentProject();

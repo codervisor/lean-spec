@@ -1,6 +1,11 @@
-import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
+import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown, FileText } from 'lucide-react';
 
 export const statusConfig: Record<string, { icon: typeof Clock; labelKey: `status.${string}`; className: string }> = {
+  'draft': {
+    icon: FileText,
+    labelKey: 'status.draft',
+    className: 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300'
+  },
   'planned': {
     icon: Clock,
     labelKey: 'status.planned',

@@ -5,6 +5,7 @@ use leanspec_core::parsers::ParseError;
 use leanspec_core::{
     FrontmatterParser, LeanSpecConfig, SpecFrontmatter, SpecPriority, SpecStatus, TemplateLoader,
 };
+use serde::Deserialize;
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
@@ -75,6 +76,30 @@ pub(crate) fn load_config(project_root: &Path) -> LeanSpecConfig {
     } else {
         LeanSpecConfig::default()
     }
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DraftStatusConfig {
+    enabled: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectConfig {
+    draft_status: Option<DraftStatusConfig>,
+}
+
+pub(crate) fn is_draft_status_enabled(project_root: &Path) -> bool {
+    let config_path = project_root.join(".lean-spec").join("config.json");
+    let Ok(content) = std::fs::read_to_string(config_path) else {
+        return false;
+    };
+
+    serde_json::from_str::<ProjectConfig>(&content)
+        .ok()
+        .and_then(|config| config.draft_status.and_then(|draft| draft.enabled))
+        .unwrap_or(false)
 }
 
 pub(crate) fn resolve_template_variables(

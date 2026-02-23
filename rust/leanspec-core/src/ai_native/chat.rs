@@ -8,7 +8,7 @@ use async_openai::types::chat::{
     ChatCompletionRequestSystemMessage, ChatCompletionRequestSystemMessageContent,
     ChatCompletionRequestToolMessage, ChatCompletionRequestToolMessageContent,
     ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
-    CreateChatCompletionRequestArgs, FinishReason, FunctionCall, FunctionCallStream,
+    CreateChatCompletionRequestArgs, FunctionCall, FunctionCallStream,
 };
 use async_openai::Client as OpenAIClient;
 use futures_util::StreamExt;
@@ -37,7 +37,8 @@ pub struct ChatRequestContext {
 
 pub struct StreamChatResult {
     pub stream: mpsc::UnboundedReceiver<StreamEvent>,
-    pub completion: oneshot::Receiver<Option<String>>,
+    /// The full assistant message parts (text + tool calls + tool results).
+    pub completion: oneshot::Receiver<Option<Vec<UIMessagePart>>>,
     pub selected_provider_id: String,
     pub selected_model_id: String,
 }
@@ -91,7 +92,14 @@ pub async fn generate_text(context: GenerateTextContext) -> Result<GenerateTextR
 
     let text = match selection.provider {
         ProviderClient::OpenAI(client) | ProviderClient::OpenRouter(client) => {
-            generate_text_openai(&client, &selection.model_id, &system_prompt, &user_prompt).await?
+            generate_text_openai(
+                &client,
+                &selection.model_id,
+                &system_prompt,
+                &user_prompt,
+                selection.use_openai_compat,
+            )
+            .await?
         }
         ProviderClient::Anthropic(client) => {
             generate_text_anthropic(client, &selection.model_id, &system_prompt, &user_prompt)
@@ -111,6 +119,7 @@ async fn generate_text_openai(
     model_id: &str,
     system_prompt: &str,
     user_prompt: &str,
+    use_openai_compat: bool,
 ) -> Result<String, AiError> {
     let messages = vec![
         ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
@@ -123,10 +132,16 @@ async fn generate_text_openai(
         }),
     ];
 
-    let request = CreateChatCompletionRequestArgs::default()
-        .model(model_id)
-        .messages(messages)
-        .max_completion_tokens(100u32)
+    let mut builder = CreateChatCompletionRequestArgs::default();
+    builder.model(model_id);
+    builder.messages(messages);
+    if use_openai_compat {
+        builder.max_tokens(100u32);
+    } else {
+        builder.max_completion_tokens(100u32);
+    }
+
+    let request = builder
         .build()
         .map_err(|e| AiError::Provider(e.to_string()))?;
 
@@ -215,6 +230,7 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
     let selected_provider_id = selection.provider_id.clone();
     let selected_model_id = selection.model_id.clone();
     let selected_model_id_for_task = selected_model_id.clone();
+    let use_openai_compat = selection.use_openai_compat;
     let max_steps = config.settings.max_steps;
     let max_tokens = selection.model_max_tokens;
 
@@ -231,6 +247,7 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
                     tools,
                     max_steps,
                     max_tokens,
+                    use_openai_compat,
                     sender: &sender,
                     text_id: &text_id,
                 })
@@ -245,6 +262,7 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
                     tools,
                     max_steps,
                     max_tokens,
+                    use_openai_compat,
                     sender: &sender,
                     text_id: &text_id,
                 })
@@ -271,9 +289,9 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
         };
 
         match result {
-            Ok(text) => {
+            Ok(parts) => {
                 let _ = sender.send(StreamEvent::Finish);
-                let _ = done_tx.send(Some(text));
+                let _ = done_tx.send(Some(parts));
             }
             Err(err) => {
                 let _ = sender.send(StreamEvent::Error {
@@ -387,6 +405,7 @@ struct OpenAiConversationParams<'a> {
     tools: ToolRegistry,
     max_steps: u32,
     max_tokens: Option<u32>,
+    use_openai_compat: bool,
     sender: &'a mpsc::UnboundedSender<StreamEvent>,
     text_id: &'a str,
 }
@@ -399,11 +418,12 @@ async fn run_openai_conversation(
         tools,
         max_steps,
         max_tokens,
+        use_openai_compat,
         sender,
         text_id,
     }: OpenAiConversationParams<'_>,
-) -> Result<String, AiError> {
-    let mut assistant_text = String::new();
+) -> Result<Vec<UIMessagePart>, AiError> {
+    let mut assistant_parts: Vec<UIMessagePart> = Vec::new();
 
     for step in 0..max_steps {
         let _ = sender.send(StreamEvent::StartStep);
@@ -414,18 +434,27 @@ async fn run_openai_conversation(
             messages,
             tools.tools(),
             max_tokens,
+            use_openai_compat,
             sender,
             text_id,
         )
         .await?;
 
+        if !round.reasoning.is_empty() {
+            assistant_parts.push(UIMessagePart::Reasoning {
+                text: round.reasoning.clone(),
+            });
+        }
+
         if !round.text.is_empty() {
-            assistant_text.push_str(&round.text);
+            assistant_parts.push(UIMessagePart::Text {
+                text: round.text.clone(),
+            });
         }
 
         if round.tool_calls.is_empty() {
             let _ = sender.send(StreamEvent::FinishStep);
-            return Ok(assistant_text);
+            return Ok(assistant_parts);
         }
 
         let assistant_tool_calls = round
@@ -451,16 +480,29 @@ async fn run_openai_conversation(
         ));
 
         for call in round.tool_calls {
-            let input =
-                serde_json::from_str::<serde_json::Value>(&call.arguments).map_err(|e| {
-                    AiError::Tool(format!("Invalid tool input JSON for {}: {}", call.name, e))
-                })?;
+            let arguments = if call.arguments.trim().is_empty() {
+                "{}"
+            } else {
+                call.arguments.as_str()
+            };
+            let input = serde_json::from_str::<serde_json::Value>(arguments).map_err(|e| {
+                AiError::Tool(format!("Invalid tool input JSON for {}: {}", call.name, e))
+            })?;
 
             let _ = sender.send(StreamEvent::ToolInputStart {
                 tool_call_id: call.id.clone(),
                 tool_name: call.name.clone(),
+                dynamic: true,
             });
             let _ = sender.send(StreamEvent::ToolInputAvailable {
+                tool_call_id: call.id.clone(),
+                tool_name: call.name.clone(),
+                input: input.clone(),
+                dynamic: true,
+            });
+
+            // Record the tool-call part
+            assistant_parts.push(UIMessagePart::ToolCall {
                 tool_call_id: call.id.clone(),
                 tool_name: call.name.clone(),
                 input: input.clone(),
@@ -479,6 +521,14 @@ async fn run_openai_conversation(
             let _ = sender.send(StreamEvent::ToolOutputAvailable {
                 tool_call_id: call.id.clone(),
                 output: output_value.clone(),
+                dynamic: true,
+            });
+
+            // Record the tool-result part
+            assistant_parts.push(UIMessagePart::ToolResult {
+                tool_call_id: call.id.clone(),
+                tool_name: call.name.clone(),
+                output: output_value,
             });
 
             messages.push(ChatCompletionRequestMessage::Tool(
@@ -498,15 +548,17 @@ async fn run_openai_conversation(
         }
     }
 
-    Ok(assistant_text)
+    Ok(assistant_parts)
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn stream_openai_round(
     client: &async_openai::Client<async_openai::config::OpenAIConfig>,
     model_id: &str,
     messages: &[ChatCompletionRequestMessage],
     tools: &[async_openai::types::chat::ChatCompletionTools],
     max_tokens: Option<u32>,
+    use_openai_compat: bool,
     sender: &mpsc::UnboundedSender<StreamEvent>,
     text_id: &str,
 ) -> Result<OpenAiRoundResult, AiError> {
@@ -516,10 +568,16 @@ async fn stream_openai_round(
     builder.stream(true);
     if !tools.is_empty() {
         builder.tools(tools.to_vec());
-        builder.parallel_tool_calls(true);
+        if !use_openai_compat {
+            builder.parallel_tool_calls(true);
+        }
     }
     if let Some(max_tokens) = max_tokens {
-        builder.max_completion_tokens(max_tokens);
+        if use_openai_compat {
+            builder.max_tokens(max_tokens);
+        } else {
+            builder.max_completion_tokens(max_tokens);
+        }
     }
     let request = builder
         .build()
@@ -533,18 +591,43 @@ async fn stream_openai_round(
 
     let mut text_started = false;
     let mut text = String::new();
+    let mut reasoning_started = false;
+    let mut reasoning_text = String::new();
+    let reasoning_id = format!("reasoning_{}", text_id);
     let mut tool_calls: Vec<ToolCallAccumulator> = Vec::new();
-    let mut finish_reason: Option<FinishReason> = None;
 
     while let Some(chunk) = stream.next().await {
         let chunk = chunk.map_err(|e| AiError::Stream(e.to_string()))?;
-        for choice in chunk.choices {
-            if finish_reason.is_none() {
-                finish_reason = choice.finish_reason;
-            }
 
+        // Some OpenAI-compatible providers (e.g. DeepSeek via OpenRouter) send
+        // `reasoning_content` as an extra field in the delta. Because async-openai
+        // does not model this field we extract it from the raw JSON choices.
+        if let Some(raw_choices) = extract_reasoning_from_raw_chunk(&chunk) {
+            for reasoning_content in raw_choices {
+                if !reasoning_started {
+                    reasoning_started = true;
+                    let _ = sender.send(StreamEvent::ReasoningStart {
+                        id: reasoning_id.clone(),
+                    });
+                }
+                reasoning_text.push_str(&reasoning_content);
+                let _ = sender.send(StreamEvent::ReasoningDelta {
+                    id: reasoning_id.clone(),
+                    delta: reasoning_content,
+                });
+            }
+        }
+
+        for choice in chunk.choices {
             let delta = choice.delta;
             if let Some(content) = delta.content {
+                // Close reasoning before text starts (reasoning always precedes text)
+                if reasoning_started && !text_started {
+                    reasoning_started = false;
+                    let _ = sender.send(StreamEvent::ReasoningEnd {
+                        id: reasoning_id.clone(),
+                    });
+                }
                 if !text_started {
                     text_started = true;
                     let _ = sender.send(StreamEvent::TextStart {
@@ -564,33 +647,41 @@ async fn stream_openai_round(
         }
     }
 
+    // Close any open reasoning stream
+    if reasoning_started {
+        let _ = sender.send(StreamEvent::ReasoningEnd {
+            id: reasoning_id.clone(),
+        });
+    }
+
     if text_started {
         let _ = sender.send(StreamEvent::TextEnd {
             id: text_id.to_string(),
         });
     }
 
-    let completed_tool_calls = if matches!(finish_reason, Some(FinishReason::ToolCalls)) {
-        tool_calls
-            .into_iter()
-            .filter_map(|call| {
-                let name = call.name?;
-                let id = call
-                    .id
-                    .unwrap_or_else(|| format!("tool_{}", uuid::Uuid::new_v4()));
-                Some(ToolCall {
-                    id,
-                    name,
-                    arguments: call.arguments,
-                })
+    // Don't gate on finish_reason == ToolCalls — some OpenAI-compatible providers
+    // (e.g. certain models via OpenRouter) return finish_reason "stop" even when
+    // the response contains tool calls. Instead, check if accumulated tool call
+    // chunks have valid data (a non-empty name).
+    let completed_tool_calls: Vec<ToolCall> = tool_calls
+        .into_iter()
+        .filter_map(|call| {
+            let name = call.name.filter(|n| !n.trim().is_empty())?;
+            let id = call
+                .id
+                .unwrap_or_else(|| format!("tool_{}", uuid::Uuid::new_v4()));
+            Some(ToolCall {
+                id,
+                name,
+                arguments: call.arguments,
             })
-            .collect()
-    } else {
-        Vec::new()
-    };
+        })
+        .collect();
 
     Ok(OpenAiRoundResult {
         text,
+        reasoning: reasoning_text,
         tool_calls: completed_tool_calls,
     })
 }
@@ -623,7 +714,36 @@ fn collect_tool_call_chunks(
 
 struct OpenAiRoundResult {
     text: String,
+    reasoning: String,
     tool_calls: Vec<ToolCall>,
+}
+
+/// Extract `reasoning_content` from the raw JSON representation of a streamed
+/// chunk. Some OpenAI-compatible providers (e.g. DeepSeek via OpenRouter) emit
+/// this field but async-openai's typed struct silently drops it during
+/// deserialization. We serialise the chunk back to JSON and inspect it.
+fn extract_reasoning_from_raw_chunk(
+    chunk: &async_openai::types::chat::CreateChatCompletionStreamResponse,
+) -> Option<Vec<String>> {
+    let json = serde_json::to_value(chunk).ok()?;
+    let choices = json.get("choices")?.as_array()?;
+    let mut results = Vec::new();
+    for choice in choices {
+        if let Some(reasoning) = choice
+            .get("delta")
+            .and_then(|d| d.get("reasoning_content"))
+            .and_then(|r| r.as_str())
+        {
+            if !reasoning.is_empty() {
+                results.push(reasoning.to_string());
+            }
+        }
+    }
+    if results.is_empty() {
+        None
+    } else {
+        Some(results)
+    }
 }
 
 async fn run_anthropic_conversation(
@@ -634,7 +754,7 @@ async fn run_anthropic_conversation(
     max_tokens: Option<u32>,
     sender: &mpsc::UnboundedSender<StreamEvent>,
     text_id: &str,
-) -> Result<String, AiError> {
+) -> Result<Vec<UIMessagePart>, AiError> {
     let max_tokens = max_tokens.unwrap_or(4096) as usize;
     let request = anthropic::types::MessagesRequestBuilder::default()
         .model(model_id.to_string())
@@ -652,6 +772,12 @@ async fn run_anthropic_conversation(
 
     let mut text_started = false;
     let mut text = String::new();
+    let reasoning_id = format!("reasoning_{}", text_id);
+    // NOTE: The anthropic crate (v0.0.8) only exposes TextDelta in ContentBlockDelta.
+    // Thinking/reasoning content blocks (`type: "thinking"`) are not modelled yet.
+    // When the crate is updated to support ContentBlockDelta::ThinkingDelta, emit
+    // ReasoningStart/ReasoningDelta/ReasoningEnd events using `reasoning_id` here.
+    let _ = &reasoning_id; // suppress unused warning until crate supports thinking
     let _ = sender.send(StreamEvent::StartStep);
 
     while let Some(event) = stream.next().await {
@@ -679,7 +805,11 @@ async fn run_anthropic_conversation(
     }
 
     let _ = sender.send(StreamEvent::FinishStep);
-    Ok(text)
+    let mut parts = Vec::new();
+    if !text.is_empty() {
+        parts.push(UIMessagePart::Text { text });
+    }
+    Ok(parts)
 }
 
 #[cfg(test)]

@@ -12,10 +12,18 @@ use crate::keychain;
 use crate::projects::DesktopProject;
 use crate::state::DesktopState;
 use crate::tray;
+use leanspec_core::models_registry::{
+    get_configured_providers, get_providers_with_availability, load_bundled_registry,
+    load_registry, registry_to_chat_config, ModelCache, ModelsDevClient, ProviderWithAvailability,
+};
 use leanspec_core::sessions::runner::{
     default_runners_file, global_runners_path, project_runners_path, read_runners_file,
     write_runners_file, RunnerConfig, RunnerDefinition, RunnerRegistry,
 };
+use leanspec_core::storage::chat_config::{
+    resolve_api_key, ChatConfigClient, ChatConfigUpdate, ChatModel, ChatProvider,
+};
+use leanspec_core::storage::{ChatStorageInfo, ChatStore};
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -65,7 +73,8 @@ pub struct RunnerInfoResponse {
     pub command: Option<String>,
     pub args: Vec<String>,
     pub env: HashMap<String, String>,
-    pub available: bool,
+    /// None means validation hasn't been performed yet (pending state)
+    pub available: Option<bool>,
     pub version: Option<String>,
     pub source: String,
 }
@@ -82,6 +91,15 @@ pub struct RunnerListResponse {
 pub struct RunnerValidateResponse {
     pub valid: bool,
     pub error: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelsRegistryResponse {
+    pub providers: Vec<ProviderWithAvailability>,
+    pub configured_provider_ids: Vec<String>,
+    pub total: usize,
+    pub configured_count: usize,
 }
 
 #[tauri::command]
@@ -237,15 +255,19 @@ pub async fn desktop_delete_chat_api_key(
 }
 
 #[tauri::command]
-pub async fn desktop_list_runners(project_path: Option<String>) -> Result<RunnerListResponse, String> {
+pub async fn desktop_list_runners(
+    project_path: Option<String>,
+    skip_validation: Option<bool>,
+) -> Result<RunnerListResponse, String> {
     let path = project_path.unwrap_or_else(|| ".".to_string());
-    build_runner_list_response(&path)
+    build_runner_list_response(&path, skip_validation.unwrap_or(false))
 }
 
 #[tauri::command]
 pub async fn desktop_get_runner(
     runner_id: String,
     project_path: Option<String>,
+    skip_validation: Option<bool>,
 ) -> Result<RunnerInfoResponse, String> {
     let path = project_path.unwrap_or_else(|| ".".to_string());
     let registry = RunnerRegistry::load(PathBuf::from(&path).as_path()).map_err(|e| e.to_string())?;
@@ -254,7 +276,7 @@ pub async fn desktop_get_runner(
         .ok_or_else(|| "Runner not found".to_string())?;
     let sources = load_runner_sources(&path)?;
 
-    Ok(build_runner_info(runner, &sources))
+    Ok(build_runner_info(runner, &sources, skip_validation.unwrap_or(false)))
 }
 
 #[tauri::command]
@@ -280,7 +302,7 @@ pub async fn desktop_create_runner(
     );
     write_runners_file(&path, &file).map_err(|e| e.to_string())?;
 
-    build_runner_list_response(&project_path)
+    build_runner_list_response(&project_path, false)
 }
 
 #[tauri::command]
@@ -307,7 +329,7 @@ pub async fn desktop_update_runner(
     );
     write_runners_file(&path, &file).map_err(|e| e.to_string())?;
 
-    build_runner_list_response(&project_path)
+    build_runner_list_response(&project_path, false)
 }
 
 #[tauri::command]
@@ -323,7 +345,7 @@ pub async fn desktop_delete_runner(
     }
     write_runners_file(&path, &file).map_err(|e| e.to_string())?;
 
-    build_runner_list_response(&project_path)
+    build_runner_list_response(&project_path, false)
 }
 
 #[tauri::command]
@@ -366,7 +388,175 @@ pub async fn desktop_set_default_runner(
     file.default = Some(runner_id);
     write_runners_file(&path, &file).map_err(|e| e.to_string())?;
 
-    build_runner_list_response(&project_path)
+    build_runner_list_response(&project_path, false)
+}
+
+#[tauri::command]
+pub async fn desktop_get_chat_config(
+    state: State<'_, DesktopState>,
+) -> Result<ChatConfigClient, String> {
+    let store = state.chat_config.read().await;
+    Ok(store.client_config())
+}
+
+#[tauri::command]
+pub async fn desktop_update_chat_config(
+    state: State<'_, DesktopState>,
+    config: ChatConfigUpdate,
+) -> Result<ChatConfigClient, String> {
+    let mut store = state.chat_config.write().await;
+    store.update(config).map_err(|e| e.to_string())?;
+    Ok(store.client_config())
+}
+
+#[tauri::command]
+pub async fn desktop_get_chat_storage_info() -> Result<ChatStorageInfo, String> {
+    let store = ChatStore::new().map_err(|e| e.to_string())?;
+    store.storage_info().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn desktop_get_models_providers(
+    state: State<'_, DesktopState>,
+    agentic_only: Option<bool>,
+) -> Result<ModelsRegistryResponse, String> {
+    let registry = load_registry().await.map_err(|e| e.to_string())?;
+    let mut providers = get_providers_with_availability(&registry);
+
+    let config = state.chat_config.read().await.config();
+    let configured_from_config: HashSet<String> = config
+        .providers
+        .iter()
+        .filter(|provider| !resolve_api_key(&provider.api_key).is_empty())
+        .map(|provider| provider.id.clone())
+        .collect();
+
+    for provider_entry in providers.iter_mut() {
+        if configured_from_config.contains(&provider_entry.provider.id) {
+            provider_entry.is_configured = true;
+        }
+    }
+
+    if agentic_only.unwrap_or(false) {
+        providers.retain(|p| {
+            p.provider
+                .models
+                .values()
+                .any(|model| model.tool_call.unwrap_or(false))
+        });
+    }
+
+    let mut configured_ids: HashSet<String> = get_configured_providers().into_iter().collect();
+    configured_ids.extend(configured_from_config);
+    let configured_count = providers.iter().filter(|p| p.is_configured).count();
+
+    Ok(ModelsRegistryResponse {
+        total: providers.len(),
+        configured_count,
+        configured_provider_ids: configured_ids.into_iter().collect(),
+        providers,
+    })
+}
+
+#[tauri::command]
+pub async fn desktop_refresh_models_registry() -> Result<(), String> {
+    let client = ModelsDevClient::new();
+    match client.fetch().await {
+        Ok(registry) => {
+            if let Ok(cache) = ModelCache::new() {
+                let _ = cache.save(&registry);
+            }
+            Ok(())
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+pub async fn desktop_set_provider_api_key(
+    state: State<'_, DesktopState>,
+    provider_id: String,
+    api_key: String,
+    base_url: Option<String>,
+) -> Result<(), String> {
+    let registry = load_bundled_registry().map_err(|e| e.to_string())?;
+    let registry_provider = registry.providers.get(&provider_id);
+
+    let mut store = state.chat_config.write().await;
+    let current_config = store.config();
+
+    let existing_provider_idx = current_config
+        .providers
+        .iter()
+        .position(|p| p.id == provider_id);
+
+    let new_providers = if let Some(idx) = existing_provider_idx {
+        let mut providers = current_config.providers.clone();
+        providers[idx].api_key = api_key.clone();
+        if let Some(base_url) = &base_url {
+            providers[idx].base_url = Some(base_url.clone());
+        }
+        providers
+    } else if let Some(reg_provider) = registry_provider {
+        let mut providers = current_config.providers.clone();
+        let chat_config_from_registry = registry_to_chat_config(&registry);
+        if let Some(reg_chat_provider) = chat_config_from_registry
+            .providers
+            .iter()
+            .find(|p| p.id == provider_id)
+        {
+            let mut new_provider = reg_chat_provider.clone();
+            new_provider.api_key = api_key.clone();
+            if let Some(base_url) = &base_url {
+                new_provider.base_url = Some(base_url.clone());
+            }
+            providers.push(new_provider);
+        } else {
+            let final_base_url = base_url.clone().or_else(|| reg_provider.api.clone());
+            providers.push(ChatProvider {
+                id: provider_id.clone(),
+                name: reg_provider.name.clone(),
+                base_url: final_base_url,
+                api_key: api_key.clone(),
+                models: reg_provider
+                    .models
+                    .values()
+                    .filter(|model| model.tool_call.unwrap_or(false))
+                    .map(|model| ChatModel {
+                        id: model.id.clone(),
+                        name: model.name.clone(),
+                        max_tokens: model.limit.as_ref().and_then(|l| l.output.map(|o| o as u32)),
+                        default: None,
+                    })
+                    .collect(),
+            });
+        }
+        providers
+    } else {
+        return Err(format!(
+            "Provider '{}' not found in registry. Use custom provider endpoint for non-registry providers.",
+            provider_id
+        ));
+    };
+
+    let update = leanspec_core::storage::chat_config::ChatConfigUpdate {
+        version: current_config.version.clone(),
+        settings: current_config.settings.clone(),
+        providers: new_providers
+            .into_iter()
+            .map(|provider| leanspec_core::storage::chat_config::ChatProviderUpdate {
+                id: provider.id,
+                name: provider.name,
+                base_url: provider.base_url,
+                api_key: Some(provider.api_key),
+                models: provider.models,
+                has_api_key: None,
+            })
+            .collect(),
+    };
+
+    store.update(update).map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 fn build_and_publish(app: &AppHandle, state: &DesktopState) -> Result<DesktopBootstrapPayload> {
@@ -439,6 +629,7 @@ fn load_runner_sources(project_path: &str) -> Result<(HashSet<String>, HashSet<S
 fn build_runner_info(
     runner: &RunnerDefinition,
     sources: &(HashSet<String>, HashSet<String>),
+    skip_validation: bool,
 ) -> RunnerInfoResponse {
     let (global_sources, project_sources) = sources;
     let source = if project_sources.contains(&runner.id) {
@@ -449,11 +640,18 @@ fn build_runner_info(
         "builtin"
     };
 
-    let available = runner.validate_command().is_ok();
-    let version = if available {
-        runner.detect_version()
+    // When skip_validation is true, return availability as None (pending)
+    // to indicate validation hasn't been performed yet
+    let (available, version) = if skip_validation {
+        (None, None)
     } else {
-        None
+        let is_available = runner.validate_command().is_ok();
+        let ver = if is_available {
+            runner.detect_version()
+        } else {
+            None
+        };
+        (Some(is_available), ver)
     };
 
     RunnerInfoResponse {
@@ -468,13 +666,17 @@ fn build_runner_info(
     }
 }
 
-fn build_runner_list_response(project_path: &str) -> Result<RunnerListResponse, String> {
-    let registry = RunnerRegistry::load(PathBuf::from(project_path).as_path()).map_err(|e| e.to_string())?;
+fn build_runner_list_response(
+    project_path: &str,
+    skip_validation: bool,
+) -> Result<RunnerListResponse, String> {
+    let registry =
+        RunnerRegistry::load(PathBuf::from(project_path).as_path()).map_err(|e| e.to_string())?;
     let sources = load_runner_sources(project_path)?;
     let runners = registry
         .list()
         .into_iter()
-        .map(|runner| build_runner_info(runner, &sources))
+        .map(|runner| build_runner_info(runner, &sources, skip_validation))
         .collect::<Vec<_>>();
 
     Ok(RunnerListResponse {

@@ -10,18 +10,21 @@ Implement the specified spec(s) following the Spec-Driven Development workflow.
 ## Workflow
 
 ### 1. Load Spec Context
-- Use `view <spec>` to read the full spec content (includes parent/children)
+- Use `view <spec>` to read the full spec content
+- The `view` output already includes: parent, children, depends_on, required_by
 - Understand the scope, requirements, and acceptance criteria
-- Check `deps <spec>` to ensure dependencies are complete
-- If dependencies are incomplete, implement those first or report blockers
+- If dependencies exist, check their status in the `view` output
 
-**For parent (umbrella) specs:**
-- Implement child specs first - parent completes when all children complete
-- Parent spec defines overall scope; children define implementation details
+> **⚠️ Do NOT call `list`, `list_children`, or `list_umbrellas`** - the `view` tool provides all relationship info you need.
+
+**For umbrella specs with children:**
+- Children are listed in `view` output - no separate lookup needed
+- Implement children first; mark parent complete only when all children are complete
+- If asked to implement the parent, implement its children individually
 
 **For child specs:**
-- Ensure implementation aligns with parent's overall vision
 - Child can be completed independently once its requirements are met
+- Parent status is not your concern when implementing a child
 
 ### 2. Update Status
 - Set spec status to `in-progress` before starting work:
@@ -87,15 +90,16 @@ pnpm lint         # Must pass linting
 
 | Action | MCP Tool | CLI Command |
 |--------|----------|-------------|
-| View spec | `view` | `lean-spec view <spec>` |
-| Check deps | `deps` | `lean-spec deps <spec>` |
+| View spec (includes all relationships) | `view` | `lean-spec view <spec>` |
 | Update status | `update` | `lean-spec update <spec> --status <status>` |
 | Validate | `validate` | `lean-spec validate` |
+
+> **Note:** The `view` tool returns parent, children, depends_on, and required_by. Avoid separate calls to `deps`, `list`, `list_children`, or `list_umbrellas`.
 
 ## Important Reminders
 
 - **Read the full spec first** - Don't start without understanding scope
-- **Check dependencies** - Blocked specs should be deferred
+- **Use `view` for all context** - It includes dependencies, parent, children - no need for separate `list`, `deps`, or `list_children` calls
 - **Parent specs** - Implement children first; parent completes when all children complete
 - **Stay in scope** - Out-of-scope discoveries become new specs
 - **Update status immediately** - in-progress before coding, complete after verification

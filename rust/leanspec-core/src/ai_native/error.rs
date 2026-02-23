@@ -8,8 +8,11 @@ pub enum AiError {
     MissingApiKey(String),
     #[error("Invalid provider: {0}")]
     InvalidProvider(String),
-    #[error("Invalid model: {0}")]
-    InvalidModel(String),
+    #[error("Invalid model '{model_id}' for provider '{provider_id}'")]
+    InvalidModel {
+        provider_id: String,
+        model_id: String,
+    },
     #[error("AI provider error: {0}")]
     Provider(String),
     #[error("Tool error: {0}")]
@@ -42,8 +45,11 @@ mod tests {
                 "Invalid provider: unknown",
             ),
             (
-                AiError::InvalidModel("gpt-99".to_string()),
-                "Invalid model: gpt-99",
+                AiError::InvalidModel {
+                    provider_id: "openai".to_string(),
+                    model_id: "gpt-99".to_string(),
+                },
+                "Invalid model 'gpt-99' for provider 'openai'",
             ),
             (
                 AiError::Provider("Rate limited".to_string()),
