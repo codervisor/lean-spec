@@ -32,7 +32,7 @@ const PACKAGES_DIR = path.join(ROOT_DIR, 'packages');
 
 function checkCIEnvironment(allowLocal: boolean): void {
   const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
-  
+
   if (!isCI && !allowLocal) {
     console.error('❌ ERROR: This script should only be run in CI/CD!');
     console.error('');
@@ -46,7 +46,7 @@ function checkCIEnvironment(allowLocal: boolean): void {
     console.error('  gh workflow run publish.yml');
     process.exit(1);
   }
-  
+
   if (!isCI && allowLocal) {
     console.warn('⚠️  WARNING: Running in local mode (--allow-local)');
     console.warn('');
@@ -161,14 +161,6 @@ async function publishMainPackages(dryRun: boolean, tag?: string): Promise<void>
     console.log(`  ✓ ${mcpResult.package}`);
   } else {
     console.log(`  ✗ ${mcpResult.package}: ${mcpResult.error}`);
-  }
-
-  const uiComponentsResult = await publishPackage(path.join(PACKAGES_DIR, 'ui-components'), dryRun, tag);
-  results.push(uiComponentsResult);
-  if (uiComponentsResult.success) {
-    console.log(`  ✓ ${uiComponentsResult.package}`);
-  } else {
-    console.log(`  ✗ ${uiComponentsResult.package}: ${uiComponentsResult.error}`);
   }
 
   const httpServerResult = await publishPackage(path.join(PACKAGES_DIR, 'http-server'), dryRun, tag);

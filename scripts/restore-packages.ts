@@ -34,11 +34,11 @@ function restorePackage(pkgPath: string): boolean {
   }
 
   console.log(`📦 Restoring ${pkgPath}...`);
-  
+
   // Replace current with backup
   renameSync(backupPath, fullPath);
   console.log(`  ✅ Restored from backup`);
-  
+
   return true;
 }
 
@@ -49,7 +49,6 @@ function main() {
     'packages/cli/package.json',
     'packages/mcp/package.json',
     'packages/http-server/package.json',
-    'packages/ui-components/package.json',
     'packages/ui/package.json',
   ];
 
