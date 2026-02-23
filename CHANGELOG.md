@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.24] - 2026-02-23
+
 ### Added
 - **Tool Registry for LeanSpec AI** - New hook infrastructure for AI tool management
   - `useChatConfig` and models registry hooks
@@ -18,6 +20,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Clear API key functionality
   - Improved toast notifications for model operations
   - Renamed AI settings to Models settings for clarity
+
+- **Draft Spec Status** - New `draft` status for specs to represent work-in-progress items
+  - Full support in UI with status badges and filtering
+
+- **Customizable Workflow Enums** - Configurable status, priority, and field enums per project
+  - Enables teams to define custom values that fit their workflow
+
+- **Tool Call Result Rendering** - Rich result display for AI tool calls in chat
+  - Specialized renderers for different result types
+  - JSON truncation for large payloads to keep UI readable
+
+- **Reasoning Support in Chat** - Streaming reasoning/thinking steps in AI chat responses
+  - Enhanced tool event handling with dynamic reasoning flag
+
+- **UmbrellaBadge Component** - New badge for displaying spec hierarchy in the UI
+  - Visual indicator for umbrella parent-child relationships
+
+- **Chat Keyboard Shortcuts** - Enhanced keyboard shortcut handling across chat interface
+  - Enhanced Markdown rendering components for chat messages
+
+- **Chat Auto-Focus** - `ChatContainer` and `ChatSidebar` input auto-focus on open
+
+- **Organize Prompt** - New AI prompt for managing specs relationships, status, and priority
+
+- **Docker Deployment** - Support and documentation for deploying LeanSpec UI via Docker
+  - Vite favicon plugin for development build support
 
 ### Changed
 - **UI Components Consolidation** ([spec 314](https://web.lean-spec.dev/specs/314)) - Major refactoring of UI package
@@ -34,17 +62,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Skill Installation** - Enhanced to target detected AI tools and streamline MCP configuration
 
+- **Chat Sidebar Global Store** - Refactored to use global chat preferences store; removed deprecated standalone chat page
+
+- **Chat Message Handling** - Enhanced with parts and metadata support for richer message structures
+  - Human-readable title field in tool input structs for better action clarity
+
+- **PriorityBadge / StatusBadge** - Added `outline` variant for flexible display options
+
+- **TerminalStatus Component** - Now displays "Running..." message when no child content is provided
+
+- **Completion Verification** - Archived child specs are now considered when verifying spec completion
+
 ### Fixed
+- **lean-spec ui Path Issue** - Fixed "specs/specs" doubled path when launching `lean-spec ui` command
+  - Passes project root instead of specs directory to HTTP server
 - **CI/CD Linux Build** - Pinned Linux build runner to ubuntu-22.04 for GLIBC 2.35 compatibility
+- **CI Rust Target Cache** - Dropped failing rust target cache step in CI workflow
 - **Chat Sidebar Conversation History** - Fixed layout sidebar race conditions
 - **TypeScript Deprecation** - Removed deprecated `ignoreDeprecations` option from tsconfig
 - **Spec Prompt Clarity** - Clarified spec loading instructions and dependency checks
 - **Clippy Warnings** - Added allowance for too many arguments in stream_openai_round function
+- **Linux arm64 Error Messages** - Removed misleading linux-arm64 support claims from error output
 
 ### Technical
 - Consolidated script references and updated skill documentation
 - Removed Makefile, updated build scripts for Rust binaries
 - Refactored merge_frontmatter function to use input struct for better readability
+- Added development logos and dev-build navigation support
 
 ## [0.2.23] - 2026-02-03
 
@@ -1074,6 +1118,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.24]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.24
 [0.2.23]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.23
 [0.2.22]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.22
 [0.2.21]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.21
