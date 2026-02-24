@@ -18,9 +18,8 @@ fn parse_mode(mode: &str) -> Result<SessionMode, Box<dyn Error>> {
     match mode.to_lowercase().as_str() {
         "guided" => Ok(SessionMode::Guided),
         "autonomous" => Ok(SessionMode::Autonomous),
-        "ralph" => Ok(SessionMode::Ralph),
         _ => Err(Box::<dyn Error>::from(format!(
-            "Invalid mode: {} (expected guided, autonomous, ralph)",
+            "Invalid mode: {} (expected guided, autonomous)",
             mode
         ))),
     }

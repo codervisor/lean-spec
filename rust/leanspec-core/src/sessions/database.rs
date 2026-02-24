@@ -552,6 +552,9 @@ impl SessionDatabase {
 
 // Helper functions for parsing
 
+/// Parse a mode string from the database.
+/// "ralph" is kept for backward compatibility with existing sessions.
+#[allow(deprecated)]
 fn parse_mode(s: &str) -> SessionMode {
     match s {
         "guided" => SessionMode::Guided,

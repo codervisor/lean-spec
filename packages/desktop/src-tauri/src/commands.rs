@@ -20,6 +20,8 @@ use leanspec_core::sessions::runner::{
     default_runners_file, global_runners_path, project_runners_path, read_runners_file,
     write_runners_file, RunnerConfig, RunnerDefinition, RunnerRegistry,
 };
+use leanspec_core::sessions::{Session, SessionDatabase, SessionManager, SessionStatus};
+use leanspec_core::storage::config::config_dir;
 use leanspec_core::storage::chat_config::{
     resolve_api_key, ChatConfigClient, ChatConfigUpdate, ChatModel, ChatProvider,
 };
@@ -91,6 +93,46 @@ pub struct RunnerListResponse {
 pub struct RunnerValidateResponse {
     pub valid: bool,
     pub error: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DesktopListSessionsRequest {
+    pub spec_id: Option<String>,
+    pub status: Option<String>,
+    pub runner: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DesktopSessionResponse {
+    pub id: String,
+    pub project_path: String,
+    pub spec_id: Option<String>,
+    pub runner: String,
+    pub mode: leanspec_core::sessions::SessionMode,
+    pub status: SessionStatus,
+    pub started_at: String,
+    pub ended_at: Option<String>,
+    pub duration_ms: Option<u64>,
+    pub token_count: Option<u64>,
+}
+
+impl From<Session> for DesktopSessionResponse {
+    fn from(session: Session) -> Self {
+        Self {
+            id: session.id,
+            project_path: session.project_path,
+            spec_id: session.spec_id,
+            runner: session.runner,
+            mode: session.mode,
+            status: session.status,
+            started_at: session.started_at.to_rfc3339(),
+            ended_at: session.ended_at.map(|value| value.to_rfc3339()),
+            duration_ms: session.duration_ms,
+            token_count: session.token_count,
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -413,6 +455,46 @@ pub async fn desktop_update_chat_config(
 pub async fn desktop_get_chat_storage_info() -> Result<ChatStorageInfo, String> {
     let store = ChatStore::new().map_err(|e| e.to_string())?;
     store.storage_info().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn desktop_list_sessions(
+    params: Option<DesktopListSessionsRequest>,
+) -> Result<Vec<DesktopSessionResponse>, String> {
+    let sessions_dir = config_dir();
+    std::fs::create_dir_all(&sessions_dir)
+        .map_err(|error| format!("Failed to create sessions dir: {error}"))?;
+
+    let session_db = SessionDatabase::new(sessions_dir.join("sessions.db"))
+        .map_err(|error| error.to_string())?;
+    let manager = SessionManager::new(session_db);
+
+    let parsed_status = match params.as_ref().and_then(|value| value.status.as_deref()) {
+        Some("pending") => Some(SessionStatus::Pending),
+        Some("running") => Some(SessionStatus::Running),
+        Some("paused") => Some(SessionStatus::Paused),
+        Some("completed") => Some(SessionStatus::Completed),
+        Some("failed") => Some(SessionStatus::Failed),
+        Some("cancelled") => Some(SessionStatus::Cancelled),
+        Some(other) => {
+            return Err(format!("Invalid session status filter: {other}"));
+        }
+        None => None,
+    };
+
+    let sessions = manager
+        .list_sessions(
+            params.as_ref().and_then(|value| value.spec_id.as_deref()),
+            parsed_status,
+            params.as_ref().and_then(|value| value.runner.as_deref()),
+        )
+        .await
+        .map_err(|error| error.to_string())?;
+
+    Ok(sessions
+        .into_iter()
+        .map(DesktopSessionResponse::from)
+        .collect())
 }
 
 #[tauri::command]

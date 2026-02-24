@@ -22,7 +22,7 @@ import type { Session, SessionMode } from '../../types/api';
 import { api } from '../../lib/api';
 import { cn } from '@/library';
 
-const MODES: SessionMode[] = ['guided', 'autonomous', 'ralph'];
+const MODES: SessionMode[] = ['guided', 'autonomous']; // 'ralph' is deprecated
 
 interface SearchableSelectProps {
   value: string;

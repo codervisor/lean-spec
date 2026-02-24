@@ -13,6 +13,7 @@ export type TokenStatus = 'optimal' | 'good' | 'warning' | 'critical';
 export type ValidationStatus = 'pass' | 'warn' | 'fail';
 
 export type SessionStatus = 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
+/** @deprecated 'ralph' is deprecated and kept only for backward-compatibility with existing sessions */
 export type SessionMode = 'guided' | 'autonomous' | 'ralph';
 
 export type SubSpec = UiSubSpec & {

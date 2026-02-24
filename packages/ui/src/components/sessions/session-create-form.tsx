@@ -67,9 +67,9 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
                         placeholder={t('sessions.labels.specIdPlaceholder')}
                     />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2">
-                     <div className="space-y-1">
+                    <div className="space-y-1">
                         <label className="text-xs font-medium">{t('sessions.labels.runner')}</label>
                         <Select value={runner} onValueChange={setRunner}>
                             <SelectTrigger className="h-8">
@@ -93,7 +93,6 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
                             <SelectContent>
                                 <SelectItem value="autonomous" className="cursor-pointer">{t('sessions.modes.autonomous')}</SelectItem>
                                 <SelectItem value="guided" className="cursor-pointer">{t('sessions.modes.guided')}</SelectItem>
-                                <SelectItem value="ralph" className="cursor-pointer">{t('sessions.modes.ralph')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

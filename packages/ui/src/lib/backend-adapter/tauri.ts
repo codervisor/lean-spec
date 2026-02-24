@@ -228,8 +228,15 @@ export class TauriBackendAdapter implements BackendAdapter {
   }
 
   async listSessions(params?: { specId?: string; status?: string; runner?: string }): Promise<Session[]> {
-    void params;
-    throw new Error('listSessions is not implemented for the Tauri backend yet');
+    return this.invoke<Session[]>('desktop_list_sessions', {
+      params: params
+        ? {
+          specId: params.specId,
+          status: params.status,
+          runner: params.runner,
+        }
+        : undefined,
+    });
   }
 
   async getSession(sessionId: string): Promise<Session> {

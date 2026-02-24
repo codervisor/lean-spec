@@ -20,7 +20,7 @@ pub struct Session {
     pub spec_id: Option<String>,
     /// AI runner used (claude, copilot, codex, opencode)
     pub runner: String,
-    /// Session mode (guided, autonomous, ralph)
+    /// Session mode (guided, autonomous)
     pub mode: SessionMode,
     /// Current session status
     pub status: SessionStatus,
@@ -112,6 +112,8 @@ pub enum SessionMode {
     #[default]
     Autonomous,
     /// Autonomous with quality loops (Ralph mode)
+    /// Deprecated: kept for backward compatibility with existing sessions only.
+    #[deprecated(note = "Ralph mode is deprecated; use Autonomous instead")]
     Ralph,
 }
 

@@ -135,7 +135,7 @@
     "modes": {
       "autonomous": "Autonomous",
       "guided": "Guided",
-      "ralph": "Ralph"
+      "ralph": "Ralph (deprecated)"
     },
     "select": {
       "placeholder": "Select...",

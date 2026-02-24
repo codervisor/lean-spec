@@ -132,7 +132,7 @@
     "modes": {
       "autonomous": "自主",
       "guided": "引导",
-      "ralph": "Ralph"
+      "ralph": "Ralph（已弃用）"
     },
     "select": {
       "placeholder": "选择...",

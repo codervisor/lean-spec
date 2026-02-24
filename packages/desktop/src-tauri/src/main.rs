@@ -12,14 +12,15 @@ mod tray;
 use tauri::WindowEvent;
 
 use commands::{
-    desktop_add_project, desktop_bootstrap, desktop_check_updates, desktop_delete_chat_api_key,
-    desktop_get_chat_api_key, desktop_get_chat_config, desktop_get_chat_storage_info,
-    desktop_get_models_providers, desktop_refresh_models_registry, desktop_refresh_projects,
-    desktop_remove_project, desktop_rename_project, desktop_set_provider_api_key,
+    desktop_add_project, desktop_bootstrap, desktop_check_updates, desktop_create_runner,
+    desktop_delete_chat_api_key, desktop_delete_runner, desktop_get_chat_api_key,
+    desktop_get_chat_config, desktop_get_chat_storage_info, desktop_get_models_providers,
+    desktop_get_runner, desktop_list_runners, desktop_list_sessions,
+    desktop_refresh_models_registry, desktop_refresh_projects, desktop_remove_project,
+    desktop_rename_project, desktop_set_default_runner, desktop_set_provider_api_key,
     desktop_store_chat_api_key, desktop_switch_project, desktop_toggle_favorite,
-    desktop_update_chat_config, desktop_validate_project, desktop_version,
-    desktop_create_runner, desktop_delete_runner, desktop_get_runner, desktop_list_runners,
-    desktop_set_default_runner, desktop_update_runner, desktop_validate_runner,
+    desktop_update_chat_config, desktop_update_runner, desktop_validate_project,
+    desktop_validate_runner, desktop_version,
 };
 use shortcuts::register_shortcuts;
 use specs::{
@@ -91,6 +92,7 @@ fn main() {
             desktop_delete_runner,
             desktop_validate_runner,
             desktop_set_default_runner,
+            desktop_list_sessions,
             // Spec commands (Phase 1 & 2 of spec 169)
             get_specs,
             get_spec_detail,
