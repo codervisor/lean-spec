@@ -4,7 +4,7 @@ interface ProjectAvatarProps {
   name: string;
   color?: string | null;
   icon?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 

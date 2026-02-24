@@ -118,7 +118,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                 <ProjectAvatar
                   name={currentProject?.name || ''}
                   color={currentProject?.color}
-                  size="sm"
+                  size="xs"
                 />
               )
             ) : (
@@ -130,7 +130,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                     <ProjectAvatar
                       name={currentProject?.name || ''}
                       color={currentProject?.color}
-                      size="sm"
+                      size="xs"
                       className="shrink-0"
                     />
                   )}
@@ -164,7 +164,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                         <ProjectAvatar
                           name={project.name || ''}
                           color={project.color}
-                          size="sm"
+                          size="xs"
                           className="shrink-0"
                         />
                         <span className="truncate flex-1">{project.name}</span>

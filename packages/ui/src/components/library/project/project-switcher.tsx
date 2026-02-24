@@ -74,7 +74,7 @@ export function ProjectSwitcher({
       setOpen(false);
       return;
     }
-    
+
     setOpen(false);
     onProjectSelect?.(projectId);
   };
@@ -102,10 +102,10 @@ export function ProjectSwitcher({
             isSwitching ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <ProjectAvatar 
+              <ProjectAvatar
                 name={currentProject?.name || ''}
                 color={currentProject?.color}
-                size="sm"
+                size="xs"
               />
             )
           ) : (
@@ -114,7 +114,7 @@ export function ProjectSwitcher({
                 {isSwitching ? (
                   <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
                 ) : (
-                  <ProjectAvatar 
+                  <ProjectAvatar
                     name={currentProject?.name || ''}
                     color={currentProject?.color}
                     size="sm"
@@ -122,8 +122,8 @@ export function ProjectSwitcher({
                   />
                 )}
                 <span className="truncate">
-                  {isSwitching 
-                    ? (labels?.switching || 'Switching...') 
+                  {isSwitching
+                    ? (labels?.switching || 'Switching...')
                     : (currentProject?.name || labels?.placeholder || 'Select project')}
                 </span>
               </div>
@@ -150,7 +150,7 @@ export function ProjectSwitcher({
                     )}
                   >
                     <div className="flex items-center gap-2 w-full">
-                      <ProjectAvatar 
+                      <ProjectAvatar
                         name={project.name}
                         color={project.color}
                         size="sm"

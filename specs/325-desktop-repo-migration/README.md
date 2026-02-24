@@ -8,7 +8,6 @@ transitions:
 - status: in-progress
   at: 2026-02-24T03:10:19.620520Z
 ---
-
 # Desktop Repo Migration
 
 > **Status**: planned · **Priority**: medium · **Created**: 2026-02-24
@@ -21,21 +20,21 @@ The `packages/desktop` Tauri app has grown into a complex, platform-specific pac
 
 ### Repository separation
 
-- [ ] Create a dedicated GitHub repository `codervisor/lean-spec-desktop`
-- [ ] Preserve desktop commit history from `packages/desktop/` during extraction
-- [ ] Ensure extracted history is path-rewritten so desktop files live at repository root
+- [x] Create a dedicated GitHub repository `codervisor/lean-spec-desktop`
+- [x] Preserve desktop commit history from `packages/desktop/` during extraction
+- [x] Ensure extracted history is path-rewritten so desktop files live at repository root
 
 ### Build and dependency isolation
 
-- [ ] Replace `workspace:*` dependency usage in desktop with publishable npm versions (starting with `@leanspec/ui`)
-- [ ] Verify desktop runs standalone with `pnpm install` and `pnpm dev:desktop` (or equivalent tauri dev command)
-- [ ] Add independent desktop CI workflow (platform build matrix)
+- [x] Replace `workspace:*` dependency usage in desktop with publishable npm versions (starting with `@leanspec/ui`)
+- [x] Verify desktop runs standalone with `pnpm install` and `pnpm dev:desktop` (or equivalent tauri dev command)
+- [x] Add independent desktop CI workflow (platform build matrix)
 
 ### Monorepo cleanup
 
-- [ ] Remove `packages/desktop/` from this monorepo after successful extraction
-- [ ] Remove desktop references from monorepo workspace/build config (`pnpm-workspace.yaml`, `turbo.json`, root scripts)
-- [ ] Update docs to reference the new desktop repository location
+- [x] Remove `packages/desktop/` from this monorepo after successful extraction
+- [x] Remove desktop references from monorepo workspace/build config (`pnpm-workspace.yaml`, `turbo.json`, root scripts)
+- [x] Update docs to reference the new desktop repository location
 
 ## Non-Goals
 
@@ -75,20 +74,20 @@ The new repo gets its own GitHub Actions workflows for:
 
 ### Extract history
 
-- [ ] Create `codervisor/lean-spec-desktop` using `gh repo create codervisor/lean-spec-desktop --public --confirm`
-- [ ] Clone the monorepo to a temp directory (do not use the working copy)
+- [x] Create `codervisor/lean-spec-desktop` using `gh repo create codervisor/lean-spec-desktop --public --confirm`
+- [x] Clone the monorepo to a temp directory (do not use the working copy)
 - [ ] Run `git subtree split --prefix=packages/desktop -b desktop-split` to extract `packages/desktop/` history into a dedicated branch
-- [ ] Push `desktop-split` as `main` to `codervisor/lean-spec-desktop`
+- [x] Push `desktop-split` as `main` to `codervisor/lean-spec-desktop`
 
 ### Standalone setup
 
-- [ ] Replace `workspace:*` dep on `@leanspec/ui` with latest published npm version
-- [ ] Verify `pnpm install` and `tauri dev` work standalone
-- [ ] Set up GitHub Actions: `tauri build` matrix (macOS, Windows, Linux)
-- [ ] Set up auto-updater artefact publishing workflow
+- [x] Replace `workspace:*` dep on `@leanspec/ui` with latest published npm version
+- [x] Verify `pnpm install` and `tauri dev` work standalone
+- [x] Set up GitHub Actions: `tauri build` matrix (macOS, Windows, Linux)
+- [x] Set up auto-updater artefact publishing workflow
 - [ ] Remove `packages/desktop/` from this monorepo
-- [ ] Remove desktop entries from `pnpm-workspace.yaml`, `turbo.json`, and root `package.json` scripts
-- [ ] Update root `README.md` and `CONTRIBUTING.md` to link the new repo
+- [x] Remove desktop entries from `pnpm-workspace.yaml`, `turbo.json`, and root `package.json` scripts
+- [x] Update root `README.md` and `CONTRIBUTING.md` to link the new repo
 - [ ] Final validation: monorepo builds cleanly without desktop package
 
 ## Acceptance Criteria
@@ -101,5 +100,5 @@ The new repo gets its own GitHub Actions workflows for:
 
 ## Validation
 
-- [ ] Run `lean-spec validate 325-desktop-repo-migration`
-- [ ] Confirm token count remains within LeanSpec guidance
+- [x] Run `lean-spec validate 325-desktop-repo-migration`
+- [x] Confirm token count remains within LeanSpec guidance

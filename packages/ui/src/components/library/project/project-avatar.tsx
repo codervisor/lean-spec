@@ -14,7 +14,7 @@ export interface ProjectAvatarProps {
   /** Optional icon URL/path */
   icon?: string;
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   /** Additional CSS classes */
   className?: string;
 }
