@@ -629,6 +629,7 @@ pub async fn create_runner(
             env: req.runner.env,
             detection: None,
             symlink_file: None,
+            prompt_flag: None,
         },
     );
 
@@ -681,6 +682,7 @@ pub async fn update_runner(
             env: req.runner.env,
             detection: None,
             symlink_file: None,
+            prompt_flag: None,
         },
     );
 
@@ -736,6 +738,7 @@ pub async fn patch_runner(
             env: req.runner.env.or(existing.env),
             detection: existing.detection,
             symlink_file: existing.symlink_file,
+            prompt_flag: existing.prompt_flag,
         },
     );
 
