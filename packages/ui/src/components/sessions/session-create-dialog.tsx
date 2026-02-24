@@ -6,6 +6,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  Input,
   Command,
   CommandEmpty,
   CommandGroup,
@@ -114,6 +115,7 @@ export function SessionCreateDialog({
   const [runner, setRunner] = useState('claude');
   const [mode, setMode] = useState<SessionMode>('autonomous');
   const [specId, setSpecId] = useState(defaultSpecId ?? '');
+  const [prompt, setPrompt] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -143,9 +145,11 @@ export function SessionCreateDialog({
     setCreating(true);
     setError(null);
     try {
+      const specIds = specId.trim() ? [specId.trim()] : [];
       const created = await api.createSession({
         projectPath,
-        specId: showSpecSelect ? (specId || null) : (defaultSpecId ?? null),
+        specIds,
+        prompt: prompt.trim() || null,
         runner,
         mode,
       });
@@ -157,7 +161,7 @@ export function SessionCreateDialog({
     } finally {
       setCreating(false);
     }
-  }, [projectPath, showSpecSelect, specId, defaultSpecId, runner, mode, onCreated, onOpenChange, t]);
+  }, [projectPath, showSpecSelect, specId, defaultSpecId, prompt, runner, mode, onCreated, onOpenChange, t]);
 
   const specSelectOptions = [
     { value: '', label: t('sessions.labels.noSpec') },
@@ -190,6 +194,14 @@ export function SessionCreateDialog({
               />
             </div>
           )}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.prompt')}</label>
+            <Input
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder={t('sessions.labels.promptPlaceholder')}
+            />
+          </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.runner')}</label>
             <SearchableSelect

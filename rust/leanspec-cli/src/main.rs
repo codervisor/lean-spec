@@ -546,8 +546,13 @@ enum SessionSubcommand {
         #[arg(long)]
         project_path: String,
 
+        /// Spec IDs to attach as context (repeatable: --spec 028 --spec 320)
+        #[arg(long, action = clap::ArgAction::Append)]
+        spec: Vec<String>,
+
+        /// Optional custom prompt/instructions for the session
         #[arg(long)]
-        spec: Option<String>,
+        prompt: Option<String>,
 
         #[arg(long)]
         runner: Option<String>,
@@ -559,8 +564,13 @@ enum SessionSubcommand {
         #[arg(long)]
         project_path: String,
 
+        /// Spec IDs to attach as context (repeatable: --spec 028 --spec 320)
+        #[arg(long, action = clap::ArgAction::Append)]
+        spec: Vec<String>,
+
+        /// Optional custom prompt/instructions for the session
         #[arg(long)]
-        spec: Option<String>,
+        prompt: Option<String>,
 
         #[arg(long)]
         runner: Option<String>,
@@ -889,22 +899,26 @@ fn main() -> ExitCode {
                 SessionSubcommand::Create {
                     project_path,
                     spec,
+                    prompt,
                     runner,
                     mode,
                 } => Cmd::Create {
                     project_path,
-                    spec,
+                    specs: spec,
+                    prompt,
                     runner,
                     mode,
                 },
                 SessionSubcommand::Run {
                     project_path,
                     spec,
+                    prompt,
                     runner,
                     mode,
                 } => Cmd::Run {
                     project_path,
-                    spec,
+                    specs: spec,
+                    prompt,
                     runner,
                     mode,
                 },

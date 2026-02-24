@@ -188,7 +188,7 @@ export function SessionDetailPage() {
     if (!session || !currentProject?.path) return;
     const created = await api.createSession({
       projectPath: currentProject.path,
-      specId: session.specId ?? null,
+      specIds: session.specIds ?? [],
       runner: session.runner,
       mode: session.mode,
     });
@@ -292,7 +292,7 @@ export function SessionDetailPage() {
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
                   {t('sessions.labels.mode')}: {session.mode}
-                  {session.specId ? ` • ${t('sessions.labels.spec')}: ${session.specId}` : ''}
+                  {(session.specIds?.length ?? 0) > 0 ? ` • ${t('sessions.labels.spec')}: ${session.specIds.join(', ')}` : ''}
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -334,8 +334,8 @@ export function SessionDetailPage() {
                   <Copy className="h-3.5 w-3.5" />
                   {t('sessions.actions.copyId')}
                 </Button>
-                {session.specId && (
-                  <Link to={`${basePath}/specs/${session.specId}`} className="inline-flex">
+                {(session.specIds?.length ?? 0) > 0 && (
+                  <Link to={`${basePath}/specs/${session.specIds[0]}`} className="inline-flex">
                     <Button size="sm" variant="ghost" className="gap-1">
                       {t('sessions.actions.viewSpec')}
                     </Button>

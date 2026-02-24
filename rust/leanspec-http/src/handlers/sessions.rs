@@ -30,7 +30,13 @@ use serde_json::json;
 #[derive(Debug, Deserialize)]
 pub struct CreateRunnerSessionRequest {
     pub project_path: String,
+    /// Specs to attach as context (replaces spec_id)
+    #[serde(default)]
+    pub spec_ids: Vec<String>,
+    /// Deprecated: use spec_ids instead. Kept for backward compatibility.
     pub spec_id: Option<String>,
+    /// Optional custom prompt/instructions
+    pub prompt: Option<String>,
     pub runner: Option<String>,
     #[serde(default)]
     pub mode: SessionMode,
@@ -41,7 +47,10 @@ pub struct CreateRunnerSessionRequest {
 pub struct SessionResponse {
     pub id: String,
     pub project_path: String,
+    pub spec_ids: Vec<String>,
+    /// Deprecated: use spec_ids instead. Returns first spec_id for backward compatibility.
     pub spec_id: Option<String>,
+    pub prompt: Option<String>,
     pub runner: String,
     pub mode: SessionMode,
     pub status: SessionStatus,
@@ -83,10 +92,13 @@ pub struct RotateLogsResponse {
 
 impl From<Session> for SessionResponse {
     fn from(session: Session) -> Self {
+        let spec_id = session.spec_ids.first().cloned();
         Self {
             id: session.id,
             project_path: session.project_path,
-            spec_id: session.spec_id,
+            spec_ids: session.spec_ids,
+            spec_id,
+            prompt: session.prompt,
             runner: session.runner,
             mode: session.mode,
             status: session.status,
@@ -105,8 +117,16 @@ pub async fn create_session(
 ) -> ApiResult<Json<SessionResponse>> {
     let manager = state.session_manager.clone();
 
+    // Merge spec_ids from both fields (spec_ids takes priority; spec_id is deprecated alias)
+    let mut spec_ids = req.spec_ids;
+    if spec_ids.is_empty() {
+        if let Some(spec_id) = req.spec_id {
+            spec_ids = vec![spec_id];
+        }
+    }
+
     let session = manager
-        .create_session(req.project_path, req.spec_id, req.runner, req.mode)
+        .create_session(req.project_path, spec_ids, req.prompt, req.runner, req.mode)
         .await
         .map_err(|e| {
             (
@@ -989,7 +1009,8 @@ mod tests {
         let session = Session::new(
             "test-id".to_string(),
             "/test/project".to_string(),
-            Some("spec-001".to_string()),
+            vec!["spec-001".to_string()],
+            None,
             "claude".to_string(),
             SessionMode::Autonomous,
         );

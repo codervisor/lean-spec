@@ -260,12 +260,12 @@ export function SpecDetailPage() {
 
   const activeSessionsCount = useMemo(() => {
     if (!spec?.specName) return 0;
-    return sessions.filter(s => s.specId === spec.specName && (s.status === 'running' || s.status === 'pending')).length;
+    return sessions.filter(s => (s.specIds?.includes(spec.specName) ?? false) && (s.status === 'running' || s.status === 'pending')).length;
   }, [sessions, spec?.specName]);
 
   const totalSessionsCount = useMemo(() => {
     if (!spec?.specName) return 0;
-    return sessions.filter(s => s.specId === spec.specName).length;
+    return sessions.filter(s => s.specIds?.includes(spec.specName) ?? false).length;
   }, [sessions, spec?.specName]);
 
   const subSpecs: EnrichedSubSpec[] = useMemo(() => {

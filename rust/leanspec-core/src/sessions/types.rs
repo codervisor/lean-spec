@@ -16,8 +16,10 @@ pub struct Session {
     pub id: String,
     /// Project path where session runs
     pub project_path: String,
-    /// Optional spec ID this session implements
-    pub spec_id: Option<String>,
+    /// Specs attached as context (zero or more)
+    pub spec_ids: Vec<String>,
+    /// Optional custom prompt/instructions for the session
+    pub prompt: Option<String>,
     /// AI runner used (claude, copilot, codex, opencode)
     pub runner: String,
     /// Session mode (guided, autonomous)
@@ -47,7 +49,8 @@ impl Session {
     pub fn new(
         id: String,
         project_path: String,
-        spec_id: Option<String>,
+        spec_ids: Vec<String>,
+        prompt: Option<String>,
         runner: String,
         mode: SessionMode,
     ) -> Self {
@@ -55,7 +58,8 @@ impl Session {
         Self {
             id,
             project_path,
-            spec_id,
+            spec_ids,
+            prompt,
             runner,
             mode,
             status: SessionStatus::Pending,
@@ -68,6 +72,11 @@ impl Session {
             created_at: now,
             updated_at: now,
         }
+    }
+
+    /// First spec ID for backward compatibility
+    pub fn spec_id(&self) -> Option<&str> {
+        self.spec_ids.first().map(|s| s.as_str())
     }
 
     /// Check if session is currently running
@@ -233,8 +242,10 @@ pub enum EventType {
 pub struct SessionConfig {
     /// Project path
     pub project_path: String,
-    /// Optional spec ID
-    pub spec_id: Option<String>,
+    /// Specs attached as context (zero or more)
+    pub spec_ids: Vec<String>,
+    /// Optional custom prompt/instructions for the session
+    pub prompt: Option<String>,
     /// AI runner to use
     pub runner: String,
     /// Session mode
@@ -253,7 +264,8 @@ impl Default for SessionConfig {
     fn default() -> Self {
         Self {
             project_path: String::new(),
-            spec_id: None,
+            spec_ids: Vec::new(),
+            prompt: None,
             runner: "claude".to_string(),
             mode: SessionMode::Autonomous,
             max_iterations: None,

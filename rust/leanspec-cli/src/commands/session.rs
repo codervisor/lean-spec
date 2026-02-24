@@ -44,16 +44,18 @@ pub fn run(command: SessionCommand) -> Result<(), Box<dyn Error>> {
     match command {
         SessionCommand::Create {
             project_path,
-            spec,
+            specs,
+            prompt,
             runner,
             mode,
-        } => create_session(project_path, spec, runner, mode, false),
+        } => create_session(project_path, specs, prompt, runner, mode, false),
         SessionCommand::Run {
             project_path,
-            spec,
+            specs,
+            prompt,
             runner,
             mode,
-        } => create_session(project_path, spec, runner, mode, true),
+        } => create_session(project_path, specs, prompt, runner, mode, true),
         SessionCommand::Start { session_id } => start_session(&session_id),
         SessionCommand::Pause { session_id } => pause_session(&session_id),
         SessionCommand::Resume { session_id } => resume_session(&session_id),
@@ -78,13 +80,15 @@ pub fn run(command: SessionCommand) -> Result<(), Box<dyn Error>> {
 pub enum SessionCommand {
     Create {
         project_path: String,
-        spec: Option<String>,
+        specs: Vec<String>,
+        prompt: Option<String>,
         runner: Option<String>,
         mode: String,
     },
     Run {
         project_path: String,
-        spec: Option<String>,
+        specs: Vec<String>,
+        prompt: Option<String>,
         runner: Option<String>,
         mode: String,
     },
@@ -127,7 +131,8 @@ pub enum SessionCommand {
 
 fn create_session(
     project_path: String,
-    spec: Option<String>,
+    specs: Vec<String>,
+    prompt: Option<String>,
     runner: Option<String>,
     mode: String,
     start: bool,
@@ -139,7 +144,7 @@ fn create_session(
         let manager = build_manager()?;
         let mode = parse_mode(&mode)?;
         let session = manager
-            .create_session(project_path, spec, runner, mode)
+            .create_session(project_path, specs, prompt, runner, mode)
             .await
             .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
 
@@ -344,8 +349,15 @@ fn view_session(session_id: &str) -> Result<(), Box<dyn Error>> {
         println!("  Status: {:?}", session.status);
         println!(
             "  Spec: {}",
-            session.spec_id.unwrap_or_else(|| "-".to_string())
+            if session.spec_ids.is_empty() {
+                "-".to_string()
+            } else {
+                session.spec_ids.join(", ")
+            }
         );
+        if let Some(ref prompt) = session.prompt {
+            println!("  Prompt: {}", prompt);
+        }
         println!("  Project Path: {}", session.project_path);
         println!("  Started: {}", session.started_at);
         println!(
@@ -401,7 +413,11 @@ fn list_sessions(
                 s.id.bold(),
                 s.runner,
                 s.status,
-                s.spec_id.unwrap_or_else(|| "-".to_string())
+                if s.spec_ids.is_empty() {
+                    "-".to_string()
+                } else {
+                    s.spec_ids.join(", ")
+                }
             );
         }
         println!();

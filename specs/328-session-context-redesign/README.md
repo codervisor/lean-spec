@@ -1,10 +1,19 @@
 ---
-status: planned
+status: complete
 created: 2026-02-24
 priority: high
-tags: [sessions, redesign, architecture]
+tags:
+- sessions
+- redesign
+- architecture
 created_at: 2026-02-24T07:35:07.231777Z
-updated_at: 2026-02-24T07:35:07.231777Z
+updated_at: 2026-02-24T08:23:41.091462Z
+completed_at: 2026-02-24T08:23:41.091462Z
+transitions:
+- status: in-progress
+  at: 2026-02-24T07:44:18.043607Z
+- status: complete
+  at: 2026-02-24T08:23:41.091462Z
 ---
 
 # Session Context Redesign: Specs as Attached Context
@@ -99,30 +108,30 @@ export interface Session {
 
 ## Plan
 
-- [ ] Update `Session` struct and `SessionConfig` in `leanspec-core/src/sessions/types.rs`
-- [ ] Update `SessionDatabase`: new schema, migration from `spec_id` → `session_specs`, add `prompt`
-- [ ] Update `SessionManager::create_session` signature and `start_session` env var injection
-- [ ] Update `leanspec-http` handler types (`CreateRunnerSessionRequest`, `SessionResponse`, `ListSessionsRequest`)
-- [ ] Update `leanspec-cli` `session.rs` commands (repeatable `--spec`, add `--prompt`)
-- [ ] Update `main.rs` `SessionSubcommand` enum
-- [ ] Update TypeScript `Session` type in `packages/ui/src/types/api.ts`
-- [ ] Update `BackendAdapter` interface and HTTP/Tauri adapters
-- [ ] Update `useSessionsQuery` hook
-- [ ] Update any UI components that use `specId`
+- [x] Update `Session` struct and `SessionConfig` in `leanspec-core/src/sessions/types.rs`
+- [x] Update `SessionDatabase`: new schema, migration from `spec_id` → `session_specs`, add `prompt`
+- [x] Update `SessionManager::create_session` signature and `start_session` env var injection
+- [x] Update `leanspec-http` handler types (`CreateRunnerSessionRequest`, `SessionResponse`, `ListSessionsRequest`)
+- [x] Update `leanspec-cli` `session.rs` commands (repeatable `--spec`, add `--prompt`)
+- [x] Update `main.rs` `SessionSubcommand` enum
+- [x] Update TypeScript `Session` type in `packages/ui/src/types/api.ts`
+- [x] Update `BackendAdapter` interface and HTTP/Tauri adapters
+- [x] Update `useSessionsQuery` hook
+- [x] Update any UI components that use `specId`
 
 ## Test
 
-- [ ] `SessionDatabase`: creating a session with no specs stores an empty `session_specs` table; creating with multiple specs stores all rows in correct order
-- [ ] `SessionDatabase`: migration of existing sessions with `spec_id` populates `session_specs` correctly; sessions without `spec_id` are unaffected
-- [ ] `SessionManager::start_session`: `LEANSPEC_SPEC_IDS` env var is empty string when no specs attached; comma-separated when multiple specs attached
-- [ ] `SessionManager::start_session`: `LEANSPEC_SPEC_ID` is set to first spec ID for backward compat; empty when no specs attached
-- [ ] `SessionManager::start_session`: `LEANSPEC_PROMPT` env var is set when `prompt` is provided; not set when `prompt` is `None`
-- [ ] HTTP API: `POST /sessions` with `spec_ids: []` and `prompt: "..."` creates a valid prompt-only session
-- [ ] HTTP API: `POST /sessions` with `spec_ids: ["028", "320"]` creates a session with two attached specs
-- [ ] HTTP API: `POST /sessions` with deprecated `spec_id: "028"` is accepted and stored as `spec_ids: ["028"]`
-- [ ] CLI: `lean-spec session run --project-path . --prompt "fix lint errors"` works without `--spec`
-- [ ] CLI: `lean-spec session run --project-path . --spec 028 --spec 320` attaches two specs
-- [ ] TypeScript `Session` type: `specIds` is always an array; `specId` alias returns first element or undefined
+- [x] `SessionDatabase`: creating a session with no specs stores an empty `session_specs` table; creating with multiple specs stores all rows in correct order
+- [x] `SessionDatabase`: migration of existing sessions with `spec_id` populates `session_specs` correctly; sessions without `spec_id` are unaffected
+- [x] `SessionManager::start_session`: `LEANSPEC_SPEC_IDS` env var is empty string when no specs attached; comma-separated when multiple specs attached
+- [x] `SessionManager::start_session`: `LEANSPEC_SPEC_ID` is set to first spec ID for backward compat; empty when no specs attached
+- [x] `SessionManager::start_session`: `LEANSPEC_PROMPT` env var is set when `prompt` is provided; not set when `prompt` is `None`
+- [x] HTTP API: `POST /sessions` with `spec_ids: []` and `prompt: "..."` creates a valid prompt-only session
+- [x] HTTP API: `POST /sessions` with `spec_ids: ["028", "320"]` creates a session with two attached specs
+- [x] HTTP API: `POST /sessions` with deprecated `spec_id: "028"` is accepted and stored as `spec_ids: ["028"]`
+- [x] CLI: `lean-spec session run --project-path . --prompt "fix lint errors"` works without `--spec`
+- [x] CLI: `lean-spec session run --project-path . --spec 028 --spec 320` attaches two specs
+- [x] TypeScript `Session` type: `specIds` is always an array; `specId` alias returns first element or undefined
 
 ## Notes
 

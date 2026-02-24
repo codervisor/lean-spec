@@ -69,7 +69,8 @@ impl SessionManager {
     pub async fn create_session(
         &self,
         project_path: String,
-        spec_id: Option<String>,
+        spec_ids: Vec<String>,
+        prompt: Option<String>,
         runner: Option<String>,
         mode: SessionMode,
     ) -> CoreResult<Session> {
@@ -108,7 +109,7 @@ impl SessionManager {
         }
 
         let session_id = Uuid::new_v4().to_string();
-        let session = Session::new(session_id, project_path, spec_id, runner_id, mode);
+        let session = Session::new(session_id, project_path, spec_ids, prompt, runner_id, mode);
 
         self.db.insert_session(&session)?;
 
@@ -143,13 +144,21 @@ impl SessionManager {
             "LEANSPEC_PROJECT_PATH".to_string(),
             session.project_path.clone(),
         );
-        if let Some(spec_id) = &session.spec_id {
-            env_vars.insert("LEANSPEC_SPEC_ID".to_string(), spec_id.clone());
+        // Set LEANSPEC_SPEC_IDS as comma-separated list
+        env_vars.insert("LEANSPEC_SPEC_IDS".to_string(), session.spec_ids.join(","));
+        // Set LEANSPEC_SPEC_ID to first spec ID for backward compatibility
+        if let Some(first_spec_id) = session.spec_ids.first() {
+            env_vars.insert("LEANSPEC_SPEC_ID".to_string(), first_spec_id.clone());
+        }
+        // Set LEANSPEC_PROMPT if prompt is provided
+        if let Some(ref prompt) = session.prompt {
+            env_vars.insert("LEANSPEC_PROMPT".to_string(), prompt.clone());
         }
 
         let config = SessionConfig {
             project_path: session.project_path.clone(),
-            spec_id: session.spec_id.clone(),
+            spec_ids: session.spec_ids.clone(),
+            prompt: session.prompt.clone(),
             runner: session.runner.clone(),
             mode: session.mode,
             max_iterations: None,
@@ -826,7 +835,8 @@ mod tests {
         let session = manager
             .create_session(
                 "/test/project".to_string(),
-                Some("spec-001".to_string()),
+                vec!["spec-001".to_string()],
+                None,
                 Some("claude".to_string()),
                 SessionMode::Autonomous,
             )
@@ -834,7 +844,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(session.project_path, "/test/project");
-        assert_eq!(session.spec_id, Some("spec-001".to_string()));
+        assert_eq!(session.spec_ids, vec!["spec-001".to_string()]);
         assert_eq!(session.runner, "claude");
         assert!(matches!(session.status, SessionStatus::Pending));
     }
@@ -848,7 +858,8 @@ mod tests {
         manager
             .create_session(
                 "/test/project1".to_string(),
-                Some("spec-001".to_string()),
+                vec!["spec-001".to_string()],
+                None,
                 Some("claude".to_string()),
                 SessionMode::Autonomous,
             )
@@ -858,7 +869,8 @@ mod tests {
         manager
             .create_session(
                 "/test/project2".to_string(),
-                Some("spec-002".to_string()),
+                vec!["spec-002".to_string()],
+                None,
                 Some("copilot".to_string()),
                 SessionMode::Guided,
             )
@@ -887,7 +899,8 @@ mod tests {
         let session = manager
             .create_session(
                 "/test/project".to_string(),
-                Some("spec-001".to_string()),
+                vec!["spec-001".to_string()],
+                None,
                 Some("claude".to_string()),
                 SessionMode::Autonomous,
             )
@@ -903,5 +916,45 @@ mod tests {
 
         // Should be gone
         assert!(manager.get_session(&session.id).await.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn test_create_session_no_specs() {
+        let db = SessionDatabase::new_in_memory().unwrap();
+        let manager = SessionManager::new(db);
+
+        let session = manager
+            .create_session(
+                "/test/project".to_string(),
+                vec![],
+                Some("fix all lint errors".to_string()),
+                Some("claude".to_string()),
+                SessionMode::Autonomous,
+            )
+            .await
+            .unwrap();
+
+        assert!(session.spec_ids.is_empty());
+        assert_eq!(session.prompt, Some("fix all lint errors".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_create_session_multiple_specs() {
+        let db = SessionDatabase::new_in_memory().unwrap();
+        let manager = SessionManager::new(db);
+
+        let session = manager
+            .create_session(
+                "/test/project".to_string(),
+                vec!["028-cli".to_string(), "320-redesign".to_string()],
+                None,
+                Some("claude".to_string()),
+                SessionMode::Autonomous,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(session.spec_ids.len(), 2);
+        assert_eq!(session.spec_id(), Some("028-cli"));
     }
 }

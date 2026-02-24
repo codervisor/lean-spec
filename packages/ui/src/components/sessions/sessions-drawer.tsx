@@ -37,7 +37,7 @@ export function SessionsDrawer() {
   // Filter sessions
   const filteredSessions = sessions.filter(session => {
     if (!specFilter) return true;
-    return session.specId === specFilter;
+    return session.specIds?.includes(specFilter) ?? false;
   });
 
   const activeSessions = filteredSessions.filter(s => ['running', 'pending', 'paused'].includes(s.status));

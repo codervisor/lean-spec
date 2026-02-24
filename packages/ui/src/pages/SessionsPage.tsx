@@ -106,7 +106,7 @@ export function SessionsPage() {
         const query = searchQuery.toLowerCase();
         const matchesSearch =
           session.id.toLowerCase().includes(query) ||
-          (session.specId ? session.specId.toLowerCase().includes(query) : false) ||
+          (session.specIds?.some(id => id.toLowerCase().includes(query)) ?? false) ||
           session.runner.toLowerCase().includes(query);
         if (!matchesSearch) return false;
       }
@@ -116,8 +116,8 @@ export function SessionsPage() {
       if (modeFilter !== 'all' && session.mode !== modeFilter) return false;
 
       if (specFilter !== 'all') {
-        if (!session.specId) return false;
-        if (session.specId !== specFilter && !session.specId.includes(specFilter)) return false;
+        if (!session.specIds?.length) return false;
+        if (!session.specIds.some(id => id === specFilter || id.includes(specFilter))) return false;
       }
 
       return true;
@@ -169,7 +169,7 @@ export function SessionsPage() {
     if (!currentProject?.path) return;
     const created = await createSession({
       projectPath: currentProject.path,
-      specId: session.specId ?? null,
+      specIds: session.specIds ?? [],
       runner: session.runner,
       mode: session.mode,
     });
@@ -366,7 +366,7 @@ export function SessionsPage() {
                         </div>
                         <div className="text-sm text-muted-foreground truncate">
                           {t('sessions.labels.mode')}: {session.mode}
-                          {session.specId ? ` • ${t('sessions.labels.spec')}: ${session.specId}` : ''}
+                          {(session.specIds?.length ?? 0) > 0 ? ` • ${t('sessions.labels.spec')}: ${session.specIds.join(', ')}` : ''}
                           {` • ${t('sessions.labels.started')}: ${new Date(session.startedAt).toLocaleString()}`}
                         </div>
                         {formatSessionDuration(session) && (
@@ -418,9 +418,9 @@ export function SessionsPage() {
                             {t('sessions.actions.retry')}
                           </Button>
                         )}
-                        {session.specId && (
+                        {(session.specIds?.length ?? 0) > 0 && (
                           <Button size="sm" variant="ghost" className="gap-1" asChild>
-                            <Link to={`${basePath}/specs/${session.specId}`}>
+                            <Link to={`${basePath}/specs/${session.specIds[0]}`}>
                               {t('sessions.actions.viewSpec')}
                             </Link>
                           </Button>

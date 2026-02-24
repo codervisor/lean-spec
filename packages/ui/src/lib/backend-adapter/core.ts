@@ -116,7 +116,10 @@ export interface BackendAdapter {
   getSession(sessionId: string): Promise<Session>;
   createSession(payload: {
     projectPath: string;
+    specIds?: string[];
+    /** @deprecated Use specIds instead */
     specId?: string | null;
+    prompt?: string | null;
     runner?: string;
     mode: SessionMode;
   }): Promise<Session>;

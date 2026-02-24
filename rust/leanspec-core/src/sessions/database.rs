@@ -56,12 +56,12 @@ impl SessionDatabase {
     /// Create tables and indexes
     fn init_tables(&self) -> CoreResult<()> {
         let conn = self.conn()?;
-        // Sessions table
+        // Sessions table (new schema: prompt column instead of spec_id)
         conn.execute(
             "CREATE TABLE IF NOT EXISTS sessions (
                     id TEXT PRIMARY KEY,
                     project_path TEXT NOT NULL,
-                    spec_id TEXT,
+                    prompt TEXT,
                     runner TEXT NOT NULL,
                     mode TEXT NOT NULL,
                     status TEXT NOT NULL,
@@ -76,6 +76,32 @@ impl SessionDatabase {
             [],
         )
         .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
+
+        // Migration: add prompt column to existing databases (ignore error if already exists)
+        conn.execute("ALTER TABLE sessions ADD COLUMN prompt TEXT", [])
+            .ok();
+
+        // Session specs join table (zero or more specs per session)
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS session_specs (
+                    session_id TEXT NOT NULL,
+                    spec_id    TEXT NOT NULL,
+                    position   INTEGER NOT NULL DEFAULT 0,
+                    PRIMARY KEY (session_id, spec_id),
+                    FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+                )",
+            [],
+        )
+        .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
+
+        // Migration: copy existing spec_id values from sessions into session_specs
+        // Ignore errors (e.g., if spec_id column doesn't exist in new databases)
+        conn.execute(
+            "INSERT OR IGNORE INTO session_specs (session_id, spec_id, position)
+                SELECT id, spec_id, 0 FROM sessions WHERE spec_id IS NOT NULL",
+            [],
+        )
+        .ok();
 
         // Session metadata table
         conn.execute(
@@ -120,7 +146,12 @@ impl SessionDatabase {
 
         // Indexes
         conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_sessions_spec ON sessions(spec_id)",
+            "CREATE INDEX IF NOT EXISTS idx_session_specs_session ON session_specs(session_id)",
+            [],
+        )
+        .ok();
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_session_specs_spec ON session_specs(spec_id)",
             [],
         )
         .ok();
@@ -153,14 +184,14 @@ impl SessionDatabase {
         let conn = self.conn()?;
         conn.execute(
             "INSERT INTO sessions (
-                    id, project_path, spec_id, runner, mode, status,
+                    id, project_path, prompt, runner, mode, status,
                     exit_code, started_at, ended_at, duration_ms, token_count,
                     created_at, updated_at
                 ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
             params![
                 session.id,
                 session.project_path,
-                session.spec_id,
+                session.prompt,
                 session.runner,
                 format!("{:?}", session.mode).to_lowercase(),
                 format!("{:?}", session.status).to_snake_case(),
@@ -174,6 +205,9 @@ impl SessionDatabase {
             ],
         )
         .map_err(|e| CoreError::DatabaseError(format!("Failed to insert session: {}", e)))?;
+
+        // Save spec IDs
+        Self::insert_spec_ids_with_conn(&conn, &session.id, &session.spec_ids)?;
 
         // Save metadata (use internal method to avoid deadlock)
         for (key, value) in &session.metadata {
@@ -198,7 +232,7 @@ impl SessionDatabase {
         conn.execute(
             "UPDATE sessions SET
                     project_path = ?1,
-                    spec_id = ?2,
+                    prompt = ?2,
                     runner = ?3,
                     mode = ?4,
                     status = ?5,
@@ -211,7 +245,7 @@ impl SessionDatabase {
                 WHERE id = ?12",
             params![
                 session.project_path,
-                session.spec_id,
+                session.prompt,
                 session.runner,
                 format!("{:?}", session.mode).to_lowercase(),
                 format!("{:?}", session.status).to_snake_case(),
@@ -225,6 +259,14 @@ impl SessionDatabase {
             ],
         )
         .map_err(|e| CoreError::DatabaseError(format!("Failed to update session: {}", e)))?;
+
+        // Update spec IDs
+        conn.execute(
+            "DELETE FROM session_specs WHERE session_id = ?1",
+            [&session.id],
+        )
+        .ok();
+        Self::insert_spec_ids_with_conn(&conn, &session.id, &session.spec_ids)?;
 
         // Update metadata (use internal method to avoid deadlock)
         conn.execute(
@@ -254,9 +296,9 @@ impl SessionDatabase {
         let mut stmt = conn
             .prepare(
                 "SELECT
-                    id, project_path, spec_id, runner, mode, status,
+                    id, project_path, runner, mode, status,
                     exit_code, started_at, ended_at, duration_ms, token_count,
-                    created_at, updated_at
+                    prompt, created_at, updated_at
                 FROM sessions WHERE id = ?1",
             )
             .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
@@ -268,6 +310,7 @@ impl SessionDatabase {
 
         if let Some(mut session) = session {
             // Use internal helper to avoid deadlock (we already hold conn lock)
+            session.spec_ids = Self::load_spec_ids_with_conn(&conn, session_id)?;
             session.metadata = Self::load_metadata_with_conn(&conn, session_id)?;
             Ok(Some(session))
         } else {
@@ -285,15 +328,15 @@ impl SessionDatabase {
         let conn = self.conn()?;
         let mut query = String::from(
             "SELECT
-                id, project_path, spec_id, runner, mode, status,
+                id, project_path, runner, mode, status,
                 exit_code, started_at, ended_at, duration_ms, token_count,
-                created_at, updated_at
+                prompt, created_at, updated_at
             FROM sessions WHERE 1=1",
         );
         let mut params: Vec<Value> = Vec::new();
 
         if let Some(spec) = spec_id {
-            query.push_str(" AND spec_id = ?");
+            query.push_str(" AND EXISTS (SELECT 1 FROM session_specs ss WHERE ss.session_id = id AND ss.spec_id = ?)");
             params.push(Value::from(spec.to_string()));
         }
         if let Some(status) = status {
@@ -320,8 +363,9 @@ impl SessionDatabase {
             sessions.push(row);
         }
 
-        // Load metadata for each session (use internal helper to avoid deadlock)
+        // Load spec IDs and metadata for each session
         for session in &mut sessions {
+            session.spec_ids = Self::load_spec_ids_with_conn(&conn, &session.id)?;
             session.metadata = Self::load_metadata_with_conn(&conn, &session.id)?;
         }
 
@@ -494,19 +538,55 @@ impl SessionDatabase {
         Ok(Session {
             id: row.get(0)?,
             project_path: row.get(1)?,
-            spec_id: row.get(2)?,
-            runner: row.get(3)?,
-            mode: parse_mode(&row.get::<_, String>(4)?),
-            status: parse_status(&row.get::<_, String>(5)?),
-            exit_code: row.get(6)?,
-            started_at: parse_datetime(row.get(7)?),
-            ended_at: row.get::<_, Option<String>>(8)?.map(parse_datetime),
-            duration_ms: row.get(9)?,
-            token_count: row.get(10)?,
+            spec_ids: Vec::new(), // Loaded separately
+            prompt: row.get(10)?,
+            runner: row.get(2)?,
+            mode: parse_mode(&row.get::<_, String>(3)?),
+            status: parse_status(&row.get::<_, String>(4)?),
+            exit_code: row.get(5)?,
+            started_at: parse_datetime(row.get(6)?),
+            ended_at: row.get::<_, Option<String>>(7)?.map(parse_datetime),
+            duration_ms: row.get(8)?,
+            token_count: row.get(9)?,
             metadata: HashMap::new(), // Loaded separately
             created_at: parse_datetime(row.get(11)?),
             updated_at: parse_datetime(row.get(12)?),
         })
+    }
+
+    /// Internal helper to insert spec IDs with an existing connection
+    fn insert_spec_ids_with_conn(
+        conn: &Connection,
+        session_id: &str,
+        spec_ids: &[String],
+    ) -> CoreResult<()> {
+        for (position, spec_id) in spec_ids.iter().enumerate() {
+            conn.execute(
+                "INSERT OR IGNORE INTO session_specs (session_id, spec_id, position) VALUES (?1, ?2, ?3)",
+                params![session_id, spec_id, position as i64],
+            )
+            .map_err(|e| CoreError::DatabaseError(format!("Failed to insert spec ID: {}", e)))?;
+        }
+        Ok(())
+    }
+
+    /// Internal helper to load spec IDs with an existing connection
+    fn load_spec_ids_with_conn(conn: &Connection, session_id: &str) -> CoreResult<Vec<String>> {
+        let mut stmt = conn
+            .prepare("SELECT spec_id FROM session_specs WHERE session_id = ? ORDER BY position ASC")
+            .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
+
+        let rows = stmt
+            .query_map([session_id], |row| row.get::<_, String>(0))
+            .map_err(|e| CoreError::DatabaseError(format!("Failed to load spec IDs: {}", e)))?;
+
+        let mut spec_ids = Vec::new();
+        for row in rows {
+            let spec_id = row.map_err(|e| CoreError::DatabaseError(e.to_string()))?;
+            spec_ids.push(spec_id);
+        }
+
+        Ok(spec_ids)
     }
 
     /// Internal helper to insert metadata with an existing connection (avoids deadlock)
@@ -642,7 +722,8 @@ mod tests {
         let session = Session::new(
             "test-id-1".to_string(),
             "/test/project".to_string(),
-            Some("spec-001".to_string()),
+            vec!["spec-001".to_string()],
+            None,
             "claude".to_string(),
             SessionMode::Autonomous,
         );
@@ -682,6 +763,7 @@ mod tests {
         let session = Session::new(
             "test-session".to_string(),
             "/test/project".to_string(),
+            vec![],
             None,
             "claude".to_string(),
             SessionMode::Autonomous,
@@ -710,6 +792,7 @@ mod tests {
         let session = Session::new(
             "test-session".to_string(),
             "/test/project".to_string(),
+            vec![],
             None,
             "claude".to_string(),
             SessionMode::Autonomous,
@@ -732,5 +815,69 @@ mod tests {
         assert!(matches!(events[0].event_type, EventType::Created));
         assert!(matches!(events[1].event_type, EventType::Started));
         assert!(matches!(events[2].event_type, EventType::Completed));
+    }
+
+    #[test]
+    fn test_spec_ids_empty() {
+        let db = SessionDatabase::new_in_memory().unwrap();
+
+        let session = Session::new(
+            "test-no-spec".to_string(),
+            "/test/project".to_string(),
+            vec![],
+            None,
+            "claude".to_string(),
+            SessionMode::Autonomous,
+        );
+        db.insert_session(&session).unwrap();
+
+        let retrieved = db.get_session("test-no-spec").unwrap().unwrap();
+        assert!(retrieved.spec_ids.is_empty());
+    }
+
+    #[test]
+    fn test_spec_ids_multiple() {
+        let db = SessionDatabase::new_in_memory().unwrap();
+
+        let session = Session::new(
+            "test-multi-spec".to_string(),
+            "/test/project".to_string(),
+            vec!["028-cli".to_string(), "320-redesign".to_string()],
+            Some("Fix all lint errors".to_string()),
+            "claude".to_string(),
+            SessionMode::Autonomous,
+        );
+        db.insert_session(&session).unwrap();
+
+        let retrieved = db.get_session("test-multi-spec").unwrap().unwrap();
+        assert_eq!(retrieved.spec_ids.len(), 2);
+        assert!(retrieved.spec_ids.contains(&"028-cli".to_string()));
+        assert!(retrieved.spec_ids.contains(&"320-redesign".to_string()));
+        assert_eq!(retrieved.prompt, Some("Fix all lint errors".to_string()));
+    }
+
+    #[test]
+    fn test_spec_ids_update() {
+        let db = SessionDatabase::new_in_memory().unwrap();
+
+        let session = Session::new(
+            "test-update-spec".to_string(),
+            "/test/project".to_string(),
+            vec!["spec-001".to_string()],
+            None,
+            "claude".to_string(),
+            SessionMode::Autonomous,
+        );
+        db.insert_session(&session).unwrap();
+
+        let mut updated = session;
+        updated.spec_ids = vec!["spec-002".to_string(), "spec-003".to_string()];
+        db.update_session(&updated).unwrap();
+
+        let retrieved = db.get_session("test-update-spec").unwrap().unwrap();
+        assert_eq!(retrieved.spec_ids.len(), 2);
+        assert!(retrieved.spec_ids.contains(&"spec-002".to_string()));
+        assert!(retrieved.spec_ids.contains(&"spec-003".to_string()));
+        assert!(!retrieved.spec_ids.contains(&"spec-001".to_string()));
     }
 }

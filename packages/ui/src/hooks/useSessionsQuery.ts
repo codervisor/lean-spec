@@ -33,7 +33,7 @@ export function useSessionMutations(projectId: string | null) {
   const listKey = sessionKeys.list(projectId ?? '');
 
   const createSession = useMutation({
-    mutationFn: (payload: { projectPath: string; specId?: string | null; runner?: string; mode: SessionMode }) =>
+    mutationFn: (payload: { projectPath: string; specIds?: string[]; specId?: string | null; prompt?: string | null; runner?: string; mode: SessionMode }) =>
       api.createSession(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: listKey });

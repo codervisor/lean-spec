@@ -248,7 +248,9 @@ export class TauriBackendAdapter implements BackendAdapter {
 
   async createSession(payload: {
     projectPath: string;
+    specIds?: string[];
     specId?: string | null;
+    prompt?: string | null;
     runner?: string;
     mode: SessionMode;
   }): Promise<Session> {

@@ -28,7 +28,7 @@ export function SessionCard({ session, compact }: SessionCardProps) {
                 {session.status === 'completed' ? <Check className="h-3 w-3 text-green-500" /> : <X className="h-3 w-3 text-red-500" />}
                 <span className="font-medium text-foreground">{session.runner}</span>
                 <span>•</span>
-                <span className="truncate flex-1">#{session.specId}</span>
+                <span className="truncate flex-1">#{session.specIds?.[0] ?? ''}</span>
                 <span>{formatRelativeTime(session.endedAt || session.startedAt, i18n.language)}</span>
                 <Button size="icon" variant="ghost" className="h-5 w-5 ml-auto">
                     <FileText className="h-3 w-3" />
@@ -49,9 +49,9 @@ export function SessionCard({ session, compact }: SessionCardProps) {
                     <div className="text-xs text-muted-foreground">
                         {session.runner} • {session.mode}
                     </div>
-                    {session.specId && (
+                    {(session.specIds?.length ?? 0) > 0 && (
                         <div className="font-medium text-primary text-xs mt-1">
-                            #{session.specId}
+                            #{session.specIds.join(', ')}
                         </div>
                     )}
                 </div>

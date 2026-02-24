@@ -1,15 +1,14 @@
 ---
 status: planned
 created: 2026-02-24
-priority: high
+priority: medium
 tags:
 - sessions
 - reliability
 - timeout
 created_at: 2026-02-24T07:25:39.461850Z
-updated_at: 2026-02-24T07:25:39.461850Z
+updated_at: 2026-02-24T08:21:16.254197Z
 ---
-
 # Session Watchdog Timeout Policy
 
 ## Overview

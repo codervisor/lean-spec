@@ -322,15 +322,20 @@ export class HttpBackendAdapter implements BackendAdapter {
 
   async createSession(payload: {
     projectPath: string;
+    specIds?: string[];
     specId?: string | null;
+    prompt?: string | null;
     runner?: string;
     mode: SessionMode;
   }): Promise<Session> {
+    // Normalize: if specIds not provided, fall back to specId for backward compat
+    const specIds = payload.specIds ?? (payload.specId ? [payload.specId] : []);
     return this.fetchAPI<Session>('/api/sessions', {
       method: 'POST',
       body: JSON.stringify({
         project_path: payload.projectPath,
-        spec_id: payload.specId ?? null,
+        spec_ids: specIds,
+        prompt: payload.prompt ?? null,
         runner: payload.runner,
         mode: payload.mode,
       }),

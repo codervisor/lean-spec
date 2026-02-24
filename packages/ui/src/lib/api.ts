@@ -128,7 +128,7 @@ class ProjectAPI {
     return this.backend.getSession(sessionId);
   }
 
-  createSession(payload: { projectPath: string; specId?: string | null; runner?: string; mode: SessionMode }): Promise<Session> {
+  createSession(payload: { projectPath: string; specIds?: string[]; specId?: string | null; prompt?: string | null; runner?: string; mode: SessionMode }): Promise<Session> {
     return this.backend.createSession(payload);
   }
 

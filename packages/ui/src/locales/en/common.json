@@ -124,6 +124,8 @@
       "spec": "Spec",
       "specId": "Spec ID",
       "specIdPlaceholder": "Expected Spec ID",
+      "prompt": "Initial Prompt",
+      "promptPlaceholder": "Optional instructions or context for the AI runner",
       "noSpec": "No spec",
       "tokens": "Tokens",
       "cost": "Estimated cost",

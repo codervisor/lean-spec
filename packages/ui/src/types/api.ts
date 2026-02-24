@@ -45,7 +45,10 @@ export type SpecDetail = UiSpecWithMetadata & {
 export interface Session {
   id: string;
   projectPath: string;
+  specIds: string[];
+  /** @deprecated Use specIds instead. Returns first spec ID for backward compatibility. */
   specId?: string | null;
+  prompt?: string | null;
   runner: string;
   mode: SessionMode;
   status: SessionStatus;

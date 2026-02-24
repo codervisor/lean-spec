@@ -121,6 +121,8 @@
       "spec": "规范",
       "specId": "规范 ID",
       "specIdPlaceholder": "输入规范 ID",
+      "prompt": "初始提示词",
+      "promptPlaceholder": "为 AI 运行器提供的可选指令或上下文",
       "noSpec": "未关联规范",
       "tokens": "令牌",
       "cost": "预估费用",

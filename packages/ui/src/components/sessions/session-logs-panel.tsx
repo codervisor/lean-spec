@@ -54,7 +54,7 @@ export function SessionLogsPanel({ sessionId, onBack }: SessionLogsPanelProps) {
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div className="font-semibold text-sm truncate">
-                    {session?.runner} • #{session?.specId}
+                    {session?.runner}{(session?.specIds?.length ?? 0) > 0 ? ` • #${session.specIds[0]}` : ''}
                 </div>
             </div>
 

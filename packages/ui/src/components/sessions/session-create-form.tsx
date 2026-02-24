@@ -18,6 +18,7 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
     const { currentProject } = useCurrentProject();
     const { createSession, startSession } = useSessionMutations(currentProject?.id ?? null);
     const [specId, setSpecId] = useState(defaultSpecId || '');
+    const [prompt, setPrompt] = useState('');
     const [runners, setRunners] = useState<string[]>([]);
     const [runner, setRunner] = useState('claude');
     const [mode, setMode] = useState<SessionMode>('autonomous');
@@ -40,9 +41,12 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
         setLoading(true);
         try {
             if (!currentProject?.path) throw new Error('No project path');
+            // specId is a comma-separated or single spec string; convert to array
+            const specIds = specId.trim() ? specId.split(',').map(s => s.trim()).filter(Boolean) : [];
             const session = await createSession({
                 projectPath: currentProject.path,
-                specId,
+                specIds,
+                prompt: prompt.trim() || null,
                 runner,
                 mode,
             });
@@ -65,6 +69,15 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
                         value={specId}
                         onChange={(event) => setSpecId(event.target.value)}
                         placeholder={t('sessions.labels.specIdPlaceholder')}
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-medium">{t('sessions.labels.prompt')}</label>
+                    <Input
+                        value={prompt}
+                        onChange={(event) => setPrompt(event.target.value)}
+                        placeholder={t('sessions.labels.promptPlaceholder')}
                     />
                 </div>
 
