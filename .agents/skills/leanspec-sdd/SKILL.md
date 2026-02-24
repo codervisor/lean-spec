@@ -36,6 +36,7 @@ Activate this skill when any of the following are true:
 
 ### 2) Design
 - If a spec is needed, create it with `create` (or `lean-spec create`).
+- **Populate all known fields in the `create` call itself** — pass `title`, `content`, `priority`, `tags`, etc. directly. Do NOT create an empty spec and then populate it with a follow-up `update` call.
 - Prefer standard templates and keep scope clear.
 - Validate token count using `tokens` (or `lean-spec tokens`).
 
@@ -77,6 +78,7 @@ Use MCP tools when available. Use CLI as fallback.
 
 - Keep AGENTS.md **project-specific only**; put SDD methodology here.
 - Never create spec files manually; use `create`.
+- **Always pass `content`, `title`, and all known fields in the `create` call** — never create an empty spec then edit it.
 - Keep specs short and focused; split when >2000 tokens.
 - Always check dependencies and link specs that block each other.
 - Document trade-offs and decisions as they happen.
