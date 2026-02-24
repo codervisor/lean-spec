@@ -109,11 +109,7 @@ fn build_context_prompt(
     let mut parts: Vec<String> = Vec::new();
 
     if !spec_contents.is_empty() {
-        let header = if spec_contents.len() == 1 {
-            "Implement the following specs:"
-        } else {
-            "Implement the following specs:"
-        };
+        let header = "Implement the following specs:";
         parts.push(format!(
             "{}\n\n{}",
             header,
