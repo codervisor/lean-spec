@@ -207,7 +207,7 @@ class ProjectAPI {
       };
       scope?: RunnerScope;
     }
-  ): Promise<RunnerListResponse> {
+  ): Promise<RunnerDefinition> {
     return this.backend.updateRunner(runnerId, payload);
   }
 

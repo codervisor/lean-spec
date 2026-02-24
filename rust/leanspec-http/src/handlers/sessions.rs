@@ -449,8 +449,8 @@ pub struct ListRunnersRequest {
 #[derive(Debug, Default, Deserialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum RunnerScope {
-    #[default]
     Project,
+    #[default]
     Global,
 }
 
@@ -502,6 +502,12 @@ pub struct RunnerUpdatePayload {
     pub command: Option<String>,
     pub args: Option<Vec<String>>,
     pub env: Option<HashMap<String, String>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RunnerPatchQuery {
+    #[serde(default)]
+    pub minimal: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -691,6 +697,81 @@ pub async fn update_runner(
             Json(ApiError::internal_error(&e.to_string())),
         )
     })?;
+
+    Ok(Json(response))
+}
+
+pub async fn patch_runner(
+    State(_state): State<AppState>,
+    Path(runner_id): Path<String>,
+    axum::extract::Query(query): axum::extract::Query<RunnerPatchQuery>,
+    Json(req): Json<RunnerUpdateRequest>,
+) -> ApiResult<Json<RunnerInfoResponse>> {
+    if let Some(command) = &req.runner.command {
+        if command.trim().is_empty() {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request("Runner command is required")),
+            ));
+        }
+    }
+
+    let scope = req.scope.unwrap_or_default();
+    let path = resolve_scope_path(&req.project_path, scope);
+    let mut file = load_or_default_runners_file(&path).map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let existing = file.runners.get(&runner_id).cloned().unwrap_or_default();
+
+    file.runners.insert(
+        runner_id.clone(),
+        RunnerConfig {
+            name: req.runner.name.or(existing.name),
+            command: req.runner.command.or(existing.command),
+            args: req.runner.args.or(existing.args),
+            env: req.runner.env.or(existing.env),
+            detection: existing.detection,
+            symlink_file: existing.symlink_file,
+        },
+    );
+
+    write_runners_file(&path, &file).map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let registry =
+        RunnerRegistry::load(PathBuf::from(&req.project_path).as_path()).map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?;
+
+    let runner = registry.get(&runner_id).ok_or_else(|| {
+        (
+            axum::http::StatusCode::NOT_FOUND,
+            Json(ApiError::not_found("Runner")),
+        )
+    })?;
+
+    let sources = load_runner_sources(&req.project_path).map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let mut response = build_runner_info(runner, &sources);
+    if query.minimal {
+        response.available = None;
+    }
 
     Ok(Json(response))
 }

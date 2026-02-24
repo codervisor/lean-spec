@@ -198,7 +198,7 @@ impl RunnerRegistry {
                 id: "copilot".to_string(),
                 name: Some("GitHub Copilot".to_string()),
                 command: Some("copilot".to_string()),
-                args: Vec::new(),
+                args: vec!["--allow-all".to_string(), "--prompt".to_string()],
                 env: HashMap::new(),
                 detection: Some(DetectionConfig {
                     commands: vec!["copilot".to_string()],

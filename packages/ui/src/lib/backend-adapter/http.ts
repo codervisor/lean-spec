@@ -454,9 +454,9 @@ export class HttpBackendAdapter implements BackendAdapter {
       };
       scope?: RunnerScope;
     }
-  ): Promise<RunnerListResponse> {
-    return this.fetchAPI<RunnerListResponse>(`/api/runners/${encodeURIComponent(runnerId)}`, {
-      method: 'PUT',
+  ): Promise<RunnerDefinition> {
+    return this.fetchAPI<RunnerDefinition>(`/api/runners/${encodeURIComponent(runnerId)}?minimal=true`, {
+      method: 'PATCH',
       body: JSON.stringify({
         projectPath: payload.projectPath,
         runner: payload.runner,

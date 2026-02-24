@@ -655,6 +655,7 @@
       "filters": {
         "status": "Status",
         "showUnavailable": "Show unavailable",
+        "showIdeRunners": "Show IDE runners",
         "source": "Source",
         "allSources": "All Sources",
         "builtin": "Built-in",

@@ -159,7 +159,7 @@ export interface BackendAdapter {
       };
       scope?: RunnerScope;
     }
-  ): Promise<RunnerListResponse>;
+  ): Promise<RunnerDefinition>;
   deleteRunner(
     runnerId: string,
     payload: { projectPath: string; scope?: RunnerScope }

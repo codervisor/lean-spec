@@ -217,6 +217,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/runners/default", put(handlers::set_default_runner))
         .route("/api/runners/{id}", get(handlers::get_runner))
         .route("/api/runners/{id}", put(handlers::update_runner))
+        .route("/api/runners/{id}", patch(handlers::patch_runner))
         .route("/api/runners/{id}", delete(handlers::delete_runner))
         .route(
             "/api/runners/{id}/validate",

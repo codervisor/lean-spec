@@ -655,6 +655,7 @@
       "filters": {
         "status": "状态",
         "showUnavailable": "显示不可用",
+        "showIdeRunners": "显示 IDE 运行器",
         "source": "来源",
         "allSources": "全部来源",
         "builtin": "内置",

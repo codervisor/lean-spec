@@ -341,13 +341,23 @@ export class TauriBackendAdapter implements BackendAdapter {
       };
       scope?: RunnerScope;
     }
-  ): Promise<RunnerListResponse> {
-    return this.invoke<RunnerListResponse>('desktop_update_runner', {
+  ): Promise<RunnerDefinition> {
+    const response = await this.invoke<RunnerDefinition | RunnerListResponse>('desktop_update_runner', {
       runnerId,
       projectPath: payload.projectPath,
       runner: payload.runner,
       scope: payload.scope,
     });
+
+    if ('runners' in response) {
+      const updated = response.runners.find((runner) => runner.id === runnerId);
+      if (updated) {
+        return updated;
+      }
+      throw new Error(`Runner '${runnerId}' not found in update response`);
+    }
+
+    return response;
   }
 
   async deleteRunner(

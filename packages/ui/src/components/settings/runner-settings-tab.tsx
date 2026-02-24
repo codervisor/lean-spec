@@ -41,7 +41,7 @@ import { SearchFilterBar } from '../shared/search-filter-bar';
 import { useToast } from '../../contexts';
 import { useRunnerFiltersStore } from '../../stores/settings-filters';
 
-const DEFAULT_SCOPE: RunnerScope = 'project';
+const DEFAULT_SCOPE: RunnerScope = 'global';
 
 function Label({ htmlFor, children, className = '' }: { htmlFor?: string; children: ReactNode; className?: string }) {
   return (
@@ -84,10 +84,12 @@ export function RunnerSettingsTab() {
     searchQuery,
     sortBy,
     showUnavailable,
+    showIdeRunners,
     sourceFilter,
     setSearchQuery,
     setSortBy,
     setShowUnavailable,
+    setShowIdeRunners,
     setSourceFilter,
   } = useRunnerFiltersStore();
 
@@ -167,7 +169,7 @@ export function RunnerSettingsTab() {
     id: string;
     name?: string | null;
     command?: string | null;
-    args?: string[];
+    args: string[];
     env?: Record<string, string>;
   }) => {
     if (!projectPath) return;
@@ -176,8 +178,8 @@ export function RunnerSettingsTab() {
     const command = trimmedCommand.length > 0 ? trimmedCommand : undefined;
 
     try {
-      const response = editingRunner
-        ? await api.updateRunner(payload.id, {
+      if (editingRunner) {
+        const updatedRunner = await api.updateRunner(payload.id, {
           projectPath,
           runner: {
             name: payload.name ?? undefined,
@@ -186,8 +188,11 @@ export function RunnerSettingsTab() {
             env: payload.env,
           },
           scope: DEFAULT_SCOPE,
-        })
-        : await api.createRunner({
+        });
+
+        setRunners((previous) => previous.map((runner) => (runner.id === updatedRunner.id ? updatedRunner : runner)));
+      } else {
+        const response = await api.createRunner({
           projectPath,
           runner: {
             ...payload,
@@ -196,7 +201,9 @@ export function RunnerSettingsTab() {
           scope: DEFAULT_SCOPE,
         });
 
-      applyResponse(response);
+        applyResponse(response);
+      }
+
       setShowDialog(false);
       setEditingRunner(null);
       setError(null);
@@ -272,6 +279,11 @@ export function RunnerSettingsTab() {
       result = result.filter(r => getRunnerAvailability(r) !== false);
     }
 
+    // Filter out IDE-only runners (unless showIdeRunners is true)
+    if (!showIdeRunners) {
+      result = result.filter(r => Boolean(r.command));
+    }
+
     // Filter by source
     if (sourceFilter !== 'all') {
       result = result.filter(r => r.source === sourceFilter);
@@ -294,7 +306,7 @@ export function RunnerSettingsTab() {
     });
 
     return result;
-  }, [runners, searchQuery, showUnavailable, sourceFilter, sortBy]);
+  }, [runners, searchQuery, showUnavailable, showIdeRunners, sourceFilter, sortBy]);
 
   if (loading) {
     return (
@@ -377,6 +389,12 @@ export function RunnerSettingsTab() {
                   label: t('settings.runners.filters.showUnavailable'),
                   checked: showUnavailable,
                   onCheckedChange: setShowUnavailable
+                },
+                {
+                  id: 'ide-runners',
+                  label: t('settings.runners.filters.showIdeRunners'),
+                  checked: showIdeRunners,
+                  onCheckedChange: setShowIdeRunners
                 }
               ]
             },
@@ -477,7 +495,9 @@ export function RunnerSettingsTab() {
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded inline-block">
-                            {runner.command ?? t('settings.runners.ideOnlyCommand')}
+                            {runner.command
+                              ? [runner.command, ...(runner.args ?? [])].join(' ')
+                              : t('settings.runners.ideOnlyCommand')}
                           </p>
                         </div>
                       </HoverCardTrigger>
@@ -585,7 +605,7 @@ interface RunnerDialogProps {
     id: string;
     name?: string | null;
     command?: string | null;
-    args?: string[];
+    args: string[];
     env?: Record<string, string>;
   }) => void;
   onCancel: () => void;
@@ -657,7 +677,7 @@ function RunnerDialog({ runner, existingIds, onSave, onCancel }: RunnerDialogPro
       id: formData.id.trim(),
       name: formData.name.trim() || null,
       command: formData.command.trim() || undefined,
-      args: args.length ? args : undefined,
+      args,
       env: Object.keys(env).length ? env : undefined,
     });
   };

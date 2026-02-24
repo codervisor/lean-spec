@@ -1,17 +1,25 @@
 ---
-status: planned
+status: archived
 created: 2026-02-07
 priority: medium
 tags:
 - rust
 - database
 - refactor
+- cancelled
 created_at: 2026-02-07T05:27:19.084883Z
-updated_at: 2026-02-07T05:27:19.084883Z
+updated_at: 2026-02-24T14:21:14.484810Z
+transitions:
+- status: archived
+  at: 2026-02-24T14:21:14.484810Z
 ---
+
 # Adopt sea-query + rusqlite_migration for DB layer
 
 ## Overview
+
+> **Cancelled** — Superseded by spec 329 (Database Consolidation and Multi-Backend Support). The consolidation goal is preserved in 329, which uses `sqlx` for proper async support and connection pooling instead of sea-query on top of sync rusqlite. See spec 329 for rationale.
+
 
 Replace raw SQL strings and ad-hoc schema management in `leanspec-core` with **sea-query** (type-safe query builder) and **rusqlite_migration** (versioned migrations). **Consolidate `sessions.db` and `chat.db` into a single `leanspec.db`** to simplify connection management and enable a clean Postgres migration path.
 

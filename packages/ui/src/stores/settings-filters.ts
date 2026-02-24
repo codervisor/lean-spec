@@ -59,10 +59,12 @@ interface RunnerFiltersState {
   searchQuery: string;
   sortBy: RunnerSortOption;
   showUnavailable: boolean;
+  showIdeRunners: boolean;
   sourceFilter: RunnerSourceFilter;
   setSearchQuery: (query: string) => void;
   setSortBy: (sort: RunnerSortOption) => void;
   setShowUnavailable: (show: boolean) => void;
+  setShowIdeRunners: (show: boolean) => void;
   setSourceFilter: (filter: RunnerSourceFilter) => void;
   resetFilters: () => void;
 }
@@ -71,6 +73,7 @@ const RUNNER_FILTERS_DEFAULTS = {
   searchQuery: '',
   sortBy: 'name' as RunnerSortOption,
   showUnavailable: false,
+  showIdeRunners: false,
   sourceFilter: 'all' as RunnerSourceFilter,
 };
 
@@ -81,6 +84,7 @@ export const useRunnerFiltersStore = create<RunnerFiltersState>()(
       setSearchQuery: (query) => set({ searchQuery: query }),
       setSortBy: (sort) => set({ sortBy: sort }),
       setShowUnavailable: (show) => set({ showUnavailable: show }),
+      setShowIdeRunners: (show) => set({ showIdeRunners: show }),
       setSourceFilter: (filter) => set({ sourceFilter: filter }),
       resetFilters: () => set(RUNNER_FILTERS_DEFAULTS),
     }),
@@ -90,6 +94,7 @@ export const useRunnerFiltersStore = create<RunnerFiltersState>()(
         searchQuery: state.searchQuery,
         sortBy: state.sortBy,
         showUnavailable: state.showUnavailable,
+        showIdeRunners: state.showIdeRunners,
         sourceFilter: state.sourceFilter,
       }),
     }
