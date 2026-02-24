@@ -7,98 +7,20 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
 } from '@/library';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import type { Session, SessionMode } from '../../types/api';
+import type { Session, SessionMode, Spec } from '../../types/api';
 import { api } from '../../lib/api';
-import { cn } from '@/library';
+import { SpecSearchSelect } from '../spec-search-select';
+import { SearchableSelect } from '../searchable-select';
 
 const MODES: SessionMode[] = ['guided', 'autonomous']; // 'ralph' is deprecated
-
-interface SearchableSelectProps {
-  value: string;
-  onValueChange: (value: string) => void;
-  options: { value: string; label: string }[];
-  placeholder?: string;
-  searchPlaceholder?: string;
-  emptyText?: string;
-}
-
-function SearchableSelect({
-  value,
-  onValueChange,
-  options,
-  placeholder,
-  searchPlaceholder,
-  emptyText,
-}: SearchableSelectProps) {
-  const { t } = useTranslation('common');
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between font-normal"
-        >
-          {value
-            ? (options.find((option) => option.value === value)?.label ?? value)
-            : placeholder ?? t('sessions.select.placeholder')}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder ?? t('sessions.select.search')} />
-          <CommandList>
-            <CommandEmpty>{emptyText ?? t('sessions.select.empty')}</CommandEmpty>
-            <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.label}
-                  className="cursor-pointer"
-                  onSelect={() => {
-                    onValueChange(option.value);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      'mr-2 h-4 w-4',
-                      value === option.value ? 'opacity-100' : 'opacity-0'
-                    )}
-                  />
-                  {option.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 interface SessionCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectPath?: string | null;
   defaultSpecId?: string | null;
-  specOptions?: Array<{ id: string; label: string }>;
   onCreated?: (session: Session) => void;
 }
 
@@ -107,7 +29,6 @@ export function SessionCreateDialog({
   onOpenChange,
   projectPath,
   defaultSpecId,
-  specOptions,
   onCreated,
 }: SessionCreateDialogProps) {
   const { t } = useTranslation('common');
@@ -116,11 +37,11 @@ export function SessionCreateDialog({
   const [mode, setMode] = useState<SessionMode>('autonomous');
   const [specId, setSpecId] = useState(defaultSpecId ?? '');
   const [prompt, setPrompt] = useState('');
+  const [specs, setSpecs] = useState<Spec[]>([]);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canCreate = Boolean(projectPath);
-  const showSpecSelect = (specOptions?.length ?? 0) > 0;
 
   useEffect(() => {
     setSpecId(defaultSpecId ?? '');
@@ -137,7 +58,16 @@ export function SessionCreateDialog({
         setRunners(['claude', 'copilot', 'codex', 'opencode', 'aider', 'cline']);
       }
     };
+    const loadSpecs = async () => {
+      try {
+        const data = await api.getSpecs();
+        setSpecs(data);
+      } catch {
+        // Best-effort; spec picker will be empty
+      }
+    };
     void loadRunners();
+    void loadSpecs();
   }, [open, projectPath]);
 
   const runCreate = useCallback(async () => {
@@ -161,12 +91,8 @@ export function SessionCreateDialog({
     } finally {
       setCreating(false);
     }
-  }, [projectPath, showSpecSelect, specId, defaultSpecId, prompt, runner, mode, onCreated, onOpenChange, t]);
+  }, [projectPath, specId, prompt, runner, mode, onCreated, onOpenChange, t]);
 
-  const specSelectOptions = [
-    { value: '', label: t('sessions.labels.noSpec') },
-    ...(specOptions?.map((option) => ({ value: option.id, label: option.label })) ?? []),
-  ];
   const runnerOptions = runners.map((value) => ({ value, label: value }));
   const modeOptions = MODES.map((value) => ({ value, label: value }));
 
@@ -183,17 +109,15 @@ export function SessionCreateDialog({
               {error}
             </div>
           )}
-          {showSpecSelect && (
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.spec')}</label>
-              <SearchableSelect
-                value={specId}
-                onValueChange={setSpecId}
-                options={specSelectOptions}
-                placeholder={t('sessions.labels.spec')}
-              />
-            </div>
-          )}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.spec')}</label>
+            <SpecSearchSelect
+              value={specId}
+              onValueChange={setSpecId}
+              specs={specs}
+              placeholder={t('sessions.labels.noSpec')}
+            />
+          </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.prompt')}</label>
             <Input

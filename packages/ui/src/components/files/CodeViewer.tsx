@@ -47,7 +47,7 @@ interface CodeViewerProps {
 
 export function CodeViewer({ file, className }: CodeViewerProps) {
   const { t } = useTranslation('common');
-  const [lines, setLines] = useState<ThemedToken[][][] | null>(null);
+  const [lines, setLines] = useState<ThemedToken[][] | null>(null);
   const [copied, setCopied] = useState(false);
   const scrollRef = useRef<HTMLPreElement>(null);
 
@@ -64,7 +64,7 @@ export function CodeViewer({ file, className }: CodeViewerProps) {
           theme: 'github-light',
         });
         if (!cancelled) {
-          setLines(result as ThemedToken[][][]);
+          setLines(result);
         }
       } catch {
         if (!cancelled) {

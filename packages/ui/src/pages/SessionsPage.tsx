@@ -453,7 +453,6 @@ export function SessionsPage() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         projectPath={currentProject?.path}
-        specOptions={specOptions}
         onCreated={() => void loadSessions()}
       />
     </PageTransition>

@@ -214,6 +214,7 @@ export type {
   RunnerListResponse,
   RunnerScope,
   RunnerValidateResponse,
+  RunnerVersionResponse,
   ChatConfig,
   ModelsRegistryResponse,
   FileListResponse,
