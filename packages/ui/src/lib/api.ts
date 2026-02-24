@@ -16,6 +16,7 @@ import type {
   RunnerListResponse,
   RunnerScope,
   RunnerValidateResponse,
+  RunnerVersionResponse,
 } from "../types/api";
 import type { ChatConfig } from "../types/chat-config";
 import type { ModelsRegistryResponse } from "../types/models-registry";
@@ -174,6 +175,10 @@ class ProjectAPI {
 
   getRunner(runnerId: string, projectPath?: string): Promise<RunnerDefinition> {
     return this.backend.getRunner(runnerId, projectPath);
+  }
+
+  getRunnerVersion(runnerId: string, projectPath?: string): Promise<RunnerVersionResponse> {
+    return this.backend.getRunnerVersion(runnerId, projectPath);
   }
 
   createRunner(payload: {

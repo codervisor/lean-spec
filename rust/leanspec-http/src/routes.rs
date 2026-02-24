@@ -221,6 +221,10 @@ pub fn create_router(state: AppState) -> Router {
         .route(
             "/api/runners/{id}/validate",
             post(handlers::validate_runner),
+        )
+        .route(
+            "/api/runners/{id}/version",
+            get(handlers::get_runner_version),
         );
 
     // AI chat route (only when ai feature is enabled)

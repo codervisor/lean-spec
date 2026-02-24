@@ -28,6 +28,7 @@ import type {
   RunnerListResponse,
   RunnerScope,
   RunnerValidateResponse,
+  RunnerVersionResponse,
 } from '../../types/api';
 import type { ChatConfig } from '../../types/chat-config';
 import type { ModelsRegistryResponse } from '../../types/models-registry';
@@ -134,6 +135,7 @@ export interface BackendAdapter {
   listAvailableRunners(projectPath?: string): Promise<string[]>;
   listRunners(projectPath?: string, options?: { skipValidation?: boolean }): Promise<RunnerListResponse>;
   getRunner(runnerId: string, projectPath?: string): Promise<RunnerDefinition>;
+  getRunnerVersion(runnerId: string, projectPath?: string): Promise<RunnerVersionResponse>;
   createRunner(payload: {
     projectPath: string;
     runner: {

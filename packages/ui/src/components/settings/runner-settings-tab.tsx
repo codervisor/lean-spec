@@ -75,6 +75,7 @@ export function RunnerSettingsTab() {
   const [error, setError] = useState<string | null>(null);
   const [runners, setRunners] = useState<RunnerDefinition[]>([]);
   const [defaultRunner, setDefaultRunner] = useState<string | null>(null);
+  const [loadingVersions, setLoadingVersions] = useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = useState(false);
   const [editingRunner, setEditingRunner] = useState<RunnerDefinition | null>(null);
 
@@ -102,6 +103,24 @@ export function RunnerSettingsTab() {
     setDefaultRunner(response.default ?? null);
   };
 
+  const fetchVersionsAsync = useCallback((loadedRunners: RunnerDefinition[]) => {
+    if (!projectPath) return;
+    const runnable = loadedRunners.filter(r => r.command && r.available === true);
+    if (runnable.length === 0) return;
+
+    setLoadingVersions(new Set(runnable.map(r => r.id)));
+    runnable.forEach(async (runner) => {
+      try {
+        const result = await api.getRunnerVersion(runner.id, projectPath);
+        setRunners(prev => prev.map(r => r.id === runner.id ? { ...r, version: result.version } : r));
+      } catch {
+        // Ignore version fetch errors
+      } finally {
+        setLoadingVersions(prev => { const next = new Set(prev); next.delete(runner.id); return next; });
+      }
+    });
+  }, [projectPath]);
+
   const loadRunners = useCallback(async () => {
     if (!projectPath) {
       setError(t('settings.runners.errors.noProject'));
@@ -111,19 +130,16 @@ export function RunnerSettingsTab() {
 
     try {
       setLoading(true);
-      // skipValidation=false to get PATH check results (cheap)
-      // Version detection only runs for available runners
-      const response = await api.listRunners(projectPath, {
-        skipValidation: false
-      });
+      const response = await api.listRunners(projectPath);
       applyResponse(response);
+      fetchVersionsAsync(response?.runners ?? []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('settings.runners.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [projectPath, t]);
+  }, [projectPath, t, fetchVersionsAsync]);
 
   useEffect(() => {
     void loadRunners();
@@ -136,16 +152,16 @@ export function RunnerSettingsTab() {
 
     setRevalidating(true);
     try {
-      // Just reload with full validation
-      const response = await api.listRunners(projectPath, { skipValidation: false });
+      const response = await api.listRunners(projectPath);
       applyResponse(response);
+      fetchVersionsAsync(response?.runners ?? []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('settings.runners.errors.loadFailed'));
     } finally {
       setRevalidating(false);
     }
-  }, [projectPath, runners, t]);
+  }, [projectPath, runners, t, fetchVersionsAsync]);
 
   const handleSaveRunner = async (payload: {
     id: string;
@@ -427,10 +443,15 @@ export function RunnerSettingsTab() {
                                 const availability = getRunnerAvailability(runner);
 
                                 if (availability === true) {
+                                  const versionLoading = loadingVersions.has(runner.id);
                                   return (
                                     <Badge variant="outline" className="text-xs gap-1 h-5 px-1.5 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800">
                                       <CheckCircle className="h-3 w-3" />
-                                      {runner.version ? `v${runner.version}` : t('settings.runners.available')}
+                                      {runner.version
+                                        ? `v${runner.version}`
+                                        : versionLoading
+                                          ? <Loader2 className="h-3 w-3 animate-spin" />
+                                          : t('settings.runners.available')}
                                     </Badge>
                                   );
                                 } else if (availability === false) {

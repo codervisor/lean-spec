@@ -85,6 +85,10 @@ export interface RunnerValidateResponse {
   error?: string | null;
 }
 
+export interface RunnerVersionResponse {
+  version?: string | null;
+}
+
 export type RunnerScope = 'project' | 'global';
 
 export interface SessionLog {

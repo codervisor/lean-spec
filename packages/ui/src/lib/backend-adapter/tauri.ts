@@ -31,6 +31,7 @@ import type {
   RunnerListResponse,
   RunnerScope,
   RunnerValidateResponse,
+  RunnerVersionResponse,
 } from './core';
 
 /**
@@ -362,6 +363,13 @@ export class TauriBackendAdapter implements BackendAdapter {
 
   async validateRunner(runnerId: string, projectPath?: string): Promise<RunnerValidateResponse> {
     return this.invoke<RunnerValidateResponse>('desktop_validate_runner', {
+      runnerId,
+      projectPath,
+    });
+  }
+
+  async getRunnerVersion(runnerId: string, projectPath?: string): Promise<RunnerVersionResponse> {
+    return this.invoke<RunnerVersionResponse>('desktop_get_runner_version', {
       runnerId,
       projectPath,
     });

@@ -31,6 +31,7 @@ import type {
   RunnerListResponse,
   RunnerScope,
   RunnerValidateResponse,
+  RunnerVersionResponse,
   ChatConfig,
   ModelsRegistryResponse,
 } from './core';
@@ -411,6 +412,13 @@ export class HttpBackendAdapter implements BackendAdapter {
       ? `/api/runners/${encodeURIComponent(runnerId)}?project_path=${encodeURIComponent(projectPath)}`
       : `/api/runners/${encodeURIComponent(runnerId)}`;
     return this.fetchAPI<RunnerDefinition>(endpoint);
+  }
+
+  async getRunnerVersion(runnerId: string, projectPath?: string): Promise<RunnerVersionResponse> {
+    const params = new URLSearchParams();
+    if (projectPath) params.set('project_path', projectPath);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.fetchAPI<RunnerVersionResponse>(`/api/runners/${encodeURIComponent(runnerId)}/version${query}`);
   }
 
   async createRunner(payload: {
