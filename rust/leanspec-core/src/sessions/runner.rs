@@ -27,6 +27,12 @@ pub struct RunnerConfig {
     pub detection: Option<DetectionConfig>,
     #[serde(default)]
     pub symlink_file: Option<String>,
+    /// Flag used to pass the session prompt to this runner (e.g. "--print" for
+    /// claude, "--message" for aider). When `None` the prompt is appended as a
+    /// positional argument. When the runner has no prompt support, set
+    /// `prompt_flag` to `"-"` to suppress prompt injection entirely.
+    #[serde(default)]
+    pub prompt_flag: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -47,6 +53,11 @@ pub struct RunnerDefinition {
     pub env: HashMap<String, String>,
     pub detection: Option<DetectionConfig>,
     pub symlink_file: Option<String>,
+    /// Controls how the session prompt is passed to the runner CLI.
+    /// - `Some(flag)` — prepend `flag` before the prompt value (e.g. `"--print"`).
+    /// - `Some("-")` — suppress prompt injection (runner doesn't accept a prompt arg).
+    /// - `None` — append the prompt as a positional argument.
+    pub prompt_flag: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -76,19 +87,29 @@ impl RunnerDefinition {
         let mut cmd = Command::new(command);
 
         for arg in &self.args {
-            if arg.contains("{PROMPT}") {
-                // Replace {PROMPT} with the actual prompt text if available.
-                // If no prompt is set, skip this arg entirely.
-                if let Some(ref prompt) = config.prompt {
-                    cmd.arg(arg.replace("{PROMPT}", prompt));
-                }
-            } else {
-                cmd.arg(arg);
-            }
+            cmd.arg(arg);
         }
 
         for arg in &config.runner_args {
             cmd.arg(arg);
+        }
+
+        // Inject the prompt as a CLI argument. The `prompt_flag` field controls
+        // how it is passed:
+        //   - Some("-")  → skip (runner does not accept a prompt arg)
+        //   - Some(flag) → append `flag` then the prompt value
+        //   - None       → append the prompt as a positional argument
+        if let Some(ref prompt) = config.prompt {
+            match self.prompt_flag.as_deref() {
+                Some("-") => {}
+                Some(flag) => {
+                    cmd.arg(flag);
+                    cmd.arg(prompt);
+                }
+                None => {
+                    cmd.arg(prompt);
+                }
+            }
         }
 
         if let Some(working_dir) = &config.working_dir {
@@ -183,11 +204,7 @@ impl RunnerRegistry {
                 id: "claude".to_string(),
                 name: Some("Claude Code".to_string()),
                 command: Some("claude".to_string()),
-                args: vec![
-                    "--dangerously-skip-permissions".to_string(),
-                    "--print".to_string(),
-                    "{PROMPT}".to_string(),
-                ],
+                args: vec!["--dangerously-skip-permissions".to_string()],
                 env: HashMap::from([(
                     "ANTHROPIC_API_KEY".to_string(),
                     "${ANTHROPIC_API_KEY}".to_string(),
@@ -199,6 +216,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: Some("CLAUDE.md".to_string()),
+                prompt_flag: Some("--print".to_string()),
             },
         );
         runners.insert(
@@ -207,11 +225,7 @@ impl RunnerRegistry {
                 id: "copilot".to_string(),
                 name: Some("GitHub Copilot".to_string()),
                 command: Some("copilot".to_string()),
-                args: vec![
-                    "--allow-all".to_string(),
-                    "--prompt".to_string(),
-                    "{PROMPT}".to_string(),
-                ],
+                args: vec!["--allow-all".to_string()],
                 env: HashMap::new(),
                 detection: Some(DetectionConfig {
                     commands: vec!["copilot".to_string()],
@@ -220,6 +234,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: Some("--prompt".to_string()),
             },
         );
         runners.insert(
@@ -228,7 +243,7 @@ impl RunnerRegistry {
                 id: "codex".to_string(),
                 name: Some("Codex CLI".to_string()),
                 command: Some("codex".to_string()),
-                args: vec!["{PROMPT}".to_string()],
+                args: Vec::new(),
                 env: HashMap::new(),
                 detection: Some(DetectionConfig {
                     commands: vec!["codex".to_string()],
@@ -237,6 +252,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -245,7 +261,7 @@ impl RunnerRegistry {
                 id: "opencode".to_string(),
                 name: Some("OpenCode".to_string()),
                 command: Some("opencode".to_string()),
-                args: vec!["{PROMPT}".to_string()],
+                args: Vec::new(),
                 env: HashMap::new(),
                 detection: Some(DetectionConfig {
                     commands: vec!["opencode".to_string()],
@@ -254,6 +270,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -262,11 +279,7 @@ impl RunnerRegistry {
                 id: "aider".to_string(),
                 name: Some("Aider".to_string()),
                 command: Some("aider".to_string()),
-                args: vec![
-                    "--no-auto-commits".to_string(),
-                    "--message".to_string(),
-                    "{PROMPT}".to_string(),
-                ],
+                args: vec!["--no-auto-commits".to_string()],
                 env: HashMap::from([(
                     "OPENAI_API_KEY".to_string(),
                     "${OPENAI_API_KEY}".to_string(),
@@ -278,6 +291,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: Some("--message".to_string()),
             },
         );
         runners.insert(
@@ -295,6 +309,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: Some("-".to_string()),
             },
         );
         runners.insert(
@@ -303,7 +318,7 @@ impl RunnerRegistry {
                 id: "gemini".to_string(),
                 name: Some("Gemini CLI".to_string()),
                 command: Some("gemini".to_string()),
-                args: vec!["{PROMPT}".to_string()],
+                args: Vec::new(),
                 env: HashMap::new(),
                 detection: Some(DetectionConfig {
                     commands: vec!["gemini".to_string()],
@@ -312,6 +327,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: Some("GEMINI.md".to_string()),
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -329,6 +345,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: Some("-".to_string()),
             },
         );
         runners.insert(
@@ -346,6 +363,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: Some("-".to_string()),
             },
         );
         runners.insert(
@@ -363,6 +381,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: Some("-".to_string()),
             },
         );
         runners.insert(
@@ -380,6 +399,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -397,6 +417,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -417,6 +438,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -434,6 +456,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -451,6 +474,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -468,6 +492,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -488,6 +513,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -505,6 +531,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -522,6 +549,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -539,6 +567,7 @@ impl RunnerRegistry {
                     extensions: vec!["continue.continue".to_string()],
                 }),
                 symlink_file: None,
+                prompt_flag: Some("-".to_string()),
             },
         );
         runners.insert(
@@ -556,6 +585,7 @@ impl RunnerRegistry {
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,
+                prompt_flag: None,
             },
         );
         runners.insert(
@@ -573,6 +603,7 @@ impl RunnerRegistry {
                     extensions: vec!["rooveterinaryinc.roo-cline".to_string()],
                 }),
                 symlink_file: None,
+                prompt_flag: Some("-".to_string()),
             },
         );
         runners.insert(
@@ -590,6 +621,7 @@ impl RunnerRegistry {
                     extensions: vec!["codebuddy.codebuddy".to_string()],
                 }),
                 symlink_file: None,
+                prompt_flag: Some("-".to_string()),
             },
         );
         runners.insert(
@@ -607,6 +639,7 @@ impl RunnerRegistry {
                     extensions: vec!["kilocode.kilo-code".to_string()],
                 }),
                 symlink_file: None,
+                prompt_flag: Some("-".to_string()),
             },
         );
         runners.insert(
@@ -624,6 +657,7 @@ impl RunnerRegistry {
                     extensions: vec!["augment.vscode-augment".to_string()],
                 }),
                 symlink_file: None,
+                prompt_flag: Some("-".to_string()),
             },
         );
 
@@ -758,6 +792,7 @@ impl RunnerRegistry {
                     env: override_config.env.unwrap_or_default(),
                     detection: override_config.detection,
                     symlink_file: override_config.symlink_file,
+                    prompt_flag: override_config.prompt_flag,
                 };
                 self.runners.insert(id, definition);
             }
@@ -789,6 +824,9 @@ fn merge_runner(mut base: RunnerDefinition, override_config: RunnerConfig) -> Ru
     }
     if let Some(symlink_file) = override_config.symlink_file {
         base.symlink_file = Some(symlink_file);
+    }
+    if let Some(prompt_flag) = override_config.prompt_flag {
+        base.prompt_flag = Some(prompt_flag);
     }
     base
 }
@@ -969,6 +1007,7 @@ mod tests {
             env: HashMap::new(),
             detection: None,
             symlink_file: None,
+            prompt_flag: None,
         };
 
         let override_config = RunnerConfig {
@@ -978,6 +1017,7 @@ mod tests {
             env: None,
             detection: None,
             symlink_file: None,
+            prompt_flag: None,
         };
 
         let merged = merge_runner(base, override_config);

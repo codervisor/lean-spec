@@ -59,10 +59,14 @@
             },
             "args": {
               "type": "array",
-              "description": "Arguments passed to the runner command. Use {PROMPT} as a placeholder for the session prompt text (spec content + user instructions). The placeholder is replaced at runtime; if no prompt is available the arg is omitted.",
+              "description": "Static arguments passed to the runner command before the prompt.",
               "items": {
                 "type": "string"
               }
+            },
+            "prompt_flag": {
+              "type": "string",
+              "description": "Controls how the session prompt is passed to the runner. Set to the flag name (e.g. '--message') to prepend it before the prompt value. Set to '-' to suppress prompt injection entirely. Omit (or set to null) to append the prompt as a positional argument."
             },
             "env": {
               "type": "object",
