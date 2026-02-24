@@ -8,20 +8,12 @@ This directory contains the LeanSpec monorepo packages.
 packages/
 ├── cli/               - lean-spec: CLI wrapper for Rust binary
 ├── mcp/               - @leanspec/mcp: MCP server wrapper
-├── desktop/           - @leanspec/desktop: Tauri desktop app
 └── ui/                - @leanspec/ui: Primary Vite SPA (web + desktop + shared UI library)
 ```
 
 ## Architecture (Vite + Rust)
 
 ```
-┌─────────────────┐              ┌────────────────────────┐
-│   Desktop App   │──────► IPC ─►│ Rust backend (Tauri)   │
-│ @leanspec/desktop│             └────────────────────────┘
-│                 │
-│   UI Shell      │──────► SPA ─►│ @leanspec/ui (Vite)    │
-└─────────────────┘              └────────────────────────┘
-
 ┌─────────────────┐              ┌────────────────────────┐
 │   Web App       │──────► HTTP ►│ Rust HTTP server       │
 │  @leanspec/ui   │              │ @leanspec/http-server  │
@@ -32,8 +24,7 @@ packages/
 └─────────────────┘
 ```
 
-- Single UI codebase (@leanspec/ui) for web and desktop
-- Rust provides backend for both HTTP server and Tauri commands
+- Rust provides backend for both HTTP server and CLI/MCP commands
 
 ## lean-spec (CLI)
 
@@ -71,7 +62,7 @@ See [MCP Integration docs](https://lean-spec.dev/docs/guide/usage/ai-assisted/mc
 
 ## @leanspec/ui (Vite SPA)
 
-Primary UI used by both web and desktop:
+Primary web UI package:
 - Vite 7 + React 19 + TypeScript 5
 - Shared components exported from `@leanspec/ui`
 - Served by Rust HTTP server or bundled in Tauri
@@ -84,17 +75,11 @@ pnpm --filter @leanspec/ui build     # build SPA assets
 pnpm --filter @leanspec/ui preview   # preview production build
 ```
 
-## @leanspec/desktop
+## Desktop Repository
 
-Tauri desktop application using the Vite SPA:
-- Rust backend commands for spec operations
-- React/Vite frontend reusing `@leanspec/ui`
-- Shared components via `@leanspec/ui`
+The desktop application now lives in a dedicated repository:
 
-```bash
-pnpm --filter @leanspec/desktop dev:desktop
-pnpm --filter @leanspec/desktop build:desktop
-```
+- https://github.com/codervisor/lean-spec-desktop
 
 ## Building
 
@@ -106,7 +91,6 @@ Build specific package:
 
 ```bash
 pnpm --filter @leanspec/ui build
-pnpm --filter @leanspec/desktop build
 ```
 
 ## Testing

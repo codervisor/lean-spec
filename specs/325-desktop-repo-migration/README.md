@@ -1,9 +1,12 @@
 ---
-status: planned
+status: in-progress
 created: 2026-02-24
 priority: medium
 created_at: 2026-02-24T02:24:52.781531Z
-updated_at: 2026-02-24T02:24:52.781531Z
+updated_at: 2026-02-24T03:10:19.620520Z
+transitions:
+- status: in-progress
+  at: 2026-02-24T03:10:19.620520Z
 ---
 
 # Desktop Repo Migration

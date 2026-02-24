@@ -18,7 +18,6 @@
     "dev": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/http-server",
     "dev:watch": "concurrently -n rust,dev -c blue,green \"cargo watch -w rust --ignore 'target/**' -x build -s 'node scripts/copy-rust-binaries.mjs --debug'\" \"pnpm dev\"",
     "dev:web": "turbo run dev:web --filter=@leanspec/ui",
-    "dev:desktop": "turbo run dev:desktop --filter=@leanspec/desktop",
     "build": "turbo run build",
     "build:rust": "cd rust && cargo build && cd .. && node scripts/copy-rust-binaries.mjs --debug",
     "build:rust:release": "cd rust && cargo build --release && cd .. && node scripts/copy-rust-binaries.mjs",

@@ -83,7 +83,7 @@ All packages in the monorepo maintain synchronized versions automatically. The r
 - `lean-spec` (CLI package - wrapper for Rust binary)
 - `@leanspec/ui` (web UI package)
 - `@leanspec/mcp` (MCP server wrapper)
-- `@leanspec/desktop` (Tauri desktop app)
+- Desktop app repository: https://github.com/codervisor/lean-spec-desktop
 
 ### Automated Version Sync
 
@@ -180,7 +180,7 @@ This project uses [Turborepo](https://turbo.build/) to manage the monorepo with 
 - `packages/cli` - CLI wrapper for Rust binary (published as `lean-spec`)
 - `packages/mcp` - MCP server wrapper (published as `@leanspec/mcp`)
 - `packages/ui` - Web UI bundle (published as `@leanspec/ui`)
-- `packages/desktop` - Tauri desktop app (not published to npm)
+- Desktop app repository: https://github.com/codervisor/lean-spec-desktop
 - `docs-site/` - Git subtree merged from `codervisor/lean-spec-docs` (Docusaurus)
 
 **Key files:**

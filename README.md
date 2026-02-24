@@ -108,15 +108,15 @@ This installs the **leanspec-sdd** skill which teaches AI agents:
 
 ## Features
 
-| Feature             | Description                                                   |
-| ------------------- | ------------------------------------------------------------- |
-| **📊 Kanban Board**  | `lean-spec board` - visual project tracking                   |
-| **🔍 Smart Search**  | `lean-spec search` - find specs by content or metadata        |
-| **🔗 Dependencies**  | Track spec relationships with `depends_on` and `related`      |
-| **🎨 Web UI**        | `lean-spec ui` - browser-based dashboard                      |
-| **📈 Project Stats** | `lean-spec stats` - health metrics and bottleneck detection   |
-| **🤖 AI-Native**     | MCP server + CLI for AI assistants                            |
-| **🖥️ Desktop App**   | Native Tauri shell with tray + shortcuts (`pnpm dev:desktop`) |
+| Feature             | Description                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------- |
+| **📊 Kanban Board**  | `lean-spec board` - visual project tracking                                                       |
+| **🔍 Smart Search**  | `lean-spec search` - find specs by content or metadata                                            |
+| **🔗 Dependencies**  | Track spec relationships with `depends_on` and `related`                                          |
+| **🎨 Web UI**        | `lean-spec ui` - browser-based dashboard                                                          |
+| **📈 Project Stats** | `lean-spec stats` - health metrics and bottleneck detection                                       |
+| **🤖 AI-Native**     | MCP server + CLI for AI assistants                                                                |
+| **🖥️ Desktop App**   | Desktop app repo: [codervisor/lean-spec-desktop](https://github.com/codervisor/lean-spec-desktop) |
 
 <p align="center">
   <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/ui/ui-board-view.png" alt="Kanban Board View" width="800">
@@ -146,25 +146,11 @@ rustc --version  # Should be 1.70 or higher (dev only)
 
 ## Desktop App
 
-The `@leanspec/desktop` package wraps the Vite UI (`@leanspec/ui`) in a lightweight Tauri shell for local, multi-project workflows backed by Rust commands:
+The desktop application has moved to a dedicated repository:
 
-```bash
-# Launch the desktop shell with hot reload
-pnpm install
-pnpm dev:desktop
+- https://github.com/codervisor/lean-spec-desktop
 
-# Produce signed installers + embedded UI bundle
-pnpm build:desktop
-```
-
-Key capabilities:
-- Frameless window with custom title bar + native controls
-- Global shortcuts (`Cmd/Ctrl+Shift+L` to toggle, `Cmd/Ctrl+Shift+K` to open the project switcher, `Cmd/Ctrl+Shift+N` to add a spec)
-- Shared project registry + native folder picker backed by `~/.lean-spec/projects.json`
-- System tray with recent projects, background notifications, and update checks
-- Embedded Vite static build + Rust HTTP server for offline packaging (macOS `.dmg`, Windows `.msi/.exe`, Linux `.AppImage/.deb/.rpm`)
-
-See [packages/desktop/README.md](packages/desktop/README.md) for configuration details.
+Use that repository for desktop development, CI, and release workflows.
 
 ---
 
@@ -179,7 +165,6 @@ pnpm build               # Build all packages
 pnpm dev                 # Start dev mode (UI + Core)
 pnpm dev:web             # UI only
 pnpm dev:cli             # CLI only
-pnpm dev:desktop         # Desktop app
 
 # Testing
 pnpm test                # Run all tests
