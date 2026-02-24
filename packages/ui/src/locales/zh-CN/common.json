@@ -1434,6 +1434,10 @@
     "bytes": "{{size}} 字节",
     "copyPath": "复制路径",
     "pathCopied": "路径已复制！",
+    "searchPlaceholder": "搜索文件...",
+    "clearSearch": "清除搜索",
+    "noSearchResults": "没有匹配的文件。",
+    "closeTab": "关闭标签",
     "errors": {
       "loadFailed": "加载目录失败。",
       "fileFailed": "加载文件失败。"

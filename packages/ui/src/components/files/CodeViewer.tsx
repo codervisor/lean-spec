@@ -13,6 +13,7 @@ import {
   createHighlighter,
 } from 'shiki';
 import type { FileContentResponse } from '../../types/api';
+import { useThemeStore } from '../../stores/theme';
 
 // Shiki bitflag checks
 // biome-ignore lint/suspicious/noBitwiseOperators: shiki bitflag
@@ -47,6 +48,7 @@ interface CodeViewerProps {
 
 export function CodeViewer({ file, className }: CodeViewerProps) {
   const { t } = useTranslation('common');
+  const { resolvedTheme } = useThemeStore();
   const [lines, setLines] = useState<ThemedToken[][] | null>(null);
   const [copied, setCopied] = useState(false);
   const scrollRef = useRef<HTMLPreElement>(null);
@@ -59,9 +61,10 @@ export function CodeViewer({ file, className }: CodeViewerProps) {
         const hl = await getHighlighter();
         // Map language to a supported bundled language or fall back to plaintext
         const lang = (file.language as BundledLanguage) ?? 'plaintext';
+        const shikiTheme = resolvedTheme === 'dark' ? 'github-dark' : 'github-light';
         const result = hl.codeToTokensBase(file.content, {
           lang: hl.getLoadedLanguages().includes(lang) ? lang : 'plaintext',
-          theme: 'github-light',
+          theme: shikiTheme,
         });
         if (!cancelled) {
           setLines(result);
@@ -76,7 +79,7 @@ export function CodeViewer({ file, className }: CodeViewerProps) {
 
     void highlight();
     return () => { cancelled = true; };
-  }, [file.content, file.language]);
+  }, [file.content, file.language, resolvedTheme]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(file.content);
@@ -113,6 +116,7 @@ export function CodeViewer({ file, className }: CodeViewerProps) {
       <pre
         ref={scrollRef}
         className="flex-1 overflow-auto text-sm font-mono leading-5 bg-[#f6f8fa] dark:bg-[#0d1117] m-0 p-0"
+        style={{ backgroundColor: resolvedTheme === 'dark' ? '#0d1117' : '#f6f8fa' }}
         aria-label={file.path}
       >
         {lines ? (
@@ -122,6 +126,7 @@ export function CodeViewer({ file, className }: CodeViewerProps) {
                 key={`l-${lineIdx}`}
                 lineNumber={lineIdx + 1}
                 tokens={lineTokens}
+                bgColor={resolvedTheme === 'dark' ? '#0d1117' : '#f6f8fa'}
               />
             ))}
           </code>
@@ -130,7 +135,7 @@ export function CodeViewer({ file, className }: CodeViewerProps) {
           <code className="block">
             {file.content.split('\n').map((line, lineIdx) => (
               <span key={`pl-${lineIdx}`} className="flex">
-                <LineNumber number={lineIdx + 1} />
+                <LineNumber number={lineIdx + 1} bgColor={resolvedTheme === 'dark' ? '#0d1117' : '#f6f8fa'} />
                 <span className="px-4 whitespace-pre text-foreground">{line}</span>
               </span>
             ))}
@@ -141,10 +146,11 @@ export function CodeViewer({ file, className }: CodeViewerProps) {
   );
 }
 
-function LineNumber({ number }: { number: number }) {
+function LineNumber({ number, bgColor }: { number: number; bgColor: string }) {
   return (
     <span
-      className="inline-block w-10 flex-shrink-0 text-right pr-3 text-muted-foreground/50 select-none border-r border-border/50 mr-3"
+      className="inline-block w-10 flex-shrink-0 text-right pr-3 text-muted-foreground/50 select-none border-r border-border/50 mr-3 sticky left-0 z-10"
+      style={{ backgroundColor: bgColor }}
       aria-hidden="true"
     >
       {number}
@@ -155,12 +161,13 @@ function LineNumber({ number }: { number: number }) {
 interface LineProps {
   lineNumber: number;
   tokens: ThemedToken[];
+  bgColor: string;
 }
 
-function Line({ lineNumber, tokens }: LineProps) {
+function Line({ lineNumber, tokens, bgColor }: LineProps) {
   return (
     <span className="flex hover:bg-black/5 dark:hover:bg-white/5">
-      <LineNumber number={lineNumber} />
+      <LineNumber number={lineNumber} bgColor={bgColor} />
       <span className="px-0 whitespace-pre flex-1">
         {tokens.length === 0 ? (
           '\n'

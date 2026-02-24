@@ -1435,6 +1435,10 @@
     "bytes": "{{size}} bytes",
     "copyPath": "Copy path",
     "pathCopied": "Path copied!",
+    "searchPlaceholder": "Search files...",
+    "clearSearch": "Clear search",
+    "noSearchResults": "No files match your search.",
+    "closeTab": "Close tab",
     "errors": {
       "loadFailed": "Failed to load directory.",
       "fileFailed": "Failed to load file."
