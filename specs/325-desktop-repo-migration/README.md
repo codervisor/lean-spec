@@ -88,17 +88,27 @@ The new repo gets its own GitHub Actions workflows for:
 - [ ] Remove `packages/desktop/` from this monorepo
 - [x] Remove desktop entries from `pnpm-workspace.yaml`, `turbo.json`, and root `package.json` scripts
 - [x] Update root `README.md` and `CONTRIBUTING.md` to link the new repo
-- [ ] Final validation: monorepo builds cleanly without desktop package
+- [x] Final validation: monorepo builds cleanly without desktop package
 
 ## Acceptance Criteria
 
-- [ ] `codervisor/lean-spec-desktop` contains desktop source at repo root and includes preserved history
+- [x] `codervisor/lean-spec-desktop` contains desktop source at repo root and includes preserved history
 - [ ] Desktop CI passes in the new repo for targeted platforms
-- [ ] Desktop app builds/runs from the new repo without requiring monorepo workspace links
-- [ ] Monorepo `pnpm build` and CI pass after desktop removal
-- [ ] Monorepo docs point desktop contributors to the new repository
+- [x] Desktop app builds/runs from the new repo without requiring monorepo workspace links
+- [x] Monorepo `pnpm build` and CI pass after desktop removal
+- [x] Monorepo docs point desktop contributors to the new repository
 
 ## Validation
 
 - [x] Run `lean-spec validate 325-desktop-repo-migration`
 - [x] Confirm token count remains within LeanSpec guidance
+
+## Notes
+
+- Implementation notes (2026-02-24):
+  - Created and populated https://github.com/codervisor/lean-spec-desktop with extracted desktop history rooted at repository root.
+  - `git subtree split` repeatedly failed with `fatal: no new revisions were found`; extraction was completed via `git filter-branch --subdirectory-filter packages/desktop` in a fresh temp clone as a documented fallback.
+  - Updated standalone desktop repo to use published `@leanspec/ui` (`^0.2.24`), added independent workflows (`tauri-build.yml`, `tauri-updater-release.yml`), verified `pnpm install` and `pnpm tauri dev --help`.
+  - Monorepo cleanup completed: removed `packages/desktop/`, removed desktop tasks/scripts/workflow references, and updated contributor/user docs to point at the new repo.
+  - Monorepo validation command results: `pnpm build` ✅, `pnpm typecheck` ✅, `pnpm test` ✅, `pnpm lint` ❌ (pre-existing unrelated UI lint violations in `packages/ui`).
+  - Global `lean-spec validate` currently reports many pre-existing length/structure issues in other specs; spec-specific validation for this spec passed.

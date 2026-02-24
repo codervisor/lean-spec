@@ -17,6 +17,8 @@ export interface BackToTopProps {
   bottom?: string | number;
   /** Position from right (in pixels or CSS value) */
   right?: string | number;
+  /** Optional target scroll container element id. Falls back to window. */
+  targetId?: string;
 }
 
 export function BackToTop({
@@ -24,23 +26,40 @@ export function BackToTop({
   className,
   bottom = 24,
   right = 24,
+  targetId,
 }: BackToTopProps) {
   const [isVisible, setIsVisible] = React.useState(false);
 
   React.useEffect(() => {
+    const targetElement = targetId ? document.getElementById(targetId) : null;
+    const getScrollTop = () => targetElement ? targetElement.scrollTop : window.scrollY;
+
     const toggleVisibility = () => {
-      if (window.scrollY > threshold) {
+      if (getScrollTop() > threshold) {
         setIsVisible(true);
       } else {
         setIsVisible(false);
       }
     };
 
-    window.addEventListener('scroll', toggleVisibility);
-    return () => window.removeEventListener('scroll', toggleVisibility);
-  }, [threshold]);
+    const scrollTarget: HTMLElement | Window = targetElement ?? window;
+
+    scrollTarget.addEventListener('scroll', toggleVisibility);
+    toggleVisibility();
+
+    return () => scrollTarget.removeEventListener('scroll', toggleVisibility);
+  }, [threshold, targetId]);
 
   const scrollToTop = () => {
+    const targetElement = targetId ? document.getElementById(targetId) : null;
+    if (targetElement) {
+      targetElement.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+      return;
+    }
+
     window.scrollTo({
       top: 0,
       behavior: 'smooth',

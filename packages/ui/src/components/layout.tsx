@@ -60,12 +60,12 @@ function LayoutContent({
         rightSlot={resolvedRightSlot}
         onHeaderDoubleClick={onNavigationDoubleClick}
       />
-      <div className="flex w-full min-w-0">
+      <div className="flex w-full min-w-0 h-[calc(100vh-3.5rem)] overflow-hidden">
         <MainSidebar mobileOpen={isSidebarOpen} onMobileClose={toggleSidebar} />
-        <div className="flex-1 min-w-0 overflow-x-auto">
+        <div id="app-main-scroll" className="flex-1 min-w-0 overflow-y-auto overflow-x-auto">
           <main
             className={cn(
-              "w-full min-h-[calc(100vh-3.5rem)] lg:min-w-4xl transition-all duration-300 ease-in-out"
+              "w-full min-h-full lg:min-w-4xl transition-all duration-300 ease-in-out"
             )}
           >
             <ErrorBoundary resetKey={location.pathname} onReset={() => window.location.reload()}>
@@ -75,7 +75,7 @@ function LayoutContent({
         </div>
         <ChatSidebar />
       </div>
-      <BackToTop />
+      <BackToTop targetId="app-main-scroll" />
       <SessionsDrawer />
     </div>
   );

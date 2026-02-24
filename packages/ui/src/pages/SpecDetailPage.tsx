@@ -802,7 +802,7 @@ export function SpecDetailPage() {
         <div className={showSidebar ? "hidden" : "block"}>
           <TableOfContents content={displayContent} />
         </div>
-        <BackToTop />
+        <BackToTop targetId="spec-detail-main" />
       </div>
       {spec && (
         <RelationshipsEditor

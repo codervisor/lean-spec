@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { FilterX, RefreshCcw, FileQuestion, Play, Square, RotateCcw, ArrowUpRight, Plus, Pause } from 'lucide-react';
+import { FilterX, RefreshCcw, FileQuestion, Play, Square, RotateCcw, ArrowUpRight, Plus, Pause, Search, Filter } from 'lucide-react';
 import { Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/library';
 import { useTranslation } from 'react-i18next';
 import type { Session, SessionStatus, Spec } from '../types/api';
@@ -210,7 +210,7 @@ export function SessionsPage() {
         className="h-[calc(100vh-3.5rem)]"
         contentClassName="flex h-full flex-col gap-4"
       >
-        <div className="flex flex-col gap-4 sticky top-14 bg-background mt-0 py-2 z-10">
+        <div className="flex flex-col gap-4 sticky top-0 bg-background mt-0 py-2 z-10">
           <PageHeader
             title={t('sessionsPage.title')}
             description={t('sessionsPage.description')}
@@ -222,74 +222,96 @@ export function SessionsPage() {
             )}
           />
 
-          <p className="text-sm text-muted-foreground">{t('sessionsPage.count', { count: filteredSessions.length })}</p>
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder={t('sessionsPage.filters.search')}
+                className="w-full pl-10 pr-4 py-2"
+              />
+            </div>
 
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            <Input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder={t('sessionsPage.filters.search')}
-              className="h-9"
-            />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder={t('sessionsPage.filters.status')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.status')}</SelectItem>
-                {uniqueStatuses.map((status) => (
-                  <SelectItem key={status} value={status} className="cursor-pointer">
-                    {t(`sessions.status.${status}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={runnerFilter} onValueChange={setRunnerFilter}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder={t('sessionsPage.filters.runner')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.runner')}</SelectItem>
-                {uniqueRunners.map((runner) => (
-                  <SelectItem key={runner} value={runner} className="cursor-pointer">
-                    {runner}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={modeFilter} onValueChange={setModeFilter}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder={t('sessionsPage.filters.mode')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.mode')}</SelectItem>
-                {uniqueModes.map((mode) => (
-                  <SelectItem key={mode} value={mode} className="cursor-pointer">{mode}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={specFilter} onValueChange={setSpecFilter}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder={t('sessionsPage.filters.spec')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.spec')}</SelectItem>
-                {specOptions.map((spec) => (
-                  <SelectItem key={spec.id} value={spec.id} className="cursor-pointer">{spec.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder={t('sessionsPage.sort.startedDesc')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="started-desc" className="cursor-pointer">{t('sessionsPage.sort.startedDesc')}</SelectItem>
-                <SelectItem value="started-asc" className="cursor-pointer">{t('sessionsPage.sort.startedAsc')}</SelectItem>
-                <SelectItem value="duration-desc" className="cursor-pointer">{t('sessionsPage.sort.durationDesc')}</SelectItem>
-                <SelectItem value="status" className="cursor-pointer">{t('sessionsPage.sort.status')}</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-3 items-center justify-between">
+              <div className="flex flex-wrap gap-3 items-center">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Filter className="w-4 h-4" />
+                  <span className="text-sm font-medium">{t('specsNavSidebar.filtersLabel')}</span>
+                </div>
+
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[140px] h-9">
+                    <SelectValue placeholder={t('sessionsPage.filters.status')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.status')}</SelectItem>
+                    {uniqueStatuses.map((status) => (
+                      <SelectItem key={status} value={status} className="cursor-pointer">
+                        {t(`sessions.status.${status}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={runnerFilter} onValueChange={setRunnerFilter}>
+                  <SelectTrigger className="w-[140px] h-9">
+                    <SelectValue placeholder={t('sessionsPage.filters.runner')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.runner')}</SelectItem>
+                    {uniqueRunners.map((runner) => (
+                      <SelectItem key={runner} value={runner} className="cursor-pointer">
+                        {runner}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={modeFilter} onValueChange={setModeFilter}>
+                  <SelectTrigger className="w-[140px] h-9">
+                    <SelectValue placeholder={t('sessionsPage.filters.mode')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.mode')}</SelectItem>
+                    {uniqueModes.map((mode) => (
+                      <SelectItem key={mode} value={mode} className="cursor-pointer">{mode}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={specFilter} onValueChange={setSpecFilter}>
+                  <SelectTrigger className="w-[180px] h-9">
+                    <SelectValue placeholder={t('sessionsPage.filters.spec')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.spec')}</SelectItem>
+                    {specOptions.map((spec) => (
+                      <SelectItem key={spec.id} value={spec.id} className="cursor-pointer">{spec.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-muted-foreground hidden sm:block">
+                  {filteredSessions.length !== sessions.length
+                    ? t('specsPage.filters.showingFiltered', { count: filteredSessions.length, total: sessions.length })
+                    : t('specsPage.filters.showingAll', { count: sessions.length })}
+                </div>
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                  <SelectTrigger className="w-[180px] h-9">
+                    <SelectValue placeholder={t('sessionsPage.sort.startedDesc')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="started-desc" className="cursor-pointer">{t('sessionsPage.sort.startedDesc')}</SelectItem>
+                    <SelectItem value="started-asc" className="cursor-pointer">{t('sessionsPage.sort.startedAsc')}</SelectItem>
+                    <SelectItem value="duration-desc" className="cursor-pointer">{t('sessionsPage.sort.durationDesc')}</SelectItem>
+                    <SelectItem value="status" className="cursor-pointer">{t('sessionsPage.sort.status')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -329,20 +351,20 @@ export function SessionsPage() {
               )}
             />
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {visibleSessions.map((session) => (
-                <Card key={session.id} className="border-border/60">
-                  <CardContent className="p-4">
+                <div key={session.id} className="block border rounded-lg hover:bg-secondary/50 transition-colors bg-background">
+                  <div className="p-4">
                     <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2 text-sm font-medium">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
                           <span className={cn('inline-flex h-2.5 w-2.5 rounded-full', SESSION_STATUS_DOT_STYLES[session.status])} />
-                          {session.runner}
+                          <h3 className="font-medium truncate">{session.runner}</h3>
                           <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', SESSION_STATUS_STYLES[session.status])}>
                             {t(`sessions.status.${session.status}`)}
                           </span>
                         </div>
-                        <div className="mt-1 text-xs text-muted-foreground">
+                        <div className="text-sm text-muted-foreground truncate">
                           {t('sessions.labels.mode')}: {session.mode}
                           {session.specId ? ` • ${t('sessions.labels.spec')}: ${session.specId}` : ''}
                           {` • ${t('sessions.labels.started')}: ${new Date(session.startedAt).toLocaleString()}`}
@@ -353,7 +375,7 @@ export function SessionsPage() {
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                         <Button size="sm" variant="outline" className="gap-1" asChild>
                           <Link to={`${basePath}/sessions/${session.id}`}>
                             <ArrowUpRight className="h-3.5 w-3.5" />
@@ -405,8 +427,8 @@ export function SessionsPage() {
                         )}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
 
               {visibleSessions.length < filteredSessions.length && (

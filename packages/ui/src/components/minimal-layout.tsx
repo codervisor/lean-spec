@@ -26,14 +26,14 @@ function MinimalLayoutContent({ navigationRightSlot }: { navigationRightSlot?: R
         onShowShortcuts={toggleHelp}
         rightSlot={navigationRightSlot}
       />
-      <main className="flex-1 w-full min-h-[calc(100vh-3.5rem)]">
+      <main id="minimal-layout-main-scroll" className="flex-1 w-full min-h-0 overflow-y-auto overflow-x-auto">
         <ErrorBoundary onReset={() => window.location.reload()}>
           <PageTransition>
             <Outlet />
           </PageTransition>
         </ErrorBoundary>
       </main>
-      <BackToTop />
+      <BackToTop targetId="minimal-layout-main-scroll" />
     </div>
   );
 }
