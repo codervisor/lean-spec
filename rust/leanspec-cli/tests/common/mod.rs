@@ -49,12 +49,17 @@ pub struct ExecResult {
 
 /// Execute a CLI command and capture output
 pub fn exec_cli(args: &[&str], cwd: &Path) -> ExecResult {
-    let output = cargo_bin_cmd!("lean-spec")
-        .args(args)
-        .current_dir(cwd)
-        .env("NO_COLOR", "1")
-        .output()
-        .expect("Failed to execute command");
+    exec_cli_env(args, cwd, &[])
+}
+
+/// Execute a CLI command with extra environment variables
+pub fn exec_cli_env(args: &[&str], cwd: &Path, env: &[(&str, &str)]) -> ExecResult {
+    let mut cmd = cargo_bin_cmd!("lean-spec");
+    cmd.args(args).current_dir(cwd).env("NO_COLOR", "1");
+    for (key, value) in env {
+        cmd.env(key, value);
+    }
+    let output = cmd.output().expect("Failed to execute command");
 
     ExecResult {
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -224,4 +229,111 @@ pub fn parse_frontmatter(content: &str) -> std::collections::HashMap<String, ser
         }
     }
     std::collections::HashMap::new()
+}
+
+/// Write a runners.json file with a simple echo test runner into the project's .lean-spec dir
+pub fn write_test_runner(cwd: &Path, runner_id: &str) {
+    let lean_spec_dir = cwd.join(".lean-spec");
+    fs::create_dir_all(&lean_spec_dir).expect("Failed to create .lean-spec dir");
+    let runners_json = format!(
+        r#"{{
+  "$schema": "https://leanspec.dev/schemas/runners.json",
+  "runners": {{
+    "{runner_id}": {{
+      "name": "Test Runner",
+      "command": "echo",
+      "args": ["session-output"]
+    }}
+  }},
+  "default": "{runner_id}"
+}}"#
+    );
+    fs::write(lean_spec_dir.join("runners.json"), runners_json)
+        .expect("Failed to write runners.json");
+}
+
+/// Create a session via the CLI; returns the ExecResult
+pub fn session_create(
+    cwd: &Path,
+    home: &Path,
+    project_path: &str,
+    runner: Option<&str>,
+    specs: &[&str],
+    prompt: Option<&str>,
+) -> ExecResult {
+    let mut args = vec!["session", "create", "--project-path", project_path];
+    if let Some(r) = runner {
+        args.extend_from_slice(&["--runner", r]);
+    }
+    for spec in specs {
+        args.extend_from_slice(&["--spec", spec]);
+    }
+    if let Some(p) = prompt {
+        args.extend_from_slice(&["--prompt", p]);
+    }
+    exec_cli_env(&args, cwd, &[("HOME", home.to_str().unwrap())])
+}
+
+/// Run a session (create + start) via the CLI; returns the ExecResult
+pub fn session_run(
+    cwd: &Path,
+    home: &Path,
+    project_path: &str,
+    runner: Option<&str>,
+    specs: &[&str],
+    prompt: Option<&str>,
+) -> ExecResult {
+    let mut args = vec!["session", "run", "--project-path", project_path];
+    if let Some(r) = runner {
+        args.extend_from_slice(&["--runner", r]);
+    }
+    for spec in specs {
+        args.extend_from_slice(&["--spec", spec]);
+    }
+    if let Some(p) = prompt {
+        args.extend_from_slice(&["--prompt", p]);
+    }
+    exec_cli_env(&args, cwd, &[("HOME", home.to_str().unwrap())])
+}
+
+/// List sessions via the CLI
+pub fn session_list(cwd: &Path, home: &Path) -> ExecResult {
+    exec_cli_env(
+        &["session", "list"],
+        cwd,
+        &[("HOME", home.to_str().unwrap())],
+    )
+}
+
+/// View a session via the CLI
+pub fn session_view(cwd: &Path, home: &Path, session_id: &str) -> ExecResult {
+    exec_cli_env(
+        &["session", "view", session_id],
+        cwd,
+        &[("HOME", home.to_str().unwrap())],
+    )
+}
+
+/// Delete a session via the CLI
+pub fn session_delete(cwd: &Path, home: &Path, session_id: &str) -> ExecResult {
+    exec_cli_env(
+        &["session", "delete", session_id],
+        cwd,
+        &[("HOME", home.to_str().unwrap())],
+    )
+}
+
+/// Parse a session ID from the `session create` / `session run` stdout output
+/// Looks for "Created session <uuid>" in the output
+pub fn parse_session_id(output: &str) -> Option<String> {
+    for line in output.lines() {
+        // Line format: "✓ Created session <uuid> (<runner>)"
+        if let Some(rest) = line.split("Created session ").nth(1) {
+            let id = rest.split_whitespace().next()?.to_string();
+            if id.len() == 36 && id.chars().filter(|c| *c == '-').count() == 4 {
+                return Some(id);
+            }
+        }
+    }
+    None
 }

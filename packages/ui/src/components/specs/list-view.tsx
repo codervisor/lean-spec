@@ -103,7 +103,7 @@ interface ListViewProps {
   onPriorityChange?: (spec: Spec, priority: string) => void;
 }
 
-export function ListView({ specs, hierarchy, basePath = '/projects', groupByParent = false, sortBy = 'id-desc', onTokenClick, onValidationClick, onStatusChange, onPriorityChange }: ListViewProps) {
+export const ListView = memo(function ListView({ specs, hierarchy, basePath = '/projects', groupByParent = false, sortBy = 'id-desc', onTokenClick, onValidationClick, onStatusChange, onPriorityChange }: ListViewProps) {
   const { t } = useTranslation('common');
 
   if (specs.length === 0) {
@@ -144,4 +144,4 @@ export function ListView({ specs, hierarchy, basePath = '/projects', groupByPare
       ))}
     </div>
   );
-}
+});

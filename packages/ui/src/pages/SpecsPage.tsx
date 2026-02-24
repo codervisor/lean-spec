@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, useDeferredValue } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
 import { Button, Card, CardContent, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/library';
@@ -106,6 +106,8 @@ export function SpecsPage() {
 
   // Local search query (not persisted)
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+  // Defer expensive filtering so the input stays responsive while typing
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   // Compute effective values considering URL overrides
   const statusFilter = useMemo(() => storedStatusFilter.filter(s => s !== 'archived'), [storedStatusFilter]);
@@ -369,8 +371,8 @@ export function SpecsPage() {
         return false;
       }
 
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
+      if (deferredSearchQuery) {
+        const query = deferredSearchQuery.toLowerCase();
         const matchesSearch =
           spec.specName.toLowerCase().includes(query) ||
           (spec.title ? spec.title.toLowerCase().includes(query) : false) ||
@@ -465,7 +467,7 @@ export function SpecsPage() {
     }
 
     return sorted;
-  }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter, groupByParent, expandWithDescendants, showValidationIssuesOnly, showArchived, validationStatuses]);
+  }, [priorityFilter, deferredSearchQuery, sortBy, specs, statusFilter, tagFilter, groupByParent, expandWithDescendants, showValidationIssuesOnly, showArchived, validationStatuses]);
 
   if (isInitialLoading) {
     return (

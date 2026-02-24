@@ -17,6 +17,7 @@ import {
   cn,
 } from '@/library';
 import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
 
 type ViewMode = 'list' | 'board';
 
@@ -76,6 +77,21 @@ export function SpecsFilters({
   loadingValidation,
 }: SpecsFiltersProps) {
   const { t } = useTranslation('common');
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
+
+  useEffect(() => {
+    setLocalSearchQuery(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (localSearchQuery !== searchQuery) {
+        onSearchChange(localSearchQuery);
+      }
+    }, 120);
+
+    return () => clearTimeout(timeoutId);
+  }, [localSearchQuery, onSearchChange, searchQuery]);
 
   // Status icons mapping
   const statusIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -145,8 +161,8 @@ export function SpecsFilters({
         <Input
           type="text"
           placeholder={t('specsPage.searchPlaceholder')}
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
+          value={localSearchQuery}
+          onChange={(e) => setLocalSearchQuery(e.target.value)}
           className="w-full pl-10 pr-4 py-2"
         />
       </div>

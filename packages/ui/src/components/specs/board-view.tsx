@@ -1,4 +1,4 @@
-import { useState, useMemo, type DragEvent } from 'react';
+import { useState, useMemo, memo, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, PlayCircle, CheckCircle2, Archive, FolderTree, CornerDownRight, Layers, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 import type { Spec } from '../../types/api';
@@ -296,7 +296,7 @@ function BoardGroup({ parentName, specs, parentSpec, basePath, onTokenClick, onV
   );
 }
 
-export function BoardView({ specs, onStatusChange, onPriorityChange, basePath = '/projects', canEdit = true, groupByParent = false, showArchived = false, onTokenClick, onValidationClick }: BoardViewProps) {
+export const BoardView = memo(function BoardView({ specs, onStatusChange, onPriorityChange, basePath = '/projects', canEdit = true, groupByParent = false, showArchived = false, onTokenClick, onValidationClick }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
   const { t } = useTranslation('common');
@@ -628,4 +628,4 @@ export function BoardView({ specs, onStatusChange, onPriorityChange, basePath = 
       })}
     </div>
   );
-}
+});
