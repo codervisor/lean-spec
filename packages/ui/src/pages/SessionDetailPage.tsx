@@ -361,6 +361,12 @@ export function SessionDetailPage() {
                 <div>{tokenLabel ?? t('sessions.labels.unknownTime')}</div>
               </div>
             </div>
+            {session.prompt && (
+              <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs">
+                <div className="text-[11px] uppercase text-muted-foreground mb-1">{t('sessions.labels.prompt')}</div>
+                <div className="text-foreground">{session.prompt}</div>
+              </div>
+            )}
             <div className="text-xs text-muted-foreground">
               {t('sessions.labels.cost')}: {costEstimate == null ? t('sessions.labels.costUnknown') : t('sessions.labels.costApprox', { value: costEstimate.toFixed(2) })}
             </div>

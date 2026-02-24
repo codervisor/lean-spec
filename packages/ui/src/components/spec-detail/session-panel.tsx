@@ -162,6 +162,11 @@ export function SessionPanel({ specId, projectPath }: SessionPanelProps) {
                   <div className="mt-1 text-xs text-muted-foreground">
                     {t('sessions.labels.mode')}: {session.mode} • {t('sessions.labels.started')}: {formatTime(session.startedAt)}
                   </div>
+                  {session.prompt && (
+                    <div className="mt-1 text-xs text-muted-foreground truncate" title={session.prompt}>
+                      {session.prompt}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button size="sm" variant="outline" className="gap-1" asChild>

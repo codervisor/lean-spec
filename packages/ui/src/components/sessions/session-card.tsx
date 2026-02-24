@@ -54,6 +54,11 @@ export function SessionCard({ session, compact }: SessionCardProps) {
                             #{session.specIds.join(', ')}
                         </div>
                     )}
+                    {session.prompt && (
+                        <div className="text-xs text-muted-foreground mt-1 truncate" title={session.prompt}>
+                            {session.prompt}
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -107,7 +107,8 @@ export function SessionsPage() {
         const matchesSearch =
           session.id.toLowerCase().includes(query) ||
           (session.specIds?.some(id => id.toLowerCase().includes(query)) ?? false) ||
-          session.runner.toLowerCase().includes(query);
+          session.runner.toLowerCase().includes(query) ||
+          (session.prompt?.toLowerCase().includes(query) ?? false);
         if (!matchesSearch) return false;
       }
 
@@ -369,6 +370,11 @@ export function SessionsPage() {
                           {(session.specIds?.length ?? 0) > 0 ? ` • ${t('sessions.labels.spec')}: ${session.specIds.join(', ')}` : ''}
                           {` • ${t('sessions.labels.started')}: ${new Date(session.startedAt).toLocaleString()}`}
                         </div>
+                        {session.prompt && (
+                          <div className="mt-1 text-xs text-muted-foreground truncate">
+                            {t('sessions.labels.prompt')}: {session.prompt}
+                          </div>
+                        )}
                         {formatSessionDuration(session) && (
                           <div className="mt-1 text-xs text-muted-foreground">
                             {t('sessions.labels.duration')}: {formatSessionDuration(session)}
