@@ -9,6 +9,8 @@ use crate::error::{CoreError, CoreResult};
 use crate::sessions::database::SessionDatabase;
 use crate::sessions::runner::RunnerRegistry;
 use crate::sessions::types::*;
+use crate::types::LeanSpecConfig;
+use crate::utils::SpecLoader;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
@@ -53,6 +55,84 @@ struct ActiveSessionHandle {
 pub struct ArchiveOptions {
     pub output_dir: Option<PathBuf>,
     pub compress: bool,
+}
+
+/// Build a context prompt for the AI runner by loading spec content and combining
+/// it with the user's explicit prompt. Returns `None` if there is neither spec
+/// content nor an explicit prompt.
+fn build_context_prompt(
+    project_path: &str,
+    spec_ids: &[String],
+    user_prompt: Option<&str>,
+) -> Option<String> {
+    if spec_ids.is_empty() {
+        return user_prompt
+            .filter(|p| !p.trim().is_empty())
+            .map(str::to_string);
+    }
+
+    // Resolve the specs directory from the project's config (fall back to "specs").
+    let specs_dir = {
+        let config_path = PathBuf::from(project_path)
+            .join(".lean-spec")
+            .join("config.yaml");
+        let specs_subdir = if config_path.exists() {
+            LeanSpecConfig::load(&config_path)
+                .ok()
+                .map(|c| c.specs_dir)
+                .unwrap_or_else(|| PathBuf::from("specs"))
+        } else {
+            PathBuf::from("specs")
+        };
+        PathBuf::from(project_path).join(specs_subdir)
+    };
+
+    let mut spec_contents: Vec<String> = Vec::new();
+
+    if specs_dir.exists() {
+        let loader = SpecLoader::new(&specs_dir);
+        for spec_id in spec_ids {
+            if let Ok(Some(spec)) = loader.load(spec_id) {
+                // Read the full file (frontmatter + content) so the runner has
+                // complete context about status, priority, and plan.
+                let full_content = std::fs::read_to_string(&spec.file_path)
+                    .unwrap_or_else(|_| spec.content.clone());
+                spec_contents.push(full_content);
+            }
+        }
+    }
+
+    if spec_contents.is_empty() && user_prompt.map(|p| p.trim().is_empty()).unwrap_or(true) {
+        return None;
+    }
+
+    let mut parts: Vec<String> = Vec::new();
+
+    if !spec_contents.is_empty() {
+        let header = if spec_contents.len() == 1 {
+            "Implement the following specs:"
+        } else {
+            "Implement the following specs:"
+        };
+        parts.push(format!(
+            "{}\n\n{}",
+            header,
+            spec_contents.join("\n\n---\n\n")
+        ));
+    }
+
+    if let Some(prompt) = user_prompt {
+        let trimmed = prompt.trim();
+        if !trimmed.is_empty() {
+            parts.push(trimmed.to_string());
+        }
+    }
+
+    if parts.is_empty() {
+        None
+    } else {
+        Some(parts.join("\n\n"))
+    }
 }
 
 impl SessionManager {
@@ -150,15 +230,25 @@ impl SessionManager {
         if let Some(first_spec_id) = session.spec_ids.first() {
             env_vars.insert("LEANSPEC_SPEC_ID".to_string(), first_spec_id.clone());
         }
-        // Set LEANSPEC_PROMPT if prompt is provided
-        if let Some(ref prompt) = session.prompt {
+
+        // Build the context prompt: load spec content for attached specs and combine
+        // with any explicit user prompt. This resolved prompt is what gets passed as
+        // the CLI argument to the runner (via the {PROMPT} placeholder in its args).
+        let resolved_prompt = build_context_prompt(
+            &session.project_path,
+            &session.spec_ids,
+            session.prompt.as_deref(),
+        );
+
+        // Keep LEANSPEC_PROMPT in the environment for runners that prefer env vars.
+        if let Some(ref prompt) = resolved_prompt {
             env_vars.insert("LEANSPEC_PROMPT".to_string(), prompt.clone());
         }
 
         let config = SessionConfig {
             project_path: session.project_path.clone(),
             spec_ids: session.spec_ids.clone(),
-            prompt: session.prompt.clone(),
+            prompt: resolved_prompt,
             runner: session.runner.clone(),
             mode: session.mode,
             max_iterations: None,

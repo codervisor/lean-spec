@@ -30,19 +30,27 @@
               "properties": {
                 "commands": {
                   "type": "array",
-                  "items": {"type": "string"}
+                  "items": {
+                    "type": "string"
+                  }
                 },
                 "config_dirs": {
                   "type": "array",
-                  "items": {"type": "string"}
+                  "items": {
+                    "type": "string"
+                  }
                 },
                 "env_vars": {
                   "type": "array",
-                  "items": {"type": "string"}
+                  "items": {
+                    "type": "string"
+                  }
                 },
                 "extensions": {
                   "type": "array",
-                  "items": {"type": "string"}
+                  "items": {
+                    "type": "string"
+                  }
                 }
               }
             },
@@ -51,6 +59,7 @@
             },
             "args": {
               "type": "array",
+              "description": "Arguments passed to the runner command. Use {PROMPT} as a placeholder for the session prompt text (spec content + user instructions). The placeholder is replaced at runtime; if no prompt is available the arg is omitted.",
               "items": {
                 "type": "string"
               }

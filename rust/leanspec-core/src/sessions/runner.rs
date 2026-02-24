@@ -76,7 +76,15 @@ impl RunnerDefinition {
         let mut cmd = Command::new(command);
 
         for arg in &self.args {
-            cmd.arg(arg);
+            if arg.contains("{PROMPT}") {
+                // Replace {PROMPT} with the actual prompt text if available.
+                // If no prompt is set, skip this arg entirely.
+                if let Some(ref prompt) = config.prompt {
+                    cmd.arg(arg.replace("{PROMPT}", prompt));
+                }
+            } else {
+                cmd.arg(arg);
+            }
         }
 
         for arg in &config.runner_args {
@@ -178,6 +186,7 @@ impl RunnerRegistry {
                 args: vec![
                     "--dangerously-skip-permissions".to_string(),
                     "--print".to_string(),
+                    "{PROMPT}".to_string(),
                 ],
                 env: HashMap::from([(
                     "ANTHROPIC_API_KEY".to_string(),
@@ -198,7 +207,11 @@ impl RunnerRegistry {
                 id: "copilot".to_string(),
                 name: Some("GitHub Copilot".to_string()),
                 command: Some("copilot".to_string()),
-                args: vec!["--allow-all".to_string(), "--prompt".to_string()],
+                args: vec![
+                    "--allow-all".to_string(),
+                    "--prompt".to_string(),
+                    "{PROMPT}".to_string(),
+                ],
                 env: HashMap::new(),
                 detection: Some(DetectionConfig {
                     commands: vec!["copilot".to_string()],
@@ -215,7 +228,7 @@ impl RunnerRegistry {
                 id: "codex".to_string(),
                 name: Some("Codex CLI".to_string()),
                 command: Some("codex".to_string()),
-                args: Vec::new(),
+                args: vec!["{PROMPT}".to_string()],
                 env: HashMap::new(),
                 detection: Some(DetectionConfig {
                     commands: vec!["codex".to_string()],
@@ -232,7 +245,7 @@ impl RunnerRegistry {
                 id: "opencode".to_string(),
                 name: Some("OpenCode".to_string()),
                 command: Some("opencode".to_string()),
-                args: Vec::new(),
+                args: vec!["{PROMPT}".to_string()],
                 env: HashMap::new(),
                 detection: Some(DetectionConfig {
                     commands: vec!["opencode".to_string()],
@@ -249,7 +262,11 @@ impl RunnerRegistry {
                 id: "aider".to_string(),
                 name: Some("Aider".to_string()),
                 command: Some("aider".to_string()),
-                args: vec!["--no-auto-commits".to_string()],
+                args: vec![
+                    "--no-auto-commits".to_string(),
+                    "--message".to_string(),
+                    "{PROMPT}".to_string(),
+                ],
                 env: HashMap::from([(
                     "OPENAI_API_KEY".to_string(),
                     "${OPENAI_API_KEY}".to_string(),
@@ -286,7 +303,7 @@ impl RunnerRegistry {
                 id: "gemini".to_string(),
                 name: Some("Gemini CLI".to_string()),
                 command: Some("gemini".to_string()),
-                args: Vec::new(),
+                args: vec!["{PROMPT}".to_string()],
                 env: HashMap::new(),
                 detection: Some(DetectionConfig {
                     commands: vec!["gemini".to_string()],
