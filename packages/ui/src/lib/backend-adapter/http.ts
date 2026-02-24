@@ -7,6 +7,8 @@ import type {
   ContextFileListItem,
   DependencyGraph,
   DirectoryListResponse,
+  FileContentResponse,
+  FileListResponse,
   ListParams,
   Spec,
   SpecDetail,
@@ -522,5 +524,19 @@ export class HttpBackendAdapter implements BackendAdapter {
       method: 'PUT',
       body: JSON.stringify({ apiKey, baseUrl }),
     });
+  }
+
+  // Codebase file browsing (spec 246)
+  async getProjectFiles(projectId: string, path?: string): Promise<FileListResponse> {
+    const params = path ? `?path=${encodeURIComponent(path)}` : '';
+    return this.fetchAPI<FileListResponse>(
+      `/api/projects/${encodeURIComponent(projectId)}/files${params}`
+    );
+  }
+
+  async getProjectFile(projectId: string, path: string): Promise<FileContentResponse> {
+    return this.fetchAPI<FileContentResponse>(
+      `/api/projects/${encodeURIComponent(projectId)}/file?path=${encodeURIComponent(path)}`
+    );
   }
 }

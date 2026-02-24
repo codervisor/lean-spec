@@ -14,6 +14,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::process::Child;
 use tokio::sync::{broadcast, Mutex, RwLock};
 use uuid::Uuid;
@@ -159,6 +160,11 @@ impl SessionManager {
 
         // Build command
         let mut cmd = runner.build_command(&config)?;
+        let session_timeout = std::env::var("LEANSPEC_SESSION_TIMEOUT_SECONDS")
+            .ok()
+            .and_then(|value| value.parse::<u64>().ok())
+            .filter(|value| *value > 0)
+            .map(Duration::from_secs);
 
         // Set up log broadcast channel
         let log_sender = {
@@ -257,6 +263,16 @@ impl SessionManager {
         session.touch();
         self.db.update_session(&session)?;
         self.db.insert_event(session_id, EventType::Started, None)?;
+        let started_message = match session_timeout {
+            Some(timeout) => format!(
+                "Session started (runner: {}, timeout: {}s)",
+                session.runner,
+                timeout.as_secs()
+            ),
+            None => format!("Session started (runner: {})", session.runner),
+        };
+        self.db
+            .log_message(session_id, LogLevel::Info, &started_message)?;
 
         // Spawn background task to wait for completion
         let session_id_owned = session_id.to_string();
@@ -264,13 +280,68 @@ impl SessionManager {
         let active_sessions_clone = self.active_sessions.clone();
         let broadcasts_clone = self.log_broadcasts.clone();
         let process_monitor = process.clone();
+        let timeout = session_timeout;
 
         tokio::spawn(async move {
-            use tokio::time::{interval, Duration};
+            use tokio::time::{interval, Duration, Instant};
             let mut ticker = interval(Duration::from_millis(500));
+            let started_at = Instant::now();
+            let mut last_heartbeat_at = Instant::now();
 
             loop {
                 ticker.tick().await;
+
+                if let Some(timeout) = timeout {
+                    if started_at.elapsed() >= timeout {
+                        let timeout_message = format!(
+                            "Session timed out after {}s and was terminated",
+                            timeout.as_secs()
+                        );
+
+                        {
+                            let mut child = process_monitor.lock().await;
+                            let _ = child.kill().await;
+                        }
+
+                        if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned) {
+                            session.status = SessionStatus::Failed;
+                            session.ended_at = Some(chrono::Utc::now());
+                            session.update_duration();
+                            session.touch();
+                            let _ = db_clone.update_session(&session);
+                            let _ = db_clone.insert_event(
+                                &session_id_owned,
+                                EventType::Failed,
+                                Some(timeout_message.clone()),
+                            );
+                        }
+                        let _ = db_clone.log_message(
+                            &session_id_owned,
+                            LogLevel::Error,
+                            &timeout_message,
+                        );
+
+                        cleanup_session(
+                            &session_id_owned,
+                            &active_sessions_clone,
+                            &broadcasts_clone,
+                        )
+                        .await;
+                        break;
+                    }
+                }
+
+                if last_heartbeat_at.elapsed() >= Duration::from_secs(30) {
+                    let _ = db_clone.log_message(
+                        &session_id_owned,
+                        LogLevel::Info,
+                        &format!(
+                            "Session still running (elapsed: {}s)",
+                            started_at.elapsed().as_secs()
+                        ),
+                    );
+                    last_heartbeat_at = Instant::now();
+                }
 
                 let status = {
                     let mut child = process_monitor.lock().await;
@@ -298,6 +369,11 @@ impl SessionManager {
                                 &session_id_owned,
                                 EventType::Failed,
                                 Some(format!("Process wait error: {}", err)),
+                            );
+                            let _ = db_clone.log_message(
+                                &session_id_owned,
+                                LogLevel::Error,
+                                &format!("Process wait error: {}", err),
                             );
                         }
                         cleanup_session(
@@ -327,6 +403,31 @@ impl SessionManager {
                         EventType::Failed
                     };
                     let _ = db_clone.insert_event(&session_id_owned, event_type, None);
+                    if status.success() {
+                        let _ = db_clone.log_message(
+                            &session_id_owned,
+                            LogLevel::Info,
+                            &format!(
+                                "Session completed successfully{}",
+                                status
+                                    .code()
+                                    .map(|code| format!(" (exit code: {})", code))
+                                    .unwrap_or_default()
+                            ),
+                        );
+                    } else {
+                        let _ = db_clone.log_message(
+                            &session_id_owned,
+                            LogLevel::Error,
+                            &format!(
+                                "Session failed{}",
+                                status
+                                    .code()
+                                    .map(|code| format!(" (exit code: {})", code))
+                                    .unwrap_or_default()
+                            ),
+                        );
+                    }
                 }
 
                 cleanup_session(&session_id_owned, &active_sessions_clone, &broadcasts_clone).await;
@@ -374,6 +475,8 @@ impl SessionManager {
         self.db.update_session(&session)?;
         self.db
             .insert_event(session_id, EventType::Cancelled, None)?;
+        self.db
+            .log_message(session_id, LogLevel::Info, "Session stopped by user")?;
 
         // Clean up broadcast channel
         {
@@ -484,6 +587,8 @@ impl SessionManager {
         session.touch();
         self.db.update_session(&session)?;
         self.db.insert_event(session_id, EventType::Paused, None)?;
+        self.db
+            .log_message(session_id, LogLevel::Info, "Session paused")?;
 
         Ok(())
     }
@@ -515,6 +620,8 @@ impl SessionManager {
         session.touch();
         self.db.update_session(&session)?;
         self.db.insert_event(session_id, EventType::Resumed, None)?;
+        self.db
+            .log_message(session_id, LogLevel::Info, "Session resumed")?;
 
         Ok(())
     }

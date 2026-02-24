@@ -540,7 +540,7 @@ fn parse_checklist_toggles(args: &Value) -> Result<Vec<ChecklistToggle>, String>
 }
 
 pub(crate) fn tool_search(specs_dir: &str, args: Value) -> Result<String, String> {
-    use leanspec_core::{parse_query_terms, search_specs};
+    use leanspec_core::{search_specs, validate_search_query};
 
     let query = args
         .get("query")
@@ -553,13 +553,22 @@ pub(crate) fn tool_search(specs_dir: &str, args: Value) -> Result<String, String
     let specs = loader.load_all().map_err(|e| e.to_string())?;
 
     // Check for empty query
-    let terms = parse_query_terms(query);
-    if terms.is_empty() {
+    if query.trim().is_empty() {
         return serde_json::to_string_pretty(&json!({
             "query": query,
             "count": 0,
             "results": [],
             "error": "Empty search query"
+        }))
+        .map_err(|e| e.to_string());
+    }
+
+    if let Err(err) = validate_search_query(query) {
+        return serde_json::to_string_pretty(&json!({
+            "query": query,
+            "count": 0,
+            "results": [],
+            "error": format!("Invalid search query: {}", err)
         }))
         .map_err(|e| e.to_string());
     }
@@ -767,13 +776,13 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
         },
         ToolDefinition {
             name: "search".to_string(),
-            description: "Search specs by query".to_string(),
+            description: "Search specs by query. Supports AND/OR/NOT, field filters (status:, tag:, priority:, title:, created:), quoted phrases, and fuzzy terms (~). Examples: \"api AND security\", \"tag:api status:planned\", \"created:>2025-11\", \"authetication~\".".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Search query"
+                        "description": "Search query (e.g., \"api AND security\", \"tag:rust status:in-progress\", \"\\\"user authentication\\\"\", \"auth~2\")"
                     },
                     "limit": {
                         "type": "number",

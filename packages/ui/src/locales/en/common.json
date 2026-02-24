@@ -20,6 +20,8 @@
     "allSpecifications": "All Specifications",
     "sessions": "Sessions",
     "sessionsDescription": "Monitor AI sessions",
+    "files": "Files",
+    "filesDescription": "Browse project codebase",
     "dependencyGraph": "Dependency Graph",
     "analytics": "Analytics",
     "projectContext": "Project Context",
@@ -1415,6 +1417,24 @@
       "version": "Version",
       "website": "Website",
       "support": "Support"
+    }
+  },
+  "filesPage": {
+    "title": "Files",
+    "description": "Browse source code files in your project.",
+    "loading": "Loading files...",
+    "loadingFile": "Loading file...",
+    "emptyDirectory": "This directory is empty.",
+    "selectFile": "Select a file to view its contents.",
+    "binaryFile": "Binary files cannot be displayed.",
+    "fileTooLarge": "File is too large to display (max 1 MB).",
+    "lines": "{{count}} lines",
+    "bytes": "{{size}} bytes",
+    "copyPath": "Copy path",
+    "pathCopied": "Path copied!",
+    "errors": {
+      "loadFailed": "Failed to load directory.",
+      "fileFailed": "Failed to load file."
     }
   }
 }

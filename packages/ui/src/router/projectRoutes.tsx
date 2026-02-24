@@ -5,6 +5,7 @@ import { ContextPage } from '../pages/ContextPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { DependenciesPage } from '../pages/DependenciesPage';
 import { ChatSettingsPage } from '../pages/ChatSettingsPage';
+import { FilesPage } from '../pages/FilesPage';
 import { SessionDetailPage } from '../pages/SessionDetailPage';
 import { SessionsPage } from '../pages/SessionsPage';
 import { SpecDetailPage } from '../pages/SpecDetailPage';
@@ -42,6 +43,7 @@ export function createProjectRoutes(): RouteObject[] {
     { path: 'dependencies', element: <DependenciesPage /> },
     { path: 'dependencies/:specName', element: <DependenciesPage /> },
     { path: 'context', element: <ContextPage /> },
+    { path: 'files', element: <FilesPage /> },
     { path: 'chat/settings', element: <ChatSettingsPage /> },
   ];
 }

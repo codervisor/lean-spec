@@ -5,6 +5,8 @@ import type {
   ContextFileListItem,
   DependencyGraph,
   DirectoryListResponse,
+  FileContentResponse,
+  FileListResponse,
   ListParams,
   Spec,
   SpecDetail,
@@ -405,5 +407,14 @@ export class TauriBackendAdapter implements BackendAdapter {
       apiKey,
       baseUrl,
     });
+  }
+
+  // Codebase file browsing (spec 246) - delegate to Rust HTTP server via IPC
+  async getProjectFiles(projectId: string, path?: string): Promise<FileListResponse> {
+    return this.invoke<FileListResponse>('desktop_get_project_files', { projectId, path });
+  }
+
+  async getProjectFile(projectId: string, path: string): Promise<FileContentResponse> {
+    return this.invoke<FileContentResponse>('desktop_get_project_file', { projectId, path });
   }
 }

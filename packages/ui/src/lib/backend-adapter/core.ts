@@ -4,6 +4,8 @@ import type {
   ContextFileListItem,
   DependencyGraph,
   DirectoryListResponse,
+  FileContentResponse,
+  FileListResponse,
   ListParams,
   Spec,
   SpecDetail,
@@ -173,6 +175,10 @@ export interface BackendAdapter {
   getModelsProviders(options?: { agenticOnly?: boolean }): Promise<ModelsRegistryResponse>;
   refreshModelsRegistry(): Promise<void>;
   setProviderApiKey(providerId: string, apiKey: string, baseUrl?: string): Promise<void>;
+
+  // Codebase file browsing (spec 246)
+  getProjectFiles(projectId: string, path?: string): Promise<FileListResponse>;
+  getProjectFile(projectId: string, path: string): Promise<FileContentResponse>;
 }
 
 export type {
@@ -205,4 +211,6 @@ export type {
   RunnerValidateResponse,
   ChatConfig,
   ModelsRegistryResponse,
+  FileListResponse,
+  FileContentResponse,
 };

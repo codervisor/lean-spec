@@ -81,6 +81,6 @@ pub use validators::{
 
 // Re-export search module
 pub use search::{
-    find_content_snippet, parse_query_terms, search_specs, search_specs_with_options,
-    SearchOptions, SearchResult,
+    find_content_snippet, parse_query, parse_query_terms, search_specs, search_specs_with_options,
+    validate_search_query, SearchOptions, SearchQueryError, SearchResult,
 };

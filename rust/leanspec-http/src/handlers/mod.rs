@@ -7,6 +7,7 @@ mod chat_config;
 mod chat_handler;
 mod chat_sessions;
 mod events;
+mod files;
 mod health;
 mod local_projects;
 #[cfg(feature = "ai")]
@@ -21,6 +22,7 @@ pub use chat_config::*;
 pub use chat_handler::*;
 pub use chat_sessions::*;
 pub use events::*;
+pub use files::*;
 pub use health::*;
 pub use local_projects::*;
 #[cfg(feature = "ai")]

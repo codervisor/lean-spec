@@ -344,7 +344,8 @@ enum Commands {
 
     /// Search specs
     Search {
-        /// Search query
+        /// Search query (supports AND/OR/NOT, field filters, phrases, fuzzy)
+        /// Examples: "api AND security", "tag:rust status:planned", "\"user authentication\"", "auth~2"
         query: String,
 
         /// Maximum results

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Home, FileText, BarChart3, Network, ChevronLeft, ChevronRight, BookOpen, X, Folder, Cpu, Settings, Terminal } from 'lucide-react';
+import { Home, FileText, BarChart3, Network, ChevronLeft, ChevronRight, BookOpen, X, Folder, Cpu, Settings, Terminal, FolderOpen } from 'lucide-react';
 import { cn } from '@/library';
 import { ProjectSwitcher } from './project-switcher';
 import { SidebarLink } from './shared/sidebar-link';
@@ -39,6 +39,7 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
     { id: 'home', path: basePath, label: t('navigation.home'), description: t('navigation.dashboard'), icon: Home },
     { id: 'specs', path: `${basePath}/specs`, label: t('navigation.specs'), description: t('navigation.allSpecifications'), icon: FileText },
     { id: 'sessions', path: `${basePath}/sessions`, label: t('navigation.sessions'), description: t('navigation.sessionsDescription'), icon: Terminal },
+    { id: 'files', path: `${basePath}/files`, label: t('navigation.files'), description: t('navigation.filesDescription'), icon: FolderOpen },
     { id: 'dependencies', path: `${basePath}/dependencies`, label: t('navigation.dependencies'), description: t('navigation.dependencyGraph'), icon: Network },
     { id: 'stats', path: `${basePath}/stats`, label: t('navigation.stats'), description: t('navigation.analytics'), icon: BarChart3 },
     { id: 'context', path: `${basePath}/context`, label: t('navigation.context'), description: t('navigation.projectContext'), icon: BookOpen },

@@ -256,3 +256,84 @@ async fn test_search_empty_query() {
     // Empty query (whitespace only) should return error message
     assert!(output.get("error").is_some() || output["count"] == 0);
 }
+
+#[tokio::test]
+async fn test_search_boolean_operators() {
+    let temp = create_test_project(&[
+        ("001-auth-api", "planned", Some("high")),
+        ("002-auth-only", "planned", Some("medium")),
+        ("003-cli-only", "planned", Some("low")),
+    ]);
+    set_specs_dir_env(&temp);
+
+    let and_result = call_tool("search", json!({ "query": "auth AND api" })).await;
+    assert!(and_result.is_ok());
+    let and_output: serde_json::Value = serde_json::from_str(&and_result.unwrap()).unwrap();
+    assert_eq!(and_output["count"], 1);
+
+    let or_result = call_tool("search", json!({ "query": "auth OR cli" })).await;
+    assert!(or_result.is_ok());
+    let or_output: serde_json::Value = serde_json::from_str(&or_result.unwrap()).unwrap();
+    assert!(or_output["count"].as_u64().unwrap() >= 2);
+
+    let not_result = call_tool("search", json!({ "query": "auth NOT cli" })).await;
+    assert!(not_result.is_ok());
+    let not_output: serde_json::Value = serde_json::from_str(&not_result.unwrap()).unwrap();
+    assert!(not_output["count"].as_u64().unwrap() >= 1);
+}
+
+#[tokio::test]
+async fn test_search_field_filters_and_created_range() {
+    let temp = create_test_project(&[
+        ("001-auth-api", "in-progress", Some("high")),
+        ("002-cli-only", "planned", Some("medium")),
+    ]);
+    set_specs_dir_env(&temp);
+
+    let status_result = call_tool("search", json!({ "query": "status:in-progress" })).await;
+    assert!(status_result.is_ok());
+    let status_output: serde_json::Value = serde_json::from_str(&status_result.unwrap()).unwrap();
+    assert_eq!(status_output["count"], 1);
+
+    let tag_result = call_tool("search", json!({ "query": "tag:test" })).await;
+    assert!(tag_result.is_ok());
+    let tag_output: serde_json::Value = serde_json::from_str(&tag_result.unwrap()).unwrap();
+    assert_eq!(tag_output["count"], 2);
+
+    let created_result = call_tool("search", json!({ "query": "created:>2024-12" })).await;
+    assert!(created_result.is_ok());
+    let created_output: serde_json::Value = serde_json::from_str(&created_result.unwrap()).unwrap();
+    assert_eq!(created_output["count"], 2);
+}
+
+#[tokio::test]
+async fn test_search_phrase_and_fuzzy() {
+    let temp = create_test_project(&[("001-user-authentication", "planned", Some("high"))]);
+    set_specs_dir_env(&temp);
+
+    let phrase_result = call_tool("search", json!({ "query": "\"User Authentication\"" })).await;
+    assert!(phrase_result.is_ok());
+    let phrase_output: serde_json::Value = serde_json::from_str(&phrase_result.unwrap()).unwrap();
+    assert_eq!(phrase_output["count"], 1);
+
+    let fuzzy_result = call_tool("search", json!({ "query": "authetication~" })).await;
+    assert!(fuzzy_result.is_ok());
+    let fuzzy_output: serde_json::Value = serde_json::from_str(&fuzzy_result.unwrap()).unwrap();
+    assert_eq!(fuzzy_output["count"], 1);
+}
+
+#[tokio::test]
+async fn test_search_invalid_query_reports_error() {
+    let temp = create_test_project(&[("001-feature", "planned", None)]);
+    set_specs_dir_env(&temp);
+
+    let result = call_tool("search", json!({ "query": "auth AND" })).await;
+    assert!(result.is_ok());
+
+    let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
+    assert!(output["error"]
+        .as_str()
+        .unwrap_or_default()
+        .contains("Invalid search query"));
+    assert_eq!(output["count"], 0);
+}

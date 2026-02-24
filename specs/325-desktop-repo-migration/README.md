@@ -27,7 +27,7 @@ The `packages/desktop` Tauri app has grown into a complex, platform-specific pac
 ### Build and dependency isolation
 
 - [x] Replace `workspace:*` dependency usage in desktop with publishable npm versions (starting with `@leanspec/ui`)
-- [x] Verify desktop runs standalone with `pnpm install` and `pnpm dev:desktop` (or equivalent tauri dev command)
+- [ ] Verify desktop runs standalone with `pnpm install` and `pnpm dev:desktop` (or equivalent tauri dev command)
 - [x] Add independent desktop CI workflow (platform build matrix)
 
 ### Monorepo cleanup
@@ -94,7 +94,7 @@ The new repo gets its own GitHub Actions workflows for:
 
 - [x] `codervisor/lean-spec-desktop` contains desktop source at repo root and includes preserved history
 - [ ] Desktop CI passes in the new repo for targeted platforms
-- [x] Desktop app builds/runs from the new repo without requiring monorepo workspace links
+- [ ] Desktop app builds/runs from the new repo without requiring monorepo workspace links
 - [x] Monorepo `pnpm build` and CI pass after desktop removal
 - [x] Monorepo docs point desktop contributors to the new repository
 
@@ -112,3 +112,11 @@ The new repo gets its own GitHub Actions workflows for:
   - Monorepo cleanup completed: removed `packages/desktop/`, removed desktop tasks/scripts/workflow references, and updated contributor/user docs to point at the new repo.
   - Monorepo validation command results: `pnpm build` ✅, `pnpm typecheck` ✅, `pnpm test` ✅, `pnpm lint` ❌ (pre-existing unrelated UI lint violations in `packages/ui`).
   - Global `lean-spec validate` currently reports many pre-existing length/structure issues in other specs; spec-specific validation for this spec passed.
+
+- CI follow-up (2026-02-24):
+  - Observed immediate workflow-file failures for initial desktop runs (`22337893259`, `22337893401`) due corrupted YAML content.
+  - Pushed workflow repairs to desktop repo (`4885d4c`) and explicit pnpm version pinning (`29e370c`).
+  - New Desktop Build runs progressed but still failed (`22339033152`, `22339242771`) with frontend standalone issues.
+  - Root cause from failed logs: extracted desktop app still references monorepo-relative config/imports (`../tsconfig.base.json`, `../ui/tailwind.config`, and `../../ui/src/*`), causing `beforeBuildCommand` (`pnpm build`) to fail in CI.
+  - Additional desktop repo commit attempted to pin Tauri package minors (`05abdd4`) to resolve tauri crate/js mismatch; that specific mismatch was resolved, but standalone frontend coupling remains the blocker.
+  - Result: desktop CI is not green yet; spec remains `in-progress` until standalone import/config decoupling is fully completed and workflows pass.

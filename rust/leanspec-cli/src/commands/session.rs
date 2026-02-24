@@ -435,12 +435,7 @@ fn show_logs(session_id: &str) -> Result<(), Box<dyn Error>> {
 }
 
 async fn start_and_wait(manager: SessionManager, session_id: &str) -> Result<(), Box<dyn Error>> {
-    manager
-        .start_session(session_id)
-        .await
-        .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
-
-    println!("{} Session {} started", "✓".green(), session_id.bold());
+    start_only(&manager, session_id).await?;
 
     loop {
         let session = manager
@@ -461,6 +456,17 @@ async fn start_and_wait(manager: SessionManager, session_id: &str) -> Result<(),
 
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
+
+    Ok(())
+}
+
+async fn start_only(manager: &SessionManager, session_id: &str) -> Result<(), Box<dyn Error>> {
+    manager
+        .start_session(session_id)
+        .await
+        .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
+
+    println!("{} Session {} started", "✓".green(), session_id.bold());
 
     Ok(())
 }

@@ -3,7 +3,9 @@
 //! Uses leanspec_core::search for cross-field multi-term search with relevance scoring.
 
 use colored::Colorize;
-use leanspec_core::{find_content_snippet, parse_query_terms, search_specs, SpecLoader};
+use leanspec_core::{
+    find_content_snippet, parse_query_terms, search_specs, validate_search_query, SpecLoader,
+};
 use std::error::Error;
 
 pub fn run(
@@ -15,11 +17,17 @@ pub fn run(
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all()?;
 
-    let terms = parse_query_terms(query);
-    if terms.is_empty() {
+    if query.trim().is_empty() {
         println!("{} Empty search query", "⚠️".yellow());
         return Ok(());
     }
+
+    if let Err(err) = validate_search_query(query) {
+        println!("{} Invalid search query: {}", "⚠️".yellow(), err);
+        return Ok(());
+    }
+
+    let terms = parse_query_terms(query);
 
     // Use core search module
     let results = search_specs(&specs, query, limit);

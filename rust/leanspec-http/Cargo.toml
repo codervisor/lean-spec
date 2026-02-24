@@ -42,6 +42,7 @@ sha2 = "0.10"
 chrono.workspace = true
 
 # Utilities
+ignore = "0.4"
 notify = "6.1"
 thiserror.workspace = true
 walkdir.workspace = true

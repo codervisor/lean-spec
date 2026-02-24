@@ -340,3 +340,29 @@ export interface SpecMetadata {
 export interface BatchMetadataResponse {
   specs: Record<string, SpecMetadata>;
 }
+
+// ---------------------------------------------------------------------------
+// Codebase file browsing (spec 246)
+// ---------------------------------------------------------------------------
+
+export type FileEntryType = 'file' | 'directory';
+
+export interface FileEntry {
+  name: string;
+  type: FileEntryType;
+  /** Size in bytes – only for files */
+  size?: number;
+}
+
+export interface FileListResponse {
+  path: string;
+  entries: FileEntry[];
+}
+
+export interface FileContentResponse {
+  path: string;
+  content: string;
+  language: string;
+  size: number;
+  lineCount: number;
+}

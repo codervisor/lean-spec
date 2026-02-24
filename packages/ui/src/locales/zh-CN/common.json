@@ -17,6 +17,8 @@
     "allSpecifications": "所有规范",
     "sessions": "会话",
     "sessionsDescription": "监控 AI 会话",
+    "files": "文件",
+    "filesDescription": "浏览项目代码库",
     "dependencyGraph": "依赖图",
     "analytics": "数据分析",
     "projectContext": "项目上下文",
@@ -1414,6 +1416,24 @@
       "version": "版本",
       "website": "网站",
       "support": "支持"
+    }
+  },
+  "filesPage": {
+    "title": "文件",
+    "description": "浏览项目源代码文件。",
+    "loading": "加载文件中...",
+    "loadingFile": "加载文件内容...",
+    "emptyDirectory": "此目录为空。",
+    "selectFile": "选择文件以查看其内容。",
+    "binaryFile": "无法显示二进制文件。",
+    "fileTooLarge": "文件过大，无法显示（最大 1 MB）。",
+    "lines": "{{count}} 行",
+    "bytes": "{{size}} 字节",
+    "copyPath": "复制路径",
+    "pathCopied": "路径已复制！",
+    "errors": {
+      "loadFailed": "加载目录失败。",
+      "fileFailed": "加载文件失败。"
     }
   }
 }

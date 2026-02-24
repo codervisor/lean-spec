@@ -1,6 +1,8 @@
 import { getBackend, APIError, type BackendAdapter } from "./backend-adapter";
 import i18n from "./i18n";
 import type {
+  FileContentResponse,
+  FileListResponse,
   ListParams,
   Spec,
   SpecDetail,
@@ -231,6 +233,15 @@ class ProjectAPI {
   refreshModelsRegistry = (): Promise<void> => this.backend.refreshModelsRegistry();
   setProviderApiKey = (providerId: string, apiKey: string, baseUrl?: string): Promise<void> =>
     this.backend.setProviderApiKey(providerId, apiKey, baseUrl);
+
+  // Codebase file browsing (spec 246)
+  async getFiles(path?: string): Promise<FileListResponse> {
+    return this.backend.getProjectFiles(this.getCurrentProjectId(), path);
+  }
+
+  async getFile(path: string): Promise<FileContentResponse> {
+    return this.backend.getProjectFile(this.getCurrentProjectId(), path);
+  }
 }
 
 export const api = new ProjectAPI();
