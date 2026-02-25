@@ -13,14 +13,15 @@ parent: 330-acp-sessions-integration
 created_at: 2026-02-25T07:01:21.422865Z
 updated_at: 2026-02-25T07:01:32.639511Z
 ---
-
-# ACP Sessions: UI Log Display & Interaction Compatibility
+# ACP Sessions: UI Log Display & Conversation View
 
 ## Overview
 
-Spec 330 introduces ACP (Agent Client Protocol) sessions, which fundamentally change the data flowing from runners to LeanSpec. The current UI was built for **unstructured plain-text logs** (raw stdout/stderr lines). ACP sessions produce **structured, typed updates** — tool calls, diffs, plans, permission requests, agent thoughts, and streaming message chunks.
+Spec 330 introduces ACP (Agent Client Protocol) sessions, which fundamentally change the data flowing from runners to LeanSpec. The current UI was built for **unstructured plain-text logs** (raw stdout/stderr lines). ACP sessions produce **structured, typed updates** — tool calls, diffs, plans, agent thoughts, and streaming message chunks.
 
-This spec ensures the UI and UX are consistent and fully compatible with ACP session data, covering both how logs are displayed and how users interact with ACP-powered sessions.
+This spec ensures the UI can display ACP session data in a structured conversation view, covering the base rendering of all ACP event types. HITL (Human-in-the-Loop) interactions — permission requests, conversational follow-ups, checkpoints, and message actions — are covered separately in Spec 334.
+
+**Component Library:** Use [ai-elements](https://www.npmjs.com/package/ai-elements) (Vercel's AI component registry built on shadcn/ui) as the foundation for all ACP session UI components. This avoids building custom chat/tool/confirmation primitives from scratch and ensures a battle-tested, accessible, composable component set.
 
 ### Current State
 
@@ -29,13 +30,6 @@ This spec ensures the UI and UX are consistent and fully compatible with ACP ses
 - No distinction between agent reasoning, tool calls, file changes, or plain output
 - WebSocket streams `{ type: "log", level, message }` — level is only stdout/stderr/info/debug/warning/error
 - No structured content — everything is a string `message`
-
-**Interaction:**
-- Controls: Start, Pause, Resume, Stop, Restart, Export, Archive
-- No permission prompt UI — agents run unattended
-- No way to cancel a specific turn (only stop entire session)
-- No session resume capability (restart creates a new session)
-- No mode switching during a running session
 
 ## Design
 
@@ -59,7 +53,7 @@ This spec ensures the UI and UX are consistent and fully compatible with ACP ses
 // ACP plan
 { "type": "acp_plan", "entries": [{ "id": "…", "title": "…", "status": "pending"|"running"|"done" }] }
 
-// ACP permission request
+// ACP permission request (rendered read-only here; interactive handling in Spec 334)
 { "type": "acp_permission_request", "id": "pr_456", "tool": "run_command", "args": {}, "options": ["allow_once", "allow_always", "reject"] }
 
 // ACP mode update
@@ -80,66 +74,111 @@ type SessionStreamEvent =
   | { type: 'complete'; status: string; duration_ms: number };
 ```
 
-### 2. Log Display — Conversation View vs Flat View
+### 2. Log Display — ai-elements Conversation View vs Flat View
 
 Detect session type via a new `session.protocol` field (`"acp" | "subprocess"`):
 
 - **`subprocess`** → current flat log view (unchanged)
-- **`acp`** → conversation-style view with:
-  - **Agent messages** — streaming markdown blocks
-  - **User messages** — visually distinct blocks
-  - **Thought blocks** — collapsible "Thinking…" sections, dimmed
-  - **Tool call cards** — tool name, args (collapsed), status badge (spinner/check/x), result (expandable), duration
-  - **Plan panel** — optional section showing plan entries with progress checkmarks
+- **`acp`** → conversation-style view using ai-elements components
+
+#### ai-elements Component Mapping
+
+Install the following ai-elements components for the ACP session view:
+
+```bash
+npx ai-elements@latest add conversation message reasoning tool plan
+```
+
+| ACP Update           | ai-elements Component                                                        | Usage                                                                         |
+| -------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Agent messages       | `<Message from="assistant">` + `<MessageResponse>`                           | Streaming markdown with GFM, math, code highlighting                          |
+| User messages        | `<Message from="user">` + `<MessageContent>`                                 | Right-aligned user prompt blocks                                              |
+| Agent thoughts       | `<Reasoning isStreaming={…}>` + `<ReasoningContent>`                         | Collapsible "Thinking…" section, auto-opens while streaming, closes when done |
+| Tool calls           | `<Tool>` + `<ToolHeader>` + `<ToolContent>` + `<ToolInput>` + `<ToolOutput>` | Collapsible card with tool name, status badge, args, result                   |
+| Plan                 | `<Plan isStreaming={…}>` + `<PlanHeader>` + `<PlanContent>`                  | Collapsible plan with shimmer while streaming, progress entries               |
+| Conversation wrapper | `<Conversation>` + `<ConversationContent>` + `<ConversationScrollButton>`    | Auto-scroll, download, scroll-to-bottom button                                |
+
+#### ACP Conversation View Architecture
+
+```tsx
+// SessionDetailPage.tsx — ACP mode
+<Conversation>
+  <ConversationContent>
+    {streamEvents.map((event) => {
+      switch (event.type) {
+        case 'acp_message':
+          return (
+            <Message from={event.role === 'agent' ? 'assistant' : 'user'}>
+              <MessageContent>
+                <MessageResponse>{event.content}</MessageResponse>
+              </MessageContent>
+            </Message>
+          );
+
+        case 'acp_thought':
+          return (
+            <Reasoning isStreaming={!event.done}>
+              <ReasoningTrigger />
+              <ReasoningContent>{event.content}</ReasoningContent>
+            </Reasoning>
+          );
+
+        case 'acp_tool_call':
+          return (
+            <Tool defaultOpen={event.status === 'running'}>
+              <ToolHeader type={`tool-${event.tool}`} state={event.status} />
+              <ToolContent>
+                <ToolInput input={event.args} />
+                <ToolOutput output={event.result} />
+              </ToolContent>
+            </Tool>
+          );
+
+        case 'acp_plan':
+          return (
+            <Plan isStreaming={planIsStreaming}>
+              <PlanHeader>
+                <PlanTitle>Execution Plan</PlanTitle>
+              </PlanHeader>
+              <PlanContent>
+                {event.entries.map(entry => (
+                  <PlanEntry key={entry.id} status={entry.status}>
+                    {entry.title}
+                  </PlanEntry>
+                ))}
+              </PlanContent>
+            </Plan>
+          );
+
+        case 'acp_permission_request':
+          // Basic read-only display; interactive approval handled in Spec 334
+          return (
+            <Tool defaultOpen>
+              <ToolHeader type="permission-request" state="running" />
+              <ToolContent>
+                <ToolInput input={{ tool: event.tool, args: event.args }} />
+              </ToolContent>
+            </Tool>
+          );
+      }
+    })}
+  </ConversationContent>
+  <ConversationScrollButton />
+</Conversation>
+```
 
 Level filter extended for ACP: filter by Messages, Thoughts, Tool Calls, Plan updates.
 
-### 3. Permission Request Flow
+### 3. Session Card & List Updates
 
-The biggest UX change. ACP agents send `session/request_permission` for sensitive tool calls.
-
-**UI Flow:**
-1. Server forwards permission request via WebSocket as `acp_permission_request`
-2. UI shows **inline permission card** in conversation stream:
-   - Tool name + arguments displayed clearly
-   - Three buttons: **Allow Once**, **Allow Always**, **Reject**
-   - Visual urgency indicator (session blocked until user responds)
-3. User clicks → UI sends response via new REST endpoint
-4. Server relays decision to ACP agent
-
-**REST Endpoint:**
-```
-POST /api/sessions/{id}/permission/{requestId}
-Body: { "decision": "allow_once" | "allow_always" | "reject" }
-```
-
-Session displays "Waiting for approval" sub-status badge while blocked.
-
-### 4. New Session Interaction Controls
-
-| Control | When | Action |
-|---|---|---|
-| **Cancel Turn** | Agent generating | `session/cancel` — stops turn, keeps session |
-| **Send Message** | After agent turn completes | `session/prompt` — follow-up message |
-| **Switch Mode** | Session active | `session/set_mode` — ask/code/architect |
-| **Resume Session** | Completed + runner supports `loadSession` | `session/load` |
-
-**Prompt Input:** Message input bar at bottom of session detail page (ACP sessions only) for conversational follow-ups.
-
-### 5. Session Card & List Updates
-
-- **Protocol badge** — "ACP" vs "CLI"
+- **Protocol badge** — "ACP" vs "CLI" to distinguish session types
 - **Active tool call indicator** — tool name + spinner on card
-- **Permission pending** — prominent indicator when awaiting approval
 - **Plan progress** — optional progress bar (completed/total plan entries)
-- **Resume button** — for completed ACP sessions with `loadSession` support
 
-### 6. Drawer Panel Updates
+### 4. Drawer Panel Updates
 
 `session-logs-panel.tsx` also needs:
-- Render ACP structured events (messages + tool calls at minimum)
-- Permission request action buttons
-- "Send Message" input for ACP sessions
+- Render ACP structured events using ai-elements (messages + tool calls at minimum)
 - Protocol indicator in header
 
 ## Non-Goals
@@ -148,6 +187,8 @@ Session displays "Waiting for approval" sub-status badge while blocked.
 - Complex inline file diff rendering (link to files instead)
 - Audio/video ACP content blocks
 - ACP `fs/` and `terminal/` capabilities in the UI
+- Replacing the existing flat log view for non-ACP sessions
+- HITL interactions (permission approval, follow-up prompts, checkpoints) — see Spec 334
 
 ## Backward Compatibility
 
@@ -158,27 +199,26 @@ Session displays "Waiting for approval" sub-status badge while blocked.
 
 ## Plan
 
+- [ ] Install ai-elements components: `conversation`, `message`, `reasoning`, `tool`, `plan`
 - [ ] Define `SessionStreamEvent` union type and add `protocol` field to Session
-- [ ] Build `AcpMessageBlock` component (streaming markdown)
-- [ ] Build `AcpThoughtBlock` component (collapsible)
-- [ ] Build `AcpToolCallCard` component (status, args, result)
-- [ ] Build `AcpPlanPanel` component (entries with progress)
-- [ ] Build `AcpPermissionCard` component (approve/reject buttons)
-- [ ] Add permission response REST endpoint
-- [ ] Update `SessionDetailPage` — protocol-aware view rendering
-- [ ] Add message input bar + Cancel Turn + mode switcher for ACP sessions
+- [ ] Build ACP conversation view using `<Conversation>` + `<ConversationContent>` wrapper
+- [ ] Map `acp_message` events to `<Message>` + `<MessageResponse>` (streaming markdown)
+- [ ] Map `acp_thought` events to `<Reasoning>` + `<ReasoningContent>` (collapsible)
+- [ ] Map `acp_tool_call` events to `<Tool>` + `<ToolHeader>` + `<ToolInput>` + `<ToolOutput>`
+- [ ] Map `acp_plan` events to `<Plan>` + `<PlanContent>` with progress entries
+- [ ] Update `SessionDetailPage` — protocol-aware view rendering (conversation vs flat)
 - [ ] Update `SessionLogsPanel` drawer for ACP events
 - [ ] Update `SessionCard` with protocol badge and status indicators
-- [ ] Add "Resume" button for `loadSession`-capable runners
+- [ ] Add ACP event type level filter (Messages, Thoughts, Tool Calls, Plan)
 
 ## Acceptance Criteria
 
-- [ ] ACP sessions display agent messages as streaming markdown
-- [ ] Tool calls show structured cards with name, status, expandable details
-- [ ] Agent thoughts shown in collapsible blocks
-- [ ] Permission requests appear inline with actionable approve/reject buttons
-- [ ] Users can send follow-up messages during an ACP session
-- [ ] Users can cancel a turn without ending the session
-- [ ] Non-ACP sessions continue to render as flat log output
+- [ ] ai-elements components installed and integrated for ACP session rendering
+- [ ] ACP sessions display agent messages as streaming markdown via `<MessageResponse>`
+- [ ] Tool calls render as collapsible `<Tool>` cards with name, status, args, result
+- [ ] Agent thoughts shown via `<Reasoning>` — auto-open while streaming, collapse when done
+- [ ] Plans render via `<Plan>` with progress entries
+- [ ] Non-ACP sessions continue to render as flat log output (backward compatible)
 - [ ] Session cards show protocol type and active indicators
 - [ ] Drawer panel supports ACP structured events
+- [ ] Level filter works for ACP event types
