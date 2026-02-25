@@ -44,7 +44,7 @@ import {
 import { StatusBadge } from './status-badge';
 import { PriorityBadge } from './priority-badge';
 import { UmbrellaBadge } from './umbrella-badge';
-import { getStatusLabel, getPriorityLabel } from './badge-config';
+import { getStatusLabel, getPriorityLabel } from '@/lib/badge-config';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 import type { Spec } from '../types/api';
 import { useTranslation } from 'react-i18next';

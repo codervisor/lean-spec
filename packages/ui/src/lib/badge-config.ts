@@ -3,7 +3,7 @@
  * Central source of truth for badge styling and labels
  */
 
-import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown, FileText, type LucideIcon } from 'lucide-react';
+import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown, CircleDotDashed, type LucideIcon } from 'lucide-react';
 import type { SpecPriority, SpecStatus } from '../types/specs';
 
 export interface BadgeConfig {
@@ -19,7 +19,7 @@ export interface BadgeConfig {
  */
 export const statusConfig: Record<SpecStatus, BadgeConfig> = {
   'draft': {
-    icon: FileText,
+    icon: CircleDotDashed,
     label: 'Draft',
     labelKey: 'status.draft',
     className: 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300'

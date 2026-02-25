@@ -16,6 +16,9 @@ export function SessionCard({ session, compact }: SessionCardProps) {
     const { startSession, stopSession, pauseSession } = useSessionMutations(currentProject?.id ?? null);
     const { setActiveSessionId } = useSessionsUiStore();
     const { t, i18n } = useTranslation('common');
+    const isAcp = (session.protocol ?? 'subprocess') === 'acp';
+    const activeTool = session.activeToolCall;
+    const planProgress = session.planProgress;
 
     const handleAction = async (e: React.MouseEvent, action: () => Promise<unknown>) => {
         e.stopPropagation();
@@ -27,6 +30,9 @@ export function SessionCard({ session, compact }: SessionCardProps) {
             <div className="flex items-center gap-2 text-xs text-muted-foreground p-1 hover:bg-muted/50 rounded cursor-pointer" onClick={() => setActiveSessionId(session.id)}>
                 {session.status === 'completed' ? <Check className="h-3 w-3 text-green-500" /> : <X className="h-3 w-3 text-red-500" />}
                 <span className="font-medium text-foreground">{session.runner}</span>
+                <span className="rounded-full border border-border px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-muted-foreground">
+                    {isAcp ? t('sessions.labels.protocolAcp') : t('sessions.labels.protocolCli')}
+                </span>
                 <span>•</span>
                 <span className="truncate flex-1">#{session.specIds?.[0] ?? ''}</span>
                 <span>{formatRelativeTime(session.endedAt || session.startedAt, i18n.language)}</span>
@@ -49,9 +55,25 @@ export function SessionCard({ session, compact }: SessionCardProps) {
                     <div className="text-xs text-muted-foreground">
                         {session.runner} • {session.mode}
                     </div>
+                    <div className="mt-1">
+                        <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                            {isAcp ? t('sessions.labels.protocolAcp') : t('sessions.labels.protocolCli')}
+                        </span>
+                    </div>
                     {(session.specIds?.length ?? 0) > 0 && (
                         <div className="font-medium text-primary text-xs mt-1">
                             #{session.specIds.join(', ')}
+                        </div>
+                    )}
+                    {isAcp && activeTool && (
+                        <div className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
+                            <RotateCcw className="h-3 w-3 animate-spin" />
+                            {t('sessions.labels.activeTool', { tool: activeTool.tool })}
+                        </div>
+                    )}
+                    {isAcp && planProgress && planProgress.total > 0 && (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                            {t('sessions.labels.planProgress', { completed: planProgress.completed, total: planProgress.total })}
                         </div>
                     )}
                     {session.prompt && (

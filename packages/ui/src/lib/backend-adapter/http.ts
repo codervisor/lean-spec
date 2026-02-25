@@ -37,6 +37,64 @@ import type {
   ModelsRegistryResponse,
 } from './core';
 
+type RawSession = Session & {
+  project_path?: string;
+  spec_ids?: string[];
+  spec_id?: string | null;
+  started_at?: string;
+  ended_at?: string | null;
+  duration_ms?: number | null;
+  token_count?: number | null;
+  active_tool_call?: {
+    id?: string;
+    tool?: string;
+    status?: 'running' | 'completed' | 'failed';
+  } | null;
+  plan_progress?: {
+    completed?: number;
+    total?: number;
+  } | null;
+};
+
+function normalizeSession(session: RawSession): Session {
+  const specIds = session.specIds ?? session.spec_ids ?? (session.spec_id ? [session.spec_id] : []);
+  const rawActiveToolCall = session.activeToolCall ?? session.active_tool_call ?? null;
+  const activeToolCall =
+    rawActiveToolCall &&
+      typeof rawActiveToolCall.tool === 'string' &&
+      (rawActiveToolCall.status === 'running' ||
+        rawActiveToolCall.status === 'completed' ||
+        rawActiveToolCall.status === 'failed')
+      ? {
+        id: rawActiveToolCall.id,
+        tool: rawActiveToolCall.tool,
+        status: rawActiveToolCall.status,
+      }
+      : null;
+
+  const rawPlanProgress = session.planProgress ?? session.plan_progress ?? null;
+  const planProgress =
+    rawPlanProgress && typeof rawPlanProgress.completed === 'number' && typeof rawPlanProgress.total === 'number'
+      ? {
+        completed: rawPlanProgress.completed,
+        total: rawPlanProgress.total,
+      }
+      : null;
+
+  return {
+    ...session,
+    projectPath: session.projectPath ?? session.project_path ?? '',
+    specIds,
+    specId: session.specId ?? session.spec_id ?? specIds[0] ?? null,
+    startedAt: session.startedAt ?? session.started_at ?? '',
+    endedAt: session.endedAt ?? session.ended_at ?? null,
+    durationMs: session.durationMs ?? session.duration_ms ?? null,
+    tokenCount: session.tokenCount ?? session.token_count ?? null,
+    activeToolCall,
+    planProgress,
+  };
+}
+
 /**
  * HTTP adapter for web browser - connects to Rust HTTP server
  */
@@ -315,11 +373,13 @@ export class HttpBackendAdapter implements BackendAdapter {
       ).toString()
       : '';
     const endpoint = query ? `/api/sessions?${query}` : '/api/sessions';
-    return this.fetchAPI<Session[]>(endpoint);
+    const sessions = await this.fetchAPI<RawSession[]>(endpoint);
+    return sessions.map((session) => normalizeSession(session));
   }
 
   async getSession(sessionId: string): Promise<Session> {
-    return this.fetchAPI<Session>(`/api/sessions/${encodeURIComponent(sessionId)}`);
+    const session = await this.fetchAPI<RawSession>(`/api/sessions/${encodeURIComponent(sessionId)}`);
+    return normalizeSession(session);
   }
 
   async createSession(payload: {
@@ -332,7 +392,7 @@ export class HttpBackendAdapter implements BackendAdapter {
   }): Promise<Session> {
     // Normalize: if specIds not provided, fall back to specId for backward compat
     const specIds = payload.specIds ?? (payload.specId ? [payload.specId] : []);
-    return this.fetchAPI<Session>('/api/sessions', {
+    const session = await this.fetchAPI<RawSession>('/api/sessions', {
       method: 'POST',
       body: JSON.stringify({
         project_path: payload.projectPath,
@@ -342,30 +402,35 @@ export class HttpBackendAdapter implements BackendAdapter {
         mode: payload.mode,
       }),
     });
+    return normalizeSession(session);
   }
 
   async startSession(sessionId: string): Promise<Session> {
-    return this.fetchAPI<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/start`, {
+    const session = await this.fetchAPI<RawSession>(`/api/sessions/${encodeURIComponent(sessionId)}/start`, {
       method: 'POST',
     });
+    return normalizeSession(session);
   }
 
   async pauseSession(sessionId: string): Promise<Session> {
-    return this.fetchAPI<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/pause`, {
+    const session = await this.fetchAPI<RawSession>(`/api/sessions/${encodeURIComponent(sessionId)}/pause`, {
       method: 'POST',
     });
+    return normalizeSession(session);
   }
 
   async resumeSession(sessionId: string): Promise<Session> {
-    return this.fetchAPI<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/resume`, {
+    const session = await this.fetchAPI<RawSession>(`/api/sessions/${encodeURIComponent(sessionId)}/resume`, {
       method: 'POST',
     });
+    return normalizeSession(session);
   }
 
   async stopSession(sessionId: string): Promise<Session> {
-    return this.fetchAPI<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/stop`, {
+    const session = await this.fetchAPI<RawSession>(`/api/sessions/${encodeURIComponent(sessionId)}/stop`, {
       method: 'POST',
     });
+    return normalizeSession(session);
   }
 
   async archiveSession(sessionId: string, options?: { compress?: boolean }): Promise<SessionArchiveResult> {

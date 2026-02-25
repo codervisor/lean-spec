@@ -1,6 +1,7 @@
 import { StatusBadge as UIStatusBadge, cn } from '@/library';
 import { useTranslation } from 'react-i18next';
-import { statusConfig } from './badge-config';
+import { statusConfig } from '@/lib/badge-config';
+import type { SpecStatus } from '@/types/specs';
 
 interface StatusBadgeProps {
   status: string;
@@ -13,11 +14,11 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ status, className, iconOnly = false, responsive = true, editable = false, onChange }: StatusBadgeProps) {
   const { t } = useTranslation('common');
-  const config = statusConfig[status] || statusConfig['planned'];
-  
+  const config = statusConfig[status as SpecStatus] || statusConfig['planned'];
+
   // Get translated label
   const label = !iconOnly ? t(config.labelKey) : undefined;
-  
+
   // Handle responsive mode by controlling iconOnly
   const isIconOnly = iconOnly || (responsive && false); // Note: responsive logic needs screen size detection
 

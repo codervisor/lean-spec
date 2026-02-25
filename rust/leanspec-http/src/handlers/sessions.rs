@@ -11,6 +11,7 @@ use axum::extract::State;
 use axum::response::IntoResponse;
 use axum::Json;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use tokio::sync::broadcast;
@@ -58,6 +59,22 @@ pub struct SessionResponse {
     pub ended_at: Option<String>,
     pub duration_ms: Option<u64>,
     pub token_count: Option<u64>,
+    pub protocol: String,
+    pub active_tool_call: Option<ActiveToolCallResponse>,
+    pub plan_progress: Option<PlanProgressResponse>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct ActiveToolCallResponse {
+    pub id: Option<String>,
+    pub tool: String,
+    pub status: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct PlanProgressResponse {
+    pub completed: usize,
+    pub total: usize,
 }
 
 /// Request to archive session logs
@@ -93,6 +110,7 @@ pub struct RotateLogsResponse {
 impl From<Session> for SessionResponse {
     fn from(session: Session) -> Self {
         let spec_id = session.spec_ids.first().cloned();
+        let protocol = detect_session_protocol(&session);
         Self {
             id: session.id,
             project_path: session.project_path,
@@ -106,8 +124,116 @@ impl From<Session> for SessionResponse {
             ended_at: session.ended_at.map(|t| t.to_rfc3339()),
             duration_ms: session.duration_ms,
             token_count: session.token_count,
+            protocol,
+            active_tool_call: None,
+            plan_progress: None,
         }
     }
+}
+
+fn detect_session_protocol(session: &Session) -> String {
+    if let Some(protocol) = session.metadata.get("protocol") {
+        return protocol.clone();
+    }
+
+    match session.runner.as_str() {
+        "copilot" | "codex" => "acp".to_string(),
+        _ => "subprocess".to_string(),
+    }
+}
+
+fn extract_log_payload(log: &SessionLog) -> Option<Value> {
+    serde_json::from_str::<Value>(&log.message)
+        .ok()
+        .and_then(|value| if value.is_object() { Some(value) } else { None })
+}
+
+fn extract_active_tool_and_plan(
+    logs: &[SessionLog],
+) -> (Option<ActiveToolCallResponse>, Option<PlanProgressResponse>) {
+    let mut active_tool: Option<ActiveToolCallResponse> = None;
+    let mut latest_plan: Option<PlanProgressResponse> = None;
+
+    for log in logs {
+        let Some(payload) = extract_log_payload(log) else {
+            continue;
+        };
+
+        let Some(event_type) = payload.get("type").and_then(|value| value.as_str()) else {
+            continue;
+        };
+
+        if event_type == "acp_tool_call" {
+            let id = payload
+                .get("id")
+                .and_then(|value| value.as_str())
+                .map(|value| value.to_string());
+            let tool = payload
+                .get("tool")
+                .and_then(|value| value.as_str())
+                .unwrap_or_default()
+                .to_string();
+            let status = payload
+                .get("status")
+                .and_then(|value| value.as_str())
+                .unwrap_or("running")
+                .to_string();
+
+            if tool.is_empty() {
+                continue;
+            }
+
+            if status == "running" {
+                active_tool = Some(ActiveToolCallResponse { id, tool, status });
+            } else if let Some(current) = &active_tool {
+                if current.id == id {
+                    active_tool = None;
+                }
+            }
+            continue;
+        }
+
+        if event_type == "acp_plan" {
+            let Some(entries) = payload.get("entries").and_then(|value| value.as_array()) else {
+                continue;
+            };
+            let total = entries.len();
+            if total == 0 {
+                continue;
+            }
+            let completed = entries
+                .iter()
+                .filter(|entry| {
+                    entry
+                        .get("status")
+                        .and_then(|value| value.as_str())
+                        .map(|status| status == "done")
+                        .unwrap_or(false)
+                })
+                .count();
+            latest_plan = Some(PlanProgressResponse { completed, total });
+        }
+    }
+
+    (active_tool, latest_plan)
+}
+
+async fn enrich_session_response(
+    manager: &crate::sessions::SessionManager,
+    session: Session,
+) -> SessionResponse {
+    let session_id = session.id.clone();
+    let mut response = SessionResponse::from(session);
+    if response.protocol == "acp" {
+        let logs = manager
+            .get_logs(&session_id, Some(500))
+            .await
+            .unwrap_or_default();
+        let (active_tool_call, plan_progress) = extract_active_tool_and_plan(&logs);
+        response.active_tool_call = active_tool_call;
+        response.plan_progress = plan_progress;
+    }
+    response
 }
 
 /// Create a new session (does not start it)
@@ -135,7 +261,7 @@ pub async fn create_session(
             )
         })?;
 
-    Ok(Json(SessionResponse::from(session)))
+    Ok(Json(enrich_session_response(&manager, session).await))
 }
 
 /// Get a session by ID
@@ -156,7 +282,7 @@ pub async fn get_session(
             )
         })?;
 
-    Ok(Json(SessionResponse::from(session)))
+    Ok(Json(enrich_session_response(&manager, session).await))
 }
 
 /// List sessions with optional filters
@@ -178,7 +304,10 @@ pub async fn list_sessions(
         .await
         .map_err(internal_error)?;
 
-    let responses: Vec<SessionResponse> = sessions.into_iter().map(SessionResponse::from).collect();
+    let mut responses = Vec::with_capacity(sessions.len());
+    for session in sessions {
+        responses.push(enrich_session_response(&manager, session).await);
+    }
 
     Ok(Json(responses))
 }
@@ -208,7 +337,7 @@ pub async fn start_session(
             )
         })?;
 
-    Ok(Json(SessionResponse::from(session)))
+    Ok(Json(enrich_session_response(&manager, session).await))
 }
 
 /// Stop a running session
@@ -236,7 +365,7 @@ pub async fn stop_session(
             )
         })?;
 
-    Ok(Json(SessionResponse::from(session)))
+    Ok(Json(enrich_session_response(&manager, session).await))
 }
 
 /// Archive session logs to disk
@@ -314,7 +443,7 @@ pub async fn pause_session(
             )
         })?;
 
-    Ok(Json(SessionResponse::from(session)))
+    Ok(Json(enrich_session_response(&manager, session).await))
 }
 
 /// Resume a paused session
@@ -342,7 +471,7 @@ pub async fn resume_session(
             )
         })?;
 
-    Ok(Json(SessionResponse::from(session)))
+    Ok(Json(enrich_session_response(&manager, session).await))
 }
 
 /// Get logs for a session
@@ -960,12 +1089,7 @@ async fn handle_ws_session(mut socket: WebSocket, state: AppState, session_id: S
         .unwrap_or_default();
 
     for log in initial_logs {
-        let payload = json!({
-            "type": "log",
-            "timestamp": log.timestamp.to_rfc3339(),
-            "level": format!("{:?}", log.level).to_lowercase(),
-            "message": log.message,
-        });
+        let payload = stream_payload_from_log(&log);
 
         if socket
             .send(Message::Text(payload.to_string().into()))
@@ -1001,12 +1125,7 @@ async fn handle_ws_session(mut socket: WebSocket, state: AppState, session_id: S
             result = log_rx.recv() => {
                 match result {
                     Ok(log) => {
-                        let payload = json!({
-                            "type": "log",
-                            "timestamp": log.timestamp.to_rfc3339(),
-                            "level": format!("{:?}", log.level).to_lowercase(),
-                            "message": log.message,
-                        });
+                        let payload = stream_payload_from_log(&log);
                         if socket
                             .send(Message::Text(payload.to_string().into()))
                             .await
@@ -1021,6 +1140,44 @@ async fn handle_ws_session(mut socket: WebSocket, state: AppState, session_id: S
             }
         }
     }
+}
+
+fn stream_payload_from_log(log: &SessionLog) -> Value {
+    if let Ok(mut parsed) = serde_json::from_str::<Value>(&log.message) {
+        let allowed = [
+            "acp_message",
+            "acp_thought",
+            "acp_tool_call",
+            "acp_plan",
+            "acp_permission_request",
+            "acp_mode_update",
+            "complete",
+        ];
+
+        let event_type = parsed
+            .get("type")
+            .and_then(|value| value.as_str())
+            .unwrap_or_default();
+
+        if allowed.contains(&event_type) {
+            if let Some(map) = parsed.as_object_mut() {
+                if !map.contains_key("timestamp") {
+                    map.insert(
+                        "timestamp".to_string(),
+                        Value::String(log.timestamp.to_rfc3339()),
+                    );
+                }
+            }
+            return parsed;
+        }
+    }
+
+    json!({
+        "type": "log",
+        "timestamp": log.timestamp.to_rfc3339(),
+        "level": format!("{:?}", log.level).to_lowercase(),
+        "message": log.message,
+    })
 }
 
 fn resolve_scope_path(project_path: &str, scope: RunnerScope) -> PathBuf {

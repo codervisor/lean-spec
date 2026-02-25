@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2026-02-25
 priority: high
 tags:
@@ -11,8 +11,15 @@ tags:
 - permissions
 parent: 330-acp-sessions-integration
 created_at: 2026-02-25T07:01:21.422865Z
-updated_at: 2026-02-25T07:01:32.639511Z
+updated_at: 2026-02-25T08:44:09.540286Z
+completed_at: 2026-02-25T08:44:09.540286Z
+transitions:
+- status: in-progress
+  at: 2026-02-25T08:35:47.253373Z
+- status: complete
+  at: 2026-02-25T08:44:09.540286Z
 ---
+
 # ACP Sessions: UI Log Display & Conversation View
 
 ## Overview
@@ -199,26 +206,26 @@ Level filter extended for ACP: filter by Messages, Thoughts, Tool Calls, Plan up
 
 ## Plan
 
-- [ ] Install ai-elements components: `conversation`, `message`, `reasoning`, `tool`, `plan`
-- [ ] Define `SessionStreamEvent` union type and add `protocol` field to Session
-- [ ] Build ACP conversation view using `<Conversation>` + `<ConversationContent>` wrapper
-- [ ] Map `acp_message` events to `<Message>` + `<MessageResponse>` (streaming markdown)
-- [ ] Map `acp_thought` events to `<Reasoning>` + `<ReasoningContent>` (collapsible)
-- [ ] Map `acp_tool_call` events to `<Tool>` + `<ToolHeader>` + `<ToolInput>` + `<ToolOutput>`
-- [ ] Map `acp_plan` events to `<Plan>` + `<PlanContent>` with progress entries
-- [ ] Update `SessionDetailPage` — protocol-aware view rendering (conversation vs flat)
-- [ ] Update `SessionLogsPanel` drawer for ACP events
-- [ ] Update `SessionCard` with protocol badge and status indicators
-- [ ] Add ACP event type level filter (Messages, Thoughts, Tool Calls, Plan)
+- [x] Install ai-elements components: `conversation`, `message`, `reasoning`, `tool`, `plan`
+- [x] Define `SessionStreamEvent` union type and add `protocol` field to Session
+- [x] Build ACP conversation view using `<Conversation>` + `<ConversationContent>` wrapper
+- [x] Map `acp_message` events to `<Message>` + `<MessageResponse>` (streaming markdown)
+- [x] Map `acp_thought` events to `<Reasoning>` + `<ReasoningContent>` (collapsible)
+- [x] Map `acp_tool_call` events to `<Tool>` + `<ToolHeader>` + `<ToolInput>` + `<ToolOutput>`
+- [x] Map `acp_plan` events to `<Plan>` + `<PlanContent>` with progress entries
+- [x] Update `SessionDetailPage` — protocol-aware view rendering (conversation vs flat)
+- [x] Update `SessionLogsPanel` drawer for ACP events
+- [x] Update `SessionCard` with protocol badge and status indicators
+- [x] Add ACP event type level filter (Messages, Thoughts, Tool Calls, Plan)
 
 ## Acceptance Criteria
 
-- [ ] ai-elements components installed and integrated for ACP session rendering
-- [ ] ACP sessions display agent messages as streaming markdown via `<MessageResponse>`
-- [ ] Tool calls render as collapsible `<Tool>` cards with name, status, args, result
-- [ ] Agent thoughts shown via `<Reasoning>` — auto-open while streaming, collapse when done
-- [ ] Plans render via `<Plan>` with progress entries
-- [ ] Non-ACP sessions continue to render as flat log output (backward compatible)
-- [ ] Session cards show protocol type and active indicators
-- [ ] Drawer panel supports ACP structured events
-- [ ] Level filter works for ACP event types
+- [x] ai-elements components installed and integrated for ACP session rendering
+- [x] ACP sessions display agent messages as streaming markdown via `<MessageResponse>`
+- [x] Tool calls render as collapsible `<Tool>` cards with name, status, args, result
+- [x] Agent thoughts shown via `<Reasoning>` — auto-open while streaming, collapse when done
+- [x] Plans render via `<Plan>` with progress entries
+- [x] Non-ACP sessions continue to render as flat log output (backward compatible)
+- [x] Session cards show protocol type and active indicators
+- [x] Drawer panel supports ACP structured events
+- [x] Level filter works for ACP event types

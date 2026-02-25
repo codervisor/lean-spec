@@ -134,6 +134,11 @@
       "unknownTime": "Unknown",
       "autoScroll": "Auto-scroll",
       "logs": "Logs",
+      "plan": "Plan",
+      "protocolAcp": "ACP",
+      "protocolCli": "CLI",
+      "activeTool": "Tool: {{tool}}",
+      "planProgress": "Plan: {{completed}}/{{total}}",
       "completed": "Completed"
     },
     "modes": {
@@ -201,7 +206,13 @@
     "logsDescription": "Streaming output from this session.",
     "filters": {
       "search": "Search logs",
-      "autoScroll": "Auto-scroll"
+      "autoScroll": "Auto-scroll",
+      "acp": {
+        "messages": "Messages",
+        "thoughts": "Thoughts",
+        "tools": "Tool Calls",
+        "plan": "Plan"
+      }
     },
     "state": {
       "notFoundTitle": "Session unavailable",

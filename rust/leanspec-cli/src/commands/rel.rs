@@ -175,11 +175,18 @@ fn update_relationships(
             if parent.is_empty() {
                 return Err("Parent spec is required for add".into());
             }
-            validate_parent_assignment(&spec_info.path, &parent, &working_specs)
+            // Resolve parent to its full canonical path via fuzzy matching (same as MCP)
+            let parent_info = loader
+                .load(&parent)?
+                .ok_or_else(|| format!("Parent spec not found: {}", parent))?;
+            let resolved_parent = parent_info.path.clone();
+            validate_parent_assignment(&spec_info.path, &resolved_parent, &working_specs)
                 .map_err(|e| e.to_string())?;
-            let parent_value = parent.clone();
-            updates.insert("parent".to_string(), serde_yaml::Value::String(parent));
-            set_parent_in_specs(&mut working_specs, &spec_info.path, Some(parent_value));
+            updates.insert(
+                "parent".to_string(),
+                serde_yaml::Value::String(resolved_parent.clone()),
+            );
+            set_parent_in_specs(&mut working_specs, &spec_info.path, Some(resolved_parent));
         } else {
             updates.insert("parent".to_string(), serde_yaml::Value::Null);
             set_parent_in_specs(&mut working_specs, &spec_info.path, None);

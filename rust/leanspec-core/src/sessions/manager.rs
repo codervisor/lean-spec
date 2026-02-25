@@ -185,7 +185,11 @@ impl SessionManager {
         }
 
         let session_id = Uuid::new_v4().to_string();
-        let session = Session::new(session_id, project_path, spec_ids, prompt, runner_id, mode);
+        let mut session = Session::new(session_id, project_path, spec_ids, prompt, runner_id, mode);
+        session.metadata.insert(
+            "protocol".to_string(),
+            infer_runner_protocol(&session.runner).to_string(),
+        );
 
         self.db.insert_session(&session)?;
 
@@ -856,6 +860,13 @@ impl SessionManager {
         }
 
         Ok(cleaned)
+    }
+}
+
+fn infer_runner_protocol(runner_id: &str) -> &'static str {
+    match runner_id {
+        "copilot" | "codex" => "acp",
+        _ => "subprocess",
     }
 }
 

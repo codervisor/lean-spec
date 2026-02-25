@@ -131,6 +131,11 @@
       "unknownTime": "未知",
       "autoScroll": "自动滚动",
       "logs": "日志",
+      "plan": "计划",
+      "protocolAcp": "ACP",
+      "protocolCli": "CLI",
+      "activeTool": "工具：{{tool}}",
+      "planProgress": "计划：{{completed}}/{{total}}",
       "completed": "已完成"
     },
     "modes": {
@@ -198,7 +203,13 @@
     "logsDescription": "来自该会话的实时输出。",
     "filters": {
       "search": "搜索日志",
-      "autoScroll": "自动滚动"
+      "autoScroll": "自动滚动",
+      "acp": {
+        "messages": "消息",
+        "thoughts": "思考",
+        "tools": "工具调用",
+        "plan": "计划"
+      }
     },
     "state": {
       "notFoundTitle": "会话不可用",

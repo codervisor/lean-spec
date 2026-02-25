@@ -1,6 +1,7 @@
 import { PriorityBadge as UIPriorityBadge, cn } from '@/library';
 import { useTranslation } from 'react-i18next';
-import { priorityConfig } from './badge-config';
+import { priorityConfig } from '@/lib/badge-config';
+import type { SpecPriority } from '@/types/specs';
 
 interface PriorityBadgeProps {
   priority: string;
@@ -13,11 +14,11 @@ interface PriorityBadgeProps {
 
 export function PriorityBadge({ priority, className, iconOnly = false, responsive = true, editable = false, onChange }: PriorityBadgeProps) {
   const { t } = useTranslation('common');
-  const config = priorityConfig[priority] || priorityConfig['medium'];
-  
+  const config = priorityConfig[priority as SpecPriority] || priorityConfig['medium'];
+
   // Get translated label
   const label = !iconOnly ? t(config.labelKey) : undefined;
-  
+
   // Handle responsive mode by controlling iconOnly
   const isIconOnly = iconOnly || (responsive && false); // Note: responsive logic needs screen size detection
 

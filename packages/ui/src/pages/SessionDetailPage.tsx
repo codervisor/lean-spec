@@ -4,18 +4,27 @@ import { AlertTriangle, ArrowLeft, Download, Copy, Play, Square, RotateCcw, Paus
 import { Button, Card, CardContent, cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
-import type { Session, SessionEvent, SessionLog } from '../types/api';
+import type { Session, SessionEvent, SessionLog, SessionStreamEvent } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { EmptyState } from '../components/shared/empty-state';
 import { PageHeader } from '../components/shared/page-header';
 import { PageTransition } from '../components/shared/page-transition';
 import { PageContainer } from '../components/shared/page-container';
+import { AcpConversation } from '../components/sessions/acp-conversation';
 import {
   SESSION_STATUS_STYLES,
   estimateSessionCost,
   formatSessionDuration,
   formatTokenCount,
 } from '../lib/session-utils';
+import {
+  appendStreamEvent,
+  getAcpFilterType,
+  isAcpSession,
+  parseSessionLog,
+  parseStreamEventPayload,
+  type AcpFilterType,
+} from '../lib/session-stream';
 
 export function SessionDetailPage() {
   const { t } = useTranslation('common');
@@ -28,6 +37,7 @@ export function SessionDetailPage() {
 
   const [session, setSession] = useState<Session | null>(null);
   const [logs, setLogs] = useState<SessionLog[]>([]);
+  const [streamEvents, setStreamEvents] = useState<SessionStreamEvent[]>([]);
   const [events, setEvents] = useState<SessionEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [logsLoading, setLogsLoading] = useState(true);
@@ -61,6 +71,11 @@ export function SessionDetailPage() {
     try {
       const data = await api.getSessionLogs(sessionId);
       setLogs(data);
+      const nextStreamEvents = data
+        .slice()
+        .reverse()
+        .reduce<SessionStreamEvent[]>((acc, log) => appendStreamEvent(acc, parseSessionLog(log)), []);
+      setStreamEvents(nextStreamEvents);
     } finally {
       setLogsLoading(false);
     }
@@ -93,16 +108,20 @@ export function SessionDetailPage() {
     ws.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
-        if (payload.type === 'log') {
-          setLogs((prev) => [
-            ...prev,
-            {
-              id: Date.now(),
-              timestamp: payload.timestamp,
-              level: payload.level,
-              message: payload.message,
-            },
-          ]);
+        const streamEvent = parseStreamEventPayload(payload);
+        if (streamEvent) {
+          setStreamEvents((prev) => appendStreamEvent(prev, streamEvent));
+          if (streamEvent.type === 'log') {
+            setLogs((prev) => [
+              ...prev,
+              {
+                id: Date.now(),
+                timestamp: streamEvent.timestamp,
+                level: streamEvent.level,
+                message: streamEvent.message,
+              },
+            ]);
+          }
         }
       } catch {
         // ignore malformed
@@ -119,9 +138,15 @@ export function SessionDetailPage() {
     container.scrollTop = container.scrollHeight;
   }, [autoScroll, logs]);
 
+  const isAcp = isAcpSession(session);
+
   const availableLevels = useMemo(() => {
-    return Array.from(new Set(logs.map((log) => log.level))).sort();
-  }, [logs]);
+    if (!isAcp) {
+      return Array.from(new Set(logs.map((log) => log.level))).sort();
+    }
+    const filters: AcpFilterType[] = ['messages', 'thoughts', 'tools', 'plan'];
+    return filters.filter((filter) => streamEvents.some((event) => getAcpFilterType(event) === filter));
+  }, [isAcp, logs, streamEvents]);
 
   const filteredLogs = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -134,6 +159,35 @@ export function SessionDetailPage() {
       return true;
     });
   }, [levelFilter, logs, searchQuery]);
+
+  const filteredStreamEvents = useMemo(() => {
+    if (!isAcp) return [];
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    return streamEvents.filter((event) => {
+      const category = getAcpFilterType(event);
+      if (levelFilter.size > 0) {
+        if (!category || !levelFilter.has(category)) return false;
+      }
+
+      if (!normalizedQuery) return true;
+
+      if (event.type === 'acp_message') {
+        return event.content.toLowerCase().includes(normalizedQuery);
+      }
+      if (event.type === 'acp_thought') {
+        return event.content.toLowerCase().includes(normalizedQuery);
+      }
+      if (event.type === 'acp_tool_call') {
+        return `${event.tool} ${JSON.stringify(event.args)} ${JSON.stringify(event.result ?? '')}`
+          .toLowerCase()
+          .includes(normalizedQuery);
+      }
+      if (event.type === 'acp_plan') {
+        return event.entries.some((entry) => entry.title.toLowerCase().includes(normalizedQuery));
+      }
+      return false;
+    });
+  }, [isAcp, levelFilter, searchQuery, streamEvents]);
 
   const durationLabel = session ? formatSessionDuration(session) : null;
   const tokenLabel = session ? formatTokenCount(session.tokenCount) : null;
@@ -197,12 +251,16 @@ export function SessionDetailPage() {
   };
 
   const handleExport = () => {
-    const lines = filteredLogs.map((log) => `[${log.timestamp}] ${log.level.toUpperCase()} ${log.message}`).join('\n');
-    const blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
+    const exportPayload = isAcp
+      ? JSON.stringify(filteredStreamEvents, null, 2)
+      : filteredLogs.map((log) => `[${log.timestamp}] ${log.level.toUpperCase()} ${log.message}`).join('\n');
+    const blob = new Blob([exportPayload], {
+      type: isAcp ? 'application/json;charset=utf-8' : 'text/plain;charset=utf-8',
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `session-${sessionId ?? t('sessions.export.fallbackName')}.txt`;
+    link.download = `session-${sessionId ?? t('sessions.export.fallbackName')}.${isAcp ? 'json' : 'txt'}`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -286,6 +344,9 @@ export function SessionDetailPage() {
               <div>
                 <div className="flex items-center gap-2 text-sm font-medium">
                   {session.runner}
+                  <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                    {isAcp ? t('sessions.labels.protocolAcp') : t('sessions.labels.protocolCli')}
+                  </span>
                   <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', SESSION_STATUS_STYLES[session.status])}>
                     {t(`sessions.status.${session.status}`)}
                   </span>
@@ -453,27 +514,38 @@ export function SessionDetailPage() {
                         : 'border-border text-muted-foreground hover:text-foreground'
                     )}
                   >
-                    {level.toUpperCase()}
+                    {isAcp ? t(`sessionDetail.filters.acp.${level}`) : level.toUpperCase()}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div ref={logRef} className="rounded-lg border border-border bg-muted/30 p-3 text-xs font-mono h-full overflow-y-auto whitespace-pre-wrap">
-              {logsLoading ? (
-                <div className="text-muted-foreground">{t('actions.loading')}</div>
-              ) : filteredLogs.length === 0 ? (
-                <div className="text-muted-foreground">{t('sessions.emptyLogs')}</div>
-              ) : (
-                filteredLogs.map((log) => (
-                  <div key={`${log.id}-${log.timestamp}`} className="mb-1">
-                    <span className="text-muted-foreground">[{log.timestamp}]</span>{' '}
-                    <span className="uppercase text-[10px]">{log.level}</span>{' '}
-                    <span>{log.message}</span>
-                  </div>
-                ))
-              )}
-            </div>
+            {isAcp ? (
+              <div className="h-full min-h-0">
+                <AcpConversation
+                  events={filteredStreamEvents}
+                  loading={logsLoading}
+                  emptyTitle={t('sessions.emptyLogs')}
+                  emptyDescription={t('sessionDetail.logsDescription')}
+                />
+              </div>
+            ) : (
+              <div ref={logRef} className="rounded-lg border border-border bg-muted/30 p-3 text-xs font-mono h-full overflow-y-auto whitespace-pre-wrap">
+                {logsLoading ? (
+                  <div className="text-muted-foreground">{t('actions.loading')}</div>
+                ) : filteredLogs.length === 0 ? (
+                  <div className="text-muted-foreground">{t('sessions.emptyLogs')}</div>
+                ) : (
+                  filteredLogs.map((log) => (
+                    <div key={`${log.id}-${log.timestamp}`} className="mb-1">
+                      <span className="text-muted-foreground">[{log.timestamp}]</span>{' '}
+                      <span className="uppercase text-[10px]">{log.level}</span>{' '}
+                      <span>{log.message}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </PageContainer>

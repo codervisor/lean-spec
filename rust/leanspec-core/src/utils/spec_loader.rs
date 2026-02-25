@@ -77,6 +77,33 @@ impl SpecLoader {
             a_num.cmp(&b_num).then_with(|| a.path.cmp(&b.path))
         });
 
+        // Normalize parent references: if a stored `parent` value is a partial/fuzzy
+        // name that doesn't exactly match any spec path, try to resolve it so all
+        // downstream comparisons use the canonical full-path.
+        let full_paths: std::collections::HashSet<String> =
+            specs.iter().map(|s| s.path.clone()).collect();
+        let needs_resolve: Vec<usize> = specs
+            .iter()
+            .enumerate()
+            .filter_map(|(i, s)| {
+                s.frontmatter
+                    .parent
+                    .as_deref()
+                    .filter(|p| !full_paths.contains(*p))
+                    .map(|_| i)
+            })
+            .collect();
+        for i in needs_resolve {
+            let partial = specs[i].frontmatter.parent.clone().unwrap();
+            // Find the first spec whose full path contains the partial string
+            if let Some(resolved) = full_paths
+                .iter()
+                .find(|p| p.contains(partial.as_str()) || partial.contains(p.as_str()))
+            {
+                specs[i].frontmatter.parent = Some(resolved.clone());
+            }
+        }
+
         Ok(specs)
     }
 

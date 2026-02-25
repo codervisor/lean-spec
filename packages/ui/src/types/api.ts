@@ -15,6 +15,7 @@ export type ValidationStatus = 'pass' | 'warn' | 'fail';
 export type SessionStatus = 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
 /** @deprecated 'ralph' is deprecated and kept only for backward-compatibility with existing sessions */
 export type SessionMode = 'guided' | 'autonomous' | 'ralph';
+export type SessionProtocol = 'acp' | 'subprocess';
 
 export type SubSpec = UiSubSpec & {
   file?: string;
@@ -51,11 +52,21 @@ export interface Session {
   prompt?: string | null;
   runner: string;
   mode: SessionMode;
+  protocol?: SessionProtocol | null;
   status: SessionStatus;
   startedAt: string;
   endedAt?: string | null;
   durationMs?: number | null;
   tokenCount?: number | null;
+  activeToolCall?: {
+    id?: string;
+    tool: string;
+    status: 'running' | 'completed' | 'failed';
+  } | null;
+  planProgress?: {
+    completed: number;
+    total: number;
+  } | null;
 }
 
 export type RunnerSource = 'builtin' | 'global' | 'project';
@@ -97,6 +108,39 @@ export interface SessionLog {
   level: string;
   message: string;
 }
+
+export type AcpToolCallStatus = 'running' | 'completed' | 'failed';
+export type AcpPlanEntryStatus = 'pending' | 'running' | 'done';
+
+export type SessionStreamEvent =
+  | { type: 'log'; timestamp: string; level: string; message: string }
+  | { type: 'acp_message'; timestamp?: string; role: 'agent' | 'user'; content: string; done: boolean }
+  | { type: 'acp_thought'; timestamp?: string; content: string; done: boolean }
+  | {
+    type: 'acp_tool_call';
+    timestamp?: string;
+    id: string;
+    tool: string;
+    args: Record<string, unknown>;
+    status: AcpToolCallStatus;
+    result?: unknown;
+  }
+  | {
+    type: 'acp_plan';
+    timestamp?: string;
+    entries: Array<{ id: string; title: string; status: AcpPlanEntryStatus }>;
+    done?: boolean;
+  }
+  | {
+    type: 'acp_permission_request';
+    timestamp?: string;
+    id: string;
+    tool: string;
+    args: Record<string, unknown>;
+    options: string[];
+  }
+  | { type: 'acp_mode_update'; timestamp?: string; mode: string }
+  | { type: 'complete'; status: string; duration_ms: number };
 
 export interface SessionArchiveResult {
   path: string;
