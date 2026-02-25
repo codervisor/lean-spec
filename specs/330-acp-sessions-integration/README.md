@@ -243,7 +243,7 @@ This means ACP integration immediately benefits the entire runner ecosystem.
 ### Phase 5: Session Resume
 - [ ] Store ACP session ID so sessions can be resumed with `session/load`
 - [x] Only for runners with `loadSession` capability
-- [ ] UI: "Resume" button on completed/interrupted sessions
+- [x] UI: "Resume" button on completed/interrupted sessions
 
 ## Acceptance Criteria
 

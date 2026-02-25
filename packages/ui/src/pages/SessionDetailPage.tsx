@@ -251,6 +251,12 @@ export function SessionDetailPage() {
     navigate(`${basePath}/sessions/${created.id}`);
   };
 
+  const handleAcpResumeSession = async () => {
+    if (!session) return;
+    await api.startSession(session.id);
+    await loadSession();
+  };
+
   const handleExport = () => {
     const exportPayload = isAcp
       ? JSON.stringify(filteredStreamEvents, null, 2)
@@ -343,6 +349,10 @@ export function SessionDetailPage() {
     );
   }
 
+  const canResumeAcpCompletedSession =
+    isAcp &&
+    (session.status === 'completed' || session.status === 'failed' || session.status === 'cancelled');
+
   return (
     <PageTransition className="flex-1 min-w-0">
       <PageContainer
@@ -410,6 +420,12 @@ export function SessionDetailPage() {
                       {t('sessions.actions.stop')}
                     </Button>
                   </>
+                )}
+                {canResumeAcpCompletedSession && (
+                  <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handleAcpResumeSession()}>
+                    <Play className="h-3.5 w-3.5" />
+                    {t('sessions.actions.resume')}
+                  </Button>
                 )}
                 <Button size="sm" variant="outline" className="gap-1" onClick={() => void handleRestart()}>
                   <RotateCcw className="h-3.5 w-3.5" />

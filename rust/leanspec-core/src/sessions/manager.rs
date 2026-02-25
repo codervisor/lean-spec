@@ -326,9 +326,7 @@ impl SessionManager {
             })?;
             Some(AcpSessionRuntime {
                 stdin: Arc::new(Mutex::new(stdin)),
-                acp_session_id: Arc::new(RwLock::new(
-                    stored_acp_session_id.or_else(|| Some(session.id.clone())),
-                )),
+                acp_session_id: Arc::new(RwLock::new(stored_acp_session_id)),
                 supports_load_session: Arc::new(RwLock::new(false)),
                 pending_permission_requests: Arc::new(Mutex::new(HashMap::new())),
                 request_counter: Arc::new(Mutex::new(1)),
@@ -562,20 +560,35 @@ impl SessionManager {
                     &session.spec_ids,
                     &prompt_message,
                 );
-                let current_acp_session_id = {
-                    let guard = acp_runtime.acp_session_id.read().await;
-                    guard.clone().unwrap_or_else(|| session.id.clone())
-                };
+                let mut current_acp_session_id: Option<String> = None;
+                for _ in 0..10 {
+                    {
+                        let guard = acp_runtime.acp_session_id.read().await;
+                        if guard.is_some() {
+                            current_acp_session_id = guard.clone();
+                            break;
+                        }
+                    }
+                    tokio::time::sleep(Duration::from_millis(50)).await;
+                }
 
-                let _ = send_acp_request(
-                    acp_runtime,
-                    "session/prompt",
-                    json!({
-                        "sessionId": current_acp_session_id,
-                        "prompt": prompt_content
-                    }),
-                )
-                .await;
+                if let Some(current_acp_session_id) = current_acp_session_id {
+                    let _ = send_acp_request(
+                        acp_runtime,
+                        "session/prompt",
+                        json!({
+                            "sessionId": current_acp_session_id,
+                            "prompt": prompt_content
+                        }),
+                    )
+                    .await;
+                } else {
+                    let _ = self.db.log_message(
+                        session_id,
+                        LogLevel::Warning,
+                        "ACP session ID unavailable; skipped initial session/prompt",
+                    );
+                }
 
                 let _ = self.db.insert_log(&SessionLog {
                     id: 0,
