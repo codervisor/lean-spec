@@ -6,6 +6,7 @@ import type {
   DirectoryListResponse,
   FileContentResponse,
   FileListResponse,
+  FileSearchResponse,
   ListParams,
   Spec,
   SpecDetail,
@@ -184,6 +185,7 @@ export interface BackendAdapter {
   // Codebase file browsing (spec 246)
   getProjectFiles(projectId: string, path?: string): Promise<FileListResponse>;
   getProjectFile(projectId: string, path: string): Promise<FileContentResponse>;
+  searchProjectFiles(projectId: string, query: string, limit?: number): Promise<FileSearchResponse>;
 }
 
 export type {
@@ -219,4 +221,5 @@ export type {
   ModelsRegistryResponse,
   FileListResponse,
   FileContentResponse,
+  FileSearchResponse,
 };

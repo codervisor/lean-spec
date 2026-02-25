@@ -3,14 +3,14 @@
  * Spec 246 - Codebase File Viewing in @leanspec/ui
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  ChevronRight, ChevronDown, Folder, FolderOpen, Loader2,
+  ChevronRight, ChevronDown, Loader2,
   Search, X,
 } from 'lucide-react';
 import { cn } from '@/library';
 import { useTranslation } from 'react-i18next';
-import type { FileListResponse } from '../../types/api';
+import type { FileListResponse, FileSearchEntry } from '../../types/api';
 import { api } from '../../lib/api';
 import { FileIcon } from './FileIcon';
 
@@ -28,6 +28,7 @@ interface TreeNode {
   path: string;
   type: 'file' | 'directory';
   size?: number;
+  ignored?: boolean;
   children?: TreeNode[];
   loaded?: boolean;
   loading?: boolean;
@@ -41,6 +42,7 @@ function buildTree(listing: FileListResponse): TreeNode[] {
     path: prefix + entry.name,
     type: entry.type,
     size: entry.size,
+    ignored: entry.ignored,
     children: entry.type === 'directory' ? [] : undefined,
     loaded: false,
     loading: false,
@@ -96,6 +98,7 @@ export function FileTree({ rootListing, selectedPath, onFileSelect, onNodesChang
         path: path + '/' + entry.name,
         type: entry.type,
         size: entry.size,
+        ignored: entry.ignored,
         children: entry.type === 'directory' ? [] : undefined,
         loaded: false,
         loading: false,
@@ -233,18 +236,10 @@ function TreeItem({ node, depth, selectedPath, onFileSelect, onToggle }: TreeIte
         )}
 
         {/* Icon */}
-        {node.type === 'directory' ? (
-          node.expanded ? (
-            <FolderOpen className="w-4 h-4 flex-shrink-0 text-amber-500" />
-          ) : (
-            <Folder className="w-4 h-4 flex-shrink-0 text-amber-500" />
-          )
-        ) : (
-          <FileIcon name={node.name} />
-        )}
+        <FileIcon name={node.name} isDirectory={node.type === 'directory'} isOpen={node.expanded} />
 
         {/* Name */}
-        <span className="truncate text-sm leading-5">{node.name}</span>
+        <span className={cn('truncate text-sm leading-5', node.ignored && 'opacity-50')}>{node.name}</span>
       </div>
 
       {/* Children */}
@@ -264,30 +259,40 @@ function TreeItem({ node, depth, selectedPath, onFileSelect, onToggle }: TreeIte
 export function FileExplorer({ rootListing, selectedPath, onFileSelect }: FileExplorerProps) {
   const { t } = useTranslation('common');
   const [searchQuery, setSearchQuery] = useState('');
-  const [allNodes, setAllNodes] = useState<TreeNode[]>(() => buildTree(rootListing));
-
-  // Flatten all loaded file nodes recursively for search
-  const flatFileNodes = useMemo(() => {
-    const result: TreeNode[] = [];
-    function flatten(nodes: TreeNode[]) {
-      for (const n of nodes) {
-        if (n.type === 'file') result.push(n);
-        if (n.children) flatten(n.children);
-      }
-    }
-    flatten(allNodes);
-    return result;
-  }, [allNodes]);
-
-  const filteredFiles = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase();
-    return flatFileNodes.filter(
-      (n) => n.name.toLowerCase().includes(q) || n.path.toLowerCase().includes(q)
-    );
-  }, [searchQuery, flatFileNodes]);
+  const [, setAllNodes] = useState<TreeNode[]>(() => buildTree(rootListing));
+  const [searchResults, setSearchResults] = useState<FileSearchEntry[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const isSearching = searchQuery.trim().length > 0;
+
+  // Debounced server-side search
+  const performSearch = useCallback((query: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (!query.trim()) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const response = await api.searchFiles(query.trim());
+        setSearchResults(response.results);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 250);
+  }, []);
+
+  useEffect(() => {
+    performSearch(searchQuery);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchQuery, performSearch]);
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -317,12 +322,18 @@ export function FileExplorer({ rootListing, selectedPath, onFileSelect }: FileEx
       {/* File tree or search results */}
       <div className="flex-1 overflow-y-auto py-1">
         {isSearching ? (
-          <SearchResults
-            results={filteredFiles}
-            query={searchQuery}
-            selectedPath={selectedPath}
-            onFileSelect={onFileSelect}
-          />
+          searchLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <SearchResults
+              results={searchResults}
+              query={searchQuery}
+              selectedPath={selectedPath}
+              onFileSelect={onFileSelect}
+            />
+          )
         ) : (
           <FileTree
             rootListing={rootListing}
@@ -337,7 +348,7 @@ export function FileExplorer({ rootListing, selectedPath, onFileSelect }: FileEx
 }
 
 interface SearchResultsProps {
-  results: TreeNode[];
+  results: FileSearchEntry[];
   query: string;
   selectedPath?: string;
   onFileSelect: (path: string) => void;
@@ -356,43 +367,45 @@ function SearchResults({ results, query, selectedPath, onFileSelect }: SearchRes
 
   return (
     <div className="text-sm select-none">
-      {results.map((node) => {
-        const isSelected = selectedPath === node.path;
+      {results.map((entry) => {
+        const isSelected = selectedPath === entry.path;
         const lowerQuery = query.toLowerCase();
-        const lowerName = node.name.toLowerCase();
+        const lowerName = entry.name.toLowerCase();
         const matchIdx = lowerName.indexOf(lowerQuery);
+        const isDirectory = entry.type === 'directory';
 
         return (
           <div
-            key={node.path}
+            key={entry.path}
             className={cn(
               'flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer hover:bg-muted/50 transition-colors',
-              isSelected && 'bg-muted text-foreground font-medium'
+              isSelected && 'bg-muted text-foreground font-medium',
+              entry.ignored && 'opacity-50'
             )}
-            onClick={() => onFileSelect(node.path)}
+            onClick={() => { if (!isDirectory) onFileSelect(entry.path); }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFileSelect(node.path); }
+              if ((e.key === 'Enter' || e.key === ' ') && !isDirectory) { e.preventDefault(); onFileSelect(entry.path); }
             }}
-            tabIndex={0}
+            tabIndex={isDirectory ? -1 : 0}
             role="button"
-            title={node.path}
+            title={entry.path}
           >
-            <FileIcon name={node.name} />
+            <FileIcon name={entry.name} isDirectory={isDirectory} />
             <span className="truncate text-sm leading-5 flex-1 min-w-0">
               {matchIdx >= 0 ? (
                 <>
-                  {node.name.slice(0, matchIdx)}
+                  {entry.name.slice(0, matchIdx)}
                   <mark className="bg-yellow-300/60 dark:bg-yellow-500/40 rounded-sm px-0 text-foreground">
-                    {node.name.slice(matchIdx, matchIdx + query.length)}
+                    {entry.name.slice(matchIdx, matchIdx + query.length)}
                   </mark>
-                  {node.name.slice(matchIdx + query.length)}
+                  {entry.name.slice(matchIdx + query.length)}
                 </>
               ) : (
-                node.name
+                entry.name
               )}
             </span>
-            <span className="text-xs text-muted-foreground truncate hidden sm:block" style={{ maxWidth: 100 }}>
-              {node.path.includes('/') ? node.path.slice(0, node.path.lastIndexOf('/')) : ''}
+            <span className="text-xs text-muted-foreground truncate hidden sm:block" style={{ maxWidth: 180 }}>
+              {entry.path.includes('/') ? entry.path.slice(0, entry.path.lastIndexOf('/')) : ''}
             </span>
           </div>
         );

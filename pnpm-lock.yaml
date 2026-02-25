@@ -50,6 +50,9 @@ importers:
       '@dagrejs/dagre':
         specifier: ^1.1.8
         version: 1.1.8
+      '@exuanbo/file-icons-js':
+        specifier: ^3.3.0
+        version: 3.3.0
       '@leanspec/http-server':
         specifier: workspace:*
         version: link:../http-server
@@ -708,6 +711,9 @@ packages:
   '@eslint/plugin-kit@0.4.1':
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@exuanbo/file-icons-js@3.3.0':
+    resolution: {integrity: sha512-utn/kkeIhbfxJtn9ZDGXL1p8BtyUlgoDls3xGYIxk1FgNnMx6CqN2fBYeeAYIPL1O4nexWZ/2thssNwIMUqHKA==}
 
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
@@ -4856,6 +4862,8 @@ snapshots:
     dependencies:
       '@eslint/core': 0.17.0
       levn: 0.4.1
+
+  '@exuanbo/file-icons-js@3.3.0': {}
 
   '@floating-ui/core@1.7.3':
     dependencies:

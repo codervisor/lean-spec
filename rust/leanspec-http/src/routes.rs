@@ -154,6 +154,10 @@ pub fn create_router(state: AppState) -> Router {
             "/api/projects/{id}/files",
             get(handlers::list_project_files),
         )
+        .route(
+            "/api/projects/{id}/files/search",
+            get(handlers::search_project_files),
+        )
         .route("/api/projects/{id}/file", get(handlers::read_project_file))
         // Spec events (SSE)
         .route("/api/events/specs", get(handlers::spec_events))

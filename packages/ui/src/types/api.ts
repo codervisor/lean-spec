@@ -359,6 +359,8 @@ export interface FileEntry {
   type: FileEntryType;
   /** Size in bytes – only for files */
   size?: number;
+  /** Whether this entry is ignored by .gitignore */
+  ignored?: boolean;
 }
 
 export interface FileListResponse {
@@ -372,4 +374,19 @@ export interface FileContentResponse {
   language: string;
   size: number;
   lineCount: number;
+}
+
+export interface FileSearchEntry {
+  name: string;
+  path: string;
+  type: FileEntryType;
+  /** Size in bytes – only for files */
+  size?: number;
+  /** Whether this entry is ignored by .gitignore */
+  ignored?: boolean;
+}
+
+export interface FileSearchResponse {
+  query: string;
+  results: FileSearchEntry[];
 }

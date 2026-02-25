@@ -7,6 +7,7 @@ import type {
   DirectoryListResponse,
   FileContentResponse,
   FileListResponse,
+  FileSearchResponse,
   ListParams,
   Spec,
   SpecDetail,
@@ -436,5 +437,9 @@ export class TauriBackendAdapter implements BackendAdapter {
 
   async getProjectFile(projectId: string, path: string): Promise<FileContentResponse> {
     return this.invoke<FileContentResponse>('desktop_get_project_file', { projectId, path });
+  }
+
+  async searchProjectFiles(projectId: string, query: string, limit?: number): Promise<FileSearchResponse> {
+    return this.invoke<FileSearchResponse>('desktop_search_project_files', { projectId, query, limit });
   }
 }

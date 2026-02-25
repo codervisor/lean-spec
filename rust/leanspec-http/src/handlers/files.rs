@@ -37,6 +37,9 @@ pub struct FileEntry {
     /// Size in bytes (only for files)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub size: Option<u64>,
+    /// Whether this entry is ignored by .gitignore
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignored: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -171,19 +174,48 @@ pub async fn list_project_files(
         ));
     }
 
-    // Use the `ignore` crate to respect .gitignore and skip hidden/build dirs
-    let mut entries: Vec<FileEntry> = Vec::new();
+    // Collect non-ignored file names using the `ignore` crate (respects .gitignore)
+    let mut non_ignored_names: std::collections::HashSet<String> = std::collections::HashSet::new();
 
-    let walker = ignore::WalkBuilder::new(&target_path)
-        .max_depth(Some(1)) // Only list immediate children
-        .hidden(false) // Include hidden files (user can see .gitignore etc.)
-        .git_ignore(true) // Respect .gitignore
+    let gi_walker = ignore::WalkBuilder::new(&target_path)
+        .max_depth(Some(1))
+        .hidden(false)
+        .follow_links(true)
+        .git_ignore(true)
         .git_global(true)
         .git_exclude(true)
         .filter_entry(|entry| {
-            // Always allow the root entry
-            let depth = entry.depth();
-            if depth == 0 {
+            if entry.depth() == 0 {
+                return true;
+            }
+            if let Some(name) = entry.file_name().to_str() {
+                if name == ".git" {
+                    return false;
+                }
+            }
+            true
+        })
+        .build();
+
+    for entry in gi_walker.flatten() {
+        if entry.depth() == 0 {
+            continue;
+        }
+        non_ignored_names.insert(entry.file_name().to_string_lossy().to_string());
+    }
+
+    // Walk ALL entries (including gitignored), marking ignored ones
+    let mut entries: Vec<FileEntry> = Vec::new();
+
+    let all_walker = ignore::WalkBuilder::new(&target_path)
+        .max_depth(Some(1))
+        .hidden(false)
+        .follow_links(true)
+        .git_ignore(false) // Include gitignored files
+        .git_global(false)
+        .git_exclude(false)
+        .filter_entry(|entry| {
+            if entry.depth() == 0 {
                 return true;
             }
             // Skip .git directory itself
@@ -196,23 +228,25 @@ pub async fn list_project_files(
         })
         .build();
 
-    for entry in walker.flatten() {
+    for entry in all_walker.flatten() {
         if entry.depth() == 0 {
             continue; // Skip the root directory itself
         }
 
-        let file_type = entry.file_type().unwrap_or_else(|| {
-            // Fallback: treat as file
-            entry.file_type().unwrap()
-        });
+        let file_type = match entry.file_type() {
+            Some(ft) => ft,
+            None => continue, // Skip dangling symlinks
+        };
 
         let name = entry.file_name().to_string_lossy().to_string();
+        let is_ignored = !non_ignored_names.contains(&name);
 
         if file_type.is_dir() {
             entries.push(FileEntry {
                 name,
                 entry_type: FileEntryType::Directory,
                 size: None,
+                ignored: if is_ignored { Some(true) } else { None },
             });
         } else if file_type.is_file() {
             let size = entry.metadata().ok().map(|m| m.len());
@@ -220,6 +254,7 @@ pub async fn list_project_files(
                 name,
                 entry_type: FileEntryType::File,
                 size,
+                ignored: if is_ignored { Some(true) } else { None },
             });
         }
     }
@@ -330,5 +365,162 @@ pub async fn read_project_file(
         language,
         size,
         line_count,
+    }))
+}
+
+/// Query params for searching files
+#[derive(Debug, Deserialize)]
+pub struct FileSearchQuery {
+    /// Search query string
+    pub q: String,
+    /// Maximum number of results to return (default 100)
+    pub limit: Option<usize>,
+}
+
+/// A search result entry
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileSearchEntry {
+    pub name: String,
+    pub path: String,
+    #[serde(rename = "type")]
+    pub entry_type: FileEntryType,
+    /// Size in bytes (only for files)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub size: Option<u64>,
+    /// Whether this entry is ignored by .gitignore
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignored: Option<bool>,
+}
+
+/// Response for file search
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileSearchResponse {
+    pub query: String,
+    pub results: Vec<FileSearchEntry>,
+}
+
+/// GET /api/projects/:id/files/search?q=...
+/// Recursively searches for files/directories matching the query
+pub async fn search_project_files(
+    State(state): State<AppState>,
+    Path(project_id): Path<String>,
+    Query(query): Query<FileSearchQuery>,
+) -> ApiResult<Json<FileSearchResponse>> {
+    let project = resolve_project(&state, &project_id).await?;
+    let root = PathBuf::from(&project.path);
+    let canonical_root = root.canonicalize().unwrap_or_else(|_| root.clone());
+
+    let search_query = query.q.to_lowercase();
+    let limit = query.limit.unwrap_or(100).min(500);
+
+    if search_query.is_empty() {
+        return Ok(Json(FileSearchResponse {
+            query: query.q,
+            results: vec![],
+        }));
+    }
+
+    // Collect non-ignored paths using gitignore-respecting walker
+    let mut non_ignored_paths: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+    let gi_walker = ignore::WalkBuilder::new(&canonical_root)
+        .hidden(false)
+        .follow_links(true)
+        .git_ignore(true)
+        .git_global(true)
+        .git_exclude(true)
+        .filter_entry(|entry| {
+            if let Some(name) = entry.file_name().to_str() {
+                if name == ".git" {
+                    return false;
+                }
+            }
+            true
+        })
+        .build();
+
+    for entry in gi_walker.flatten() {
+        if entry.depth() == 0 {
+            continue;
+        }
+        if let Ok(rel) = entry.path().strip_prefix(&canonical_root) {
+            non_ignored_paths.insert(rel.to_string_lossy().to_string());
+        }
+    }
+
+    // Walk all files (including gitignored) and filter by query
+    let mut results: Vec<FileSearchEntry> = Vec::new();
+
+    let all_walker = ignore::WalkBuilder::new(&canonical_root)
+        .hidden(false)
+        .follow_links(true)
+        .git_ignore(false)
+        .git_global(false)
+        .git_exclude(false)
+        .filter_entry(|entry| {
+            if let Some(name) = entry.file_name().to_str() {
+                if name == ".git" {
+                    return false;
+                }
+            }
+            true
+        })
+        .build();
+
+    for entry in all_walker.flatten() {
+        if entry.depth() == 0 {
+            continue;
+        }
+
+        let name = entry.file_name().to_string_lossy().to_string();
+        let rel_path = entry
+            .path()
+            .strip_prefix(&canonical_root)
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_default();
+
+        // Match against name or full path
+        if !name.to_lowercase().contains(&search_query)
+            && !rel_path.to_lowercase().contains(&search_query)
+        {
+            continue;
+        }
+
+        let is_ignored = !non_ignored_paths.contains(&rel_path);
+
+        let file_type = match entry.file_type() {
+            Some(ft) => ft,
+            None => continue,
+        };
+
+        if file_type.is_dir() {
+            results.push(FileSearchEntry {
+                name,
+                path: rel_path,
+                entry_type: FileEntryType::Directory,
+                size: None,
+                ignored: if is_ignored { Some(true) } else { None },
+            });
+        } else if file_type.is_file() {
+            let size = entry.metadata().ok().map(|m| m.len());
+            results.push(FileSearchEntry {
+                name,
+                path: rel_path,
+                entry_type: FileEntryType::File,
+                size,
+                ignored: if is_ignored { Some(true) } else { None },
+            });
+        }
+
+        if results.len() >= limit {
+            break;
+        }
+    }
+
+    Ok(Json(FileSearchResponse {
+        query: query.q,
+        results,
     }))
 }

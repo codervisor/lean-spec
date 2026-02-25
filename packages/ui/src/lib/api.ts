@@ -3,6 +3,7 @@ import i18n from "./i18n";
 import type {
   FileContentResponse,
   FileListResponse,
+  FileSearchResponse,
   ListParams,
   Spec,
   SpecDetail,
@@ -246,6 +247,10 @@ class ProjectAPI {
 
   async getFile(path: string): Promise<FileContentResponse> {
     return this.backend.getProjectFile(this.getCurrentProjectId(), path);
+  }
+
+  async searchFiles(query: string, limit?: number): Promise<FileSearchResponse> {
+    return this.backend.searchProjectFiles(this.getCurrentProjectId(), query, limit);
   }
 }
 

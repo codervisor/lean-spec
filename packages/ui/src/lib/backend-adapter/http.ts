@@ -9,6 +9,7 @@ import type {
   DirectoryListResponse,
   FileContentResponse,
   FileListResponse,
+  FileSearchResponse,
   ListParams,
   Spec,
   SpecDetail,
@@ -550,6 +551,14 @@ export class HttpBackendAdapter implements BackendAdapter {
   async getProjectFile(projectId: string, path: string): Promise<FileContentResponse> {
     return this.fetchAPI<FileContentResponse>(
       `/api/projects/${encodeURIComponent(projectId)}/file?path=${encodeURIComponent(path)}`
+    );
+  }
+
+  async searchProjectFiles(projectId: string, query: string, limit?: number): Promise<FileSearchResponse> {
+    const params = new URLSearchParams({ q: query });
+    if (limit) params.set('limit', String(limit));
+    return this.fetchAPI<FileSearchResponse>(
+      `/api/projects/${encodeURIComponent(projectId)}/files/search?${params.toString()}`
     );
   }
 }
