@@ -433,6 +433,20 @@ export class HttpBackendAdapter implements BackendAdapter {
     return normalizeSession(session);
   }
 
+  async respondToSessionPermission(sessionId: string, permissionId: string, option: string): Promise<Session> {
+    const session = await this.fetchAPI<RawSession>(
+      `/api/sessions/${encodeURIComponent(sessionId)}/permissions/respond`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          permission_id: permissionId,
+          option,
+        }),
+      }
+    );
+    return normalizeSession(session);
+  }
+
   async archiveSession(sessionId: string, options?: { compress?: boolean }): Promise<SessionArchiveResult> {
     return this.fetchAPI<SessionArchiveResult>(`/api/sessions/${encodeURIComponent(sessionId)}/archive`, {
       method: 'POST',

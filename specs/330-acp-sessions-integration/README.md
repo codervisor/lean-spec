@@ -234,7 +234,7 @@ This means ACP integration immediately benefits the entire runner ecosystem.
 - [x] Store ACP session ID alongside LeanSpec session ID in DB
 - [x] Surface tool calls & diffs in session log stream (not just raw text)
 - [x] Surface agent execution plan (`plan` update) in UI
-- [ ] Permission request flow: agent → LeanSpec → UI → back to agent
+- [x] Permission request flow: agent → LeanSpec → UI → back to agent
 
 ### Phase 4: MCP Integration
 - [x] Pass `leanspec-mcp` as MCP server in `session/new`

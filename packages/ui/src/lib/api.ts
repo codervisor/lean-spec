@@ -150,6 +150,10 @@ class ProjectAPI {
     return this.backend.stopSession(sessionId);
   }
 
+  respondToSessionPermission(sessionId: string, permissionId: string, option: string): Promise<Session> {
+    return this.backend.respondToSessionPermission(sessionId, permissionId, option);
+  }
+
   archiveSession(sessionId: string, options?: { compress?: boolean }) {
     return this.backend.archiveSession(sessionId, options);
   }

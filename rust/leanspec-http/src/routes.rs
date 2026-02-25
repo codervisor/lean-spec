@@ -204,6 +204,10 @@ pub fn create_router(state: AppState) -> Router {
             post(handlers::cancel_session_turn),
         )
         .route(
+            "/api/sessions/{id}/permissions/respond",
+            post(handlers::respond_session_permission),
+        )
+        .route(
             "/api/sessions/{id}/archive",
             post(handlers::archive_session),
         )

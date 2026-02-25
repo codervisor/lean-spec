@@ -112,6 +112,12 @@ pub struct PromptSessionRequest {
     pub message: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RespondPermissionRequest {
+    pub permission_id: String,
+    pub option: String,
+}
+
 impl From<Session> for SessionResponse {
     fn from(session: Session) -> Self {
         let spec_id = session.spec_ids.first().cloned();
@@ -414,6 +420,38 @@ pub async fn cancel_session_turn(
 
     manager
         .cancel_session_turn(&session_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request(&e.to_string())),
+            )
+        })?;
+
+    let session = manager
+        .get_session(&session_id)
+        .await
+        .map_err(internal_error)?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                Json(ApiError::not_found("Session")),
+            )
+        })?;
+
+    Ok(Json(enrich_session_response(&manager, session).await))
+}
+
+/// Respond to an ACP permission request
+pub async fn respond_session_permission(
+    State(state): State<AppState>,
+    Path(session_id): Path<String>,
+    Json(req): Json<RespondPermissionRequest>,
+) -> ApiResult<Json<SessionResponse>> {
+    let manager = state.session_manager.clone();
+
+    manager
+        .respond_to_permission_request(&session_id, &req.permission_id, &req.option)
         .await
         .map_err(|e| {
             (

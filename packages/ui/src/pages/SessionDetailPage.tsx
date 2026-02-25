@@ -46,6 +46,7 @@ export function SessionDetailPage() {
   const [archivePath, setArchivePath] = useState<string | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [archiveLoading, setArchiveLoading] = useState(false);
+  const [respondingPermissionIds, setRespondingPermissionIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<Set<string>>(new Set());
   const [autoScroll, setAutoScroll] = useState(true);
@@ -283,6 +284,29 @@ export function SessionDetailPage() {
       setArchiveError(err instanceof Error ? err.message : t('sessionDetail.archiveError'));
     } finally {
       setArchiveLoading(false);
+    }
+  };
+
+  const handlePermissionResponse = async (permissionId: string, option: string) => {
+    if (!session) return;
+
+    setRespondingPermissionIds((prev) => {
+      const next = new Set(prev);
+      next.add(permissionId);
+      return next;
+    });
+
+    try {
+      const updated = await api.respondToSessionPermission(session.id, permissionId, option);
+      setSession(updated);
+    } catch (err) {
+      setArchiveError(err instanceof Error ? err.message : t('sessions.errors.load'));
+    } finally {
+      setRespondingPermissionIds((prev) => {
+        const next = new Set(prev);
+        next.delete(permissionId);
+        return next;
+      });
     }
   };
 
@@ -527,6 +551,10 @@ export function SessionDetailPage() {
                   loading={logsLoading}
                   emptyTitle={t('sessions.emptyLogs')}
                   emptyDescription={t('sessionDetail.logsDescription')}
+                  onPermissionResponse={(permissionId, option) => {
+                    void handlePermissionResponse(permissionId, option);
+                  }}
+                  isPermissionResponding={(permissionId) => respondingPermissionIds.has(permissionId)}
                 />
               </div>
             ) : (

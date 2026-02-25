@@ -129,6 +129,7 @@ export interface BackendAdapter {
   pauseSession(sessionId: string): Promise<Session>;
   resumeSession(sessionId: string): Promise<Session>;
   stopSession(sessionId: string): Promise<Session>;
+  respondToSessionPermission(sessionId: string, permissionId: string, option: string): Promise<Session>;
   archiveSession(sessionId: string, options?: { compress?: boolean }): Promise<SessionArchiveResult>;
   deleteSession(sessionId: string): Promise<void>;
   getSessionLogs(sessionId: string): Promise<SessionLog[]>;

@@ -44,9 +44,18 @@ interface AcpConversationProps {
   loading?: boolean;
   emptyTitle: string;
   emptyDescription: string;
+  onPermissionResponse?: (permissionId: string, option: string) => void;
+  isPermissionResponding?: (permissionId: string) => boolean;
 }
 
-export function AcpConversation({ events, loading = false, emptyTitle, emptyDescription }: AcpConversationProps) {
+export function AcpConversation({
+  events,
+  loading = false,
+  emptyTitle,
+  emptyDescription,
+  onPermissionResponse,
+  isPermissionResponding,
+}: AcpConversationProps) {
   const { t } = useTranslation('common');
 
   return (
@@ -124,11 +133,28 @@ export function AcpConversation({ events, loading = false, emptyTitle, emptyDesc
               }
 
               case 'acp_permission_request':
+                const responding = isPermissionResponding?.(event.id) ?? false;
                 return (
                   <Tool key={`acp-permission-${event.id}`} defaultOpen>
                     <ToolHeader type="dynamic-tool" toolName={event.tool} state="approval-requested" />
                     <ToolContent>
                       <ToolInput input={{ tool: event.tool, args: event.args, options: event.options }} />
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {event.options.map((option) => (
+                          <button
+                            key={`${event.id}-${option}`}
+                            type="button"
+                            disabled={responding || !onPermissionResponse}
+                            onClick={() => onPermissionResponse?.(event.id, option)}
+                            className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {t(`sessions.permissions.${option}`, { defaultValue: option })}
+                          </button>
+                        ))}
+                        {responding ? (
+                          <span className="text-xs text-muted-foreground">{t('sessions.permissions.responding')}</span>
+                        ) : null}
+                      </div>
                     </ToolContent>
                   </Tool>
                 );

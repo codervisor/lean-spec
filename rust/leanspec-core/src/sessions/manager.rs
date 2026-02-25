@@ -61,7 +61,14 @@ struct AcpSessionRuntime {
     stdin: Arc<Mutex<ChildStdin>>,
     acp_session_id: Arc<RwLock<Option<String>>>,
     supports_load_session: Arc<RwLock<bool>>,
+    pending_permission_requests: Arc<Mutex<HashMap<String, PendingPermissionRequest>>>,
     request_counter: Arc<Mutex<u64>>,
+}
+
+#[derive(Clone)]
+struct PendingPermissionRequest {
+    request_id: Value,
+    options: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -323,6 +330,7 @@ impl SessionManager {
                     stored_acp_session_id.or_else(|| Some(session.id.clone())),
                 )),
                 supports_load_session: Arc::new(RwLock::new(false)),
+                pending_permission_requests: Arc::new(Mutex::new(HashMap::new())),
                 request_counter: Arc::new(Mutex::new(1)),
             })
         } else {
@@ -371,18 +379,12 @@ impl SessionManager {
                             }
                         }
 
-                        if let Some((request_id, selected_option)) =
-                            extract_acp_permission_response_choice(&payload)
+                        if let Some((permission_id, pending_request)) =
+                            extract_acp_pending_permission_request(&payload)
                         {
                             if let Some(runtime) = &acp_runtime_stdout {
-                                let _ = send_acp_response(
-                                    runtime,
-                                    request_id,
-                                    json!({
-                                        "option": selected_option,
-                                    }),
-                                )
-                                .await;
+                                let mut pending = runtime.pending_permission_requests.lock().await;
+                                pending.insert(permission_id, pending_request);
                             }
                         }
 
@@ -910,6 +912,69 @@ impl SessionManager {
         Ok(())
     }
 
+    /// Respond to an ACP permission request for a running session.
+    pub async fn respond_to_permission_request(
+        &self,
+        session_id: &str,
+        permission_id: &str,
+        option: &str,
+    ) -> CoreResult<()> {
+        if permission_id.trim().is_empty() {
+            return Err(CoreError::ValidationError(
+                "Permission request ID cannot be empty".to_string(),
+            ));
+        }
+        if option.trim().is_empty() {
+            return Err(CoreError::ValidationError(
+                "Permission response option cannot be empty".to_string(),
+            ));
+        }
+
+        let runtime = {
+            let active = self.active_sessions.read().await;
+            active
+                .get(session_id)
+                .and_then(|handle| handle.acp_runtime.clone())
+        }
+        .ok_or_else(|| {
+            CoreError::ValidationError(
+                "Session is not active or does not support ACP permissions".to_string(),
+            )
+        })?;
+
+        let pending_request = {
+            let mut pending = runtime.pending_permission_requests.lock().await;
+            pending.remove(permission_id)
+        }
+        .ok_or_else(|| {
+            CoreError::ValidationError(format!(
+                "Unknown ACP permission request ID: {}",
+                permission_id
+            ))
+        })?;
+
+        if !pending_request.options.is_empty()
+            && !pending_request.options.iter().any(|v| v == option)
+        {
+            return Err(CoreError::ValidationError(format!(
+                "Invalid permission response option '{}'. Allowed: {}",
+                option,
+                pending_request.options.join(", ")
+            )));
+        }
+
+        send_acp_response(
+            &runtime,
+            pending_request.request_id,
+            json!({
+                "option": option,
+            }),
+        )
+        .await?;
+
+        Ok(())
+    }
+
     /// Archive session logs to a file
     pub async fn archive_session(
         &self,
@@ -1261,13 +1326,26 @@ fn extract_acp_load_session_capability(payload: &Value) -> Option<bool> {
         .and_then(|value| value.as_bool())
 }
 
-fn extract_acp_permission_response_choice(payload: &Value) -> Option<(Value, String)> {
+fn extract_acp_pending_permission_request(
+    payload: &Value,
+) -> Option<(String, PendingPermissionRequest)> {
     let method = payload.get("method").and_then(|value| value.as_str())?;
     if method != "session/request_permission" {
         return None;
     }
 
     let request_id = payload.get("id")?.clone();
+    let permission_id = payload
+        .get("params")
+        .and_then(|params| params.get("id"))
+        .and_then(|value| value.as_str())
+        .map(|value| value.to_string())
+        .or_else(|| match &request_id {
+            Value::String(value) => Some(value.clone()),
+            Value::Number(value) => Some(value.to_string()),
+            _ => None,
+        })?;
+
     let options = payload
         .get("params")
         .and_then(|params| params.get("options"))
@@ -1278,18 +1356,13 @@ fn extract_acp_permission_response_choice(payload: &Value) -> Option<(Value, Str
         .filter_map(|value| value.as_str().map(|value| value.to_string()))
         .collect::<Vec<_>>();
 
-    let selected_option = if options.iter().any(|option| option == "allow_once") {
-        "allow_once".to_string()
-    } else if options.iter().any(|option| option == "allow_always") {
-        "allow_always".to_string()
-    } else {
-        options
-            .first()
-            .cloned()
-            .unwrap_or_else(|| "reject".to_string())
-    };
-
-    Some((request_id, selected_option))
+    Some((
+        permission_id,
+        PendingPermissionRequest {
+            request_id,
+            options,
+        },
+    ))
 }
 
 fn map_acp_payload_to_logs(session_id: &str, payload: Value) -> Option<Vec<SessionLog>> {

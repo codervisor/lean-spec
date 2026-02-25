@@ -163,6 +163,12 @@
       "load": "Failed to load sessions.",
       "create": "Failed to create session.",
       "noProjectPath": "Project path missing for this workspace."
+    },
+    "permissions": {
+      "allow_once": "Allow once",
+      "allow_always": "Always allow",
+      "reject": "Reject",
+      "responding": "Sending response..."
     }
   },
   "sessionsPage": {

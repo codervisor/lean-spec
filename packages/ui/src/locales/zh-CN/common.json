@@ -160,6 +160,12 @@
       "load": "加载会话失败。",
       "create": "创建会话失败。",
       "noProjectPath": "当前工作区缺少项目路径。"
+    },
+    "permissions": {
+      "allow_once": "允许一次",
+      "allow_always": "始终允许",
+      "reject": "拒绝",
+      "responding": "正在发送响应..."
     }
   },
   "sessionsPage": {

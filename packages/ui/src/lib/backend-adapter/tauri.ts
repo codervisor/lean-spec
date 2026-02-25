@@ -276,6 +276,10 @@ export class TauriBackendAdapter implements BackendAdapter {
     throw new Error('stopSession is not implemented for the Tauri backend yet');
   }
 
+  async respondToSessionPermission(): Promise<Session> {
+    throw new Error('respondToSessionPermission is not implemented for the Tauri backend yet');
+  }
+
   async archiveSession(): Promise<SessionArchiveResult> {
     throw new Error('archiveSession is not implemented for the Tauri backend yet');
   }
