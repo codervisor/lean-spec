@@ -198,6 +198,11 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/sessions/{id}/pause", post(handlers::pause_session))
         .route("/api/sessions/{id}/resume", post(handlers::resume_session))
         .route("/api/sessions/{id}/stop", post(handlers::stop_session))
+        .route("/api/sessions/{id}/prompt", post(handlers::prompt_session))
+        .route(
+            "/api/sessions/{id}/cancel",
+            post(handlers::cancel_session_turn),
+        )
         .route(
             "/api/sessions/{id}/archive",
             post(handlers::archive_session),

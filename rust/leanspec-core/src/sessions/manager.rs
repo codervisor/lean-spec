@@ -15,14 +15,17 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::process::Child;
+use tokio::io::AsyncWriteExt;
+use tokio::process::{Child, ChildStdin};
 use tokio::sync::{broadcast, Mutex, RwLock};
 use uuid::Uuid;
 
 use flate2::write::GzEncoder;
 use flate2::Compression;
+use serde_json::{json, Value};
 
 #[cfg(unix)]
 use nix::sys::signal::{kill, Signal};
@@ -49,6 +52,16 @@ struct ActiveSessionHandle {
     /// Stderr task handle
     #[allow(dead_code)]
     stderr_task: tokio::task::JoinHandle<()>,
+    /// ACP runtime resources when protocol is ACP
+    acp_runtime: Option<AcpSessionRuntime>,
+}
+
+#[derive(Clone)]
+struct AcpSessionRuntime {
+    stdin: Arc<Mutex<ChildStdin>>,
+    acp_session_id: Arc<RwLock<Option<String>>>,
+    supports_load_session: Arc<RwLock<bool>>,
+    request_counter: Arc<Mutex<u64>>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -218,18 +231,14 @@ impl SessionManager {
         })?;
         runner.validate_command()?;
 
+        let is_acp = is_acp_runner(&session.runner);
+
         // Build config
         let mut env_vars = HashMap::new();
         env_vars.insert(
             "LEANSPEC_PROJECT_PATH".to_string(),
             session.project_path.clone(),
         );
-        // Set LEANSPEC_SPEC_IDS as comma-separated list
-        env_vars.insert("LEANSPEC_SPEC_IDS".to_string(), session.spec_ids.join(","));
-        // Set LEANSPEC_SPEC_ID to first spec ID for backward compatibility
-        if let Some(first_spec_id) = session.spec_ids.first() {
-            env_vars.insert("LEANSPEC_SPEC_ID".to_string(), first_spec_id.clone());
-        }
 
         // Build the context prompt: load spec content for attached specs and combine
         // with any explicit user prompt. This resolved prompt is what gets passed as
@@ -240,21 +249,38 @@ impl SessionManager {
             session.prompt.as_deref(),
         );
 
-        // Keep LEANSPEC_PROMPT in the environment for runners that prefer env vars.
-        if let Some(ref prompt) = resolved_prompt {
-            env_vars.insert("LEANSPEC_PROMPT".to_string(), prompt.clone());
+        if !is_acp {
+            // Set LEANSPEC_SPEC_IDS as comma-separated list
+            env_vars.insert("LEANSPEC_SPEC_IDS".to_string(), session.spec_ids.join(","));
+            // Set LEANSPEC_SPEC_ID to first spec ID for backward compatibility
+            if let Some(first_spec_id) = session.spec_ids.first() {
+                env_vars.insert("LEANSPEC_SPEC_ID".to_string(), first_spec_id.clone());
+            }
+
+            // Keep LEANSPEC_PROMPT in the environment for runners that prefer env vars.
+            if let Some(ref prompt) = resolved_prompt {
+                env_vars.insert("LEANSPEC_PROMPT".to_string(), prompt.clone());
+            }
         }
 
         let config = SessionConfig {
             project_path: session.project_path.clone(),
             spec_ids: session.spec_ids.clone(),
-            prompt: resolved_prompt,
+            prompt: if is_acp {
+                None
+            } else {
+                resolved_prompt.clone()
+            },
             runner: session.runner.clone(),
             mode: session.mode,
             max_iterations: None,
             working_dir: Some(session.project_path.clone()),
             env_vars,
-            runner_args: Vec::new(),
+            runner_args: if is_acp {
+                vec!["--acp".to_string()]
+            } else {
+                Vec::new()
+            },
         };
 
         // Build command
@@ -277,10 +303,31 @@ impl SessionManager {
             }
         };
 
+        if is_acp {
+            cmd.stdin(Stdio::piped());
+        }
+
         // Spawn process
         let mut child = cmd
             .spawn()
             .map_err(|e| CoreError::ToolError(format!("Failed to spawn process: {}", e)))?;
+
+        let acp_runtime = if is_acp {
+            let stored_acp_session_id = session.metadata.get("acp_session_id").cloned();
+            let stdin = child.stdin.take().ok_or_else(|| {
+                CoreError::ToolError("Failed to capture stdin for ACP".to_string())
+            })?;
+            Some(AcpSessionRuntime {
+                stdin: Arc::new(Mutex::new(stdin)),
+                acp_session_id: Arc::new(RwLock::new(
+                    stored_acp_session_id.or_else(|| Some(session.id.clone())),
+                )),
+                supports_load_session: Arc::new(RwLock::new(false)),
+                request_counter: Arc::new(Mutex::new(1)),
+            })
+        } else {
+            None
+        };
 
         // Take stdout/stderr handles
         let stdout = child
@@ -299,6 +346,14 @@ impl SessionManager {
         let db_stderr = self.db.clone();
         let stdout_sender = log_sender.clone();
         let stderr_sender = log_sender.clone();
+        let acp_session_id_ref = acp_runtime
+            .as_ref()
+            .map(|runtime| runtime.acp_session_id.clone());
+        let acp_supports_load_ref = acp_runtime
+            .as_ref()
+            .map(|runtime| runtime.supports_load_session.clone());
+        let acp_runtime_stdout = acp_runtime.clone();
+        let is_acp_stdout = is_acp;
 
         // Start log reader tasks
         let stdout_task = tokio::spawn(async move {
@@ -307,6 +362,58 @@ impl SessionManager {
             let mut lines = reader.lines();
 
             while let Ok(Some(line)) = lines.next_line().await {
+                if is_acp_stdout {
+                    if let Ok(payload) = serde_json::from_str::<Value>(&line) {
+                        if let Some(supports_load) = extract_acp_load_session_capability(&payload) {
+                            if let Some(acp_supports_load_ref) = &acp_supports_load_ref {
+                                let mut guard = acp_supports_load_ref.write().await;
+                                *guard = supports_load;
+                            }
+                        }
+
+                        if let Some((request_id, selected_option)) =
+                            extract_acp_permission_response_choice(&payload)
+                        {
+                            if let Some(runtime) = &acp_runtime_stdout {
+                                let _ = send_acp_response(
+                                    runtime,
+                                    request_id,
+                                    json!({
+                                        "option": selected_option,
+                                    }),
+                                )
+                                .await;
+                            }
+                        }
+
+                        if let Some(acp_id) = extract_acp_session_id_from_response(&payload) {
+                            if let Some(acp_session_id_ref) = &acp_session_id_ref {
+                                let mut guard = acp_session_id_ref.write().await;
+                                *guard = Some(acp_id.clone());
+                            }
+
+                            if let Ok(Some(mut session)) = db_stdout.get_session(&session_id_stdout)
+                            {
+                                session
+                                    .metadata
+                                    .insert("acp_session_id".to_string(), acp_id);
+                                session.touch();
+                                let _ = db_stdout.update_session(&session);
+                            }
+                        }
+
+                        if let Some(mapped_logs) =
+                            map_acp_payload_to_logs(&session_id_stdout, payload)
+                        {
+                            for log in mapped_logs {
+                                let _ = db_stdout.insert_log(&log);
+                                let _ = stdout_sender.send(log);
+                            }
+                            continue;
+                        }
+                    }
+                }
+
                 let log = SessionLog {
                     id: 0,
                     session_id: session_id_stdout.clone(),
@@ -352,8 +459,136 @@ impl SessionManager {
                     process: process.clone(),
                     stdout_task,
                     stderr_task,
+                    acp_runtime: acp_runtime.clone(),
                 },
             );
+        }
+
+        if let Some(acp_runtime) = &acp_runtime {
+            let _ = send_acp_request(
+                acp_runtime,
+                "initialize",
+                json!({
+                    "protocolVersion": 1,
+                    "clientInfo": {
+                        "name": "lean-spec",
+                        "version": env!("CARGO_PKG_VERSION")
+                    },
+                    "clientCapabilities": {}
+                }),
+            )
+            .await;
+
+            let mut supports_load_session = false;
+            for _ in 0..10 {
+                {
+                    let guard = acp_runtime.supports_load_session.read().await;
+                    if *guard {
+                        supports_load_session = true;
+                        break;
+                    }
+                }
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+
+            let current_acp_session_id = {
+                let guard = acp_runtime.acp_session_id.read().await;
+                guard.clone()
+            };
+
+            if supports_load_session {
+                if let Ok(Some(mut current)) = self.db.get_session(session_id) {
+                    current
+                        .metadata
+                        .insert("acp_load_session_supported".to_string(), "true".to_string());
+                    current.touch();
+                    let _ = self.db.update_session(&current);
+                }
+            }
+
+            if supports_load_session {
+                if let Some(existing_session_id) = current_acp_session_id {
+                    let _ = send_acp_request(
+                        acp_runtime,
+                        "session/load",
+                        json!({
+                            "sessionId": existing_session_id,
+                            "cwd": session.project_path,
+                        }),
+                    )
+                    .await;
+                } else {
+                    let _ = send_acp_request(
+                        acp_runtime,
+                        "session/new",
+                        json!({
+                            "cwd": session.project_path,
+                            "mcpServers": [
+                                {
+                                    "name": "leanspec",
+                                    "command": "leanspec-mcp",
+                                    "args": ["--project", session.project_path],
+                                    "env": []
+                                }
+                            ]
+                        }),
+                    )
+                    .await;
+                }
+            } else {
+                let _ = send_acp_request(
+                    acp_runtime,
+                    "session/new",
+                    json!({
+                        "cwd": session.project_path,
+                        "mcpServers": [
+                            {
+                                "name": "leanspec",
+                                "command": "leanspec-mcp",
+                                "args": ["--project", session.project_path],
+                                "env": []
+                            }
+                        ]
+                    }),
+                )
+                .await;
+            }
+
+            if let Some(prompt_message) = resolved_prompt {
+                let prompt_content = build_acp_prompt_content(
+                    &session.project_path,
+                    &session.spec_ids,
+                    &prompt_message,
+                );
+                let current_acp_session_id = {
+                    let guard = acp_runtime.acp_session_id.read().await;
+                    guard.clone().unwrap_or_else(|| session.id.clone())
+                };
+
+                let _ = send_acp_request(
+                    acp_runtime,
+                    "session/prompt",
+                    json!({
+                        "sessionId": current_acp_session_id,
+                        "prompt": prompt_content
+                    }),
+                )
+                .await;
+
+                let _ = self.db.insert_log(&SessionLog {
+                    id: 0,
+                    session_id: session_id.to_string(),
+                    timestamp: chrono::Utc::now(),
+                    level: LogLevel::Info,
+                    message: json!({
+                        "type": "acp_message",
+                        "role": "user",
+                        "content": prompt_message,
+                        "done": true,
+                    })
+                    .to_string(),
+                });
+            }
         }
 
         // Update session status
@@ -556,6 +791,21 @@ impl SessionManager {
         {
             let mut active = self.active_sessions.write().await;
             if let Some(handle) = active.remove(session_id) {
+                if let Some(acp_runtime) = &handle.acp_runtime {
+                    let current_acp_session_id = {
+                        let guard = acp_runtime.acp_session_id.read().await;
+                        guard.clone().unwrap_or_else(|| session_id.to_string())
+                    };
+                    let _ = send_acp_request(
+                        acp_runtime,
+                        "session/cancel",
+                        json!({
+                            "sessionId": current_acp_session_id,
+                        }),
+                    )
+                    .await;
+                }
+
                 // Abort the reader tasks
                 handle.stdout_task.abort();
                 handle.stderr_task.abort();
@@ -582,6 +832,80 @@ impl SessionManager {
             let mut broadcasts = self.log_broadcasts.write().await;
             broadcasts.remove(session_id);
         }
+
+        Ok(())
+    }
+
+    /// Send a prompt to a running ACP session.
+    pub async fn prompt_session(&self, session_id: &str, message: String) -> CoreResult<()> {
+        if message.trim().is_empty() {
+            return Err(CoreError::ValidationError(
+                "Prompt message cannot be empty".to_string(),
+            ));
+        }
+
+        let runtime = {
+            let active = self.active_sessions.read().await;
+            active
+                .get(session_id)
+                .and_then(|handle| handle.acp_runtime.clone())
+        }
+        .ok_or_else(|| {
+            CoreError::ValidationError(
+                "Session is not active or does not support ACP prompting".to_string(),
+            )
+        })?;
+
+        let current_acp_session_id = {
+            let guard = runtime.acp_session_id.read().await;
+            guard.clone().unwrap_or_else(|| session_id.to_string())
+        };
+
+        send_acp_request(
+            &runtime,
+            "session/prompt",
+            json!({
+                "sessionId": current_acp_session_id,
+                "prompt": [
+                    {
+                        "type": "text",
+                        "text": message,
+                    }
+                ]
+            }),
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    /// Cancel the current turn for a running ACP session.
+    pub async fn cancel_session_turn(&self, session_id: &str) -> CoreResult<()> {
+        let runtime = {
+            let active = self.active_sessions.read().await;
+            active
+                .get(session_id)
+                .and_then(|handle| handle.acp_runtime.clone())
+        }
+        .ok_or_else(|| {
+            CoreError::ValidationError(
+                "Session is not active or does not support ACP cancellation".to_string(),
+            )
+        })?;
+
+        let current_acp_session_id = {
+            let guard = runtime.acp_session_id.read().await;
+            guard.clone().unwrap_or_else(|| session_id.to_string())
+        };
+
+        send_acp_request(
+            &runtime,
+            "session/cancel",
+            json!({
+                "sessionId": current_acp_session_id,
+            }),
+        )
+        .await?;
 
         Ok(())
     }
@@ -864,10 +1188,319 @@ impl SessionManager {
 }
 
 fn infer_runner_protocol(runner_id: &str) -> &'static str {
-    match runner_id {
-        "copilot" | "codex" => "acp",
-        _ => "subprocess",
+    if is_acp_runner(runner_id) {
+        "acp"
+    } else {
+        "subprocess"
     }
+}
+
+fn is_acp_runner(runner_id: &str) -> bool {
+    matches!(runner_id, "copilot" | "codex")
+}
+
+fn build_acp_prompt_content(
+    project_path: &str,
+    spec_ids: &[String],
+    user_message: &str,
+) -> Vec<Value> {
+    let mut content = vec![json!({
+        "type": "text",
+        "text": user_message,
+    })];
+
+    let config_path = PathBuf::from(project_path)
+        .join(".lean-spec")
+        .join("config.yaml");
+    let specs_subdir = if config_path.exists() {
+        LeanSpecConfig::load(&config_path)
+            .ok()
+            .map(|value| value.specs_dir)
+            .unwrap_or_else(|| PathBuf::from("specs"))
+    } else {
+        PathBuf::from("specs")
+    };
+
+    let specs_dir = PathBuf::from(project_path).join(specs_subdir);
+    if !specs_dir.exists() {
+        return content;
+    }
+
+    let loader = SpecLoader::new(&specs_dir);
+    for spec_id in spec_ids {
+        if let Ok(Some(spec)) = loader.load(spec_id) {
+            let absolute_path =
+                std::fs::canonicalize(&spec.file_path).unwrap_or_else(|_| spec.file_path.clone());
+            let uri = format!("file://{}", absolute_path.to_string_lossy());
+
+            content.push(json!({
+                "type": "resource_link",
+                "uri": uri,
+                "name": spec_id,
+                "mimeType": "text/markdown"
+            }));
+        }
+    }
+
+    content
+}
+
+fn extract_acp_session_id_from_response(payload: &Value) -> Option<String> {
+    payload
+        .get("result")
+        .and_then(|value| value.get("sessionId"))
+        .and_then(|value| value.as_str())
+        .map(|value| value.to_string())
+}
+
+fn extract_acp_load_session_capability(payload: &Value) -> Option<bool> {
+    payload
+        .get("result")
+        .and_then(|value| value.get("agentCapabilities"))
+        .and_then(|value| value.get("loadSession"))
+        .and_then(|value| value.as_bool())
+}
+
+fn extract_acp_permission_response_choice(payload: &Value) -> Option<(Value, String)> {
+    let method = payload.get("method").and_then(|value| value.as_str())?;
+    if method != "session/request_permission" {
+        return None;
+    }
+
+    let request_id = payload.get("id")?.clone();
+    let options = payload
+        .get("params")
+        .and_then(|params| params.get("options"))
+        .and_then(|value| value.as_array())
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|value| value.as_str().map(|value| value.to_string()))
+        .collect::<Vec<_>>();
+
+    let selected_option = if options.iter().any(|option| option == "allow_once") {
+        "allow_once".to_string()
+    } else if options.iter().any(|option| option == "allow_always") {
+        "allow_always".to_string()
+    } else {
+        options
+            .first()
+            .cloned()
+            .unwrap_or_else(|| "reject".to_string())
+    };
+
+    Some((request_id, selected_option))
+}
+
+fn map_acp_payload_to_logs(session_id: &str, payload: Value) -> Option<Vec<SessionLog>> {
+    let method = payload.get("method").and_then(|value| value.as_str())?;
+    let timestamp = chrono::Utc::now();
+    let mut logs = Vec::new();
+
+    if method == "session/request_permission" {
+        if let Some(params) = payload.get("params") {
+            let log_message = json!({
+                "type": "acp_permission_request",
+                "timestamp": timestamp.to_rfc3339(),
+                "id": params.get("id").cloned().unwrap_or_else(|| json!("")),
+                "tool": params.get("tool").and_then(|value| value.as_str()).unwrap_or(""),
+                "args": params.get("args").cloned().unwrap_or_else(|| json!({})),
+                "options": params
+                    .get("options")
+                    .and_then(|value| value.as_array())
+                    .cloned()
+                    .unwrap_or_default(),
+            })
+            .to_string();
+
+            logs.push(SessionLog {
+                id: 0,
+                session_id: session_id.to_string(),
+                timestamp,
+                level: LogLevel::Info,
+                message: log_message,
+            });
+        }
+        return Some(logs);
+    }
+
+    if method != "session/update" {
+        return None;
+    }
+
+    let update = payload
+        .get("params")
+        .and_then(|params| params.get("update"))
+        .or_else(|| payload.get("params"))?;
+
+    let update_type = update
+        .get("type")
+        .and_then(|value| value.as_str())
+        .unwrap_or_default();
+
+    let mapped = match update_type {
+        "agent_message_chunk" => Some(json!({
+            "type": "acp_message",
+            "timestamp": timestamp.to_rfc3339(),
+            "role": "agent",
+            "content": update.get("content").and_then(|v| v.as_str()).or_else(|| update.get("text").and_then(|v| v.as_str())).unwrap_or(""),
+            "done": update.get("done").and_then(|v| v.as_bool()).unwrap_or(false),
+        })),
+        "user_message_chunk" => Some(json!({
+            "type": "acp_message",
+            "timestamp": timestamp.to_rfc3339(),
+            "role": "user",
+            "content": update.get("content").and_then(|v| v.as_str()).or_else(|| update.get("text").and_then(|v| v.as_str())).unwrap_or(""),
+            "done": update.get("done").and_then(|v| v.as_bool()).unwrap_or(false),
+        })),
+        "agent_thought_chunk" => Some(json!({
+            "type": "acp_thought",
+            "timestamp": timestamp.to_rfc3339(),
+            "content": update.get("content").and_then(|v| v.as_str()).or_else(|| update.get("text").and_then(|v| v.as_str())).unwrap_or(""),
+            "done": update.get("done").and_then(|v| v.as_bool()).unwrap_or(false),
+        })),
+        "tool_call" | "tool_call_update" => Some(json!({
+            "type": "acp_tool_call",
+            "timestamp": timestamp.to_rfc3339(),
+            "id": update.get("id").and_then(|v| v.as_str()).unwrap_or_default(),
+            "tool": update.get("tool").and_then(|v| v.as_str()).unwrap_or_default(),
+            "args": update.get("args").cloned().unwrap_or_else(|| json!({})),
+            "status": update.get("status").and_then(|v| v.as_str()).unwrap_or("running"),
+            "result": update.get("result").cloned().unwrap_or(Value::Null),
+        })),
+        "plan" => {
+            let entries = update
+                .get("entries")
+                .and_then(|value| value.as_array())
+                .cloned()
+                .unwrap_or_default()
+                .into_iter()
+                .enumerate()
+                .map(|(index, entry)| {
+                    let status = entry
+                        .get("status")
+                        .and_then(|value| value.as_str())
+                        .map(|value| match value {
+                            "completed" => "done",
+                            "in_progress" => "running",
+                            "done" | "running" | "pending" => value,
+                            _ => "pending",
+                        })
+                        .unwrap_or("pending");
+
+                    json!({
+                        "id": entry
+                            .get("id")
+                            .and_then(|value| value.as_str())
+                            .map(|value| value.to_string())
+                            .unwrap_or_else(|| index.to_string()),
+                        "title": entry
+                            .get("title")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or_default(),
+                        "status": status,
+                    })
+                })
+                .collect::<Vec<_>>();
+
+            Some(json!({
+                "type": "acp_plan",
+                "timestamp": timestamp.to_rfc3339(),
+                "entries": entries,
+                "done": update.get("done").and_then(|v| v.as_bool()),
+            }))
+        }
+        "current_mode_update" => Some(json!({
+            "type": "acp_mode_update",
+            "timestamp": timestamp.to_rfc3339(),
+            "mode": update.get("mode").and_then(|v| v.as_str()).unwrap_or_default(),
+        })),
+        _ => None,
+    };
+
+    if let Some(message) = mapped {
+        logs.push(SessionLog {
+            id: 0,
+            session_id: session_id.to_string(),
+            timestamp,
+            level: LogLevel::Info,
+            message: message.to_string(),
+        });
+        return Some(logs);
+    }
+
+    None
+}
+
+async fn send_acp_request(
+    runtime: &AcpSessionRuntime,
+    method: &str,
+    params: Value,
+) -> CoreResult<u64> {
+    let request_id = {
+        let mut counter = runtime.request_counter.lock().await;
+        let current = *counter;
+        *counter += 1;
+        current
+    };
+
+    let payload = json!({
+        "jsonrpc": "2.0",
+        "id": request_id,
+        "method": method,
+        "params": params,
+    });
+
+    let serialized = serde_json::to_string(&payload)
+        .map_err(|err| CoreError::ToolError(format!("Failed to serialize ACP request: {}", err)))?;
+
+    let mut stdin = runtime.stdin.lock().await;
+    stdin
+        .write_all(serialized.as_bytes())
+        .await
+        .map_err(|err| CoreError::ToolError(format!("Failed to write ACP request: {}", err)))?;
+    stdin
+        .write_all(b"\n")
+        .await
+        .map_err(|err| CoreError::ToolError(format!("Failed to write ACP newline: {}", err)))?;
+    stdin
+        .flush()
+        .await
+        .map_err(|err| CoreError::ToolError(format!("Failed to flush ACP request: {}", err)))?;
+
+    Ok(request_id)
+}
+
+async fn send_acp_response(
+    runtime: &AcpSessionRuntime,
+    request_id: Value,
+    result: Value,
+) -> CoreResult<()> {
+    let payload = json!({
+        "jsonrpc": "2.0",
+        "id": request_id,
+        "result": result,
+    });
+
+    let serialized = serde_json::to_string(&payload).map_err(|err| {
+        CoreError::ToolError(format!("Failed to serialize ACP response: {}", err))
+    })?;
+
+    let mut stdin = runtime.stdin.lock().await;
+    stdin
+        .write_all(serialized.as_bytes())
+        .await
+        .map_err(|err| CoreError::ToolError(format!("Failed to write ACP response: {}", err)))?;
+    stdin
+        .write_all(b"\n")
+        .await
+        .map_err(|err| CoreError::ToolError(format!("Failed to write ACP newline: {}", err)))?;
+    stdin
+        .flush()
+        .await
+        .map_err(|err| CoreError::ToolError(format!("Failed to flush ACP response: {}", err)))?;
+
+    Ok(())
 }
 
 #[cfg(unix)]

@@ -107,6 +107,11 @@ pub struct RotateLogsResponse {
     pub deleted: usize,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct PromptSessionRequest {
+    pub message: String,
+}
+
 impl From<Session> for SessionResponse {
     fn from(session: Session) -> Self {
         let spec_id = session.spec_ids.first().cloned();
@@ -353,6 +358,69 @@ pub async fn stop_session(
             Json(ApiError::invalid_request(&e.to_string())),
         )
     })?;
+
+    let session = manager
+        .get_session(&session_id)
+        .await
+        .map_err(internal_error)?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                Json(ApiError::not_found("Session")),
+            )
+        })?;
+
+    Ok(Json(enrich_session_response(&manager, session).await))
+}
+
+/// Send a prompt to an active ACP session
+pub async fn prompt_session(
+    State(state): State<AppState>,
+    Path(session_id): Path<String>,
+    Json(req): Json<PromptSessionRequest>,
+) -> ApiResult<Json<SessionResponse>> {
+    let manager = state.session_manager.clone();
+
+    manager
+        .prompt_session(&session_id, req.message)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request(&e.to_string())),
+            )
+        })?;
+
+    let session = manager
+        .get_session(&session_id)
+        .await
+        .map_err(internal_error)?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                Json(ApiError::not_found("Session")),
+            )
+        })?;
+
+    Ok(Json(enrich_session_response(&manager, session).await))
+}
+
+/// Cancel the active turn for an ACP session
+pub async fn cancel_session_turn(
+    State(state): State<AppState>,
+    Path(session_id): Path<String>,
+) -> ApiResult<Json<SessionResponse>> {
+    let manager = state.session_manager.clone();
+
+    manager
+        .cancel_session_turn(&session_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request(&e.to_string())),
+            )
+        })?;
 
     let session = manager
         .get_session(&session_id)

@@ -15,6 +15,7 @@ path = "src/lib.rs"
 
 [dependencies]
 # AI provider libraries (optional)
+agent-client-protocol = {version = "0.9.4", optional = true}
 anthropic = {version = "0.0.8", optional = true}
 async-openai = {version = "0.32", optional = true, features = ["chat-completion"]}
 chrono.workspace = true
@@ -49,7 +50,7 @@ nix = {version = "0.28", default-features = false, features = ["signal"]}
 ai = ["tokio", "async-trait", "uuid", "async-openai", "anthropic", "schemars", "reqwest", "urlencoding", "futures-util"]
 default = []
 full = ["sessions", "storage", "ai"]
-sessions = ["rusqlite", "tokio", "uuid", "async-trait", "which", "flate2"]
+sessions = ["rusqlite", "tokio", "uuid", "async-trait", "which", "flate2", "agent-client-protocol"]
 storage = ["rusqlite", "tokio", "dirs", "uuid"]
 
 [dev-dependencies]

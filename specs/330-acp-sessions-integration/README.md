@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-02-24
 priority: high
 tags:
@@ -10,9 +10,11 @@ tags:
 - architecture
 - research
 created_at: 2026-02-24T15:32:02.930828Z
-updated_at: 2026-02-24T15:32:02.930828Z
+updated_at: 2026-02-25T09:13:23.337704Z
+transitions:
+- status: in-progress
+  at: 2026-02-25T09:03:50.233143Z
 ---
-
 # ACP Sessions Integration: Standardized Agent Communication
 
 ## Overview
@@ -214,33 +216,33 @@ This means ACP integration immediately benefits the entire runner ecosystem.
 ## Plan
 
 ### Phase 1: Research & Prototype
-- [ ] Add `agent-client-protocol` crate to `leanspec-core` Cargo.toml
+- [x] Add `agent-client-protocol` crate to `leanspec-core` Cargo.toml
 - [ ] Prototype ACP client connection with Claude Code (`claude --acp` or similar)
 - [ ] Map existing `Session` struct fields to ACP protocol concepts
 - [ ] Determine which runners support ACP and how to invoke them in ACP mode
 - [ ] Document discovery: how to detect if a runner supports ACP vs raw CLI
 
 ### Phase 2: Core ACP Client
-- [ ] Implement `AcpClient` in `leanspec-core` (stdio transport only)
-- [ ] `initialize` → capability negotiation
-- [ ] `session/new` → returns ACP session ID
-- [ ] `session/prompt` → accepts spec context as ContentBlocks
-- [ ] Handle `session/update` notifications → forward to LeanSpec session event stream
-- [ ] `session/cancel` → map to session stop
+- [x] Implement `AcpClient` in `leanspec-core` (stdio transport only)
+- [x] `initialize` → capability negotiation
+- [x] `session/new` → returns ACP session ID
+- [x] `session/prompt` → accepts spec context as ContentBlocks
+- [x] Handle `session/update` notifications → forward to LeanSpec session event stream
+- [x] `session/cancel` → map to session stop
 
 ### Phase 3: Enhanced Session State
-- [ ] Store ACP session ID alongside LeanSpec session ID in DB
-- [ ] Surface tool calls & diffs in session log stream (not just raw text)
-- [ ] Surface agent execution plan (`plan` update) in UI
+- [x] Store ACP session ID alongside LeanSpec session ID in DB
+- [x] Surface tool calls & diffs in session log stream (not just raw text)
+- [x] Surface agent execution plan (`plan` update) in UI
 - [ ] Permission request flow: agent → LeanSpec → UI → back to agent
 
 ### Phase 4: MCP Integration
-- [ ] Pass `leanspec-mcp` as MCP server in `session/new`
+- [x] Pass `leanspec-mcp` as MCP server in `session/new`
 - [ ] Agent can directly read/update specs during session execution- [ ] Test with Claude Code, Gemini CLI, OpenCode
 
 ### Phase 5: Session Resume
 - [ ] Store ACP session ID so sessions can be resumed with `session/load`
-- [ ] Only for runners with `loadSession` capability
+- [x] Only for runners with `loadSession` capability
 - [ ] UI: "Resume" button on completed/interrupted sessions
 
 ## Acceptance Criteria
