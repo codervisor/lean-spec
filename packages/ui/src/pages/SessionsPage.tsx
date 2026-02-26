@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, memo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { FilterX, RefreshCcw, FileQuestion, Play, Square, Plus, Pause, Search, Filter, Timer, Hash, X } from 'lucide-react';
+import { FilterX, RefreshCcw, FileQuestion, Play, Square, Plus, Pause, Search, Filter, Hash, X } from 'lucide-react';
 import { Badge, Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/library';
 import { useTranslation } from 'react-i18next';
 import type { Session, SessionStatus, Spec } from '../types/api';
@@ -11,7 +11,10 @@ import { EmptyState } from '../components/shared/empty-state';
 import { PageHeader } from '../components/shared/page-header';
 import { PageTransition } from '../components/shared/page-transition';
 import { PageContainer } from '../components/shared/page-container';
-import { sessionStatusConfig, sessionModeConfig, formatSessionDuration, getRunnerDisplayName } from '../lib/session-utils';
+import { sessionStatusConfig, formatSessionDuration, getRunnerDisplayName } from '../lib/session-utils';
+import { formatRelativeTime } from '../lib/date-utils';
+import { SessionDurationBadge } from '../components/sessions/session-duration-badge';
+import { SessionModeBadge } from '../components/sessions/session-mode-badge';
 import { SessionCreateDialog } from '../components/sessions/session-create-dialog';
 import { SearchableSelect } from '../components/searchable-select';
 import { RunnerLogo } from '../components/library/ai-elements/runner-logo';
@@ -415,18 +418,18 @@ const SessionListItem = memo(function SessionListItem({
   onPause,
   onResume,
 }: SessionListItemProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const navigate = useNavigate();
   const statusCfg = sessionStatusConfig[session.status];
-  const modeCfg = sessionModeConfig[session.mode];
   const StatusIcon = statusCfg.icon;
-  const ModeIcon = modeCfg?.icon;
   const duration = formatSessionDuration(session);
 
   // Use prompt as session title, falling back to spec IDs or session ID
   const sessionTitle = session.prompt
     || (session.specIds?.length ? session.specIds.join(', ') : null)
     || session.id.slice(0, 8);
+
+  const hasActionButtons = session.status === 'pending' || session.status === 'running' || session.status === 'paused';
 
   const handleClick = (e: React.MouseEvent) => {
     // Don't navigate if clicking on a button or link inside the item
@@ -442,29 +445,22 @@ const SessionListItem = memo(function SessionListItem({
       <div className="flex items-start">
         <div className="w-8 h-full invisible flex items-center text-muted-foreground" />
         <div className="flex-1 p-4 pl-0">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="flex-shrink-0">
-                        <RunnerLogo runnerId={session.runner} size={32} />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {getRunnerDisplayName(session.runner, t)}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <h3 className="font-medium truncate">{sessionTitle}</h3>
-              </div>
-              {(session.specIds?.length ?? 0) > 0 && (
-                <p className="text-sm text-muted-foreground truncate">
-                  <Hash className="inline h-3 w-3 mr-0.5 -mt-px" />
-                  {session.specIds.join(', ')}
-                </p>
-              )}
+          {/* Top row: runner logo + title on left, status + mode badges on right */}
+          <div className="flex items-start justify-between gap-4 mb-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex-shrink-0">
+                      <RunnerLogo runnerId={session.runner} size={24} />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {getRunnerDisplayName(session.runner, t)}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <h3 className="font-medium truncate">{sessionTitle}</h3>
             </div>
             <div className="flex gap-2 items-center flex-shrink-0 flex-wrap justify-end">
               {/* Status badge */}
@@ -480,59 +476,61 @@ const SessionListItem = memo(function SessionListItem({
               </Badge>
 
               {/* Mode badge */}
-              {modeCfg && (
-                <Badge
-                  variant="outline"
-                  className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
-                >
-                  {ModeIcon && <ModeIcon className="h-3.5 w-3.5" />}
-                  {t(`sessions.modes.${session.mode}`)}
-                </Badge>
-              )}
-
-              {/* Duration badge */}
-              {duration && (
-                <Badge
-                  variant="outline"
-                  className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
-                >
-                  <Timer className="h-3.5 w-3.5" />
-                  {duration}
-                </Badge>
-              )}
-
-              {/* Action buttons */}
-              {session.status === 'pending' && (
-                <Button size="sm" variant="secondary" className="gap-1 h-6 text-xs px-2" onClick={() => void onStart(session.id)}>
-                  <Play className="h-3 w-3" />
-                  {t('sessions.actions.start')}
-                </Button>
-              )}
-              {session.status === 'running' && (
-                <>
-                  <Button size="sm" variant="secondary" className="gap-1 h-6 text-xs px-2" onClick={() => void onPause(session.id)}>
-                    <Pause className="h-3 w-3" />
-                    {t('sessions.actions.pause')}
-                  </Button>
-                  <Button size="sm" variant="destructive" className="gap-1 h-6 text-xs px-2" onClick={() => void onStop(session.id)}>
-                    <Square className="h-3 w-3" />
-                    {t('sessions.actions.stop')}
-                  </Button>
-                </>
-              )}
-              {session.status === 'paused' && (
-                <>
-                  <Button size="sm" variant="secondary" className="gap-1 h-6 text-xs px-2" onClick={() => void onResume(session.id)}>
-                    <Play className="h-3 w-3" />
-                    {t('sessions.actions.resume')}
-                  </Button>
-                  <Button size="sm" variant="destructive" className="gap-1 h-6 text-xs px-2" onClick={() => void onStop(session.id)}>
-                    <Square className="h-3 w-3" />
-                    {t('sessions.actions.stop')}
-                  </Button>
-                </>
-              )}
+              <SessionModeBadge mode={session.mode} />
             </div>
+          </div>
+
+          {/* Bottom row: metadata on left, action buttons on right */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground min-w-0">
+              {(session.specIds?.length ?? 0) > 0 && (
+                <span className="truncate flex items-center gap-0.5">
+                  <Hash className="inline h-3 w-3 shrink-0" />
+                  {session.specIds.join(', ')}
+                </span>
+              )}
+              {session.startedAt && (
+                <span className="shrink-0 text-xs">
+                  {formatRelativeTime(session.startedAt, i18n.language)}
+                </span>
+              )}
+              {duration && <SessionDurationBadge duration={duration} />}
+            </div>
+
+            {hasActionButtons && (
+              <div className="flex gap-2 items-center flex-shrink-0">
+                {session.status === 'pending' && (
+                  <Button size="sm" variant="secondary" className="gap-1 h-6 text-xs px-2" onClick={() => void onStart(session.id)}>
+                    <Play className="h-3 w-3" />
+                    {t('sessions.actions.start')}
+                  </Button>
+                )}
+                {session.status === 'running' && (
+                  <>
+                    <Button size="sm" variant="secondary" className="gap-1 h-6 text-xs px-2" onClick={() => void onPause(session.id)}>
+                      <Pause className="h-3 w-3" />
+                      {t('sessions.actions.pause')}
+                    </Button>
+                    <Button size="sm" variant="destructive" className="gap-1 h-6 text-xs px-2" onClick={() => void onStop(session.id)}>
+                      <Square className="h-3 w-3" />
+                      {t('sessions.actions.stop')}
+                    </Button>
+                  </>
+                )}
+                {session.status === 'paused' && (
+                  <>
+                    <Button size="sm" variant="secondary" className="gap-1 h-6 text-xs px-2" onClick={() => void onResume(session.id)}>
+                      <Play className="h-3 w-3" />
+                      {t('sessions.actions.resume')}
+                    </Button>
+                    <Button size="sm" variant="destructive" className="gap-1 h-6 text-xs px-2" onClick={() => void onStop(session.id)}>
+                      <Square className="h-3 w-3" />
+                      {t('sessions.actions.stop')}
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

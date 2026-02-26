@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Filter,
@@ -7,18 +7,20 @@ import {
   ChevronRight,
   Check,
   Hash,
-  Timer,
 } from 'lucide-react';
 import {
   Button,
   cn,
   formatRelativeTime,
-  ScrollArea,
   SearchInput,
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/library';
+import {
+  List,
+  type ListImperativeAPI,
+} from 'react-window';
 import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useSessions } from '../hooks/useSessionsQuery';
@@ -26,6 +28,7 @@ import { useSessionsSidebarStore } from '../stores/sessions-sidebar';
 import { sessionStatusConfig, formatSessionDuration } from '../lib/session-utils';
 import { RunnerLogo } from './library/ai-elements/runner-logo';
 import { SessionStatusBadge } from './session-status-badge';
+import { SessionDurationBadge } from './sessions/session-duration-badge';
 import type { Session, SessionStatus } from '../types/api';
 
 interface SessionsNavSidebarProps {
@@ -50,10 +53,20 @@ export function SessionsNavSidebar({ mobileOpen = false, onMobileOpenChange }: S
 
   const { collapsed, setCollapsed } = useSessionsSidebarStore();
 
+  const [listHeight, setListHeight] = useState<number>(() => calculateListHeight());
+  const listRef = useRef<ListImperativeAPI>(null);
+
   const activeSessionId = useMemo(() => {
     const match = location.pathname.match(/\/sessions\/(.+)$/);
     return match ? decodeURIComponent(match[1]) : '';
   }, [location.pathname]);
+
+  useEffect(() => {
+    const handler = () => setListHeight(calculateListHeight());
+    handler();
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -109,6 +122,63 @@ export function SessionsNavSidebar({ mobileOpen = false, onMobileOpenChange }: S
   };
 
   const { t, i18n } = useTranslation('common');
+
+  const RowComponent = useCallback(
+    (rowProps: { index: number; style: CSSProperties }) => {
+      const { index, style } = rowProps;
+      const session = filteredSessions[index];
+      if (!session) return <div style={style} />;
+
+      const isActive = session.id === activeSessionId;
+      const duration = formatSessionDuration(session);
+      const title = session.prompt
+        || (session.specIds?.length ? session.specIds.join(', ') : null)
+        || session.id.slice(0, 8);
+
+      return (
+        <div style={style} className="px-1.5 py-0.5">
+          <button
+            onClick={() => handleSessionClick(session)}
+            className={cn(
+              'w-full text-left rounded-md px-2.5 py-2 transition-colors group overflow-hidden',
+              isActive
+                ? 'bg-accent text-accent-foreground font-medium'
+                : 'hover:bg-accent/50'
+            )}
+          >
+            <div className="flex items-center gap-1.5 w-full min-w-0">
+              <RunnerLogo runnerId={session.runner} size={20} className="shrink-0" />
+              <span className="truncate text-xs leading-relaxed flex-1">{title}</span>
+            </div>
+            <div className="flex space-between items-center mt-1">
+              <div className="flex items-center gap-1.5 w-full flex-1">
+                <SessionStatusBadge
+                  status={session.status}
+                  iconOnly
+                  responsive={false}
+                />
+                {duration && <SessionDurationBadge duration={duration} variant="pill" />}
+                {session.startedAt && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {formatRelativeTime(session.startedAt, i18n.language)}
+                  </span>
+                )}
+              </div>
+              <div>
+                {(session.specIds?.length ?? 0) > 0 && (
+                  <div className="text-[10px] text-muted-foreground truncate w-full flex items-center gap-0.5">
+                    <Hash className="h-2.5 w-2.5 shrink-0" />
+                    <span className="truncate">{session.specIds.map(id => id.split('-')[0]).join(', ')}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </button>
+        </div>
+      );
+    },
+    [activeSessionId, filteredSessions, formatSessionDuration, handleSessionClick, i18n.language, t]
+  );
 
   const sidebarVisible = mobileOpen || !collapsed;
 
@@ -219,7 +289,7 @@ export function SessionsNavSidebar({ mobileOpen = false, onMobileOpenChange }: S
           />
         </div>
 
-        <ScrollArea className="flex-1">
+        <div className="flex-1 overflow-hidden">
           {loading ? (
             <div className="p-3 space-y-2">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -231,73 +301,17 @@ export function SessionsNavSidebar({ mobileOpen = false, onMobileOpenChange }: S
               {t('sessionsSidebar.noResults')}
             </div>
           ) : (
-            <div className="p-1.5 space-y-0.5">
-              {filteredSessions.map((session) => {
-                const isActive = session.id === activeSessionId;
-                const duration = formatSessionDuration(session);
-                const title = session.prompt
-                  || (session.specIds?.length ? session.specIds.join(', ') : null)
-                  || session.id.slice(0, 8);
-
-                return (
-                  <button
-                    key={session.id}
-                    onClick={() => handleSessionClick(session)}
-                    className={cn(
-                      'w-full text-left rounded-md px-2.5 py-2 transition-colors group overflow-hidden',
-                      isActive
-                        ? 'bg-accent text-accent-foreground font-medium'
-                        : 'hover:bg-accent/50'
-                    )}
-                  >
-                    <div className="flex items-center gap-1.5 w-full min-w-0">
-                      <RunnerLogo runnerId={session.runner} size={20} className="shrink-0" />
-                      <span className="truncate text-xs leading-relaxed flex-1">{title}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-1 ml-[22px] w-[calc(100%-22px)]">
-                      <SessionStatusBadge
-                        status={session.status}
-                        iconOnly
-                        responsive={false}
-                      />
-                      {duration && (
-                        <span className="inline-flex items-center gap-1 h-5 px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-muted text-muted-foreground shrink-0">
-                          <Timer className="h-3 w-3" />
-                          {duration}
-                        </span>
-                      )}
-                      {session.startedAt && (
-                        <span className="text-[10px] text-muted-foreground">
-                          {formatRelativeTime(session.startedAt, i18n.language)}
-                        </span>
-                      )}
-                    </div>
-                    {(session.specIds?.length ?? 0) > 0 && (
-                      <div className="text-[10px] text-muted-foreground truncate mt-0.5 ml-[22px] w-[calc(100%-22px)] flex items-center gap-0.5">
-                        <Hash className="h-3 w-3 shrink-0" />
-                        <span className="truncate">{session.specIds.join(', ')}</span>
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <List<Record<string, never>>
+              listRef={listRef}
+              defaultHeight={listHeight}
+              rowCount={filteredSessions.length}
+              rowHeight={60}
+              overscanCount={6}
+              rowComponent={RowComponent}
+              rowProps={{}}
+              style={{ height: listHeight, width: '100%' }}
+            />
           )}
-        </ScrollArea>
-
-        <div className="border-t px-3 py-2 flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground">
-            {t('sessionsPage.count', { count: filteredSessions.length })}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 hidden lg:flex"
-            onClick={() => setCollapsed(true)}
-            title={t('sessionsSidebar.collapse')}
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-          </Button>
         </div>
       </aside>
 
@@ -314,4 +328,11 @@ export function SessionsNavSidebar({ mobileOpen = false, onMobileOpenChange }: S
       )}
     </div>
   );
+}
+
+function calculateListHeight() {
+  if (typeof window === 'undefined') return 600;
+  const headerHeight = 56; // top navigation bar
+  const controlsHeight = 100;
+  return window.innerHeight - headerHeight - controlsHeight;
 }

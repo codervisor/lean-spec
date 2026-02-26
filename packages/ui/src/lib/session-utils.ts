@@ -25,15 +25,15 @@ export const sessionStatusConfig: Record<SessionStatus, SessionStatusConfig> = {
     icon: PlayCircle,
     label: 'Running',
     labelKey: 'sessions.status.running',
-    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    dotClassName: 'bg-green-500',
+    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+    dotClassName: 'bg-orange-500',
   },
   paused: {
     icon: Pause,
     label: 'Paused',
     labelKey: 'sessions.status.paused',
-    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-    dotClassName: 'bg-orange-500',
+    className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+    dotClassName: 'bg-gray-500',
   },
   completed: {
     icon: CheckCircle2,
@@ -107,16 +107,15 @@ export function getSessionDurationMs(session: Session, now = Date.now()): number
 export function formatDuration(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+  const minutes = Math.floor(totalSeconds / 60);
 
   if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s`;
+    return `${hours}h`;
   }
   if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
+    return `${minutes}m`;
   }
-  return `${seconds}s`;
+  return `${totalSeconds}s`;
 }
 
 export function formatSessionDuration(session: Session, now = Date.now()): string | null {

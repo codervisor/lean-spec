@@ -2,16 +2,7 @@ import type { Session, SessionLog, SessionStreamEvent } from '../types/api';
 
 export type AcpFilterType = 'messages' | 'thoughts' | 'tools' | 'plan';
 
-const ACP_EVENT_TYPES = new Set<SessionStreamEvent['type']>([
-  'acp_message',
-  'acp_thought',
-  'acp_tool_call',
-  'acp_plan',
-  'acp_permission_request',
-  'acp_mode_update',
-  'complete',
-  'log',
-]);
+const STREAM_EVENT_TYPES = new Set<SessionStreamEvent['type']>(['complete', 'log']);
 
 export function isAcpSession(session?: Session | null): boolean {
   return (session?.protocol ?? 'subprocess') === 'acp';
@@ -33,10 +24,161 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
+function asObject(value: unknown): Record<string, unknown> | null {
+  return isRecord(value) ? value : null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {};
+}
+
+function asOptionalTimestamp(value: unknown): string | undefined {
+  const timestamp = asString(value);
+  return timestamp || undefined;
+}
+
+function asToolStatus(value: unknown): 'running' | 'completed' | 'failed' {
+  if (value === 'completed' || value === 'failed') return value;
+  if (value === 'done') return 'completed';
+  return 'running';
+}
+
+function asPlanStatus(value: unknown): 'pending' | 'running' | 'done' {
+  if (value === 'done' || value === 'running' || value === 'pending') return value;
+  if (value === 'completed') return 'done';
+  if (value === 'in_progress') return 'running';
+  return 'pending';
+}
+
+function extractTextFromContent(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (isRecord(value)) {
+    if (typeof value.text === 'string') return value.text;
+    if (typeof value.content === 'string') return value.content;
+    return '';
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => extractTextFromContent(item)).join('');
+  }
+  return '';
+}
+
+function extractResultFromUpdate(update: Record<string, unknown>): unknown {
+  if (update.result !== undefined) return update.result;
+
+  const content = update.content;
+  if (Array.isArray(content)) {
+    for (const item of content) {
+      if (!isRecord(item)) continue;
+      if (item.content !== undefined) return item.content;
+      if (item.result !== undefined) return item.result;
+      if (item.text !== undefined) return item.text;
+    }
+    return content;
+  }
+
+  if (isRecord(content)) {
+    if (content.content !== undefined) return content.content;
+    if (content.text !== undefined) return content.text;
+    return content;
+  }
+
+  return null;
+}
+
+function mapAcpRawToStreamEvent(method: string, params: unknown, fallbackTimestamp?: string): SessionStreamEvent | null {
+  if (!isRecord(params)) return null;
+
+  if (method === 'session/request_permission') {
+    return {
+      type: 'acp_permission_request',
+      timestamp: fallbackTimestamp,
+      id: asString(params.id),
+      tool: asString(params.tool),
+      args: asRecord(params.args),
+      options: asArray(params.options).filter((option): option is string => typeof option === 'string'),
+    };
+  }
+
+  if (method !== 'session/update') return null;
+
+  const updateObj = asObject(params.update) ?? params;
+  const updateType = asString(updateObj.sessionUpdate ?? updateObj.type);
+
+  if (updateType === 'agent_message_chunk' || updateType === 'user_message_chunk') {
+    const contentBlocks = asArray(updateObj.content);
+    const content = extractTextFromContent(updateObj.content ?? updateObj.text);
+    return {
+      type: 'acp_message',
+      timestamp: fallbackTimestamp,
+      role: updateType === 'user_message_chunk' ? 'user' : 'agent',
+      content,
+      done: asBoolean(updateObj.done),
+      contentBlocks,
+      rawContent: updateObj.content,
+    };
+  }
+
+  if (updateType === 'agent_thought_chunk') {
+    const contentBlocks = asArray(updateObj.content);
+    const content = extractTextFromContent(updateObj.content ?? updateObj.text);
+    return {
+      type: 'acp_thought',
+      timestamp: fallbackTimestamp,
+      content,
+      done: asBoolean(updateObj.done),
+      contentBlocks,
+      rawContent: updateObj.content,
+    };
+  }
+
+  if (updateType === 'tool_call' || updateType === 'tool_call_update') {
+    return {
+      type: 'acp_tool_call',
+      timestamp: fallbackTimestamp,
+      id: asString(updateObj.toolCallId ?? updateObj.id),
+      tool: asString(updateObj.title ?? updateObj.tool),
+      args: asRecord(updateObj.args ?? updateObj.rawInput),
+      status: asToolStatus(updateObj.status),
+      result: extractResultFromUpdate(updateObj),
+      rawContent: updateObj.content,
+    };
+  }
+
+  if (updateType === 'plan') {
+    return {
+      type: 'acp_plan',
+      timestamp: fallbackTimestamp,
+      entries: asArray(updateObj.entries).map((entry, index) => {
+        if (!isRecord(entry)) {
+          return { id: String(index), title: '', status: 'pending' as const };
+        }
+
+        return {
+          id: asString(entry.id, String(index)),
+          title: asString(entry.title),
+          status: asPlanStatus(entry.status),
+        };
+      }),
+      done: typeof updateObj.done === 'boolean' ? updateObj.done : undefined,
+    };
+  }
+
+  if (updateType === 'current_mode_update') {
+    return {
+      type: 'acp_mode_update',
+      timestamp: fallbackTimestamp,
+      mode: asString(updateObj.mode),
+    };
+  }
+
+  return null;
+}
+
 function parseRawEvent(payload: unknown): SessionStreamEvent | null {
   if (!isRecord(payload)) return null;
   const type = asString(payload.type);
-  if (!ACP_EVENT_TYPES.has(type as SessionStreamEvent['type'])) return null;
+  if (!STREAM_EVENT_TYPES.has(type as SessionStreamEvent['type'])) return null;
 
   switch (type) {
     case 'log':
@@ -45,63 +187,6 @@ function parseRawEvent(payload: unknown): SessionStreamEvent | null {
         timestamp: asString(payload.timestamp),
         level: asString(payload.level),
         message: asString(payload.message),
-      };
-    case 'acp_message':
-      return {
-        type: 'acp_message',
-        timestamp: asString(payload.timestamp) || undefined,
-        role: payload.role === 'user' ? 'user' : 'agent',
-        content: asString(payload.content),
-        done: asBoolean(payload.done),
-      };
-    case 'acp_thought':
-      return {
-        type: 'acp_thought',
-        timestamp: asString(payload.timestamp) || undefined,
-        content: asString(payload.content),
-        done: asBoolean(payload.done),
-      };
-    case 'acp_tool_call':
-      return {
-        type: 'acp_tool_call',
-        timestamp: asString(payload.timestamp) || undefined,
-        id: asString(payload.id),
-        tool: asString(payload.tool),
-        args: isRecord(payload.args) ? payload.args : {},
-        status: payload.status === 'completed' || payload.status === 'failed' ? payload.status : 'running',
-        result: payload.result,
-      };
-    case 'acp_plan':
-      return {
-        type: 'acp_plan',
-        timestamp: asString(payload.timestamp) || undefined,
-        entries: asArray(payload.entries).map((entry, index) => {
-          if (!isRecord(entry)) {
-            return { id: String(index), title: '', status: 'pending' as const };
-          }
-          const status = entry.status === 'done' || entry.status === 'running' ? entry.status : 'pending';
-          return {
-            id: asString(entry.id, String(index)),
-            title: asString(entry.title),
-            status,
-          };
-        }),
-        done: typeof payload.done === 'boolean' ? payload.done : undefined,
-      };
-    case 'acp_permission_request':
-      return {
-        type: 'acp_permission_request',
-        timestamp: asString(payload.timestamp) || undefined,
-        id: asString(payload.id),
-        tool: asString(payload.tool),
-        args: isRecord(payload.args) ? payload.args : {},
-        options: asArray(payload.options).filter((option): option is string => typeof option === 'string'),
-      };
-    case 'acp_mode_update':
-      return {
-        type: 'acp_mode_update',
-        timestamp: asString(payload.timestamp) || undefined,
-        mode: asString(payload.mode),
       };
     case 'complete':
       return {
@@ -114,53 +199,64 @@ function parseRawEvent(payload: unknown): SessionStreamEvent | null {
   }
 }
 
-/**
- * Try to extract a SessionStreamEvent from a parsed JSON-RPC object.
- * Handles both old field names (type, id, tool, args) and new protocol names
- * (sessionUpdate, toolCallId, title, rawInput, content array).
- */
-function extractJsonRpcEvent(obj: unknown, fallbackTimestamp?: string): SessionStreamEvent | null {
-  if (!isRecord(obj) || obj.method !== 'session/update' || !isRecord(obj.params)) return null;
+function parseDirectAcpEvent(payload: Record<string, unknown>): SessionStreamEvent | null {
+  const type = asString(payload.type);
+  const timestamp = asOptionalTimestamp(payload.timestamp);
 
-  const params = obj.params as Record<string, unknown>;
-  const update = (isRecord(params.update) ? params.update : params) as Record<string, unknown>;
-  const updateType = asString(update.sessionUpdate || update.type);
-
-  if (updateType === 'agent_message_chunk' && isRecord(update.content)) {
-    return {
-      type: 'acp_message',
-      timestamp: fallbackTimestamp,
-      role: 'agent',
-      content: asString((update.content as Record<string, unknown>).text),
-      done: false,
-    };
+  if (type === 'acp_message') {
+    const role = asString(payload.role);
+    if (role === 'user' || role === 'agent') {
+      return {
+        type: 'acp_message',
+        timestamp,
+        role,
+        content: extractTextFromContent(payload.content),
+        done: asBoolean(payload.done),
+        contentBlocks: asArray(payload.contentBlocks ?? payload.content),
+        rawContent: payload.content,
+      };
+    }
   }
 
-  if (updateType === 'agent_thought_chunk' && isRecord(update.content)) {
+  if (type === 'acp_thought') {
     return {
       type: 'acp_thought',
-      timestamp: fallbackTimestamp,
-      content: asString((update.content as Record<string, unknown>).text),
-      done: false,
+      timestamp,
+      content: extractTextFromContent(payload.content),
+      done: asBoolean(payload.done),
+      contentBlocks: asArray(payload.contentBlocks ?? payload.content),
+      rawContent: payload.content,
     };
   }
 
-  if (updateType === 'tool_call' || updateType === 'tool_call_update') {
-    let result: unknown = update.result ?? null;
-    if (result === null && Array.isArray(update.content)) {
-      const first = update.content[0];
-      if (isRecord(first) && isRecord(first.content)) {
-        result = (first.content as Record<string, unknown>).text ?? null;
-      }
-    }
+  if (type === 'acp_tool_call') {
     return {
       type: 'acp_tool_call',
-      timestamp: fallbackTimestamp,
-      id: asString(update.id ?? update.toolCallId),
-      tool: asString(update.tool ?? update.title),
-      args: isRecord(update.args) ? update.args : isRecord(update.rawInput) ? update.rawInput : {},
-      status: update.status === 'completed' || update.status === 'failed' ? update.status : 'running',
-      result,
+      timestamp,
+      id: asString(payload.id),
+      tool: asString(payload.tool),
+      args: asRecord(payload.args),
+      status: asToolStatus(payload.status),
+      result: payload.result ?? null,
+      rawContent: payload.content,
+    };
+  }
+
+  if (type === 'acp_plan') {
+    return {
+      type: 'acp_plan',
+      timestamp,
+      entries: asArray(payload.entries).map((entry, index) => {
+        if (!isRecord(entry)) {
+          return { id: String(index), title: '', status: 'pending' as const };
+        }
+        return {
+          id: asString(entry.id, String(index)),
+          title: asString(entry.title),
+          status: asPlanStatus(entry.status),
+        };
+      }),
+      done: typeof payload.done === 'boolean' ? payload.done : undefined,
     };
   }
 
@@ -168,6 +264,20 @@ function extractJsonRpcEvent(obj: unknown, fallbackTimestamp?: string): SessionS
 }
 
 export function parseStreamEventPayload(payload: unknown): SessionStreamEvent | null {
+  if (isRecord(payload) && typeof payload.__acp_method === 'string') {
+    const mapped = mapAcpRawToStreamEvent(
+      payload.__acp_method,
+      payload.params,
+      asOptionalTimestamp(payload.timestamp),
+    );
+    if (mapped) return mapped;
+  }
+
+  if (isRecord(payload)) {
+    const direct = parseDirectAcpEvent(payload);
+    if (direct) return direct;
+  }
+
   const parsed = parseRawEvent(payload);
   if (parsed) return parsed;
 
@@ -178,8 +288,14 @@ export function parseStreamEventPayload(payload: unknown): SessionStreamEvent | 
     if (jsonStart >= 0) {
       try {
         const inner = JSON.parse(msg.slice(jsonStart));
-        const event = extractJsonRpcEvent(inner, typeof payload.timestamp === 'string' ? payload.timestamp : undefined);
-        if (event) return event;
+        if (isRecord(inner) && typeof inner.__acp_method === 'string') {
+          const event = mapAcpRawToStreamEvent(
+            inner.__acp_method,
+            inner.params,
+            asOptionalTimestamp(payload.timestamp),
+          );
+          if (event) return event;
+        }
       } catch { /* ignore */ }
     }
   }
@@ -199,9 +315,19 @@ export function parseSessionLog(log: SessionLog): SessionStreamEvent {
     }
   }
 
-  // Handle JSON-RPC agent messages if found
-  const jsonRpcEvent = extractJsonRpcEvent(parsedMessage, log.timestamp);
-  if (jsonRpcEvent) return jsonRpcEvent;
+  if (isRecord(parsedMessage) && typeof parsedMessage.__acp_method === 'string') {
+    const acpEvent = mapAcpRawToStreamEvent(
+      parsedMessage.__acp_method,
+      parsedMessage.params,
+      asOptionalTimestamp(parsedMessage.timestamp) ?? log.timestamp,
+    );
+    if (acpEvent) return acpEvent;
+  }
+
+  if (isRecord(parsedMessage)) {
+    const direct = parseDirectAcpEvent(parsedMessage);
+    if (direct) return direct;
+  }
 
   const parsed = parseRawEvent(parsedMessage);
   if (parsed) {
@@ -209,17 +335,6 @@ export function parseSessionLog(log: SessionLog): SessionStreamEvent {
       return { ...parsed, timestamp: log.timestamp };
     }
     return parsed;
-  }
-
-  if (log.level.startsWith('acp_')) {
-    const fallback = parseRawEvent({
-      type: log.level,
-      timestamp: log.timestamp,
-      content: log.message,
-      role: 'agent',
-      done: true,
-    });
-    if (fallback) return fallback;
   }
 
   return {

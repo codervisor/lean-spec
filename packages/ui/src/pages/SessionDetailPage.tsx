@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { 
-  AlertTriangle, Download, Copy, Play, Square, Pause, 
+import {
+  AlertTriangle, Download, Copy, Play, Square, Pause,
   Activity, Search, Cpu, Zap, MessageSquare, FileCode, Timer, PanelLeft
 } from 'lucide-react';
-import { 
+import {
   Button, cn, Badge, ScrollArea,
   Tabs, TabsContent, TabsList, TabsTrigger
 } from '@/library';
@@ -17,13 +17,12 @@ import { PageTransition } from '../components/shared/page-transition';
 import { AcpConversation } from '../components/sessions/acp-conversation';
 import {
   sessionStatusConfig,
-  sessionModeConfig,
-  getRunnerDisplayName,
   estimateSessionCost,
   formatSessionDuration,
   formatTokenCount,
 } from '../lib/session-utils';
 import { RunnerLogo } from '../components/library/ai-elements/runner-logo';
+import { SessionModeBadge } from '../components/sessions/session-mode-badge';
 import {
   appendStreamEvent,
   isAcpSession,
@@ -123,13 +122,13 @@ export function SessionDetailPage() {
   useEffect(() => {
     const container = logRef.current;
     if (!container) return;
-    
+
     // Attempt to find the viewport if using ScrollArea
     const viewport = container.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
     if (viewport) {
-       viewport.scrollTop = viewport.scrollHeight;
+      viewport.scrollTop = viewport.scrollHeight;
     } else {
-       container.scrollTop = container.scrollHeight;
+      container.scrollTop = container.scrollHeight;
     }
   }, [logs]);
 
@@ -338,24 +337,7 @@ export function SessionDetailPage() {
               </Badge>
 
               {/* Mode badge */}
-              {sessionModeConfig[session.mode] && (
-                <Badge
-                  variant="outline"
-                  className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
-                >
-                  {(() => { const ModeIcon = sessionModeConfig[session.mode].icon; return <ModeIcon className="h-3.5 w-3.5" />; })()}
-                  {t(`sessions.modes.${session.mode}`)}
-                </Badge>
-              )}
-
-              {/* Runner badge */}
-              <Badge
-                variant="outline"
-                className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
-              >
-                <RunnerLogo runnerId={session.runner} size={14} />
-                {getRunnerDisplayName(session.runner, t)}
-              </Badge>
+              <SessionModeBadge mode={session.mode} />
 
               {/* Protocol badge */}
               <Badge
@@ -502,106 +484,106 @@ export function SessionDetailPage() {
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden w-full">
           {(!isAcp) ? (
             <div className="flex-1 flex flex-col min-h-0">
-               <div className="border-b px-4 py-2 flex items-center justify-between bg-muted/20 gap-4">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                        <input
-                          value={searchQuery}
-                          onChange={(event) => setSearchQuery(event.target.value)}
-                          placeholder={t('sessionDetail.filters.search')}
-                          className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                        />
-                      </div>
+              <div className="border-b px-4 py-2 flex items-center justify-between bg-muted/20 gap-4">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <input
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder={t('sessionDetail.filters.search')}
+                      className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
                   </div>
-                  <div className="flex items-center gap-2 justify-end">
-                       <div className="flex items-center gap-2 font-medium text-sm text-muted-foreground mr-2">
-                         <FileCode className="h-4 w-4" />
-                         <span>Verbose Logs</span>
-                       </div>
-                       <div className="h-4 w-px bg-border mx-1" />
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleDownload} title={t('sessionDetail.actions.download')}>
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className={cn("h-8 w-8 p-0", copySuccess && "text-emerald-500")} onClick={() => void handleCopyLogs()} title={t('sessionDetail.actions.copyLogs')}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
+                </div>
+                <div className="flex items-center gap-2 justify-end">
+                  <div className="flex items-center gap-2 font-medium text-sm text-muted-foreground mr-2">
+                    <FileCode className="h-4 w-4" />
+                    <span>Verbose Logs</span>
                   </div>
-               </div>
-               <ScrollArea className="flex-1 h-full bg-background" ref={logRef}>
-                 <div className="p-4 font-mono text-xs">
-                    {logsLoading ? (
-                      <div className="text-muted-foreground">{t('actions.loading')}</div>
-                    ) : filteredLogs.length === 0 ? (
-                      <div className="text-muted-foreground text-center italic opacity-60 py-8">{t('sessions.emptyLogs')}</div>
-                    ) : (
-                      filteredLogs.map((log) => {
-                        const isJson = log.message.trim().startsWith('{') || log.message.trim().startsWith('[');
-                        return (
-                          <div key={`${log.id}-${log.timestamp}`} className="mb-0.5 group hover:bg-muted/30 -mx-4 px-4 py-1 flex gap-3 items-start border-l-2 border-transparent">
-                            <span className="text-muted-foreground/40 whitespace-nowrap select-none w-24 shrink-0 text-[10px] pt-0.5 text-right font-light tabular-nums">
-                              {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}.
-                              <span className="opacity-50">{new Date(log.timestamp).getMilliseconds().toString().padStart(3, '0')}</span>
-                            </span>
-                            <span className={cn("uppercase text-[10px] font-bold w-14 shrink-0 pt-0.5 select-none text-center rounded-sm bg-muted/30", 
-                              log.level === 'error' ? "text-rose-600 bg-rose-500/10 dark:text-rose-400" : 
-                              log.level === 'warn' ? "text-amber-600 bg-amber-500/10 dark:text-amber-400" : 
-                              log.level === 'info' ? "text-sky-600 bg-sky-500/10 dark:text-sky-400" :
-                              log.level === 'debug' ? "text-violet-600 bg-violet-500/10 dark:text-violet-400" :
-                              "text-muted-foreground"
-                            )}>{log.level}</span>
-                            <div className={cn("flex-1 min-w-0 break-all whitespace-pre-wrap leading-relaxed", isJson && "text-emerald-600 dark:text-emerald-400")}>
-                              {log.message}
-                            </div>
+                  <div className="h-4 w-px bg-border mx-1" />
+                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleDownload} title={t('sessionDetail.actions.download')}>
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className={cn("h-8 w-8 p-0", copySuccess && "text-emerald-500")} onClick={() => void handleCopyLogs()} title={t('sessionDetail.actions.copyLogs')}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <ScrollArea className="flex-1 h-full bg-background" ref={logRef}>
+                <div className="p-4 font-mono text-xs">
+                  {logsLoading ? (
+                    <div className="text-muted-foreground">{t('actions.loading')}</div>
+                  ) : filteredLogs.length === 0 ? (
+                    <div className="text-muted-foreground text-center italic opacity-60 py-8">{t('sessions.emptyLogs')}</div>
+                  ) : (
+                    filteredLogs.map((log) => {
+                      const isJson = log.message.trim().startsWith('{') || log.message.trim().startsWith('[');
+                      return (
+                        <div key={`${log.id}-${log.timestamp}`} className="mb-0.5 group hover:bg-muted/30 -mx-4 px-4 py-1 flex gap-3 items-start border-l-2 border-transparent">
+                          <span className="text-muted-foreground/40 whitespace-nowrap select-none w-24 shrink-0 text-[10px] pt-0.5 text-right font-light tabular-nums">
+                            {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}.
+                            <span className="opacity-50">{new Date(log.timestamp).getMilliseconds().toString().padStart(3, '0')}</span>
+                          </span>
+                          <span className={cn("uppercase text-[10px] font-bold w-14 shrink-0 pt-0.5 select-none text-center rounded-sm bg-muted/30",
+                            log.level === 'error' ? "text-rose-600 bg-rose-500/10 dark:text-rose-400" :
+                              log.level === 'warn' ? "text-amber-600 bg-amber-500/10 dark:text-amber-400" :
+                                log.level === 'info' ? "text-sky-600 bg-sky-500/10 dark:text-sky-400" :
+                                  log.level === 'debug' ? "text-violet-600 bg-violet-500/10 dark:text-violet-400" :
+                                    "text-muted-foreground"
+                          )}>{log.level}</span>
+                          <div className={cn("flex-1 min-w-0 break-all whitespace-pre-wrap leading-relaxed", isJson && "text-emerald-600 dark:text-emerald-400")}>
+                            {log.message}
                           </div>
-                        );
-                      })
-                    )}
-                 </div>
-               </ScrollArea>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </ScrollArea>
             </div>
           ) : (
-             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'messages' | 'verbose')} className="flex-1 flex flex-col min-h-0">
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'messages' | 'verbose')} className="flex-1 flex flex-col min-h-0">
               <div className="border-b px-4 py-2 flex items-center justify-between bg-muted/20 gap-4">
-                 
-                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                        <input
-                          value={searchQuery}
-                          onChange={(event) => setSearchQuery(event.target.value)}
-                          placeholder={t('sessionDetail.filters.search')}
-                          className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                        />
+
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <input
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder={t('sessionDetail.filters.search')}
+                      className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 justify-end">
+                  <TabsList className="h-8 bg-muted/50 p-0.5">
+                    <TabsTrigger value="messages" className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                      <div className="flex items-center gap-1.5">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        <span>{t('sessionDetail.displayMode.messages')}</span>
                       </div>
-                  </div>
+                    </TabsTrigger>
+                    <TabsTrigger value="verbose" className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                      <div className="flex items-center gap-1.5">
+                        <FileCode className="h-3.5 w-3.5" />
+                        <span>{t('sessionDetail.displayMode.verbose')}</span>
+                      </div>
+                    </TabsTrigger>
+                  </TabsList>
 
-                  <div className="flex items-center gap-2 justify-end">
-                       <TabsList className="h-8 bg-muted/50 p-0.5">
-                           <TabsTrigger value="messages" className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                             <div className="flex items-center gap-1.5">
-                               <MessageSquare className="h-3.5 w-3.5" />
-                               <span>{t('sessionDetail.displayMode.messages')}</span>
-                             </div>
-                           </TabsTrigger>
-                           <TabsTrigger value="verbose" className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                             <div className="flex items-center gap-1.5">
-                               <FileCode className="h-3.5 w-3.5" />
-                               <span>{t('sessionDetail.displayMode.verbose')}</span>
-                             </div>
-                           </TabsTrigger>
-                       </TabsList>
-
-                      <div className="h-4 w-px bg-border mx-1" />
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleDownload} title={t('sessionDetail.actions.download')}>
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className={cn("h-8 w-8 p-0", copySuccess && "text-emerald-500")} onClick={() => void handleCopyLogs()} title={t('sessionDetail.actions.copyLogs')}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                  </div>
+                  <div className="h-4 w-px bg-border mx-1" />
+                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleDownload} title={t('sessionDetail.actions.download')}>
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className={cn("h-8 w-8 p-0", copySuccess && "text-emerald-500")} onClick={() => void handleCopyLogs()} title={t('sessionDetail.actions.copyLogs')}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              
+
               <TabsContent value="messages" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden relative">
                 <div className="absolute inset-0">
                   <AcpConversation
@@ -617,41 +599,41 @@ export function SessionDetailPage() {
                   />
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="verbose" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden relative h-full">
-                 <ScrollArea className="h-full bg-background" ref={logRef}>
-                   <div className="p-4 font-mono text-xs">
-                      {logsLoading ? (
-                        <div className="text-muted-foreground">{t('actions.loading')}</div>
-                      ) : filteredLogs.length === 0 ? (
-                        <div className="text-muted-foreground text-center italic opacity-60 py-8">{t('sessions.emptyLogs')}</div>
-                      ) : (
-                        filteredLogs.map((log) => {
-                          const isJson = log.message.trim().startsWith('{') || log.message.trim().startsWith('[');
-                          return (
-                            <div key={`${log.id}-${log.timestamp}`} className="mb-0.5 group hover:bg-muted/30 -mx-4 px-4 py-1 flex gap-3 items-start border-l-2 border-transparent">
-                              <span className="text-muted-foreground/40 whitespace-nowrap select-none w-24 shrink-0 text-[10px] pt-0.5 text-right font-light tabular-nums">
-                                {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}.
-                                <span className="opacity-50">{new Date(log.timestamp).getMilliseconds().toString().padStart(3, '0')}</span>
-                              </span>
-                              <span className={cn("uppercase text-[10px] font-bold w-14 shrink-0 pt-0.5 select-none text-center rounded-sm bg-muted/30", 
-                                log.level === 'error' ? "text-rose-600 bg-rose-500/10 dark:text-rose-400" : 
-                                log.level === 'warn' ? "text-amber-600 bg-amber-500/10 dark:text-amber-400" : 
-                                log.level === 'info' ? "text-sky-600 bg-sky-500/10 dark:text-sky-400" :
-                                log.level === 'debug' ? "text-violet-600 bg-violet-500/10 dark:text-violet-400" :
-                                "text-muted-foreground"
-                              )}>{log.level}</span>
-                              <div className={cn("flex-1 min-w-0 break-all whitespace-pre-wrap leading-relaxed", isJson && "text-emerald-600 dark:text-emerald-400")}>
-                                {log.message}
-                              </div>
+                <ScrollArea className="h-full bg-background" ref={logRef}>
+                  <div className="p-4 font-mono text-xs">
+                    {logsLoading ? (
+                      <div className="text-muted-foreground">{t('actions.loading')}</div>
+                    ) : filteredLogs.length === 0 ? (
+                      <div className="text-muted-foreground text-center italic opacity-60 py-8">{t('sessions.emptyLogs')}</div>
+                    ) : (
+                      filteredLogs.map((log) => {
+                        const isJson = log.message.trim().startsWith('{') || log.message.trim().startsWith('[');
+                        return (
+                          <div key={`${log.id}-${log.timestamp}`} className="mb-0.5 group hover:bg-muted/30 -mx-4 px-4 py-1 flex gap-3 items-start border-l-2 border-transparent">
+                            <span className="text-muted-foreground/40 whitespace-nowrap select-none w-24 shrink-0 text-[10px] pt-0.5 text-right font-light tabular-nums">
+                              {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}.
+                              <span className="opacity-50">{new Date(log.timestamp).getMilliseconds().toString().padStart(3, '0')}</span>
+                            </span>
+                            <span className={cn("uppercase text-[10px] font-bold w-14 shrink-0 pt-0.5 select-none text-center rounded-sm bg-muted/30",
+                              log.level === 'error' ? "text-rose-600 bg-rose-500/10 dark:text-rose-400" :
+                                log.level === 'warn' ? "text-amber-600 bg-amber-500/10 dark:text-amber-400" :
+                                  log.level === 'info' ? "text-sky-600 bg-sky-500/10 dark:text-sky-400" :
+                                    log.level === 'debug' ? "text-violet-600 bg-violet-500/10 dark:text-violet-400" :
+                                      "text-muted-foreground"
+                            )}>{log.level}</span>
+                            <div className={cn("flex-1 min-w-0 break-all whitespace-pre-wrap leading-relaxed", isJson && "text-emerald-600 dark:text-emerald-400")}>
+                              {log.message}
                             </div>
-                          );
-                        })
-                      )}
-                   </div>
-                 </ScrollArea>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </ScrollArea>
               </TabsContent>
-             </Tabs>
+            </Tabs>
           )}
         </div>
       </div>

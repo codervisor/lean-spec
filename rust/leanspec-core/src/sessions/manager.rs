@@ -438,7 +438,7 @@ impl SessionManager {
                         }
 
                         if let Some(mapped_logs) =
-                            map_acp_payload_to_logs(&session_id_stdout, payload)
+                            store_acp_payload_as_log(&session_id_stdout, payload)
                         {
                             for log in mapped_logs {
                                 let _ = db_stdout.insert_log(&log);
@@ -1468,160 +1468,26 @@ fn extract_acp_pending_permission_request(
     ))
 }
 
-fn map_acp_payload_to_logs(session_id: &str, payload: Value) -> Option<Vec<SessionLog>> {
+fn store_acp_payload_as_log(session_id: &str, payload: Value) -> Option<Vec<SessionLog>> {
     let method = payload.get("method").and_then(|value| value.as_str())?;
-    let timestamp = chrono::Utc::now();
-    let mut logs = Vec::new();
-
-    if method == "session/request_permission" {
-        if let Some(params) = payload.get("params") {
-            let log_message = json!({
-                "type": "acp_permission_request",
-                "timestamp": timestamp.to_rfc3339(),
-                "id": params.get("id").cloned().unwrap_or_else(|| json!("")),
-                "tool": params.get("tool").and_then(|value| value.as_str()).unwrap_or(""),
-                "args": params.get("args").cloned().unwrap_or_else(|| json!({})),
-                "options": params
-                    .get("options")
-                    .and_then(|value| value.as_array())
-                    .cloned()
-                    .unwrap_or_default(),
-            })
-            .to_string();
-
-            logs.push(SessionLog {
-                id: 0,
-                session_id: session_id.to_string(),
-                timestamp,
-                level: LogLevel::Info,
-                message: log_message,
-            });
-        }
-        return Some(logs);
-    }
-
-    if method != "session/update" {
+    if !matches!(method, "session/update" | "session/request_permission") {
         return None;
     }
 
-    let update = payload
-        .get("params")
-        .and_then(|params| params.get("update"))
-        .or_else(|| payload.get("params"))?;
+    let timestamp = chrono::Utc::now();
+    let message = json!({
+        "__acp_method": method,
+        "params": payload.get("params").cloned().unwrap_or(Value::Null),
+    })
+    .to_string();
 
-    let update_type = update
-        .get("type")
-        .or_else(|| update.get("sessionUpdate"))
-        .and_then(|value| value.as_str())
-        .unwrap_or_default();
-
-    let mapped = match update_type {
-        "agent_message_chunk" => Some(json!({
-            "type": "acp_message",
-            "timestamp": timestamp.to_rfc3339(),
-            "role": "agent",
-            "content": update.get("content").and_then(|v| v.as_str()).or_else(|| update.get("text").and_then(|v| v.as_str())).unwrap_or(""),
-            "done": update.get("done").and_then(|v| v.as_bool()).unwrap_or(false),
-        })),
-        "user_message_chunk" => Some(json!({
-            "type": "acp_message",
-            "timestamp": timestamp.to_rfc3339(),
-            "role": "user",
-            "content": update.get("content").and_then(|v| v.as_str()).or_else(|| update.get("text").and_then(|v| v.as_str())).unwrap_or(""),
-            "done": update.get("done").and_then(|v| v.as_bool()).unwrap_or(false),
-        })),
-        "agent_thought_chunk" => Some(json!({
-            "type": "acp_thought",
-            "timestamp": timestamp.to_rfc3339(),
-            "content": update.get("content").and_then(|v| v.as_str()).or_else(|| update.get("text").and_then(|v| v.as_str())).unwrap_or(""),
-            "done": update.get("done").and_then(|v| v.as_bool()).unwrap_or(false),
-        })),
-        "tool_call" | "tool_call_update" => {
-            // Support both old field names (id/tool/args/result) and new protocol
-            // field names (toolCallId/title/rawInput/content)
-            let result = update.get("result").cloned().unwrap_or_else(|| {
-                // New protocol nests result in content[].content.text
-                update
-                    .get("content")
-                    .and_then(|v| v.as_array())
-                    .and_then(|arr| arr.first())
-                    .and_then(|item| item.get("content"))
-                    .and_then(|content| content.get("text"))
-                    .cloned()
-                    .unwrap_or(Value::Null)
-            });
-            Some(json!({
-                "type": "acp_tool_call",
-                "timestamp": timestamp.to_rfc3339(),
-                "id": update.get("id").or_else(|| update.get("toolCallId")).and_then(|v| v.as_str()).unwrap_or_default(),
-                "tool": update.get("tool").or_else(|| update.get("title")).and_then(|v| v.as_str()).unwrap_or_default(),
-                "args": update.get("args").or_else(|| update.get("rawInput")).cloned().unwrap_or_else(|| json!({})),
-                "status": update.get("status").and_then(|v| v.as_str()).unwrap_or("running"),
-                "result": result,
-            }))
-        }
-        "plan" => {
-            let entries = update
-                .get("entries")
-                .and_then(|value| value.as_array())
-                .cloned()
-                .unwrap_or_default()
-                .into_iter()
-                .enumerate()
-                .map(|(index, entry)| {
-                    let status = entry
-                        .get("status")
-                        .and_then(|value| value.as_str())
-                        .map(|value| match value {
-                            "completed" => "done",
-                            "in_progress" => "running",
-                            "done" | "running" | "pending" => value,
-                            _ => "pending",
-                        })
-                        .unwrap_or("pending");
-
-                    json!({
-                        "id": entry
-                            .get("id")
-                            .and_then(|value| value.as_str())
-                            .map(|value| value.to_string())
-                            .unwrap_or_else(|| index.to_string()),
-                        "title": entry
-                            .get("title")
-                            .and_then(|value| value.as_str())
-                            .unwrap_or_default(),
-                        "status": status,
-                    })
-                })
-                .collect::<Vec<_>>();
-
-            Some(json!({
-                "type": "acp_plan",
-                "timestamp": timestamp.to_rfc3339(),
-                "entries": entries,
-                "done": update.get("done").and_then(|v| v.as_bool()),
-            }))
-        }
-        "current_mode_update" => Some(json!({
-            "type": "acp_mode_update",
-            "timestamp": timestamp.to_rfc3339(),
-            "mode": update.get("mode").and_then(|v| v.as_str()).unwrap_or_default(),
-        })),
-        _ => None,
-    };
-
-    if let Some(message) = mapped {
-        logs.push(SessionLog {
-            id: 0,
-            session_id: session_id.to_string(),
-            timestamp,
-            level: LogLevel::Info,
-            message: message.to_string(),
-        });
-        return Some(logs);
-    }
-
-    None
+    Some(vec![SessionLog {
+        id: 0,
+        session_id: session_id.to_string(),
+        timestamp,
+        level: LogLevel::Info,
+        message,
+    }])
 }
 
 async fn send_acp_request(
@@ -1748,6 +1614,7 @@ async fn cleanup_session(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[tokio::test]
     async fn test_create_session() {
@@ -1878,5 +1745,65 @@ mod tests {
 
         assert_eq!(session.spec_ids.len(), 2);
         assert_eq!(session.spec_id(), Some("028-cli"));
+    }
+
+    #[test]
+    fn test_store_acp_payload_as_log_passthrough() {
+        let update_payload = json!({
+            "method": "session/update",
+            "params": {
+                "update": {
+                    "sessionUpdate": "tool_call",
+                    "toolCallId": "tool-1",
+                    "title": "read_file",
+                    "rawInput": {"path": "README.md"},
+                    "status": "running"
+                }
+            }
+        });
+
+        let logs = store_acp_payload_as_log("session-1", update_payload)
+            .expect("session/update should be stored");
+        assert_eq!(logs.len(), 1);
+        let stored = serde_json::from_str::<Value>(&logs[0].message).expect("valid json");
+        assert_eq!(
+            stored.get("__acp_method").and_then(|v| v.as_str()),
+            Some("session/update")
+        );
+        assert_eq!(
+            stored
+                .get("params")
+                .and_then(|params| params.get("update"))
+                .and_then(|update| update.get("toolCallId"))
+                .and_then(|v| v.as_str()),
+            Some("tool-1")
+        );
+
+        let permission_payload = json!({
+            "method": "session/request_permission",
+            "params": {
+                "id": "perm-1",
+                "tool": "delete_file",
+                "args": {"path": "tmp.txt"},
+                "options": ["allow_once", "deny_once"]
+            }
+        });
+
+        let permission_logs = store_acp_payload_as_log("session-1", permission_payload)
+            .expect("session/request_permission should be stored");
+        let permission_stored =
+            serde_json::from_str::<Value>(&permission_logs[0].message).expect("valid json");
+        assert_eq!(
+            permission_stored
+                .get("__acp_method")
+                .and_then(|v| v.as_str()),
+            Some("session/request_permission")
+        );
+
+        let non_session_payload = json!({
+            "method": "workspace/other",
+            "params": {}
+        });
+        assert!(store_acp_payload_as_log("session-1", non_session_payload).is_none());
     }
 }

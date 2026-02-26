@@ -114,8 +114,23 @@ export type AcpPlanEntryStatus = 'pending' | 'running' | 'done';
 
 export type SessionStreamEvent =
   | { type: 'log'; timestamp: string; level: string; message: string }
-  | { type: 'acp_message'; timestamp?: string; role: 'agent' | 'user'; content: string; done: boolean }
-  | { type: 'acp_thought'; timestamp?: string; content: string; done: boolean }
+  | {
+    type: 'acp_message';
+    timestamp?: string;
+    role: 'agent' | 'user';
+    content: string;
+    done: boolean;
+    contentBlocks?: unknown[];
+    rawContent?: unknown;
+  }
+  | {
+    type: 'acp_thought';
+    timestamp?: string;
+    content: string;
+    done: boolean;
+    contentBlocks?: unknown[];
+    rawContent?: unknown;
+  }
   | {
     type: 'acp_tool_call';
     timestamp?: string;
@@ -124,6 +139,7 @@ export type SessionStreamEvent =
     args: Record<string, unknown>;
     status: AcpToolCallStatus;
     result?: unknown;
+    rawContent?: unknown;
   }
   | {
     type: 'acp_plan';

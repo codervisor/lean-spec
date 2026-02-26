@@ -159,6 +159,30 @@ fn extract_log_payload(log: &SessionLog) -> Option<Value> {
         .and_then(|value| if value.is_object() { Some(value) } else { None })
 }
 
+fn value_to_string(value: &Value) -> Option<String> {
+    match value {
+        Value::String(inner) => Some(inner.clone()),
+        Value::Number(inner) => Some(inner.to_string()),
+        _ => None,
+    }
+}
+
+fn acp_update_from_payload(payload: &Value) -> Option<&Value> {
+    if payload.get("__acp_method").and_then(|value| value.as_str()) != Some("session/update") {
+        return None;
+    }
+
+    let params = payload.get("params")?;
+    Some(params.get("update").unwrap_or(params))
+}
+
+fn acp_update_type(update: &Value) -> Option<&str> {
+    update
+        .get("sessionUpdate")
+        .or_else(|| update.get("type"))
+        .and_then(|value| value.as_str())
+}
+
 fn extract_active_tool_and_plan(
     logs: &[SessionLog],
 ) -> (Option<ActiveToolCallResponse>, Option<PlanProgressResponse>) {
@@ -170,23 +194,29 @@ fn extract_active_tool_and_plan(
             continue;
         };
 
-        let Some(event_type) = payload.get("type").and_then(|value| value.as_str()) else {
+        let Some(update) = acp_update_from_payload(&payload) else {
             continue;
         };
 
-        if event_type == "acp_tool_call" {
-            let id = payload
-                .get("id")
-                .and_then(|value| value.as_str())
-                .map(|value| value.to_string());
-            let tool = payload
-                .get("tool")
+        let Some(update_type) = acp_update_type(update) else {
+            continue;
+        };
+
+        if update_type == "tool_call" || update_type == "tool_call_update" {
+            let id = update.get("toolCallId").and_then(value_to_string);
+            let tool = update
+                .get("title")
                 .and_then(|value| value.as_str())
                 .unwrap_or_default()
                 .to_string();
-            let status = payload
+            let status = update
                 .get("status")
                 .and_then(|value| value.as_str())
+                .map(|value| match value {
+                    "completed" | "failed" => value,
+                    "done" => "completed",
+                    _ => "running",
+                })
                 .unwrap_or("running")
                 .to_string();
 
@@ -204,8 +234,8 @@ fn extract_active_tool_and_plan(
             continue;
         }
 
-        if event_type == "acp_plan" {
-            let Some(entries) = payload.get("entries").and_then(|value| value.as_array()) else {
+        if update_type == "plan" {
+            let Some(entries) = update.get("entries").and_then(|value| value.as_array()) else {
                 continue;
             };
             let total = entries.len();
@@ -218,7 +248,7 @@ fn extract_active_tool_and_plan(
                     entry
                         .get("status")
                         .and_then(|value| value.as_str())
-                        .map(|status| status == "done")
+                        .map(|status| matches!(status, "done" | "completed"))
                         .unwrap_or(false)
                 })
                 .count();
@@ -1270,22 +1300,12 @@ async fn handle_ws_session(mut socket: WebSocket, state: AppState, session_id: S
 
 fn stream_payload_from_log(log: &SessionLog) -> Value {
     if let Ok(mut parsed) = serde_json::from_str::<Value>(&log.message) {
-        let allowed = [
-            "acp_message",
-            "acp_thought",
-            "acp_tool_call",
-            "acp_plan",
-            "acp_permission_request",
-            "acp_mode_update",
-            "complete",
-        ];
-
-        let event_type = parsed
-            .get("type")
+        let method = parsed
+            .get("__acp_method")
             .and_then(|value| value.as_str())
             .unwrap_or_default();
 
-        if allowed.contains(&event_type) {
+        if matches!(method, "session/update" | "session/request_permission") {
             if let Some(map) = parsed.as_object_mut() {
                 if !map.contains_key("timestamp") {
                     map.insert(
@@ -1385,6 +1405,9 @@ fn build_runner_list_response(project_path: &str) -> leanspec_core::CoreResult<R
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::sessions::LogLevel;
+    use chrono::Utc;
+    use serde_json::json;
 
     #[test]
     fn test_session_response_from_session() {
@@ -1401,5 +1424,93 @@ mod tests {
         assert_eq!(response.id, "test-id");
         assert_eq!(response.project_path, "/test/project");
         assert_eq!(response.runner, "claude");
+    }
+
+    #[test]
+    fn test_stream_payload_from_log_acp_passthrough() {
+        let log = SessionLog {
+            id: 1,
+            session_id: "session-1".to_string(),
+            timestamp: Utc::now(),
+            level: LogLevel::Info,
+            message: json!({
+                "__acp_method": "session/update",
+                "params": {
+                    "update": {
+                        "sessionUpdate": "agent_message_chunk",
+                        "content": { "text": "Hello" },
+                        "done": false
+                    }
+                }
+            })
+            .to_string(),
+        };
+
+        let payload = stream_payload_from_log(&log);
+        assert_eq!(
+            payload.get("__acp_method").and_then(|value| value.as_str()),
+            Some("session/update")
+        );
+        assert!(payload
+            .get("params")
+            .and_then(|params| params.get("update"))
+            .is_some());
+        assert!(payload
+            .get("timestamp")
+            .and_then(|value| value.as_str())
+            .is_some());
+    }
+
+    #[test]
+    fn test_extract_active_tool_and_plan_from_raw_acp_logs() {
+        let logs = vec![
+            SessionLog {
+                id: 1,
+                session_id: "session-1".to_string(),
+                timestamp: Utc::now(),
+                level: LogLevel::Info,
+                message: json!({
+                    "__acp_method": "session/update",
+                    "params": {
+                        "update": {
+                            "sessionUpdate": "tool_call",
+                            "toolCallId": "tool-1",
+                            "title": "read_file",
+                            "status": "running"
+                        }
+                    }
+                })
+                .to_string(),
+            },
+            SessionLog {
+                id: 2,
+                session_id: "session-1".to_string(),
+                timestamp: Utc::now(),
+                level: LogLevel::Info,
+                message: json!({
+                    "__acp_method": "session/update",
+                    "params": {
+                        "update": {
+                            "sessionUpdate": "plan",
+                            "entries": [
+                                {"id": "1", "title": "Step 1", "status": "completed"},
+                                {"id": "2", "title": "Step 2", "status": "in_progress"}
+                            ]
+                        }
+                    }
+                })
+                .to_string(),
+            },
+        ];
+
+        let (active_tool, plan_progress) = extract_active_tool_and_plan(&logs);
+        let active_tool = active_tool.expect("active tool should be present");
+        assert_eq!(active_tool.id.as_deref(), Some("tool-1"));
+        assert_eq!(active_tool.tool, "read_file");
+        assert_eq!(active_tool.status, "running");
+
+        let plan_progress = plan_progress.expect("plan progress should be present");
+        assert_eq!(plan_progress.completed, 1);
+        assert_eq!(plan_progress.total, 2);
     }
 }
