@@ -23,6 +23,8 @@ lean-spec create <name> --template default
 lean-spec create <name> --status planned
 lean-spec create <name> --priority high
 lean-spec create <name> --tags api,backend
+lean-spec create <name> --parent 250
+lean-spec create <name> --depends-on 210 211
 ```
 
 ### Update Metadata

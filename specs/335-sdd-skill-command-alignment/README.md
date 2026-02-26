@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-02-26
 priority: high
 tags:
@@ -7,10 +7,13 @@ tags:
 - documentation
 - dx
 created_at: 2026-02-26T02:43:21.640718246Z
-updated_at: 2026-02-26T02:59:49.528016444Z
+updated_at: 2026-02-26T03:21:39.820928955Z
+completed_at: 2026-02-26T03:21:39.820928955Z
 transitions:
 - status: in-progress
   at: 2026-02-26T02:59:49.528016444Z
+- status: complete
+  at: 2026-02-26T03:21:39.820928955Z
 ---
 
 ## Overview
@@ -136,18 +139,34 @@ Deprecate `link`, `unlink`, `children` CLI commands in favor of `rel`. This is p
 
 ## Plan
 
-- [ ] Fix skill docs: replace phantom MCP tools with actual `relationships` tool usage
-- [ ] Fix commands.md: correct all flag errors
-- [ ] Add missing CLI commands to commands.md
-- [ ] Update SKILL.md tool reference table to match reality
-- [ ] Add `deps` and `children` MCP tools (Rust implementation)
-- [ ] Add `--parent` and `--depends-on` to CLI `create` command
-- [ ] Add `--hierarchy` documentation to list command
-- [ ] Decide on `link`/`unlink` CLI fate (keep as aliases? deprecation warning?)
-- [ ] Final cross-verification pass
+- [x] Fix skill docs: replace phantom MCP tools with actual `relationships` tool usage
+- [x] Fix commands.md: correct all flag errors
+- [x] Add missing CLI commands to commands.md
+- [x] Update SKILL.md tool reference table to match reality
+- [x] Add `deps` and `children` MCP tools (Rust implementation)
+- [x] Add `--parent` and `--depends-on` to CLI `create` command
+- [x] Add `--hierarchy` documentation to list command
+- [x] Decide on `link`/`unlink` CLI fate (keep as aliases? deprecation warning?)
+- [x] Final cross-verification pass
+
+
+- [x] Update SDD skill docs to use `relationships` MCP semantics and correct command examples
+- [x] Correct CLI reference flags and remove invalid options in `references/commands.md`
+- [x] Add CLI `create` support for `--parent` and `--depends-on`
+- [x] Add MCP `children` and `deps` tools for closer CLI/MCP parity
+- [x] Reconcile CLI source/runtime mismatch (`children`/`deps` already in runtime help, not in current rust/leanspec-cli source tree)
 
 ## Notes
 
 - MCP uses camelCase params (JSON convention), CLI uses kebab-case flags (POSIX convention) — this is correct
 - The `create` MCP tool already supports `parent` and `dependsOn` but CLI `create` doesn't — this should be added
 - The `update` MCP tool has rich content editing (replacements, sectionUpdates, checklistToggles) that CLI doesn't — this is by design (agents need it, humans use editors)
+
+### Completion Notes (2026-02-26)
+
+- Added MCP convenience tools `children` and `deps` while keeping `relationships` as canonical mutation API.
+- Added CLI `create --parent` and `create --depends-on` for creation-time relationship parity with MCP `create`.
+- Added CLI `children` and `deps` commands and `list --hierarchy` support in source.
+- Updated SDD skill docs to use real MCP tool names/params and corrected CLI flags.
+- Runtime/source mismatch in the monorepo was reconciled by preferring locally built Rust binaries in the CLI wrapper during development.
+- Decision on `link`/`unlink`: keep `rel` as the canonical workflow in docs; do not introduce/encourage separate aliases in source-aligned docs.

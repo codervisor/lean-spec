@@ -40,7 +40,7 @@ lean-spec children 250
 With MCP tool (`relationships`):
 - add parent: `specPath=251`, `action=add`, `type=parent`, `target=250`
 - add parent: `specPath=252`, `action=add`, `type=parent`, `target=250`
-- view hierarchy: `specPath=250`, `action=view`
+- list children: `children` with `specPath=250`
 
 ## Example: Choosing Between Parent and Depends-On
 

@@ -120,6 +120,12 @@ enum Commands {
         fix: bool,
     },
 
+    /// List child specs for a parent
+    Children {
+        /// Spec path or number
+        spec: String,
+    },
+
     /// Remove specified line ranges from spec
     Compact {
         /// Spec to compact
@@ -298,6 +304,28 @@ enum Commands {
         /// Show compact output
         #[arg(short, long)]
         compact: bool,
+
+        /// Show parent-child hierarchy tree
+        #[arg(long)]
+        hierarchy: bool,
+    },
+
+    /// Show spec dependency graph
+    Deps {
+        /// Spec path or number
+        spec: String,
+
+        /// Maximum depth to traverse
+        #[arg(short = 'D', long, default_value = "3")]
+        depth: usize,
+
+        /// Show upstream dependencies only
+        #[arg(long)]
+        upstream: bool,
+
+        /// Show downstream dependents only
+        #[arg(long)]
+        downstream: bool,
     },
 
     /// Start MCP server for AI assistants
@@ -714,6 +742,7 @@ fn main() -> ExitCode {
         ),
         Commands::Board { group_by } => commands::board::run(&specs_dir, &group_by, &cli.output),
         Commands::Check { fix } => commands::check::run(&specs_dir, fix, &cli.output),
+        Commands::Children { spec } => commands::children::run(&specs_dir, &spec, &cli.output),
         Commands::Compact {
             spec,
             removes,
@@ -747,6 +776,12 @@ fn main() -> ExitCode {
             &cli.output,
         ),
         Commands::Examples => commands::examples::run(&cli.output),
+        Commands::Deps {
+            spec,
+            depth,
+            upstream,
+            downstream,
+        } => commands::deps::run(&specs_dir, &spec, depth, upstream, downstream, &cli.output),
         Commands::Files { spec, size } => {
             commands::files::run(&specs_dir, &spec, size, &cli.output)
         }
@@ -790,6 +825,7 @@ fn main() -> ExitCode {
             priority,
             assignee,
             compact,
+            hierarchy,
         } => commands::list::run(
             &specs_dir,
             status,
@@ -797,6 +833,7 @@ fn main() -> ExitCode {
             priority,
             assignee,
             compact,
+            hierarchy,
             &cli.output,
         ),
         Commands::Mcp => commands::mcp::run(&specs_dir),

@@ -11,6 +11,7 @@ pub fn run(
     priority: Option<String>,
     assignee: Option<String>,
     compact: bool,
+    hierarchy: bool,
     output_format: &str,
 ) -> Result<(), Box<dyn Error>> {
     let loader = SpecLoader::new(specs_dir);
@@ -39,6 +40,8 @@ pub fn run(
 
     if output_format == "json" {
         print_json(&filtered)?;
+    } else if hierarchy {
+        print_hierarchy(&filtered);
     } else if compact {
         print_compact(&filtered);
     } else {
@@ -169,4 +172,74 @@ fn is_umbrella(spec: &SpecInfo, specs: &[&SpecInfo]) -> bool {
     specs
         .iter()
         .any(|s| s.frontmatter.parent.as_deref() == Some(spec.path.as_str()))
+}
+
+fn print_hierarchy(specs: &[&SpecInfo]) {
+    if specs.is_empty() {
+        println!("{}", "No specs found".yellow());
+        return;
+    }
+
+    let mut by_path: std::collections::HashMap<String, &SpecInfo> =
+        std::collections::HashMap::new();
+    let mut children_by_parent: std::collections::HashMap<String, Vec<&SpecInfo>> =
+        std::collections::HashMap::new();
+
+    for spec in specs {
+        by_path.insert(spec.path.clone(), *spec);
+    }
+
+    for spec in specs {
+        if let Some(parent) = &spec.frontmatter.parent {
+            children_by_parent
+                .entry(parent.clone())
+                .or_default()
+                .push(*spec);
+        }
+    }
+
+    let mut roots: Vec<&SpecInfo> = specs
+        .iter()
+        .copied()
+        .filter(|s| match &s.frontmatter.parent {
+            None => true,
+            Some(parent) => !by_path.contains_key(parent),
+        })
+        .collect();
+    roots.sort_by(|a, b| a.path.cmp(&b.path));
+
+    let mut visited = std::collections::HashSet::new();
+    for root in roots {
+        print_hierarchy_node(root, 0, &children_by_parent, &mut visited);
+    }
+
+    println!("\n{} specs found", specs.len().to_string().green());
+}
+
+fn print_hierarchy_node(
+    spec: &SpecInfo,
+    depth: usize,
+    children_by_parent: &std::collections::HashMap<String, Vec<&SpecInfo>>,
+    visited: &mut std::collections::HashSet<String>,
+) {
+    if !visited.insert(spec.path.clone()) {
+        return;
+    }
+
+    let indent = "  ".repeat(depth);
+    println!(
+        "{}{} {} - {}",
+        indent,
+        spec.frontmatter.status_emoji(),
+        spec.path.cyan(),
+        spec.title
+    );
+
+    if let Some(children) = children_by_parent.get(&spec.path) {
+        let mut sorted = children.clone();
+        sorted.sort_by(|a, b| a.path.cmp(&b.path));
+        for child in sorted {
+            print_hierarchy_node(child, depth + 1, children_by_parent, visited);
+        }
+    }
 }

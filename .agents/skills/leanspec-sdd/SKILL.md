@@ -73,8 +73,8 @@ Use MCP tools when available. Use CLI as fallback.
 | Add child | `relationships` (`action=add`, `type=child`) | `lean-spec rel add <parent> --child <child>` |
 | Add dependency | `relationships` (`action=add`, `type=depends_on`) | `lean-spec rel add <spec> --depends-on <other>` |
 | Remove dependency | `relationships` (`action=remove`, `type=depends_on`) | `lean-spec rel rm <spec> --depends-on <other>` |
-| Dependency graph | _(no dedicated MCP tool)_ | `lean-spec deps <spec>` |
-| List children | `relationships` (`action=view`) | `lean-spec children <parent>` |
+| Dependency graph | `deps` | `lean-spec deps <spec>` |
+| List children | `children` | `lean-spec children <parent>` |
 | Token count | `tokens` | `lean-spec tokens <spec>` |
 | Validate | `validate` | `lean-spec validate` |
 | Stats | `stats` | `lean-spec stats` |
@@ -93,7 +93,7 @@ Use when a large initiative is **broken into child specs** that together form th
 - Children share the parent's theme/goal
 
 **Tools**: `relationships` with `action=add`, `type=parent`, `target=<parent>` (MCP) / `lean-spec rel add <child> --parent <parent>` (CLI)
-**View children**: `relationships` with `action=view` (read `hierarchy.children`) (MCP) / `lean-spec children <parent>` (CLI)
+**View children**: `children` (MCP) / `lean-spec children <parent>` (CLI)
 
 **Example**: "CLI UX Overhaul" umbrella with children: "Help System", "Error Messages", "Progress Indicators"
 
@@ -127,7 +127,7 @@ When breaking a large initiative into child specs:
 1. Create the umbrella spec: `create`
 2. Create each child spec: `create`
 3. Assign children to parent: `relationships` (`action=add`, `type=parent`) for each child
-4. Verify structure: `relationships` (`action=view`) or `children` on CLI
+4. Verify structure: `children` (MCP) or `children` on CLI
 5. Add cross-cutting deps between children if needed: `relationships` (`action=add`, `type=depends_on`)
 
 ## Best Practices (Summary)

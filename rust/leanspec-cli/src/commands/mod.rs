@@ -1,7 +1,9 @@
 //! CLI commands module
 
 pub mod board;
+pub mod children;
 pub mod create;
+pub mod deps;
 pub mod list;
 pub mod rel;
 pub mod runner;

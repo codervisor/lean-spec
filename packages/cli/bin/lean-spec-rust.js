@@ -6,8 +6,10 @@
  * then spawns the appropriate Rust binary with the provided arguments.
  * 
  * The wrapper looks for binaries in the following locations:
- * 1. Platform-specific npm package (lean-spec-darwin-x64, etc.)
- * 2. Local binaries directory (for development)
+ * 1. Rust target/debug binary (for local development)
+ * 2. Rust target/release binary (for local development)
+ * 3. Platform-specific npm package (lean-spec-darwin-x64, etc.)
+ * 4. Local binaries directory (fallback)
  */
 
 import { spawn } from 'child_process';
@@ -104,32 +106,6 @@ function getBinaryPath() {
   
   debug('Binary info:', { platformKey, binaryName, packageName });
 
-  // Try to resolve platform package
-  try {
-    const resolvedPath = require.resolve(`${packageName}/${binaryName}`);
-    if (isExecutableBinary(resolvedPath, platform)) {
-      debug('Found platform package binary:', resolvedPath);
-      return resolvedPath;
-    }
-    debug('Platform package binary is invalid:', resolvedPath);
-  } catch (e) {
-    debug('Platform package not found:', packageName, '-', e.message);
-  }
-
-  // Try local binaries directory (for development/testing)
-  try {
-    const localPath = join(__dirname, '..', 'binaries', platformKey, binaryName);
-    debug('Trying local binary:', localPath);
-    accessSync(localPath);
-    if (isExecutableBinary(localPath, platform)) {
-      debug('Found local binary:', localPath);
-      return localPath;
-    }
-    debug('Local binary is invalid:', localPath);
-  } catch (e) {
-    debug('Local binary not found:', e.message);
-  }
-
   // Try rust/target/debug directory first (for local development with `pnpm build:rust`)
   try {
     const rustDebugPath = join(__dirname, '..', '..', '..', 'rust', 'target', 'debug', binaryName);
@@ -156,6 +132,32 @@ function getBinaryPath() {
     debug('Rust release binary is invalid:', rustTargetPath);
   } catch (e) {
     debug('Rust release binary not found:', e.message);
+  }
+
+  // Try to resolve platform package
+  try {
+    const resolvedPath = require.resolve(`${packageName}/${binaryName}`);
+    if (isExecutableBinary(resolvedPath, platform)) {
+      debug('Found platform package binary:', resolvedPath);
+      return resolvedPath;
+    }
+    debug('Platform package binary is invalid:', resolvedPath);
+  } catch (e) {
+    debug('Platform package not found:', packageName, '-', e.message);
+  }
+
+  // Try local binaries directory (fallback)
+  try {
+    const localPath = join(__dirname, '..', 'binaries', platformKey, binaryName);
+    debug('Trying local binary:', localPath);
+    accessSync(localPath);
+    if (isExecutableBinary(localPath, platform)) {
+      debug('Found local binary:', localPath);
+      return localPath;
+    }
+    debug('Local binary is invalid:', localPath);
+  } catch (e) {
+    debug('Local binary not found:', e.message);
   }
 
   console.error(`Binary not found for ${platform}-${arch}`);
