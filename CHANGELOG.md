@@ -7,6 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **ACP Sessions Integration** ([spec 330](https://web.lean-spec.dev/specs/330)) - Agent-Client-Protocol support for interactive AI sessions
+  - Human-in-the-loop permission response handling in UI and backend
+  - Resume session functionality for paused ACP sessions
+  - New `AcpConversation` component for structured agent interactions
+  - Session streaming via `session-stream.ts` for real-time updates
+
+- **Files Page** ([spec 331](https://web.lean-spec.dev/specs/331)) - Full-featured file browser in web UI
+  - `FileExplorer` component with tree navigation and tab management
+  - `CodeViewer` with syntax highlighting and sticky line numbers
+  - File search with support for ignored files
+  - Material-style file icons via `@exuanbo/file-icons-js`
+  - File browsing API endpoints in Rust HTTP server
+
+- **Session Context Redesign** ([spec 328](https://web.lean-spec.dev/specs/328)) - Multi-spec and multi-prompt session support
+  - Sessions can now reference multiple specs and prompts
+  - `SearchableSelect` and `SpecSearchSelect` reusable components
+  - Enhanced `SessionCreateDialog` with searchable spec selection
+  - Session timeout management and watchdog support
+
+- **Runner Enhancements** - Flexible prompt handling and version management
+  - `prompt_flag` field in `RunnerConfig` and `RunnerDefinition` for dynamic prompt injection
+  - Runner version retrieval API with settings integration
+  - Global scope support and IDE runner filters in runner settings
+  - Updated runners schema to document prompt usage
+
+- **CLI Template Loading** - Template loading in Rust CLI `create` command
+  - Loads and applies templates during spec creation (PR #139)
+
+- **Advanced Search Refactoring** ([spec 313](https://web.lean-spec.dev/specs/313)) - Modular search architecture in Rust
+  - Split monolithic `search.rs` into `filters`, `fuzzy`, `query`, and `scorer` modules
+  - MCP search tool integration tests
+
+- **Session E2E Tests** - End-to-end tests for session lifecycle
+  - CLI session integration tests covering create, list, and management workflows
+
+### Changed
+- **Desktop Package Migrated** ([spec 325](https://web.lean-spec.dev/specs/325)) - Moved desktop app to separate repository
+  - Removed entire `packages/desktop` directory (Tauri source, components, hooks, styles)
+  - Removed `desktop-build.yml` GitHub Actions workflow
+  - Updated packages README to reflect new architecture
+
+- **Component Performance** - Memoized `BoardView` and `ListView` for optimized rendering
+  - Enhanced search functionality in `SpecsFilters`
+
+- **BackToTop Component** - Added `targetId` prop for scoping scroll behavior to specific containers
+
+- **Session Runner** - Supports dynamic prompt replacement via `prompt_flag` configuration
+
+### Fixed
+- **pnpm Version** - Updated `packageManager` to pnpm@10.30.2 in root `package.json`
+- **Publishing Scripts** - Removed `ui-components` from package handling in publish scripts
+- **Context Prompt** - Simplified header assignment in `build_context_prompt` function
+
+### Technical
+- Removed deprecated `badge-config.ts` from UI components root (moved to `lib/`)
+- Added new API types for sessions, files, and ACP in `types/api.ts`
+- Updated `pnpm-lock.yaml` and Rust `Cargo.lock` dependencies
+
 ## [0.2.24] - 2026-02-23
 
 ### Added
