@@ -112,6 +112,7 @@ Rules enforced by hooks or CI:
 2. **i18n** - Update BOTH en and zh-CN → [I18N.md](./references/I18N.md) ⚠️ commonly forgotten
 3. **Regression Tests** - Bug fixes MUST include failing-then-passing tests
 4. **Rust Quality** - Must pass `cargo clippy -- -D warnings`
+5. **Rust Params Structs** - Functions with >7 args must use a params struct (enforced by `clippy.toml`)
 5. **Use shadcn/ui** - No native HTML form elements
 6. **cursor-pointer** - All clickable items must use `cursor-pointer`
 

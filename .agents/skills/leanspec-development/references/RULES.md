@@ -266,6 +266,29 @@ const className = `text-blue-300 ${isActive ? 'font-bold' : ''}`;
 - **No `.unwrap()` in library code** - Use proper error handling
 - **Descriptive names** - No abbreviations
 - **Follow Rust conventions** - snake_case, etc.
+- **Params structs for complex functions** - Functions with more than 7 arguments must use a params struct instead of positional args (enforced by `rust/clippy.toml`)
+
+```rust
+// ✅ Good - params struct for many arguments
+pub struct CreateParams {
+    pub specs_dir: String,
+    pub name: String,
+    pub title: Option<String>,
+    pub template: Option<String>,
+    pub status: Option<String>,
+    pub priority: String,
+    pub tags: Option<String>,
+    pub parent: Option<String>,
+}
+
+pub fn run(params: CreateParams) -> Result<()> { ... }
+
+// ❌ Bad - too many positional arguments
+pub fn run(specs_dir: &str, name: &str, title: Option<String>,
+           template: Option<String>, status: Option<String>,
+           priority: &str, tags: Option<String>, parent: Option<String>
+) -> Result<()> { ... }
+```
 
 ```rust
 // ✅ Good
