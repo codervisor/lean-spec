@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, Download, Copy, Play, Square, RotateCcw, Pause } from 'lucide-react';
+import { 
+  AlertTriangle, ArrowLeft, Download, Copy, Play, Square, RotateCcw, Pause, 
+  Terminal, Activity, Eye, EyeOff, Search, Clock, Cpu, Zap
+} from 'lucide-react';
 import { Button, Card, CardContent, cn } from '@/library';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
@@ -49,6 +52,7 @@ export function SessionDetailPage() {
   const [respondingPermissionIds, setRespondingPermissionIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<Set<string>>(new Set());
+  const [showHeartbeatLogs, setShowHeartbeatLogs] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const logRef = useRef<HTMLDivElement>(null);
 
@@ -152,6 +156,7 @@ export function SessionDetailPage() {
   const filteredLogs = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     return logs.filter((log) => {
+      if (!showHeartbeatLogs && log.message.includes('Session still running')) return false;
       if (levelFilter.size > 0 && !levelFilter.has(log.level)) return false;
       if (normalizedQuery) {
         const haystack = `${log.level} ${log.message}`.toLowerCase();
@@ -159,12 +164,14 @@ export function SessionDetailPage() {
       }
       return true;
     });
-  }, [levelFilter, logs, searchQuery]);
+  }, [levelFilter, logs, searchQuery, showHeartbeatLogs]);
 
   const filteredStreamEvents = useMemo(() => {
     if (!isAcp) return [];
     const normalizedQuery = searchQuery.trim().toLowerCase();
     return streamEvents.filter((event) => {
+      if (event.type === 'log' && !showHeartbeatLogs && event.message.includes('Session still running')) return false;
+
       const category = getAcpFilterType(event);
       if (levelFilter.size > 0) {
         if (!category || !levelFilter.has(category)) return false;
@@ -188,11 +195,13 @@ export function SessionDetailPage() {
       }
       return false;
     });
-  }, [isAcp, levelFilter, searchQuery, streamEvents]);
+  }, [isAcp, levelFilter, searchQuery, streamEvents, showHeartbeatLogs]);
 
   const durationLabel = session ? formatSessionDuration(session) : null;
   const tokenLabel = session ? formatTokenCount(session.tokenCount) : null;
   const costEstimate = session ? estimateSessionCost(session.tokenCount) : null;
+
+  const shortId = (id: string) => id.length > 12 ? id.slice(0, 8) : id;
 
   const formatEventLabel = (event: SessionEvent) => {
     const raw = event.eventType ?? (event as { event_type?: string }).event_type ?? '';
@@ -201,6 +210,11 @@ export function SessionDetailPage() {
       .filter(Boolean)
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
+  };
+
+  const formatEventTimestamp = (ts: string) => {
+    const d = new Date(ts);
+    return Number.isNaN(d.getTime()) ? ts : d.toLocaleTimeString();
   };
 
   const handleToggleLevel = (level: string) => {
@@ -360,238 +374,252 @@ export function SessionDetailPage() {
         contentClassName="flex h-full flex-col gap-4"
       >
         <PageHeader
-          title={t('sessionDetail.title', { id: session.id })}
-          description={t('sessionDetail.description')}
-          actions={(
-            <Link to={`${basePath}/sessions`} className="inline-flex">
-              <Button variant="outline" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                {t('sessions.actions.back')}
-              </Button>
-            </Link>
-          )}
-        />
-
-        <Card className="border-border/60">
-          <CardContent className="p-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2 text-sm font-medium">
+          title={
+            <div className="flex items-center gap-3">
+              <span>{t('sessionDetail.title', { id: shortId(session.id) })}</span>
+            </div>
+          }
+          description={
+            <div className="flex flex-col gap-2 mt-2">
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <span className={cn('rounded-md border px-2 py-0.5 text-xs font-medium uppercase', SESSION_STATUS_STYLES[session.status])}>
+                  {t(`sessions.status.${session.status}`)}
+                </span>
+                <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                  <Terminal className="h-3.5 w-3.5" />
                   {session.runner}
-                  <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                    {isAcp ? t('sessions.labels.protocolAcp') : t('sessions.labels.protocolCli')}
+                </span>
+                <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                  <Activity className="h-3.5 w-3.5" />
+                  {isAcp ? t('sessions.labels.protocolAcp') : t('sessions.labels.protocolCli')} / {session.mode}
+                </span>
+                <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                  <Clock className="h-3.5 w-3.5" />
+                  {durationLabel ?? '—'}
+                </span>
+                {tokenLabel && (
+                  <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                    <Cpu className="h-3.5 w-3.5" />
+                    {tokenLabel}
                   </span>
-                  <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', SESSION_STATUS_STYLES[session.status])}>
-                    {t(`sessions.status.${session.status}`)}
+                )}
+                {costEstimate != null && (
+                  <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                    <Zap className="h-3.5 w-3.5" />
+                    {t('sessions.labels.costApprox', { value: costEstimate.toFixed(2) })}
                   </span>
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {t('sessions.labels.mode')}: {session.mode}
-                  {(session.specIds?.length ?? 0) > 0 ? ` • ${t('sessions.labels.spec')}: ${session.specIds.join(', ')}` : ''}
-                </div>
+                )}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              
+              {eventsLoading ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground" />
+                  Loading...
+                </div>
+              ) : events.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground/80 mt-1">
+                  {events.slice(-3).map((event) => (
+                    <span key={event.id} className="inline-flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded">
+                      <span className={cn(
+                        'block h-1.5 w-1.5 rounded-full',
+                        formatEventLabel(event).toLowerCase().includes('fail') || formatEventLabel(event).toLowerCase().includes('error')
+                          ? 'bg-rose-500'
+                          : formatEventLabel(event).toLowerCase().includes('complete')
+                            ? 'bg-sky-500'
+                            : formatEventLabel(event).toLowerCase().includes('start') || formatEventLabel(event).toLowerCase().includes('run')
+                              ? 'bg-emerald-500'
+                              : 'bg-muted-foreground/50'
+                      )} />
+                      <span>{formatEventLabel(event)}</span>
+                      <span className="opacity-60">{formatEventTimestamp(event.timestamp)}</span>
+                    </span>
+                  ))}
+                  {events.length > 3 && <span className="text-[10px] opacity-60">+{events.length - 3} more</span>}
+                </div>
+              )}
+            </div>
+          }
+          actions={(
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 mr-2">
                 {session.status === 'running' && (
                   <>
-                    <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handlePause()}>
+                    <Button size="sm" variant="secondary" className="gap-1.5 h-8" onClick={() => void handlePause()}>
                       <Pause className="h-3.5 w-3.5" />
                       {t('sessions.actions.pause')}
                     </Button>
-                    <Button size="sm" variant="destructive" className="gap-1" onClick={() => void handleStop()}>
+                    <Button size="sm" variant="destructive" className="gap-1.5 h-8" onClick={() => void handleStop()}>
                       <Square className="h-3.5 w-3.5" />
                       {t('sessions.actions.stop')}
                     </Button>
                   </>
                 )}
                 {session.status === 'pending' && (
-                  <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handleStart()}>
+                  <Button size="sm" variant="secondary" className="gap-1.5 h-8" onClick={() => void handleStart()}>
                     <Play className="h-3.5 w-3.5" />
                     {t('sessions.actions.start')}
                   </Button>
                 )}
                 {session.status === 'paused' && (
                   <>
-                    <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handleResume()}>
+                    <Button size="sm" variant="secondary" className="gap-1.5 h-8" onClick={() => void handleResume()}>
                       <Play className="h-3.5 w-3.5" />
                       {t('sessions.actions.resume')}
                     </Button>
-                    <Button size="sm" variant="destructive" className="gap-1" onClick={() => void handleStop()}>
+                    <Button size="sm" variant="destructive" className="gap-1.5 h-8" onClick={() => void handleStop()}>
                       <Square className="h-3.5 w-3.5" />
                       {t('sessions.actions.stop')}
                     </Button>
                   </>
                 )}
                 {canResumeAcpCompletedSession && (
-                  <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handleAcpResumeSession()}>
+                  <Button size="sm" variant="secondary" className="gap-1.5 h-8" onClick={() => void handleAcpResumeSession()}>
                     <Play className="h-3.5 w-3.5" />
                     {t('sessions.actions.resume')}
                   </Button>
                 )}
-                <Button size="sm" variant="outline" className="gap-1" onClick={() => void handleRestart()}>
+                <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => void handleRestart()}>
                   <RotateCcw className="h-3.5 w-3.5" />
                   {t('sessions.actions.restart')}
                 </Button>
-                <Button size="sm" variant="ghost" className="gap-1" onClick={() => void handleCopyId()}>
+                <Button size="sm" variant="ghost" className="h-8 w-8 px-0" onClick={() => void handleCopyId()} title={t('sessions.actions.copyId')}>
                   <Copy className="h-3.5 w-3.5" />
-                  {t('sessions.actions.copyId')}
                 </Button>
-                {(session.specIds?.length ?? 0) > 0 && (
-                  <Link to={`${basePath}/specs/${session.specIds[0]}`} className="inline-flex">
-                    <Button size="sm" variant="ghost" className="gap-1">
-                      {t('sessions.actions.viewSpec')}
-                    </Button>
-                  </Link>
-                )}
               </div>
+              
+              <Link to={`${basePath}/sessions`}>
+                <Button variant="ghost" size="sm" className="gap-2 h-8">
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
-            <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <div className="text-[11px] uppercase">{t('sessions.labels.started')}</div>
-                <div>{new Date(session.startedAt).toLocaleString()}</div>
-              </div>
-              <div>
-                <div className="text-[11px] uppercase">{t('sessions.labels.ended')}</div>
-                <div>{session.endedAt ? new Date(session.endedAt).toLocaleString() : t('sessions.labels.unknownTime')}</div>
-              </div>
-              <div>
-                <div className="text-[11px] uppercase">{t('sessions.labels.duration')}</div>
-                <div>{durationLabel ?? t('sessions.labels.unknownTime')}</div>
-              </div>
-              <div>
-                <div className="text-[11px] uppercase">{t('sessions.labels.tokens')}</div>
-                <div>{tokenLabel ?? t('sessions.labels.unknownTime')}</div>
-              </div>
-            </div>
-            {session.prompt && (
-              <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs">
-                <div className="text-[11px] uppercase text-muted-foreground mb-1">{t('sessions.labels.prompt')}</div>
-                <div className="text-foreground">{session.prompt}</div>
-              </div>
-            )}
-            <div className="text-xs text-muted-foreground">
-              {t('sessions.labels.cost')}: {costEstimate == null ? t('sessions.labels.costUnknown') : t('sessions.labels.costApprox', { value: costEstimate.toFixed(2) })}
-            </div>
-          </CardContent>
-        </Card>
+          )}
+        />
 
-        <Card className="border-border/60">
-          <CardContent className="p-4 space-y-3">
-            <div>
-              <div className="text-sm font-semibold">{t('sessionDetail.eventsTitle')}</div>
-              <p className="text-xs text-muted-foreground">{t('sessionDetail.eventsDescription')}</p>
-            </div>
-            <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs">
-              {eventsLoading ? (
-                <div className="text-muted-foreground">{t('actions.loading')}</div>
-              ) : events.length === 0 ? (
-                <div className="text-muted-foreground">{t('sessionDetail.eventsEmpty')}</div>
-              ) : (
-                <div className="space-y-2">
-                  {events.map((event) => (
-                    <div key={event.id} className="flex flex-wrap items-center gap-2">
-                      <span className="text-muted-foreground">[{event.timestamp}]</span>
-                      <span className="font-semibold">{formatEventLabel(event)}</span>
-                      {event.data ? (
-                        <span className="text-muted-foreground">{event.data}</span>
-                      ) : null}
-                    </div>
+        {session.prompt && (
+          <div className="bg-muted/30 border rounded-md px-3 py-2 text-xs">
+            <div className="text-[10px] font-semibold uppercase text-muted-foreground mb-1 tracking-wider">{t('sessions.labels.prompt')}</div>
+            <div className="text-foreground/90 line-clamp-2 hover:line-clamp-none transition-all">{session.prompt}</div>
+          </div>
+        )}
+
+        {(archivePath || archiveError) && (
+          <div className={cn("rounded-md border px-3 py-2 text-xs", archiveError ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400")}>
+            {archivePath && t('sessionDetail.archiveSuccess', { path: archivePath })}
+            {archiveError && archiveError}
+          </div>
+        )}
+
+        <div className="flex-1 min-h-0 flex flex-col border rounded-md bg-background shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between p-2 border-b bg-muted/5 gap-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+               <div className="relative flex-1 max-w-sm">
+                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                 <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder={t('sessionDetail.filters.search')}
+                  className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+               </div>
+               
+               <div className="h-4 w-px bg-border mx-1" />
+
+               <div className="flex items-center gap-1">
+                 {availableLevels.map((level) => (
+                    <button
+                      key={level}
+                      onClick={() => handleToggleLevel(level)}
+                      className={cn(
+                        'rounded-md px-2 py-1 text-[10px] font-medium uppercase transition-colors border',
+                        levelFilter.has(level)
+                          ? 'border-primary/50 bg-primary/10 text-primary'
+                          : 'border-transparent text-muted-foreground hover:bg-muted'
+                      )}
+                    >
+                      {isAcp ? t(`sessionDetail.filters.acp.${level}`) : level}
+                    </button>
                   ))}
+               </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+               <Button
+                  size="sm"
+                  variant="ghost"
+                  className={cn("h-7 w-7 p-0", showHeartbeatLogs ? "text-primary bg-primary/10" : "text-muted-foreground")}
+                  onClick={() => setShowHeartbeatLogs(!showHeartbeatLogs)}
+                  title={showHeartbeatLogs ? "Hide system logs" : "Show system logs"}
+                >
+                  {showHeartbeatLogs ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                </Button>
+            
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className={cn("h-7 w-7 p-0", autoScroll ? "text-primary" : "text-muted-foreground")}
+                  onClick={() => setAutoScroll((prev) => !prev)}
+                  title={t('sessionDetail.filters.autoScroll')}
+                >
+                  <ArrowLeft className={cn("h-3.5 w-3.5 -rotate-90 transition-transform", !autoScroll && "rotate-90")} />
+                </Button>
+                
+                <div className="h-4 w-px bg-border mx-1" />
+
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleArchive} disabled={archiveLoading} title={t('sessions.actions.archive')}>
+                  <Download className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleExport} title={t('sessions.actions.export')}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-0 relative">
+             {isAcp ? (
+                <div className="absolute inset-0 overflow-hidden">
+                  <AcpConversation
+                    events={filteredStreamEvents}
+                    loading={logsLoading}
+                    emptyTitle={t('sessions.emptyLogs')}
+                    emptyDescription={t('sessionDetail.logsDescription')}
+                    onPermissionResponse={(permissionId, option) => {
+                      void handlePermissionResponse(permissionId, option);
+                    }}
+                    isPermissionResponding={(permissionId) => respondingPermissionIds.has(permissionId)}
+                  />
+                </div>
+              ) : (
+                <div ref={logRef} className="absolute inset-0 overflow-y-auto p-3 font-mono text-xs">
+                  {logsLoading ? (
+                    <div className="text-muted-foreground p-4">{t('actions.loading')}</div>
+                  ) : filteredLogs.length === 0 ? (
+                    <div className="text-muted-foreground p-4 text-center">{t('sessions.emptyLogs')}</div>
+                  ) : (
+                    filteredLogs.map((log) => {
+                       const isJson = log.message.trim().startsWith('{') || log.message.trim().startsWith('[');
+                       return (
+                        <div key={`${log.id}-${log.timestamp}`} className="mb-0.5 group hover:bg-muted/30 -mx-3 px-3 py-0.5 flex gap-2 items-start">
+                          <span className="text-muted-foreground/50 whitespace-nowrap select-none w-20 shrink-0 text-[10px] pt-0.5 text-right font-light">
+                             {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}.
+                             <span className="opacity-50">{new Date(log.timestamp).getMilliseconds().toString().padStart(3, '0')}</span>
+                          </span>
+                          <span className={cn("uppercase text-[10px] font-bold w-12 shrink-0 pt-0.5 select-none", 
+                             log.level === 'error' ? "text-rose-500" : 
+                             log.level === 'warn' ? "text-amber-500" : 
+                             "text-muted-foreground"
+                          )}>{log.level}</span>
+                          <div className={cn("flex-1 min-w-0 break-all whitespace-pre-wrap", isJson && "text-emerald-600 dark:text-emerald-400")}>
+                             {log.message}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60 flex-1 min-h-0">
-          <CardContent className="p-4 space-y-3 h-full flex flex-col">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <div className="text-sm font-semibold">{t('sessionDetail.logsTitle')}</div>
-                <p className="text-xs text-muted-foreground">{t('sessionDetail.logsDescription')}</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="outline" className="gap-1" onClick={handleArchive} disabled={archiveLoading}>
-                  <Download className="h-3.5 w-3.5" />
-                  {archiveLoading ? t('actions.loading') : t('sessions.actions.archive')}
-                </Button>
-                <Button size="sm" variant="outline" className="gap-1" onClick={handleExport}>
-                  <Download className="h-3.5 w-3.5" />
-                  {t('sessions.actions.export')}
-                </Button>
-                <Button size="sm" variant={autoScroll ? 'secondary' : 'outline'} onClick={() => setAutoScroll((prev) => !prev)}>
-                  {t('sessionDetail.filters.autoScroll')}
-                </Button>
-              </div>
-            </div>
-
-            {(archivePath || archiveError) && (
-              <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs">
-                {archivePath && (
-                  <div className="text-muted-foreground">{t('sessionDetail.archiveSuccess', { path: archivePath })}</div>
-                )}
-                {archiveError && (
-                  <div className="text-destructive">{archiveError}</div>
-                )}
-              </div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder={t('sessionDetail.filters.search')}
-                className="h-8 rounded-md border border-border bg-background px-3 text-xs"
-              />
-              <div className="flex flex-wrap items-center gap-1 text-xs">
-                {availableLevels.map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => handleToggleLevel(level)}
-                    className={cn(
-                      'rounded-full border px-2 py-1 transition-colors',
-                      levelFilter.has(level)
-                        ? 'border-primary/40 bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {isAcp ? t(`sessionDetail.filters.acp.${level}`) : level.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {isAcp ? (
-              <div className="h-full min-h-0">
-                <AcpConversation
-                  events={filteredStreamEvents}
-                  loading={logsLoading}
-                  emptyTitle={t('sessions.emptyLogs')}
-                  emptyDescription={t('sessionDetail.logsDescription')}
-                  onPermissionResponse={(permissionId, option) => {
-                    void handlePermissionResponse(permissionId, option);
-                  }}
-                  isPermissionResponding={(permissionId) => respondingPermissionIds.has(permissionId)}
-                />
-              </div>
-            ) : (
-              <div ref={logRef} className="rounded-lg border border-border bg-muted/30 p-3 text-xs font-mono h-full overflow-y-auto whitespace-pre-wrap">
-                {logsLoading ? (
-                  <div className="text-muted-foreground">{t('actions.loading')}</div>
-                ) : filteredLogs.length === 0 ? (
-                  <div className="text-muted-foreground">{t('sessions.emptyLogs')}</div>
-                ) : (
-                  filteredLogs.map((log) => (
-                    <div key={`${log.id}-${log.timestamp}`} className="mb-1">
-                      <span className="text-muted-foreground">[{log.timestamp}]</span>{' '}
-                      <span className="uppercase text-[10px]">{log.level}</span>{' '}
-                      <span>{log.message}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </PageContainer>
     </PageTransition>
   );

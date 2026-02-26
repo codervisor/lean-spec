@@ -20,7 +20,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::io::AsyncWriteExt;
 use tokio::process::{Child, ChildStdin};
-use tokio::sync::{broadcast, Mutex, RwLock};
+use tokio::sync::{broadcast, Mutex, Notify, RwLock};
 use uuid::Uuid;
 
 use flate2::write::GzEncoder;
@@ -60,7 +60,9 @@ struct ActiveSessionHandle {
 struct AcpSessionRuntime {
     stdin: Arc<Mutex<ChildStdin>>,
     acp_session_id: Arc<RwLock<Option<String>>>,
+    acp_session_id_notify: Arc<Notify>,
     supports_load_session: Arc<RwLock<bool>>,
+    init_response_notify: Arc<Notify>,
     pending_permission_requests: Arc<Mutex<HashMap<String, PendingPermissionRequest>>>,
     request_counter: Arc<Mutex<u64>>,
 }
@@ -327,7 +329,9 @@ impl SessionManager {
             Some(AcpSessionRuntime {
                 stdin: Arc::new(Mutex::new(stdin)),
                 acp_session_id: Arc::new(RwLock::new(stored_acp_session_id)),
+                acp_session_id_notify: Arc::new(Notify::new()),
                 supports_load_session: Arc::new(RwLock::new(false)),
+                init_response_notify: Arc::new(Notify::new()),
                 pending_permission_requests: Arc::new(Mutex::new(HashMap::new())),
                 request_counter: Arc::new(Mutex::new(1)),
             })
@@ -355,9 +359,15 @@ impl SessionManager {
         let acp_session_id_ref = acp_runtime
             .as_ref()
             .map(|runtime| runtime.acp_session_id.clone());
+        let acp_session_id_notify_ref = acp_runtime
+            .as_ref()
+            .map(|runtime| runtime.acp_session_id_notify.clone());
         let acp_supports_load_ref = acp_runtime
             .as_ref()
             .map(|runtime| runtime.supports_load_session.clone());
+        let acp_init_response_notify_ref = acp_runtime
+            .as_ref()
+            .map(|runtime| runtime.init_response_notify.clone());
         let acp_runtime_stdout = acp_runtime.clone();
         let is_acp_stdout = is_acp;
 
@@ -375,6 +385,9 @@ impl SessionManager {
                                 let mut guard = acp_supports_load_ref.write().await;
                                 *guard = supports_load;
                             }
+                            if let Some(notify) = &acp_init_response_notify_ref {
+                                notify.notify_one();
+                            }
                         }
 
                         if let Some((permission_id, pending_request)) =
@@ -390,6 +403,9 @@ impl SessionManager {
                             if let Some(acp_session_id_ref) = &acp_session_id_ref {
                                 let mut guard = acp_session_id_ref.write().await;
                                 *guard = Some(acp_id.clone());
+                            }
+                            if let Some(notify) = &acp_session_id_notify_ref {
+                                notify.notify_one();
                             }
 
                             if let Ok(Some(mut session)) = db_stdout.get_session(&session_id_stdout)
@@ -480,15 +496,15 @@ impl SessionManager {
             .await;
 
             let mut supports_load_session = false;
-            for _ in 0..10 {
-                {
-                    let guard = acp_runtime.supports_load_session.read().await;
-                    if *guard {
-                        supports_load_session = true;
-                        break;
-                    }
-                }
-                tokio::time::sleep(Duration::from_millis(50)).await;
+            if tokio::time::timeout(
+                Duration::from_secs(10),
+                acp_runtime.init_response_notify.notified(),
+            )
+            .await
+            .is_ok()
+            {
+                let guard = acp_runtime.supports_load_session.read().await;
+                supports_load_session = *guard;
             }
 
             let current_acp_session_id = {
@@ -560,17 +576,27 @@ impl SessionManager {
                     &session.spec_ids,
                     &prompt_message,
                 );
-                let mut current_acp_session_id: Option<String> = None;
-                for _ in 0..10 {
-                    {
-                        let guard = acp_runtime.acp_session_id.read().await;
-                        if guard.is_some() {
-                            current_acp_session_id = guard.clone();
-                            break;
+                let current_acp_session_id = {
+                    // Check if already available (e.g. restored from previous session)
+                    let guard = acp_runtime.acp_session_id.read().await;
+                    if guard.is_some() {
+                        guard.clone()
+                    } else {
+                        drop(guard);
+                        if tokio::time::timeout(
+                            Duration::from_secs(30),
+                            acp_runtime.acp_session_id_notify.notified(),
+                        )
+                        .await
+                        .is_ok()
+                        {
+                            let guard = acp_runtime.acp_session_id.read().await;
+                            guard.clone()
+                        } else {
+                            None
                         }
                     }
-                    tokio::time::sleep(Duration::from_millis(50)).await;
-                }
+                };
 
                 if let Some(current_acp_session_id) = current_acp_session_id {
                     let _ = send_acp_request(

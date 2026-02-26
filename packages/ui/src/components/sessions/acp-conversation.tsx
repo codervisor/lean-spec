@@ -174,12 +174,22 @@ export function AcpConversation({
                 );
 
               case 'log':
-              default:
+              default: {
+                const isJson = (event.message.trim().startsWith('{') && event.message.trim().endsWith('}')) || 
+                               (event.message.trim().startsWith('[') && event.message.trim().endsWith(']'));
+                let displayMessage = event.message;
+                if (isJson) {
+                  try {
+                    displayMessage = JSON.stringify(JSON.parse(event.message), null, 2);
+                  } catch {}
+                }
+
                 return (
-                  <div key={`acp-log-${index}`} className="font-mono text-xs text-muted-foreground whitespace-pre-wrap">
-                    [{event.timestamp}] {event.level.toUpperCase()} {event.message}
+                  <div key={`acp-log-${index}`} className={`font-mono text-xs whitespace-pre-wrap ${isJson ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
+                    [{event.timestamp}] {event.level.toUpperCase()} {displayMessage}
                   </div>
                 );
+              }
             }
           })
         )}
