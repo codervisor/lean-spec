@@ -1,0 +1,3 @@
+# Clippy configuration for LeanSpec Rust workspace
+# Functions with more than 7 arguments should use a params struct instead.
+too-many-arguments-threshold = 7

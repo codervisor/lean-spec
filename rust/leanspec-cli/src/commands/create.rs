@@ -22,17 +22,28 @@ struct ProjectConfig {
     draft_status: Option<DraftStatusConfig>,
 }
 
-pub fn run(
-    specs_dir: &str,
-    name: &str,
-    title: Option<String>,
-    template: Option<String>,
-    status: Option<String>,
-    priority: &str,
-    tags: Option<String>,
-    parent: Option<String>,
-    depends_on: Vec<String>,
-) -> Result<(), Box<dyn Error>> {
+pub struct CreateParams {
+    pub specs_dir: String,
+    pub name: String,
+    pub title: Option<String>,
+    pub template: Option<String>,
+    pub status: Option<String>,
+    pub priority: String,
+    pub tags: Option<String>,
+    pub parent: Option<String>,
+    pub depends_on: Vec<String>,
+}
+
+pub fn run(params: CreateParams) -> Result<(), Box<dyn Error>> {
+    let specs_dir = &params.specs_dir;
+    let name = &params.name;
+    let title = params.title;
+    let template = params.template;
+    let status = params.status;
+    let priority = &params.priority;
+    let tags = params.tags;
+    let parent = params.parent;
+    let depends_on = params.depends_on;
     // 1. Find project root and load config
     let project_root = find_project_root(specs_dir)?;
     let config = load_config(&project_root)?;
@@ -84,16 +95,16 @@ pub fn run(
     fs::write(&readme_path, &content)?;
 
     // 8. Output success message
-    print_success(
-        &spec_name,
-        &title,
-        &resolved_status,
+    print_success(&SuccessInfo {
+        spec_name: &spec_name,
+        title: &title,
+        status: &resolved_status,
         priority,
-        &tags_vec,
-        parent.as_deref(),
-        &depends_on,
-        &readme_path,
-    );
+        tags: &tags_vec,
+        parent: parent.as_deref(),
+        depends_on: &depends_on,
+        readme_path: &readme_path,
+    });
 
     Ok(())
 }
@@ -293,16 +304,28 @@ fn parse_tags(tags: Option<String>) -> Vec<String> {
         .unwrap_or_default()
 }
 
-fn print_success(
-    spec_name: &str,
-    title: &str,
-    status: &str,
-    priority: &str,
-    tags: &[String],
-    parent: Option<&str>,
-    depends_on: &[String],
-    readme_path: &Path,
-) {
+struct SuccessInfo<'a> {
+    spec_name: &'a str,
+    title: &'a str,
+    status: &'a str,
+    priority: &'a str,
+    tags: &'a [String],
+    parent: Option<&'a str>,
+    depends_on: &'a [String],
+    readme_path: &'a Path,
+}
+
+fn print_success(info: &SuccessInfo) {
+    let SuccessInfo {
+        spec_name,
+        title,
+        status,
+        priority,
+        tags,
+        parent,
+        depends_on,
+        readme_path,
+    } = info;
     println!("{} {}", "✓".green(), "Created spec:".green());
     println!("  {}: {}", "Path".bold(), spec_name);
     println!("  {}: {}", "Title".bold(), title);

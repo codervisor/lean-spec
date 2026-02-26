@@ -757,9 +757,17 @@ fn main() -> ExitCode {
             tags,
             parent,
             depends_on,
-        } => commands::create::run(
-            &specs_dir, &name, title, template, status, &priority, tags, parent, depends_on,
-        ),
+        } => commands::create::run(commands::create::CreateParams {
+            specs_dir: specs_dir.clone(),
+            name,
+            title,
+            template,
+            status,
+            priority,
+            tags,
+            parent,
+            depends_on,
+        }),
         Commands::Rel {
             args,
             parent,
@@ -826,16 +834,16 @@ fn main() -> ExitCode {
             assignee,
             compact,
             hierarchy,
-        } => commands::list::run(
-            &specs_dir,
+        } => commands::list::run(commands::list::ListParams {
+            specs_dir: specs_dir.clone(),
             status,
-            tag,
+            tags: tag,
             priority,
             assignee,
             compact,
             hierarchy,
-            &cli.output,
-        ),
+            output_format: cli.output.clone(),
+        }),
         Commands::Mcp => commands::mcp::run(&specs_dir),
         Commands::Migrate {
             input_path,

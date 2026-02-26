@@ -4,16 +4,26 @@ use colored::Colorize;
 use leanspec_core::{SpecFilterOptions, SpecInfo, SpecLoader, SpecPriority, SpecStatus};
 use std::error::Error;
 
-pub fn run(
-    specs_dir: &str,
-    status: Option<String>,
-    tags: Option<Vec<String>>,
-    priority: Option<String>,
-    assignee: Option<String>,
-    compact: bool,
-    hierarchy: bool,
-    output_format: &str,
-) -> Result<(), Box<dyn Error>> {
+pub struct ListParams {
+    pub specs_dir: String,
+    pub status: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub priority: Option<String>,
+    pub assignee: Option<String>,
+    pub compact: bool,
+    pub hierarchy: bool,
+    pub output_format: String,
+}
+
+pub fn run(params: ListParams) -> Result<(), Box<dyn Error>> {
+    let specs_dir = &params.specs_dir;
+    let status = params.status;
+    let tags = params.tags;
+    let priority = params.priority;
+    let assignee = params.assignee;
+    let compact = params.compact;
+    let hierarchy = params.hierarchy;
+    let output_format = &params.output_format;
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all()?;
 
