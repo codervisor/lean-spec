@@ -167,6 +167,9 @@ pub fn apply_checklist_toggles(
     let mut results = Vec::new();
     let checkbox_re = Regex::new(r"- \[[ xX]\]").map_err(|e| e.to_string())?;
 
+    let inline_md_re = Regex::new(r"`([^`]*)`|\*\*([^*]*)\*\*|\*([^*]*)\*|_([^_]*)_")
+        .map_err(|e| e.to_string())?;
+
     for toggle in toggles {
         let target = toggle.item_text.trim().to_lowercase();
         let index = lines
@@ -176,7 +179,13 @@ pub fn apply_checklist_toggles(
                 (normalized.starts_with("- [ ]")
                     || normalized.starts_with("- [x]")
                     || normalized.starts_with("- [X]"))
-                    && normalized.contains(&target)
+                    && {
+                        // Try exact match first, then match with inline markdown stripped
+                        normalized.contains(&target) || {
+                            let stripped = inline_md_re.replace_all(&normalized, "$1$2$3$4");
+                            stripped.contains(&target)
+                        }
+                    }
             })
             .ok_or_else(|| format!("Checklist item not found: {}", toggle.item_text))?;
 

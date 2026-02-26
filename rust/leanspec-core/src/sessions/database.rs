@@ -321,6 +321,7 @@ impl SessionDatabase {
     /// List sessions with optional filters
     pub fn list_sessions(
         &self,
+        project_path: Option<&str>,
         spec_id: Option<&str>,
         status: Option<SessionStatus>,
         runner: Option<&str>,
@@ -335,6 +336,10 @@ impl SessionDatabase {
         );
         let mut params: Vec<Value> = Vec::new();
 
+        if let Some(path) = project_path {
+            query.push_str(" AND project_path = ?");
+            params.push(Value::from(path.to_string()));
+        }
         if let Some(spec) = spec_id {
             query.push_str(" AND EXISTS (SELECT 1 FROM session_specs ss WHERE ss.session_id = id AND ss.spec_id = ?)");
             params.push(Value::from(spec.to_string()));
@@ -747,7 +752,7 @@ mod tests {
         assert!(matches!(updated.status, SessionStatus::Running));
 
         // List
-        let sessions = db.list_sessions(None, None, None).unwrap();
+        let sessions = db.list_sessions(None, None, None, None).unwrap();
         assert_eq!(sessions.len(), 1);
 
         // Delete

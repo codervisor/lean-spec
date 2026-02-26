@@ -133,3 +133,15 @@ export function estimateSessionCost(tokens?: number | null): number | null {
   if (!tokens && tokens !== 0) return null;
   return (tokens / 1000) * COST_PER_1K_TOKENS;
 }
+
+/**
+ * Get translated runner display name, falling back to the raw runner ID
+ * with the first letter capitalized.
+ */
+export function getRunnerDisplayName(runnerId: string, t: (key: string) => string): string {
+  const key = `sessions.runners.${runnerId}`;
+  const translated = t(key);
+  // i18next returns the key itself when the translation is missing
+  if (translated !== key) return translated;
+  return runnerId.charAt(0).toUpperCase() + runnerId.slice(1);
+}

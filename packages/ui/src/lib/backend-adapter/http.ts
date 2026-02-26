@@ -361,12 +361,13 @@ export class HttpBackendAdapter implements BackendAdapter {
     });
   }
 
-  async listSessions(params?: { specId?: string; status?: string; runner?: string }): Promise<Session[]> {
+  async listSessions(params?: { projectId?: string; specId?: string; status?: string; runner?: string }): Promise<Session[]> {
     const query = params
       ? new URLSearchParams(
         Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
           if (typeof value === 'string' && value.length > 0) {
-            acc.push([key === 'specId' ? 'spec_id' : key, value]);
+            const paramKey = key === 'specId' ? 'spec_id' : key === 'projectId' ? 'project_id' : key;
+            acc.push([paramKey, value]);
           }
           return acc;
         }, [])

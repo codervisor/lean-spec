@@ -13,7 +13,7 @@ export const sessionKeys = {
 export function useSessions(projectId: string | null) {
   return useQuery({
     queryKey: sessionKeys.list(projectId ?? ''),
-    queryFn: () => api.listSessions({}),
+    queryFn: () => api.listSessions({ projectId: projectId! }),
     enabled: !!projectId,
     staleTime: 5 * 1000,
   });

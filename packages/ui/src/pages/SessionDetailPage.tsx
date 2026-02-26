@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { 
-  AlertTriangle, ArrowLeft, Download, Copy, Play, Square, RotateCcw, Pause, 
-  Activity, Search, Clock, Cpu, Zap, MessageSquare, FileCode
+  AlertTriangle, ArrowLeft, Download, Copy, Play, Square, Pause, 
+  Activity, Search, Cpu, Zap, MessageSquare, FileCode, Timer
 } from 'lucide-react';
 import { 
-  Button, cn, Badge, ScrollArea, Separator,
+  Button, cn, Badge, ScrollArea,
   Tabs, TabsContent, TabsList, TabsTrigger
 } from '@/library';
 import { useTranslation } from 'react-i18next';
@@ -17,12 +17,15 @@ import { PageTransition } from '../components/shared/page-transition';
 import { PageContainer } from '../components/shared/page-container';
 import { AcpConversation } from '../components/sessions/acp-conversation';
 import {
-  SESSION_STATUS_STYLES,
+  sessionStatusConfig,
+  sessionModeConfig,
+  getRunnerDisplayName,
   estimateSessionCost,
   formatSessionDuration,
   formatTokenCount,
 } from '../lib/session-utils';
 import { RunnerLogo } from '../components/library/ai-elements/runner-logo';
+import { useDisplayStore } from '../stores/display';
 import {
   appendStreamEvent,
   getAcpFilterType,
@@ -35,7 +38,6 @@ import {
 export function SessionDetailPage() {
   const { t } = useTranslation('common');
   const { sessionId, projectId } = useParams<{ sessionId: string; projectId: string }>();
-  const navigate = useNavigate();
   const { currentProject, loading: projectLoading } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
@@ -51,9 +53,10 @@ export function SessionDetailPage() {
   const [respondingPermissionIds, setRespondingPermissionIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<Set<string>>(new Set());
-  const [displayMode, setDisplayMode] = useState<'messages' | 'verbose'>('messages');
+  const [viewMode, setViewMode] = useState<'messages' | 'verbose'>('messages');
   const [copySuccess, setCopySuccess] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
+  const { displayMode } = useDisplayStore();
 
   const loadSession = useCallback(async () => {
     if (!sessionId || !projectReady || projectLoading) return;
@@ -144,7 +147,7 @@ export function SessionDetailPage() {
     return filters.filter((filter) => streamEvents.some((event) => getAcpFilterType(event) === filter));
   }, [isAcp, logs, streamEvents]);
 
-  const showHeartbeatLogs = displayMode === 'verbose';
+  const showHeartbeatLogs = viewMode === 'verbose';
 
   const filteredLogs = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -164,7 +167,7 @@ export function SessionDetailPage() {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     return streamEvents.filter((event) => {
       // In messages mode, hide log-type events (they show in verbose)
-      if (displayMode === 'messages' && event.type === 'log') return false;
+      if (viewMode === 'messages' && event.type === 'log') return false;
       if (event.type === 'log' && !showHeartbeatLogs && event.message.includes('Session still running')) return false;
 
       const category = getAcpFilterType(event);
@@ -190,7 +193,7 @@ export function SessionDetailPage() {
       }
       return false;
     });
-  }, [isAcp, levelFilter, searchQuery, streamEvents, showHeartbeatLogs, displayMode]);
+  }, [isAcp, levelFilter, searchQuery, streamEvents, showHeartbeatLogs, viewMode]);
 
   const durationLabel = session ? formatSessionDuration(session) : null;
   const tokenLabel = session ? formatTokenCount(session.tokenCount) : null;
@@ -232,18 +235,6 @@ export function SessionDetailPage() {
     if (!session) return;
     await api.resumeSession(session.id);
     await loadSession();
-  };
-
-  const handleRestart = async () => {
-    if (!session || !currentProject?.path) return;
-    const created = await api.createSession({
-      projectPath: currentProject.path,
-      specIds: session.specIds ?? [],
-      runner: session.runner,
-      mode: session.mode,
-    });
-    await api.startSession(created.id);
-    navigate(`${basePath}/sessions/${created.id}`);
   };
 
   const handleAcpResumeSession = async () => {
@@ -338,9 +329,7 @@ export function SessionDetailPage() {
     );
   }
 
-  const canResumeAcpCompletedSession =
-    isAcp &&
-    (session.status === 'completed' || session.status === 'failed' || session.status === 'cancelled');
+  const canResumeAcpCompletedSession = false;
 
   return (
     <PageTransition className="flex-1 min-w-0">
@@ -357,45 +346,82 @@ export function SessionDetailPage() {
               <h1 className="text-lg sm:text-xl font-bold tracking-tight">
                 {t('sessionDetail.title', { id: shortId(session.id) })}
               </h1>
-              <Badge variant="outline" className={cn('font-mono uppercase tracking-wider text-[10px] py-0 h-5 flex items-center', SESSION_STATUS_STYLES[session.status])}>
-                {t(`sessions.status.${session.status}`)}
-              </Badge>
             </div>
 
-            {/* Line 2: Metadata badges - runner, protocol, duration, tokens, cost */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-foreground">{session.runner}</span>
-              </div>
-              <Separator orientation="vertical" className="h-4" />
-              <div className="flex items-center gap-2">
-                <Activity className="h-3.5 w-3.5 opacity-70" />
-                <span>{isAcp ? t('sessions.labels.protocolAcp') : t('sessions.labels.protocolCli')}</span>
-                <span className="opacity-50">/</span>
-                <span className="font-medium text-foreground">{session.mode}</span>
-              </div>
-              <Separator orientation="vertical" className="h-4" />
-              <div className="flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5 opacity-70" />
-                <span>{durationLabel ?? '—'}</span>
-              </div>
-              {tokenLabel && (
-                <>
-                  <Separator orientation="vertical" className="h-4" />
-                  <div className="flex items-center gap-2">
-                    <Cpu className="h-3.5 w-3.5 opacity-70" />
-                    <span>{tokenLabel}</span>
-                  </div>
-                </>
+            {/* Line 2: Metadata badges - status, runner, mode, duration, tokens, cost */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {/* Status badge */}
+              <Badge
+                variant="outline"
+                className={cn(
+                  'flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium',
+                  sessionStatusConfig[session.status].className
+                )}
+              >
+                {(() => { const StatusIcon = sessionStatusConfig[session.status].icon; return <StatusIcon className="h-3.5 w-3.5" />; })()}
+                {t(`sessions.status.${session.status}`)}
+              </Badge>
+
+              {/* Mode badge */}
+              {sessionModeConfig[session.mode] && (
+                <Badge
+                  variant="outline"
+                  className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
+                >
+                  {(() => { const ModeIcon = sessionModeConfig[session.mode].icon; return <ModeIcon className="h-3.5 w-3.5" />; })()}
+                  {t(`sessions.modes.${session.mode}`)}
+                </Badge>
               )}
+
+              {/* Runner badge */}
+              <Badge
+                variant="outline"
+                className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
+              >
+                <RunnerLogo runnerId={session.runner} size={14} />
+                {getRunnerDisplayName(session.runner, t)}
+              </Badge>
+
+              {/* Protocol badge */}
+              <Badge
+                variant="outline"
+                className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
+              >
+                <Activity className="h-3.5 w-3.5" />
+                {isAcp ? t('sessions.labels.protocolAcp') : t('sessions.labels.protocolCli')}
+              </Badge>
+
+              {/* Duration badge */}
+              {durationLabel && (
+                <Badge
+                  variant="outline"
+                  className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
+                >
+                  <Timer className="h-3.5 w-3.5" />
+                  {durationLabel}
+                </Badge>
+              )}
+
+              {/* Tokens */}
+              {tokenLabel && (
+                <Badge
+                  variant="outline"
+                  className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
+                >
+                  <Cpu className="h-3.5 w-3.5" />
+                  {tokenLabel}
+                </Badge>
+              )}
+
+              {/* Cost */}
               {costEstimate != null && (
-                <>
-                  <Separator orientation="vertical" className="h-4" />
-                  <div className="flex items-center gap-2">
-                    <Zap className="h-3.5 w-3.5 opacity-70" />
-                    <span>{t('sessions.labels.costApprox', { value: costEstimate.toFixed(2) })}</span>
-                  </div>
-                </>
+                <Badge
+                  variant="outline"
+                  className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
+                >
+                  <Zap className="h-3.5 w-3.5" />
+                  {t('sessions.labels.costApprox', { value: costEstimate.toFixed(2) })}
+                </Badge>
               )}
             </div>
 
@@ -485,16 +511,6 @@ export function SessionDetailPage() {
                   {t('sessions.actions.resume')}
                 </Button>
               )}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => void handleRestart()}
-                className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                {t('sessions.actions.restart')}
-              </Button>
 
               <Link to={`${basePath}/sessions`} className="inline-flex">
                 <Button
@@ -519,7 +535,10 @@ export function SessionDetailPage() {
         )}
 
         {/* Main content area */}
-        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div className={cn(
+          'flex-1 min-h-0 flex flex-col overflow-hidden mx-auto w-full transition-[max-width] duration-300',
+          displayMode === 'wide' ? 'w-full' : 'max-w-6xl'
+        )}>
           {(!isAcp) ? (
             <div className="flex-1 flex flex-col min-h-0">
                <div className="border-b px-4 py-2 flex items-center justify-between bg-muted/20 gap-4">
@@ -598,7 +617,7 @@ export function SessionDetailPage() {
                </ScrollArea>
             </div>
           ) : (
-             <Tabs value={displayMode} onValueChange={(v) => setDisplayMode(v as 'messages' | 'verbose')} className="flex-1 flex flex-col min-h-0">
+             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'messages' | 'verbose')} className="flex-1 flex flex-col min-h-0">
               <div className="border-b px-4 py-2 flex items-center justify-between bg-muted/20 gap-4">
                  
                  <div className="flex items-center gap-2 flex-1 min-w-0">

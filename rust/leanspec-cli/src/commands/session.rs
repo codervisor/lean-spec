@@ -401,7 +401,7 @@ fn list_sessions(
             None => None,
         };
         let sessions = manager
-            .list_sessions(spec.as_deref(), status_filter, runner.as_deref())
+            .list_sessions(None, spec.as_deref(), status_filter, runner.as_deref())
             .await
             .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
 

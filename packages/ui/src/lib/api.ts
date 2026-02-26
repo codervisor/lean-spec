@@ -122,7 +122,7 @@ class ProjectAPI {
     return this.backend.getDependencies(this.getCurrentProjectId(), specName);
   }
 
-  listSessions(params?: { specId?: string; status?: string; runner?: string }): Promise<Session[]> {
+  listSessions(params?: { projectId?: string; specId?: string; status?: string; runner?: string }): Promise<Session[]> {
     return this.backend.listSessions(params);
   }
 

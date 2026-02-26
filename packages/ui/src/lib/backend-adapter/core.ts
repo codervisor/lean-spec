@@ -114,7 +114,7 @@ export interface BackendAdapter {
   listDirectory(path?: string): Promise<DirectoryListResponse>;
 
   // Sessions
-  listSessions(params?: { specId?: string; status?: string; runner?: string }): Promise<Session[]>;
+  listSessions(params?: { projectId?: string; specId?: string; status?: string; runner?: string }): Promise<Session[]>;
   getSession(sessionId: string): Promise<Session>;
   createSession(payload: {
     projectPath: string;

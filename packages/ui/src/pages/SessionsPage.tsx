@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, memo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { FilterX, RefreshCcw, FileQuestion, Play, Square, RotateCcw, Plus, Pause, Search, Filter, Timer, Hash, X } from 'lucide-react';
+import { FilterX, RefreshCcw, FileQuestion, Play, Square, Plus, Pause, Search, Filter, Timer, Hash, X } from 'lucide-react';
 import { Badge, Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/library';
 import { useTranslation } from 'react-i18next';
 import type { Session, SessionStatus, Spec } from '../types/api';
@@ -11,9 +11,11 @@ import { EmptyState } from '../components/shared/empty-state';
 import { PageHeader } from '../components/shared/page-header';
 import { PageTransition } from '../components/shared/page-transition';
 import { PageContainer } from '../components/shared/page-container';
-import { sessionStatusConfig, sessionModeConfig, formatSessionDuration } from '../lib/session-utils';
+import { sessionStatusConfig, sessionModeConfig, formatSessionDuration, getRunnerDisplayName } from '../lib/session-utils';
 import { SessionCreateDialog } from '../components/sessions/session-create-dialog';
+import { SearchableSelect } from '../components/searchable-select';
 import { RunnerLogo } from '../components/library/ai-elements/runner-logo';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/tooltip';
 import { cn } from '@/library';
 
 const PAGE_SIZE = 20;
@@ -28,8 +30,7 @@ export function SessionsPage() {
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const sessionsQuery = useSessions(resolvedProjectId ?? null);
   const specsQuery = useSpecsList(resolvedProjectId ?? null);
-  const { createSession, startSession, stopSession, pauseSession, resumeSession } = useSessionMutations(resolvedProjectId ?? null);
-
+  const { startSession, stopSession, pauseSession, resumeSession } = useSessionMutations(resolvedProjectId ?? null);
   const sessions = useMemo(() => (sessionsQuery.data as Session[] | undefined) ?? [], [sessionsQuery.data]);
   const specs = useMemo(() => (specsQuery.data as Spec[] | undefined) ?? [], [specsQuery.data]);
   const loading = projectLoading || sessionsQuery.isLoading;
@@ -167,17 +168,6 @@ export function SessionsPage() {
     await resumeSession(sessionId);
   }, [resumeSession]);
 
-  const handleRetry = useCallback(async (session: Session) => {
-    if (!currentProject?.path) return;
-    const created = await createSession({
-      projectPath: currentProject.path,
-      specIds: session.specIds ?? [],
-      runner: session.runner,
-      mode: session.mode,
-    });
-    await startSession(created.id);
-  }, [createSession, currentProject, startSession]);
-
   if (loading) {
     return (
       <PageContainer>
@@ -265,7 +255,7 @@ export function SessionsPage() {
                     <SelectItem key={runner} value={runner} className="cursor-pointer">
                       <span className="flex items-center gap-2">
                         <RunnerLogo runnerId={runner} size={16} />
-                        {runner}
+                        {getRunnerDisplayName(runner, t)}
                       </span>
                     </SelectItem>
                   ))}
@@ -279,22 +269,24 @@ export function SessionsPage() {
                 <SelectContent>
                   <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.mode')}</SelectItem>
                   {uniqueModes.map((mode) => (
-                    <SelectItem key={mode} value={mode} className="cursor-pointer">{mode}</SelectItem>
+                    <SelectItem key={mode} value={mode} className="cursor-pointer">{t(`sessions.modes.${mode}`)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              <Select value={specFilter} onValueChange={setSpecFilter}>
-                <SelectTrigger className="w-[180px] h-9">
-                  <SelectValue placeholder={t('sessionsPage.filters.spec')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.spec')}</SelectItem>
-                  {specOptions.map((spec) => (
-                    <SelectItem key={spec.id} value={spec.id} className="cursor-pointer">{spec.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="w-[180px]">
+                <SearchableSelect
+                  value={specFilter}
+                  onValueChange={setSpecFilter}
+                  options={[
+                    { value: 'all', label: t('sessionsPage.filters.spec') },
+                    ...specOptions.map((spec) => ({ value: spec.id, label: spec.label })),
+                  ]}
+                  placeholder={t('sessionsPage.filters.spec')}
+                  searchPlaceholder={t('sessions.select.search')}
+                  emptyText={t('sessions.select.empty')}
+                />
+              </div>
 
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
                 <SelectTrigger className="w-[160px] h-9">
@@ -379,7 +371,6 @@ export function SessionsPage() {
                   onStop={handleStop}
                   onPause={handlePause}
                   onResume={handleResume}
-                  onRetry={handleRetry}
                 />
               ))}
 
@@ -414,7 +405,6 @@ interface SessionListItemProps {
   onStop: (id: string) => Promise<void>;
   onPause: (id: string) => Promise<void>;
   onResume: (id: string) => Promise<void>;
-  onRetry: (session: Session) => Promise<void>;
 }
 
 const SessionListItem = memo(function SessionListItem({
@@ -424,7 +414,6 @@ const SessionListItem = memo(function SessionListItem({
   onStop,
   onPause,
   onResume,
-  onRetry,
 }: SessionListItemProps) {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
@@ -433,6 +422,11 @@ const SessionListItem = memo(function SessionListItem({
   const StatusIcon = statusCfg.icon;
   const ModeIcon = modeCfg?.icon;
   const duration = formatSessionDuration(session);
+
+  // Use prompt as session title, falling back to spec IDs or session ID
+  const sessionTitle = session.prompt
+    || (session.specIds?.length ? session.specIds.join(', ') : null)
+    || session.id.slice(0, 8);
 
   const handleClick = (e: React.MouseEvent) => {
     // Don't navigate if clicking on a button or link inside the item
@@ -451,12 +445,20 @@ const SessionListItem = memo(function SessionListItem({
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <RunnerLogo runnerId={session.runner} size={20} />
-                <h3 className="font-medium truncate">{session.runner}</h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="flex-shrink-0">
+                        <RunnerLogo runnerId={session.runner} size={32} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {getRunnerDisplayName(session.runner, t)}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <h3 className="font-medium truncate">{sessionTitle}</h3>
               </div>
-              {session.prompt && (
-                <p className="text-sm text-muted-foreground truncate">{session.prompt}</p>
-              )}
               {(session.specIds?.length ?? 0) > 0 && (
                 <p className="text-sm text-muted-foreground truncate">
                   <Hash className="inline h-3 w-3 mr-0.5 -mt-px" />
@@ -529,12 +531,6 @@ const SessionListItem = memo(function SessionListItem({
                     {t('sessions.actions.stop')}
                   </Button>
                 </>
-              )}
-              {session.status === 'failed' && (
-                <Button size="sm" variant="secondary" className="gap-1 h-6 text-xs px-2" onClick={() => void onRetry(session)}>
-                  <RotateCcw className="h-3 w-3" />
-                  {t('sessions.actions.retry')}
-                </Button>
               )}
             </div>
           </div>

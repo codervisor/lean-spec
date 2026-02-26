@@ -1224,11 +1224,12 @@ impl SessionManager {
     /// List sessions with optional filters
     pub async fn list_sessions(
         &self,
+        project_path: Option<&str>,
         spec_id: Option<&str>,
         status: Option<SessionStatus>,
         runner: Option<&str>,
     ) -> CoreResult<Vec<Session>> {
-        self.db.list_sessions(spec_id, status, runner)
+        self.db.list_sessions(project_path, spec_id, status, runner)
     }
 
     /// Get session logs
@@ -1323,7 +1324,7 @@ impl SessionManager {
     /// Clean up stale sessions (sessions that were running when server restarted)
     pub async fn cleanup_stale_sessions(&self) -> CoreResult<usize> {
         // Find sessions marked as running but not in active_sessions
-        let all_sessions = self.db.list_sessions(None, None, None)?;
+        let all_sessions = self.db.list_sessions(None, None, None, None)?;
         let active_ids = {
             let active = self.active_sessions.read().await;
             active
@@ -1783,12 +1784,12 @@ mod tests {
             .unwrap();
 
         // List all
-        let sessions = manager.list_sessions(None, None, None).await.unwrap();
+        let sessions = manager.list_sessions(None, None, None, None).await.unwrap();
         assert_eq!(sessions.len(), 2);
 
         // Filter by runner
         let claude_sessions = manager
-            .list_sessions(None, None, Some("claude"))
+            .list_sessions(None, None, None, Some("claude"))
             .await
             .unwrap();
         assert_eq!(claude_sessions.len(), 1);

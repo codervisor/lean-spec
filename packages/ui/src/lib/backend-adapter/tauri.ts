@@ -231,10 +231,11 @@ export class TauriBackendAdapter implements BackendAdapter {
     throw new Error('listDirectory is not implemented for the Tauri backend yet');
   }
 
-  async listSessions(params?: { specId?: string; status?: string; runner?: string }): Promise<Session[]> {
+  async listSessions(params?: { projectId?: string; specId?: string; status?: string; runner?: string }): Promise<Session[]> {
     return this.invoke<Session[]>('desktop_list_sessions', {
       params: params
         ? {
+          projectId: params.projectId,
           specId: params.specId,
           status: params.status,
           runner: params.runner,

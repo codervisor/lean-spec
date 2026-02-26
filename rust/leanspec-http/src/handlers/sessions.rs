@@ -299,6 +299,7 @@ pub async fn get_session(
 /// List sessions with optional filters
 #[derive(Debug, Deserialize)]
 pub struct ListSessionsRequest {
+    pub project_id: Option<String>,
     pub spec_id: Option<String>,
     pub status: Option<SessionStatus>,
     pub runner: Option<String>,
@@ -310,8 +311,27 @@ pub async fn list_sessions(
 ) -> ApiResult<Json<Vec<SessionResponse>>> {
     let manager = state.session_manager.clone();
 
+    // Resolve project_id to project_path if provided
+    let project_path = if let Some(ref pid) = req.project_id {
+        let registry = state.registry.read().await;
+        let project = registry.get(pid).ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                Json(ApiError::not_found("Project")),
+            )
+        })?;
+        Some(project.path.to_string_lossy().to_string())
+    } else {
+        None
+    };
+
     let sessions = manager
-        .list_sessions(req.spec_id.as_deref(), req.status, req.runner.as_deref())
+        .list_sessions(
+            project_path.as_deref(),
+            req.spec_id.as_deref(),
+            req.status,
+            req.runner.as_deref(),
+        )
         .await
         .map_err(internal_error)?;
 
