@@ -220,6 +220,14 @@
         "plan": "Plan"
       }
     },
+    "displayMode": {
+      "messages": "Messages",
+      "verbose": "Verbose"
+    },
+    "actions": {
+      "download": "Download logs as file",
+      "copyLogs": "Copy logs to clipboard"
+    },
     "state": {
       "notFoundTitle": "Session unavailable",
       "notFoundDescription": "The session could not be loaded."
@@ -924,6 +932,8 @@
       "hideArchived": "Hide archived",
       "settings": "Settings",
       "filteredCount": "{{filtered}} of {{total}} specs",
+      "showingAll": "Showing all {{count}} sessions",
+      "showingFiltered": "Showing {{count}} of {{total}} sessions",
       "sortOptions": {
         "id-desc": "Newest First",
         "id-asc": "Oldest First",

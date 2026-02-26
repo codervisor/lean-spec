@@ -1,22 +1,95 @@
-import type { Session, SessionStatus } from '../types/api';
+import { Clock, PlayCircle, Pause, CheckCircle2, XCircle, Ban, Compass, Bot, type LucideIcon } from 'lucide-react';
+import type { Session, SessionMode, SessionStatus } from '../types/api';
 
-export const SESSION_STATUS_STYLES: Record<SessionStatus, string> = {
-  pending: 'bg-muted text-muted-foreground',
-  running: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-  paused: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  completed: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
-  failed: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
-  cancelled: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-300',
+export interface SessionStatusConfig {
+  icon: LucideIcon;
+  label: string;
+  labelKey: string;
+  className: string;
+  dotClassName: string;
+}
+
+/**
+ * Session status badge configuration
+ * Aligned with spec status badge pattern from badge-config.ts
+ */
+export const sessionStatusConfig: Record<SessionStatus, SessionStatusConfig> = {
+  pending: {
+    icon: Clock,
+    label: 'Pending',
+    labelKey: 'sessions.status.pending',
+    className: 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300',
+    dotClassName: 'bg-slate-500',
+  },
+  running: {
+    icon: PlayCircle,
+    label: 'Running',
+    labelKey: 'sessions.status.running',
+    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    dotClassName: 'bg-green-500',
+  },
+  paused: {
+    icon: Pause,
+    label: 'Paused',
+    labelKey: 'sessions.status.paused',
+    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+    dotClassName: 'bg-orange-500',
+  },
+  completed: {
+    icon: CheckCircle2,
+    label: 'Completed',
+    labelKey: 'sessions.status.completed',
+    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    dotClassName: 'bg-green-500',
+  },
+  failed: {
+    icon: XCircle,
+    label: 'Failed',
+    labelKey: 'sessions.status.failed',
+    className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    dotClassName: 'bg-red-500',
+  },
+  cancelled: {
+    icon: Ban,
+    label: 'Cancelled',
+    labelKey: 'sessions.status.cancelled',
+    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
+    dotClassName: 'bg-gray-500',
+  },
 };
 
-export const SESSION_STATUS_DOT_STYLES: Record<SessionStatus, string> = {
-  pending: 'bg-muted-foreground/60',
-  running: 'bg-emerald-500',
-  paused: 'bg-amber-500',
-  completed: 'bg-sky-500',
-  failed: 'bg-rose-500',
-  cancelled: 'bg-zinc-500',
+export interface SessionModeConfig {
+  icon: LucideIcon;
+  label: string;
+  labelKey: string;
+}
+
+export const sessionModeConfig: Record<SessionMode, SessionModeConfig> = {
+  autonomous: {
+    icon: Bot,
+    label: 'Autonomous',
+    labelKey: 'sessions.modes.autonomous',
+  },
+  guided: {
+    icon: Compass,
+    label: 'Guided',
+    labelKey: 'sessions.modes.guided',
+  },
+  ralph: {
+    icon: Bot,
+    label: 'Ralph',
+    labelKey: 'sessions.modes.ralph',
+  },
 };
+
+// Legacy exports for backward compatibility
+export const SESSION_STATUS_STYLES: Record<SessionStatus, string> = Object.fromEntries(
+  Object.entries(sessionStatusConfig).map(([k, v]) => [k, v.className])
+) as Record<SessionStatus, string>;
+
+export const SESSION_STATUS_DOT_STYLES: Record<SessionStatus, string> = Object.fromEntries(
+  Object.entries(sessionStatusConfig).map(([k, v]) => [k, v.dotClassName])
+) as Record<SessionStatus, string>;
 
 const COST_PER_1K_TOKENS = 0.01;
 

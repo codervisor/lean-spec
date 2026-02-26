@@ -26,6 +26,21 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/library';
 import { CollapsibleJsonLog } from './collapsible-json-log';
 
+function formatTimeAgo(ts: string | undefined): string | null {
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return null;
+  const diffMs = Date.now() - d.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 5) return 'just now';
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  return d.toLocaleDateString();
+}
+
 function toToolState(status: 'running' | 'completed' | 'failed'):
   | 'input-available'
   | 'output-available'
@@ -70,12 +85,21 @@ export function AcpConversation({
           <ConversationEmptyState title={emptyTitle} description={emptyDescription} className="py-8" />
         ) : (
           events.map((event, index) => {
+            const timeAgo = 'timestamp' in event ? formatTimeAgo(event.timestamp) : null;
+            const timestampEl = timeAgo ? (
+              <span className="text-[10px] text-muted-foreground/50 ml-1 font-normal">{timeAgo}</span>
+            ) : null;
             switch (event.type) {
               case 'acp_message':
                 if (event.role === 'user') {
                   return (
                     <Message key={`acp-message-${index}`} from="user">
-                      <MessageContent>{event.content}</MessageContent>
+                      <MessageContent>
+                        <div className="flex items-baseline gap-1">
+                          <span className="flex-1">{event.content}</span>
+                          {timestampEl}
+                        </div>
+                      </MessageContent>
                     </Message>
                   );
                 }
@@ -83,6 +107,7 @@ export function AcpConversation({
                   <Message key={`acp-message-${index}`} from="assistant">
                     <MessageContent>
                       <MessageResponse>{event.content}</MessageResponse>
+                      {timestampEl}
                     </MessageContent>
                   </Message>
                 );

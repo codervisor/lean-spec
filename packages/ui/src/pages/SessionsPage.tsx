@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { FilterX, RefreshCcw, FileQuestion, Play, Square, RotateCcw, ArrowUpRight, Plus, Pause, Search, Filter } from 'lucide-react';
-import { Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/library';
+import { useCallback, useMemo, useState, memo } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { FilterX, RefreshCcw, FileQuestion, Play, Square, RotateCcw, Plus, Pause, Search, Filter, Timer, Hash, X } from 'lucide-react';
+import { Badge, Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/library';
 import { useTranslation } from 'react-i18next';
 import type { Session, SessionStatus, Spec } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
@@ -11,8 +11,9 @@ import { EmptyState } from '../components/shared/empty-state';
 import { PageHeader } from '../components/shared/page-header';
 import { PageTransition } from '../components/shared/page-transition';
 import { PageContainer } from '../components/shared/page-container';
-import { SESSION_STATUS_DOT_STYLES, SESSION_STATUS_STYLES, formatSessionDuration } from '../lib/session-utils';
+import { sessionStatusConfig, sessionModeConfig, formatSessionDuration } from '../lib/session-utils';
 import { SessionCreateDialog } from '../components/sessions/session-create-dialog';
+import { RunnerLogo } from '../components/library/ai-elements/runner-logo';
 import { cn } from '@/library';
 
 const PAGE_SIZE = 20;
@@ -175,7 +176,7 @@ export function SessionsPage() {
       mode: session.mode,
     });
     await startSession(created.id);
-  }, [createSession, currentProject?.path, startSession]);
+  }, [createSession, currentProject, startSession]);
 
   if (loading) {
     return (
@@ -234,84 +235,100 @@ export function SessionsPage() {
               />
             </div>
 
-            <div className="flex flex-wrap gap-3 items-center justify-between">
-              <div className="flex flex-wrap gap-3 items-center">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Filter className="w-4 h-4" />
-                  <span className="text-sm font-medium">{t('specsNavSidebar.filtersLabel')}</span>
-                </div>
+            <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Filter className="w-4 h-4" />
+                <span className="text-sm font-medium">{t('specsNavSidebar.filtersLabel')}</span>
+              </div>
 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px] h-9">
-                    <SelectValue placeholder={t('sessionsPage.filters.status')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.status')}</SelectItem>
-                    {uniqueStatuses.map((status) => (
-                      <SelectItem key={status} value={status} className="cursor-pointer">
-                        {t(`sessions.status.${status}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px] h-9">
+                  <SelectValue placeholder={t('sessionsPage.filters.status')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.status')}</SelectItem>
+                  {uniqueStatuses.map((status) => (
+                    <SelectItem key={status} value={status} className="cursor-pointer">
+                      {t(`sessions.status.${status}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                <Select value={runnerFilter} onValueChange={setRunnerFilter}>
-                  <SelectTrigger className="w-[140px] h-9">
-                    <SelectValue placeholder={t('sessionsPage.filters.runner')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.runner')}</SelectItem>
-                    {uniqueRunners.map((runner) => (
-                      <SelectItem key={runner} value={runner} className="cursor-pointer">
+              <Select value={runnerFilter} onValueChange={setRunnerFilter}>
+                <SelectTrigger className="w-[140px] h-9">
+                  <SelectValue placeholder={t('sessionsPage.filters.runner')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.runner')}</SelectItem>
+                  {uniqueRunners.map((runner) => (
+                    <SelectItem key={runner} value={runner} className="cursor-pointer">
+                      <span className="flex items-center gap-2">
+                        <RunnerLogo runnerId={runner} size={16} />
                         {runner}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                <Select value={modeFilter} onValueChange={setModeFilter}>
-                  <SelectTrigger className="w-[140px] h-9">
-                    <SelectValue placeholder={t('sessionsPage.filters.mode')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.mode')}</SelectItem>
-                    {uniqueModes.map((mode) => (
-                      <SelectItem key={mode} value={mode} className="cursor-pointer">{mode}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <Select value={modeFilter} onValueChange={setModeFilter}>
+                <SelectTrigger className="w-[140px] h-9">
+                  <SelectValue placeholder={t('sessionsPage.filters.mode')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.mode')}</SelectItem>
+                  {uniqueModes.map((mode) => (
+                    <SelectItem key={mode} value={mode} className="cursor-pointer">{mode}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                <Select value={specFilter} onValueChange={setSpecFilter}>
-                  <SelectTrigger className="w-[180px] h-9">
-                    <SelectValue placeholder={t('sessionsPage.filters.spec')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.spec')}</SelectItem>
-                    {specOptions.map((spec) => (
-                      <SelectItem key={spec.id} value={spec.id} className="cursor-pointer">{spec.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={specFilter} onValueChange={setSpecFilter}>
+                <SelectTrigger className="w-[180px] h-9">
+                  <SelectValue placeholder={t('sessionsPage.filters.spec')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.spec')}</SelectItem>
+                  {specOptions.map((spec) => (
+                    <SelectItem key={spec.id} value={spec.id} className="cursor-pointer">{spec.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              <div className="flex items-center gap-3">
-                <div className="text-sm text-muted-foreground hidden sm:block">
-                  {filteredSessions.length !== sessions.length
-                    ? t('specsPage.filters.showingFiltered', { count: filteredSessions.length, total: sessions.length })
-                    : t('specsPage.filters.showingAll', { count: sessions.length })}
-                </div>
-                <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                  <SelectTrigger className="w-[180px] h-9">
-                    <SelectValue placeholder={t('sessionsPage.sort.startedDesc')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="started-desc" className="cursor-pointer">{t('sessionsPage.sort.startedDesc')}</SelectItem>
-                    <SelectItem value="started-asc" className="cursor-pointer">{t('sessionsPage.sort.startedAsc')}</SelectItem>
-                    <SelectItem value="duration-desc" className="cursor-pointer">{t('sessionsPage.sort.durationDesc')}</SelectItem>
-                    <SelectItem value="status" className="cursor-pointer">{t('sessionsPage.sort.status')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                <SelectTrigger className="w-[160px] h-9">
+                  <SelectValue placeholder={t('sessionsPage.sort.startedDesc')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="started-desc" className="cursor-pointer">{t('sessionsPage.sort.startedDesc')}</SelectItem>
+                  <SelectItem value="started-asc" className="cursor-pointer">{t('sessionsPage.sort.startedAsc')}</SelectItem>
+                  <SelectItem value="duration-desc" className="cursor-pointer">{t('sessionsPage.sort.durationDesc')}</SelectItem>
+                  <SelectItem value="status" className="cursor-pointer">{t('sessionsPage.sort.status')}</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {(searchQuery || statusFilter !== 'all' || runnerFilter !== 'all' || modeFilter !== 'all' || specFilter !== 'all') && (
+                <Button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                    setRunnerFilter('all');
+                    setModeFilter('all');
+                    setSpecFilter('all');
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  {t('specsNavSidebar.clearFilters')}
+                </Button>
+              )}
+
+              <span className="text-sm text-muted-foreground">
+                {t('specsPage.filters.filteredCount', { filtered: filteredSessions.length, total: sessions.length })}
+              </span>
             </div>
           </div>
         </div>
@@ -354,87 +371,16 @@ export function SessionsPage() {
           ) : (
             <div className="space-y-2">
               {visibleSessions.map((session) => (
-                <div key={session.id} className="block border rounded-lg hover:bg-secondary/50 transition-colors bg-background">
-                  <div className="p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={cn('inline-flex h-2.5 w-2.5 rounded-full', SESSION_STATUS_DOT_STYLES[session.status])} />
-                          <h3 className="font-medium truncate">{session.runner}</h3>
-                          <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', SESSION_STATUS_STYLES[session.status])}>
-                            {t(`sessions.status.${session.status}`)}
-                          </span>
-                        </div>
-                        <div className="text-sm text-muted-foreground truncate">
-                          {t('sessions.labels.mode')}: {session.mode}
-                          {(session.specIds?.length ?? 0) > 0 ? ` • ${t('sessions.labels.spec')}: ${session.specIds.join(', ')}` : ''}
-                          {` • ${t('sessions.labels.started')}: ${new Date(session.startedAt).toLocaleString()}`}
-                        </div>
-                        {session.prompt && (
-                          <div className="mt-1 text-xs text-muted-foreground truncate">
-                            {t('sessions.labels.prompt')}: {session.prompt}
-                          </div>
-                        )}
-                        {formatSessionDuration(session) && (
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {t('sessions.labels.duration')}: {formatSessionDuration(session)}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-                        <Button size="sm" variant="outline" className="gap-1" asChild>
-                          <Link to={`${basePath}/sessions/${session.id}`}>
-                            <ArrowUpRight className="h-3.5 w-3.5" />
-                            {t('sessions.actions.view')}
-                          </Link>
-                        </Button>
-                        {session.status === 'pending' && (
-                          <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handleStart(session.id)}>
-                            <Play className="h-3.5 w-3.5" />
-                            {t('sessions.actions.start')}
-                          </Button>
-                        )}
-                        {session.status === 'running' && (
-                          <>
-                            <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handlePause(session.id)}>
-                              <Pause className="h-3.5 w-3.5" />
-                              {t('sessions.actions.pause')}
-                            </Button>
-                            <Button size="sm" variant="destructive" className="gap-1" onClick={() => void handleStop(session.id)}>
-                              <Square className="h-3.5 w-3.5" />
-                              {t('sessions.actions.stop')}
-                            </Button>
-                          </>
-                        )}
-                        {session.status === 'paused' && (
-                          <>
-                            <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handleResume(session.id)}>
-                              <Play className="h-3.5 w-3.5" />
-                              {t('sessions.actions.resume')}
-                            </Button>
-                            <Button size="sm" variant="destructive" className="gap-1" onClick={() => void handleStop(session.id)}>
-                              <Square className="h-3.5 w-3.5" />
-                              {t('sessions.actions.stop')}
-                            </Button>
-                          </>
-                        )}
-                        {session.status === 'failed' && (
-                          <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handleRetry(session)}>
-                            <RotateCcw className="h-3.5 w-3.5" />
-                            {t('sessions.actions.retry')}
-                          </Button>
-                        )}
-                        {(session.specIds?.length ?? 0) > 0 && (
-                          <Button size="sm" variant="ghost" className="gap-1" asChild>
-                            <Link to={`${basePath}/specs/${session.specIds[0]}`}>
-                              {t('sessions.actions.viewSpec')}
-                            </Link>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <SessionListItem
+                  key={session.id}
+                  session={session}
+                  basePath={basePath}
+                  onStart={handleStart}
+                  onStop={handleStop}
+                  onPause={handlePause}
+                  onResume={handleResume}
+                  onRetry={handleRetry}
+                />
               ))}
 
               {visibleSessions.length < filteredSessions.length && (
@@ -458,3 +404,142 @@ export function SessionsPage() {
     </PageTransition>
   );
 }
+
+// --- Session List Item Component ---
+
+interface SessionListItemProps {
+  session: Session;
+  basePath: string;
+  onStart: (id: string) => Promise<void>;
+  onStop: (id: string) => Promise<void>;
+  onPause: (id: string) => Promise<void>;
+  onResume: (id: string) => Promise<void>;
+  onRetry: (session: Session) => Promise<void>;
+}
+
+const SessionListItem = memo(function SessionListItem({
+  session,
+  basePath,
+  onStart,
+  onStop,
+  onPause,
+  onResume,
+  onRetry,
+}: SessionListItemProps) {
+  const { t } = useTranslation('common');
+  const navigate = useNavigate();
+  const statusCfg = sessionStatusConfig[session.status];
+  const modeCfg = sessionModeConfig[session.mode];
+  const StatusIcon = statusCfg.icon;
+  const ModeIcon = modeCfg?.icon;
+  const duration = formatSessionDuration(session);
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on a button or link inside the item
+    if ((e.target as HTMLElement).closest('button, a')) return;
+    navigate(`${basePath}/sessions/${session.id}`);
+  };
+
+  return (
+    <div
+      className="block border rounded-lg hover:bg-secondary/50 transition-colors bg-background cursor-pointer"
+      onClick={handleClick}
+    >
+      <div className="flex items-start">
+        <div className="w-8 h-full invisible flex items-center text-muted-foreground" />
+        <div className="flex-1 p-4 pl-0">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <RunnerLogo runnerId={session.runner} size={20} />
+                <h3 className="font-medium truncate">{session.runner}</h3>
+              </div>
+              {session.prompt && (
+                <p className="text-sm text-muted-foreground truncate">{session.prompt}</p>
+              )}
+              {(session.specIds?.length ?? 0) > 0 && (
+                <p className="text-sm text-muted-foreground truncate">
+                  <Hash className="inline h-3 w-3 mr-0.5 -mt-px" />
+                  {session.specIds.join(', ')}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2 items-center flex-shrink-0 flex-wrap justify-end">
+              {/* Status badge */}
+              <Badge
+                variant="outline"
+                className={cn(
+                  'flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium',
+                  statusCfg.className
+                )}
+              >
+                <StatusIcon className="h-3.5 w-3.5" />
+                {t(`sessions.status.${session.status}`)}
+              </Badge>
+
+              {/* Mode badge */}
+              {modeCfg && (
+                <Badge
+                  variant="outline"
+                  className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
+                >
+                  {ModeIcon && <ModeIcon className="h-3.5 w-3.5" />}
+                  {t(`sessions.modes.${session.mode}`)}
+                </Badge>
+              )}
+
+              {/* Duration badge */}
+              {duration && (
+                <Badge
+                  variant="outline"
+                  className="flex items-center gap-1.5 w-fit border-transparent h-5 px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground"
+                >
+                  <Timer className="h-3.5 w-3.5" />
+                  {duration}
+                </Badge>
+              )}
+
+              {/* Action buttons */}
+              {session.status === 'pending' && (
+                <Button size="sm" variant="secondary" className="gap-1 h-6 text-xs px-2" onClick={() => void onStart(session.id)}>
+                  <Play className="h-3 w-3" />
+                  {t('sessions.actions.start')}
+                </Button>
+              )}
+              {session.status === 'running' && (
+                <>
+                  <Button size="sm" variant="secondary" className="gap-1 h-6 text-xs px-2" onClick={() => void onPause(session.id)}>
+                    <Pause className="h-3 w-3" />
+                    {t('sessions.actions.pause')}
+                  </Button>
+                  <Button size="sm" variant="destructive" className="gap-1 h-6 text-xs px-2" onClick={() => void onStop(session.id)}>
+                    <Square className="h-3 w-3" />
+                    {t('sessions.actions.stop')}
+                  </Button>
+                </>
+              )}
+              {session.status === 'paused' && (
+                <>
+                  <Button size="sm" variant="secondary" className="gap-1 h-6 text-xs px-2" onClick={() => void onResume(session.id)}>
+                    <Play className="h-3 w-3" />
+                    {t('sessions.actions.resume')}
+                  </Button>
+                  <Button size="sm" variant="destructive" className="gap-1 h-6 text-xs px-2" onClick={() => void onStop(session.id)}>
+                    <Square className="h-3 w-3" />
+                    {t('sessions.actions.stop')}
+                  </Button>
+                </>
+              )}
+              {session.status === 'failed' && (
+                <Button size="sm" variant="secondary" className="gap-1 h-6 text-xs px-2" onClick={() => void onRetry(session)}>
+                  <RotateCcw className="h-3 w-3" />
+                  {t('sessions.actions.retry')}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});

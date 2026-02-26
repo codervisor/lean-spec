@@ -65,6 +65,8 @@ struct AcpSessionRuntime {
     init_response_notify: Arc<Notify>,
     pending_permission_requests: Arc<Mutex<HashMap<String, PendingPermissionRequest>>>,
     request_counter: Arc<Mutex<u64>>,
+    /// Notified when the ACP agent signals turn completion (stopReason: end_turn).
+    turn_completed: Arc<Notify>,
 }
 
 #[derive(Clone)]
@@ -334,6 +336,7 @@ impl SessionManager {
                 init_response_notify: Arc::new(Notify::new()),
                 pending_permission_requests: Arc::new(Mutex::new(HashMap::new())),
                 request_counter: Arc::new(Mutex::new(1)),
+                turn_completed: Arc::new(Notify::new()),
             })
         } else {
             None
@@ -369,6 +372,9 @@ impl SessionManager {
             .as_ref()
             .map(|runtime| runtime.init_response_notify.clone());
         let acp_runtime_stdout = acp_runtime.clone();
+        let acp_turn_completed_stdout = acp_runtime
+            .as_ref()
+            .map(|runtime| runtime.turn_completed.clone());
         let is_acp_stdout = is_acp;
 
         // Start log reader tasks
@@ -415,6 +421,19 @@ impl SessionManager {
                                     .insert("acp_session_id".to_string(), acp_id);
                                 session.touch();
                                 let _ = db_stdout.update_session(&session);
+                            }
+                        }
+
+                        // Detect ACP turn completion from JSON-RPC responses
+                        // e.g. {"jsonrpc":"2.0","id":3,"result":{"stopReason":"end_turn"}}
+                        if payload
+                            .get("result")
+                            .and_then(|r| r.get("stopReason"))
+                            .and_then(|v| v.as_str())
+                            .is_some()
+                        {
+                            if let Some(notify) = &acp_turn_completed_stdout {
+                                notify.notify_one();
                             }
                         }
 
@@ -656,6 +675,9 @@ impl SessionManager {
         let broadcasts_clone = self.log_broadcasts.clone();
         let process_monitor = process.clone();
         let timeout = session_timeout;
+        let acp_turn_completed_monitor = acp_runtime
+            .as_ref()
+            .map(|runtime| runtime.turn_completed.clone());
 
         tokio::spawn(async move {
             use tokio::time::{interval, Duration, Instant};
@@ -664,7 +686,48 @@ impl SessionManager {
             let mut last_heartbeat_at = Instant::now();
 
             loop {
-                ticker.tick().await;
+                // For ACP sessions, also listen for turn completion alongside the
+                // regular tick. Non-ACP sessions only wait on the ticker.
+                let acp_turn_done = if let Some(ref notify) = acp_turn_completed_monitor {
+                    tokio::select! {
+                        _ = ticker.tick() => false,
+                        _ = notify.notified() => true,
+                    }
+                } else {
+                    ticker.tick().await;
+                    false
+                };
+
+                // ACP agent signalled end of turn — kill the process and mark
+                // the session as completed.
+                if acp_turn_done {
+                    // Give the process a moment to flush remaining output.
+                    tokio::time::sleep(Duration::from_millis(500)).await;
+
+                    {
+                        let mut child = process_monitor.lock().await;
+                        let _ = child.kill().await;
+                    }
+
+                    if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned) {
+                        session.status = SessionStatus::Completed;
+                        session.ended_at = Some(chrono::Utc::now());
+                        session.update_duration();
+                        session.touch();
+                        let _ = db_clone.update_session(&session);
+                        let _ =
+                            db_clone.insert_event(&session_id_owned, EventType::Completed, None);
+                    }
+                    let _ = db_clone.log_message(
+                        &session_id_owned,
+                        LogLevel::Info,
+                        "ACP session completed (agent turn ended)",
+                    );
+
+                    cleanup_session(&session_id_owned, &active_sessions_clone, &broadcasts_clone)
+                        .await;
+                    break;
+                }
 
                 if let Some(timeout) = timeout {
                     if started_at.elapsed() >= timeout {

@@ -217,6 +217,14 @@
         "plan": "计划"
       }
     },
+    "displayMode": {
+      "messages": "消息",
+      "verbose": "详细"
+    },
+    "actions": {
+      "download": "下载日志文件",
+      "copyLogs": "复制日志到剪贴板"
+    },
     "state": {
       "notFoundTitle": "会话不可用",
       "notFoundDescription": "无法加载该会话。"
@@ -924,6 +932,8 @@
       "hideArchived": "隐藏已归档",
       "settings": "设置",
       "filteredCount": "{{filtered}} / {{total}} 个规范",
+      "showingAll": "显示全部 {{count}} 个会话",
+      "showingFiltered": "显示 {{count}} / {{total}} 个会话",
       "sortOptions": {
         "id-desc": "最新优先",
         "id-asc": "最早优先",

@@ -28,19 +28,19 @@ export function CollapsibleJsonLog({ timestamp, level, rawMessage }: { timestamp
   }
 
   return (
-    <div className="font-mono text-xs text-muted-foreground">
+    <div className="font-mono text-xs text-muted-foreground relative">
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
-        className="flex items-center gap-1 hover:text-foreground transition-colors text-left w-full"
+        className="flex items-center hover:text-foreground transition-colors text-left w-full"
       >
-        <ChevronRight className={cn("h-3 w-3 shrink-0 transition-transform", expanded && "rotate-90")} />
+        <ChevronRight className={cn("h-3 w-3 shrink-0 transition-transform -ml-4 mr-1", expanded && "rotate-90")} />
         <span className="truncate">
           [{timestamp}] {level.toUpperCase()} {summary}
         </span>
       </button>
       {expanded && (
-        <pre className="mt-1 ml-4 whitespace-pre-wrap text-emerald-600 dark:text-emerald-400 text-[11px] overflow-x-auto">
+        <pre className="mt-1 whitespace-pre-wrap text-emerald-600 dark:text-emerald-400 text-[11px] overflow-x-auto pl-0">
           {formatted}
         </pre>
       )}

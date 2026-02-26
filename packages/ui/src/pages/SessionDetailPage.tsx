@@ -2,15 +2,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { 
   AlertTriangle, ArrowLeft, Download, Copy, Play, Square, RotateCcw, Pause, 
-  Terminal, Activity, Eye, EyeOff, Search, Clock, Cpu, Zap
+  Activity, Search, Clock, Cpu, Zap, MessageSquare, FileCode
 } from 'lucide-react';
-import { Button, Card, CardContent, cn } from '@/library';
+import { 
+  Button, cn, Badge, ScrollArea, Separator,
+  Tabs, TabsContent, TabsList, TabsTrigger
+} from '@/library';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
-import type { Session, SessionEvent, SessionLog, SessionStreamEvent } from '../types/api';
+import type { Session, SessionLog, SessionStreamEvent } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { EmptyState } from '../components/shared/empty-state';
-import { PageHeader } from '../components/shared/page-header';
 import { PageTransition } from '../components/shared/page-transition';
 import { PageContainer } from '../components/shared/page-container';
 import { AcpConversation } from '../components/sessions/acp-conversation';
@@ -20,6 +22,7 @@ import {
   formatSessionDuration,
   formatTokenCount,
 } from '../lib/session-utils';
+import { RunnerLogo } from '../components/library/ai-elements/runner-logo';
 import {
   appendStreamEvent,
   getAcpFilterType,
@@ -41,19 +44,15 @@ export function SessionDetailPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [logs, setLogs] = useState<SessionLog[]>([]);
   const [streamEvents, setStreamEvents] = useState<SessionStreamEvent[]>([]);
-  const [events, setEvents] = useState<SessionEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [logsLoading, setLogsLoading] = useState(true);
-  const [eventsLoading, setEventsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [archivePath, setArchivePath] = useState<string | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
-  const [archiveLoading, setArchiveLoading] = useState(false);
   const [respondingPermissionIds, setRespondingPermissionIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<Set<string>>(new Set());
-  const [showHeartbeatLogs, setShowHeartbeatLogs] = useState(false);
-  const [autoScroll, setAutoScroll] = useState(true);
+  const [displayMode, setDisplayMode] = useState<'messages' | 'verbose'>('messages');
+  const [copySuccess, setCopySuccess] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
 
   const loadSession = useCallback(async () => {
@@ -84,22 +83,10 @@ export function SessionDetailPage() {
     }
   }, [projectLoading, projectReady, sessionId]);
 
-  const loadEvents = useCallback(async () => {
-    if (!sessionId || !projectReady || projectLoading) return;
-    setEventsLoading(true);
-    try {
-      const data = await api.getSessionEvents(sessionId);
-      setEvents(data);
-    } finally {
-      setEventsLoading(false);
-    }
-  }, [projectLoading, projectReady, sessionId]);
-
   useEffect(() => {
     void loadSession();
     void loadLogs();
-    void loadEvents();
-  }, [loadSession, loadLogs, loadEvents]);
+  }, [loadSession, loadLogs]);
 
   useEffect(() => {
     if (!session || session.status !== 'running') return;
@@ -135,11 +122,17 @@ export function SessionDetailPage() {
   }, [session]);
 
   useEffect(() => {
-    if (!autoScroll) return;
     const container = logRef.current;
     if (!container) return;
-    container.scrollTop = container.scrollHeight;
-  }, [autoScroll, logs]);
+    
+    // Attempt to find the viewport if using ScrollArea
+    const viewport = container.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+    if (viewport) {
+       viewport.scrollTop = viewport.scrollHeight;
+    } else {
+       container.scrollTop = container.scrollHeight;
+    }
+  }, [logs]);
 
   const isAcp = isAcpSession(session);
 
@@ -150,6 +143,8 @@ export function SessionDetailPage() {
     const filters: AcpFilterType[] = ['messages', 'thoughts', 'tools', 'plan'];
     return filters.filter((filter) => streamEvents.some((event) => getAcpFilterType(event) === filter));
   }, [isAcp, logs, streamEvents]);
+
+  const showHeartbeatLogs = displayMode === 'verbose';
 
   const filteredLogs = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -168,6 +163,8 @@ export function SessionDetailPage() {
     if (!isAcp) return [];
     const normalizedQuery = searchQuery.trim().toLowerCase();
     return streamEvents.filter((event) => {
+      // In messages mode, hide log-type events (they show in verbose)
+      if (displayMode === 'messages' && event.type === 'log') return false;
       if (event.type === 'log' && !showHeartbeatLogs && event.message.includes('Session still running')) return false;
 
       const category = getAcpFilterType(event);
@@ -193,27 +190,13 @@ export function SessionDetailPage() {
       }
       return false;
     });
-  }, [isAcp, levelFilter, searchQuery, streamEvents, showHeartbeatLogs]);
+  }, [isAcp, levelFilter, searchQuery, streamEvents, showHeartbeatLogs, displayMode]);
 
   const durationLabel = session ? formatSessionDuration(session) : null;
   const tokenLabel = session ? formatTokenCount(session.tokenCount) : null;
   const costEstimate = session ? estimateSessionCost(session.tokenCount) : null;
 
   const shortId = (id: string) => id.length > 12 ? id.slice(0, 8) : id;
-
-  const formatEventLabel = (event: SessionEvent) => {
-    const raw = event.eventType ?? (event as { event_type?: string }).event_type ?? '';
-    return raw
-      .split('_')
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
-  };
-
-  const formatEventTimestamp = (ts: string) => {
-    const d = new Date(ts);
-    return Number.isNaN(d.getTime()) ? ts : d.toLocaleTimeString();
-  };
 
   const handleToggleLevel = (level: string) => {
     setLevelFilter((prev) => {
@@ -269,10 +252,13 @@ export function SessionDetailPage() {
     await loadSession();
   };
 
-  const handleExport = () => {
-    const exportPayload = isAcp
-      ? JSON.stringify(filteredStreamEvents, null, 2)
-      : filteredLogs.map((log) => `[${log.timestamp}] ${log.level.toUpperCase()} ${log.message}`).join('\n');
+  const getLogPayload = () => {
+    if (isAcp) return JSON.stringify(filteredStreamEvents, null, 2);
+    return filteredLogs.map((log) => `[${log.timestamp}] ${log.level.toUpperCase()} ${log.message}`).join('\n');
+  };
+
+  const handleDownload = () => {
+    const exportPayload = getLogPayload();
     const blob = new Blob([exportPayload], {
       type: isAcp ? 'application/json;charset=utf-8' : 'text/plain;charset=utf-8',
     });
@@ -286,23 +272,16 @@ export function SessionDetailPage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleCopyId = async () => {
-    if (!session?.id) return;
-    await navigator.clipboard.writeText(session.id);
-  };
+  const MAX_COPY_SIZE = 500_000; // ~500KB clipboard limit
 
-  const handleArchive = async () => {
-    if (!session) return;
-    setArchiveLoading(true);
-    setArchiveError(null);
-    try {
-      const result = await api.archiveSession(session.id, { compress: true });
-      setArchivePath(result.path);
-    } catch (err) {
-      setArchiveError(err instanceof Error ? err.message : t('sessionDetail.archiveError'));
-    } finally {
-      setArchiveLoading(false);
-    }
+  const handleCopyLogs = async () => {
+    const payload = getLogPayload();
+    const text = payload.length > MAX_COPY_SIZE
+      ? payload.slice(0, MAX_COPY_SIZE) + '\n\n… (truncated)'
+      : payload;
+    await navigator.clipboard.writeText(text);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
   };
 
   const handlePermissionResponse = async (permissionId: string, option: string) => {
@@ -331,11 +310,9 @@ export function SessionDetailPage() {
   if (loading) {
     return (
       <PageContainer>
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            {t('actions.loading')}
-          </CardContent>
-        </Card>
+        <div className="py-10 text-center text-sm text-muted-foreground">
+          {t('actions.loading')}
+        </div>
       </PageContainer>
     );
   }
@@ -367,219 +344,323 @@ export function SessionDetailPage() {
 
   return (
     <PageTransition className="flex-1 min-w-0">
-      <PageContainer
-        className="h-[calc(100vh-3.5rem)]"
-        contentClassName="flex h-full flex-col gap-4"
-      >
-        <PageHeader
-          title={
-            <div className="flex items-center gap-3">
-              <span>{t('sessionDetail.title', { id: shortId(session.id) })}</span>
+      <div className="h-[calc(100vh-3.5rem)] flex flex-col">
+        {/* Compact Header - sticky, matching SpecDetailPage */}
+        <header className="shrink-0 border-b bg-card">
+          <PageContainer
+            padding="none"
+            contentClassName="px-4 sm:px-6 lg:px-8 py-2 sm:py-3"
+          >
+            {/* Line 1: Title with runner logo + session ID + status badge */}
+            <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+              <RunnerLogo runnerId={session.runner} size={24} />
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight">
+                {t('sessionDetail.title', { id: shortId(session.id) })}
+              </h1>
+              <Badge variant="outline" className={cn('font-mono uppercase tracking-wider text-[10px] py-0 h-5 flex items-center', SESSION_STATUS_STYLES[session.status])}>
+                {t(`sessions.status.${session.status}`)}
+              </Badge>
             </div>
-          }
-          description={
-            <div className="flex flex-col gap-2 mt-2">
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                <span className={cn('rounded-md border px-2 py-0.5 text-xs font-medium uppercase', SESSION_STATUS_STYLES[session.status])}>
-                  {t(`sessions.status.${session.status}`)}
-                </span>
-                <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                  <Terminal className="h-3.5 w-3.5" />
-                  {session.runner}
-                </span>
-                <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                  <Activity className="h-3.5 w-3.5" />
-                  {isAcp ? t('sessions.labels.protocolAcp') : t('sessions.labels.protocolCli')} / {session.mode}
-                </span>
-                <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                  <Clock className="h-3.5 w-3.5" />
-                  {durationLabel ?? '—'}
-                </span>
-                {tokenLabel && (
-                  <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                    <Cpu className="h-3.5 w-3.5" />
-                    {tokenLabel}
-                  </span>
-                )}
-                {costEstimate != null && (
-                  <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                    <Zap className="h-3.5 w-3.5" />
-                    {t('sessions.labels.costApprox', { value: costEstimate.toFixed(2) })}
-                  </span>
-                )}
+
+            {/* Line 2: Metadata badges - runner, protocol, duration, tokens, cost */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-foreground">{session.runner}</span>
               </div>
-              
-              {eventsLoading ? (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground" />
-                  Loading...
-                </div>
-              ) : events.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground/80 mt-1">
-                  {events.slice(-3).map((event) => (
-                    <span key={event.id} className="inline-flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded">
-                      <span className={cn(
-                        'block h-1.5 w-1.5 rounded-full',
-                        formatEventLabel(event).toLowerCase().includes('fail') || formatEventLabel(event).toLowerCase().includes('error')
-                          ? 'bg-rose-500'
-                          : formatEventLabel(event).toLowerCase().includes('complete')
-                            ? 'bg-sky-500'
-                            : formatEventLabel(event).toLowerCase().includes('start') || formatEventLabel(event).toLowerCase().includes('run')
-                              ? 'bg-emerald-500'
-                              : 'bg-muted-foreground/50'
-                      )} />
-                      <span>{formatEventLabel(event)}</span>
-                      <span className="opacity-60">{formatEventTimestamp(event.timestamp)}</span>
-                    </span>
-                  ))}
-                  {events.length > 3 && <span className="text-[10px] opacity-60">+{events.length - 3} more</span>}
-                </div>
+              <Separator orientation="vertical" className="h-4" />
+              <div className="flex items-center gap-2">
+                <Activity className="h-3.5 w-3.5 opacity-70" />
+                <span>{isAcp ? t('sessions.labels.protocolAcp') : t('sessions.labels.protocolCli')}</span>
+                <span className="opacity-50">/</span>
+                <span className="font-medium text-foreground">{session.mode}</span>
+              </div>
+              <Separator orientation="vertical" className="h-4" />
+              <div className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 opacity-70" />
+                <span>{durationLabel ?? '—'}</span>
+              </div>
+              {tokenLabel && (
+                <>
+                  <Separator orientation="vertical" className="h-4" />
+                  <div className="flex items-center gap-2">
+                    <Cpu className="h-3.5 w-3.5 opacity-70" />
+                    <span>{tokenLabel}</span>
+                  </div>
+                </>
+              )}
+              {costEstimate != null && (
+                <>
+                  <Separator orientation="vertical" className="h-4" />
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-3.5 w-3.5 opacity-70" />
+                    <span>{t('sessions.labels.costApprox', { value: costEstimate.toFixed(2) })}</span>
+                  </div>
+                </>
               )}
             </div>
-          }
-          actions={(
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 mr-2">
-                {session.status === 'running' && (
-                  <>
-                    <Button size="sm" variant="secondary" className="gap-1.5 h-8" onClick={() => void handlePause()}>
-                      <Pause className="h-3.5 w-3.5" />
-                      {t('sessions.actions.pause')}
-                    </Button>
-                    <Button size="sm" variant="destructive" className="gap-1.5 h-8" onClick={() => void handleStop()}>
-                      <Square className="h-3.5 w-3.5" />
-                      {t('sessions.actions.stop')}
-                    </Button>
-                  </>
-                )}
-                {session.status === 'pending' && (
-                  <Button size="sm" variant="secondary" className="gap-1.5 h-8" onClick={() => void handleStart()}>
-                    <Play className="h-3.5 w-3.5" />
-                    {t('sessions.actions.start')}
+
+            {/* Spec IDs */}
+            {session.specIds && session.specIds.length > 0 && (
+              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mt-1.5">
+                <span>{t('sessions.labels.specs')}:</span>
+                {session.specIds.map((specId) => (
+                  <Link key={specId} to={`${basePath}/specs/${specId}`} className="hover:text-primary hover:underline font-medium">
+                    {specId}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* Action buttons row */}
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              {session.status === 'running' && (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handlePause()}
+                    className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <Pause className="mr-1.5 h-3.5 w-3.5" />
+                    {t('sessions.actions.pause')}
                   </Button>
-                )}
-                {session.status === 'paused' && (
-                  <>
-                    <Button size="sm" variant="secondary" className="gap-1.5 h-8" onClick={() => void handleResume()}>
-                      <Play className="h-3.5 w-3.5" />
-                      {t('sessions.actions.resume')}
-                    </Button>
-                    <Button size="sm" variant="destructive" className="gap-1.5 h-8" onClick={() => void handleStop()}>
-                      <Square className="h-3.5 w-3.5" />
-                      {t('sessions.actions.stop')}
-                    </Button>
-                  </>
-                )}
-                {canResumeAcpCompletedSession && (
-                  <Button size="sm" variant="secondary" className="gap-1.5 h-8" onClick={() => void handleAcpResumeSession()}>
-                    <Play className="h-3.5 w-3.5" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleStop()}
+                    className="h-8 rounded-full border px-3 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+                  >
+                    <Square className="mr-1.5 h-3.5 w-3.5" />
+                    {t('sessions.actions.stop')}
+                  </Button>
+                </>
+              )}
+              {session.status === 'pending' && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleStart()}
+                  className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Play className="mr-1.5 h-3.5 w-3.5" />
+                  {t('sessions.actions.start')}
+                </Button>
+              )}
+              {session.status === 'paused' && (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleResume()}
+                    className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <Play className="mr-1.5 h-3.5 w-3.5" />
                     {t('sessions.actions.resume')}
                   </Button>
-                )}
-                <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => void handleRestart()}>
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  {t('sessions.actions.restart')}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleStop()}
+                    className="h-8 rounded-full border px-3 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+                  >
+                    <Square className="mr-1.5 h-3.5 w-3.5" />
+                    {t('sessions.actions.stop')}
+                  </Button>
+                </>
+              )}
+              {canResumeAcpCompletedSession && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleAcpResumeSession()}
+                  className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Play className="mr-1.5 h-3.5 w-3.5" />
+                  {t('sessions.actions.resume')}
                 </Button>
-                <Button size="sm" variant="ghost" className="h-8 w-8 px-0" onClick={() => void handleCopyId()} title={t('sessions.actions.copyId')}>
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-              
-              <Link to={`${basePath}/sessions`}>
-                <Button variant="ghost" size="sm" className="gap-2 h-8">
-                  <ArrowLeft className="h-4 w-4" />
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void handleRestart()}
+                className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                {t('sessions.actions.restart')}
+              </Button>
+
+              <Link to={`${basePath}/sessions`} className="inline-flex">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+                  {t('sessions.actions.back')}
                 </Button>
               </Link>
             </div>
-          )}
-        />
+          </PageContainer>
+        </header>
 
-        {session.prompt && (
-          <div className="bg-muted/30 border rounded-md px-3 py-2 text-xs">
-            <div className="text-[10px] font-semibold uppercase text-muted-foreground mb-1 tracking-wider">{t('sessions.labels.prompt')}</div>
-            <div className="text-foreground/90 line-clamp-2 hover:line-clamp-none transition-all">{session.prompt}</div>
+        {archiveError && (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive font-medium flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            {archiveError}
           </div>
         )}
 
-        {(archivePath || archiveError) && (
-          <div className={cn("rounded-md border px-3 py-2 text-xs", archiveError ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400")}>
-            {archivePath && t('sessionDetail.archiveSuccess', { path: archivePath })}
-            {archiveError && archiveError}
-          </div>
-        )}
-
-        <div className="flex-1 min-h-0 flex flex-col border rounded-md bg-background shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between p-2 border-b bg-muted/5 gap-2">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-               <div className="relative flex-1 max-w-sm">
-                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                 <input
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder={t('sessionDetail.filters.search')}
-                  className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                />
+        {/* Main content area */}
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          {(!isAcp) ? (
+            <div className="flex-1 flex flex-col min-h-0">
+               <div className="border-b px-4 py-2 flex items-center justify-between bg-muted/20 gap-4">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="relative flex-1 max-w-sm">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <input
+                          value={searchQuery}
+                          onChange={(event) => setSearchQuery(event.target.value)}
+                          placeholder={t('sessionDetail.filters.search')}
+                          className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                      </div>
+                  </div>
+                  <div className="flex items-center gap-2 justify-end">
+                       <div className="flex items-center gap-2 font-medium text-sm text-muted-foreground mr-2">
+                         <FileCode className="h-4 w-4" />
+                         <span>Verbose Logs</span>
+                       </div>
+                       <div className="h-4 w-px bg-border mx-1" />
+                       <div className="flex items-center gap-1">
+                        {availableLevels.map((level) => (
+                          <button
+                            key={level}
+                            onClick={() => handleToggleLevel(level)}
+                            className={cn(
+                              'rounded-md px-2 py-1 text-[10px] font-medium uppercase transition-colors border',
+                              levelFilter.has(level)
+                                ? 'border-primary/50 bg-primary/10 text-primary'
+                                : 'border-transparent text-muted-foreground hover:bg-muted'
+                            )}
+                          >
+                            {level}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="h-4 w-px bg-border mx-1" />
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleDownload} title={t('sessionDetail.actions.download')}>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className={cn("h-8 w-8 p-0", copySuccess && "text-emerald-500")} onClick={() => void handleCopyLogs()} title={t('sessionDetail.actions.copyLogs')}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                  </div>
                </div>
-               
-               <div className="h-4 w-px bg-border mx-1" />
-
-               <div className="flex items-center gap-1">
-                 {availableLevels.map((level) => (
-                    <button
-                      key={level}
-                      onClick={() => handleToggleLevel(level)}
-                      className={cn(
-                        'rounded-md px-2 py-1 text-[10px] font-medium uppercase transition-colors border',
-                        levelFilter.has(level)
-                          ? 'border-primary/50 bg-primary/10 text-primary'
-                          : 'border-transparent text-muted-foreground hover:bg-muted'
-                      )}
-                    >
-                      {isAcp ? t(`sessionDetail.filters.acp.${level}`) : level}
-                    </button>
-                  ))}
-               </div>
+               <ScrollArea className="flex-1 h-full bg-background" ref={logRef}>
+                 <div className="p-4 font-mono text-xs">
+                    {logsLoading ? (
+                      <div className="text-muted-foreground">{t('actions.loading')}</div>
+                    ) : filteredLogs.length === 0 ? (
+                      <div className="text-muted-foreground text-center italic opacity-60 py-8">{t('sessions.emptyLogs')}</div>
+                    ) : (
+                      filteredLogs.map((log) => {
+                        const isJson = log.message.trim().startsWith('{') || log.message.trim().startsWith('[');
+                        return (
+                          <div key={`${log.id}-${log.timestamp}`} className="mb-0.5 group hover:bg-muted/30 -mx-4 px-4 py-1 flex gap-3 items-start border-l-2 border-transparent">
+                            <span className="text-muted-foreground/40 whitespace-nowrap select-none w-24 shrink-0 text-[10px] pt-0.5 text-right font-light tabular-nums">
+                              {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}.
+                              <span className="opacity-50">{new Date(log.timestamp).getMilliseconds().toString().padStart(3, '0')}</span>
+                            </span>
+                            <span className={cn("uppercase text-[10px] font-bold w-14 shrink-0 pt-0.5 select-none text-center rounded-sm bg-muted/30", 
+                              log.level === 'error' ? "text-rose-600 bg-rose-500/10 dark:text-rose-400" : 
+                              log.level === 'warn' ? "text-amber-600 bg-amber-500/10 dark:text-amber-400" : 
+                              log.level === 'info' ? "text-sky-600 bg-sky-500/10 dark:text-sky-400" :
+                              log.level === 'debug' ? "text-violet-600 bg-violet-500/10 dark:text-violet-400" :
+                              "text-muted-foreground"
+                            )}>{log.level}</span>
+                            <div className={cn("flex-1 min-w-0 break-all whitespace-pre-wrap leading-relaxed", isJson && "text-emerald-600 dark:text-emerald-400")}>
+                              {log.message}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                 </div>
+               </ScrollArea>
             </div>
+          ) : (
+             <Tabs value={displayMode} onValueChange={(v) => setDisplayMode(v as 'messages' | 'verbose')} className="flex-1 flex flex-col min-h-0">
+              <div className="border-b px-4 py-2 flex items-center justify-between bg-muted/20 gap-4">
+                 
+                 <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="relative flex-1 max-w-sm">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <input
+                          value={searchQuery}
+                          onChange={(event) => setSearchQuery(event.target.value)}
+                          placeholder={t('sessionDetail.filters.search')}
+                          className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                      </div>
+                  </div>
 
-            <div className="flex items-center gap-1">
-               <Button
-                  size="sm"
-                  variant="ghost"
-                  className={cn("h-7 w-7 p-0", showHeartbeatLogs ? "text-primary bg-primary/10" : "text-muted-foreground")}
-                  onClick={() => setShowHeartbeatLogs(!showHeartbeatLogs)}
-                  title={showHeartbeatLogs ? "Hide system logs" : "Show system logs"}
-                >
-                  {showHeartbeatLogs ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                </Button>
-            
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className={cn("h-7 w-7 p-0", autoScroll ? "text-primary" : "text-muted-foreground")}
-                  onClick={() => setAutoScroll((prev) => !prev)}
-                  title={t('sessionDetail.filters.autoScroll')}
-                >
-                  <ArrowLeft className={cn("h-3.5 w-3.5 -rotate-90 transition-transform", !autoScroll && "rotate-90")} />
-                </Button>
-                
-                <div className="h-4 w-px bg-border mx-1" />
+                  <div className="flex items-center gap-2 justify-end">
+                       <TabsList className="h-8 bg-muted/50 p-0.5">
+                           <TabsTrigger value="messages" className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                             <div className="flex items-center gap-1.5">
+                               <MessageSquare className="h-3.5 w-3.5" />
+                               <span>{t('sessionDetail.displayMode.messages')}</span>
+                             </div>
+                           </TabsTrigger>
+                           <TabsTrigger value="verbose" className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                             <div className="flex items-center gap-1.5">
+                               <FileCode className="h-3.5 w-3.5" />
+                               <span>{t('sessionDetail.displayMode.verbose')}</span>
+                             </div>
+                           </TabsTrigger>
+                       </TabsList>
 
-                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleArchive} disabled={archiveLoading} title={t('sessions.actions.archive')}>
-                  <Download className="h-3.5 w-3.5" />
-                </Button>
-                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleExport} title={t('sessions.actions.export')}>
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-            </div>
-          </div>
-
-            <div className="flex-1 min-h-0 relative">
-             {isAcp ? (
+                      <div className="h-4 w-px bg-border mx-1" />
+                       <div className="flex items-center gap-1">
+                        {availableLevels.filter((level) => level !== 'messages').map((level) => (
+                          <button
+                            key={level}
+                            onClick={() => handleToggleLevel(level)}
+                            className={cn(
+                              'rounded-md px-2 py-1 text-[10px] font-medium uppercase transition-colors border',
+                              levelFilter.has(level)
+                                ? 'border-primary/50 bg-primary/10 text-primary'
+                                : 'border-transparent text-muted-foreground hover:bg-muted'
+                            )}
+                          >
+                            {isAcp ? t(`sessionDetail.filters.acp.${level}`) : level}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="h-4 w-px bg-border mx-1" />
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleDownload} title={t('sessionDetail.actions.download')}>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className={cn("h-8 w-8 p-0", copySuccess && "text-emerald-500")} onClick={() => void handleCopyLogs()} title={t('sessionDetail.actions.copyLogs')}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                  </div>
+              </div>
+              
+              <TabsContent value="messages" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden relative">
                 <div className="absolute inset-0">
                   <AcpConversation
                     className="h-full border-0 rounded-none bg-transparent"
                     events={filteredStreamEvents}
-
                     loading={logsLoading}
                     emptyTitle={t('sessions.emptyLogs')}
                     emptyDescription={t('sessionDetail.logsDescription')}
@@ -589,38 +670,45 @@ export function SessionDetailPage() {
                     isPermissionResponding={(permissionId) => respondingPermissionIds.has(permissionId)}
                   />
                 </div>
-              ) : (
-                <div ref={logRef} className="absolute inset-0 overflow-y-auto p-3 font-mono text-xs">
-                  {logsLoading ? (
-                    <div className="text-muted-foreground p-4">{t('actions.loading')}</div>
-                  ) : filteredLogs.length === 0 ? (
-                    <div className="text-muted-foreground p-4 text-center">{t('sessions.emptyLogs')}</div>
-                  ) : (
-                    filteredLogs.map((log) => {
-                       const isJson = log.message.trim().startsWith('{') || log.message.trim().startsWith('[');
-                       return (
-                        <div key={`${log.id}-${log.timestamp}`} className="mb-0.5 group hover:bg-muted/30 -mx-3 px-3 py-0.5 flex gap-2 items-start">
-                          <span className="text-muted-foreground/50 whitespace-nowrap select-none w-20 shrink-0 text-[10px] pt-0.5 text-right font-light">
-                             {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}.
-                             <span className="opacity-50">{new Date(log.timestamp).getMilliseconds().toString().padStart(3, '0')}</span>
-                          </span>
-                          <span className={cn("uppercase text-[10px] font-bold w-12 shrink-0 pt-0.5 select-none", 
-                             log.level === 'error' ? "text-rose-500" : 
-                             log.level === 'warn' ? "text-amber-500" : 
-                             "text-muted-foreground"
-                          )}>{log.level}</span>
-                          <div className={cn("flex-1 min-w-0 break-all whitespace-pre-wrap", isJson && "text-emerald-600 dark:text-emerald-400")}>
-                             {log.message}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              )}
-          </div>
+              </TabsContent>
+              
+              <TabsContent value="verbose" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden relative h-full">
+                 <ScrollArea className="h-full bg-background" ref={logRef}>
+                   <div className="p-4 font-mono text-xs">
+                      {logsLoading ? (
+                        <div className="text-muted-foreground">{t('actions.loading')}</div>
+                      ) : filteredLogs.length === 0 ? (
+                        <div className="text-muted-foreground text-center italic opacity-60 py-8">{t('sessions.emptyLogs')}</div>
+                      ) : (
+                        filteredLogs.map((log) => {
+                          const isJson = log.message.trim().startsWith('{') || log.message.trim().startsWith('[');
+                          return (
+                            <div key={`${log.id}-${log.timestamp}`} className="mb-0.5 group hover:bg-muted/30 -mx-4 px-4 py-1 flex gap-3 items-start border-l-2 border-transparent">
+                              <span className="text-muted-foreground/40 whitespace-nowrap select-none w-24 shrink-0 text-[10px] pt-0.5 text-right font-light tabular-nums">
+                                {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}.
+                                <span className="opacity-50">{new Date(log.timestamp).getMilliseconds().toString().padStart(3, '0')}</span>
+                              </span>
+                              <span className={cn("uppercase text-[10px] font-bold w-14 shrink-0 pt-0.5 select-none text-center rounded-sm bg-muted/30", 
+                                log.level === 'error' ? "text-rose-600 bg-rose-500/10 dark:text-rose-400" : 
+                                log.level === 'warn' ? "text-amber-600 bg-amber-500/10 dark:text-amber-400" : 
+                                log.level === 'info' ? "text-sky-600 bg-sky-500/10 dark:text-sky-400" :
+                                log.level === 'debug' ? "text-violet-600 bg-violet-500/10 dark:text-violet-400" :
+                                "text-muted-foreground"
+                              )}>{log.level}</span>
+                              <div className={cn("flex-1 min-w-0 break-all whitespace-pre-wrap leading-relaxed", isJson && "text-emerald-600 dark:text-emerald-400")}>
+                                {log.message}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                   </div>
+                 </ScrollArea>
+              </TabsContent>
+             </Tabs>
+          )}
         </div>
-      </PageContainer>
+      </div>
     </PageTransition>
   );
 }
