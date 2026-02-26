@@ -114,8 +114,76 @@ function parseRawEvent(payload: unknown): SessionStreamEvent | null {
   }
 }
 
+/**
+ * Try to extract a SessionStreamEvent from a parsed JSON-RPC object.
+ * Handles both old field names (type, id, tool, args) and new protocol names
+ * (sessionUpdate, toolCallId, title, rawInput, content array).
+ */
+function extractJsonRpcEvent(obj: unknown, fallbackTimestamp?: string): SessionStreamEvent | null {
+  if (!isRecord(obj) || obj.method !== 'session/update' || !isRecord(obj.params)) return null;
+
+  const params = obj.params as Record<string, unknown>;
+  const update = (isRecord(params.update) ? params.update : params) as Record<string, unknown>;
+  const updateType = asString(update.sessionUpdate || update.type);
+
+  if (updateType === 'agent_message_chunk' && isRecord(update.content)) {
+    return {
+      type: 'acp_message',
+      timestamp: fallbackTimestamp,
+      role: 'agent',
+      content: asString((update.content as Record<string, unknown>).text),
+      done: false,
+    };
+  }
+
+  if (updateType === 'agent_thought_chunk' && isRecord(update.content)) {
+    return {
+      type: 'acp_thought',
+      timestamp: fallbackTimestamp,
+      content: asString((update.content as Record<string, unknown>).text),
+      done: false,
+    };
+  }
+
+  if (updateType === 'tool_call' || updateType === 'tool_call_update') {
+    let result: unknown = update.result ?? null;
+    if (result === null && Array.isArray(update.content)) {
+      const first = update.content[0];
+      if (isRecord(first) && isRecord(first.content)) {
+        result = (first.content as Record<string, unknown>).text ?? null;
+      }
+    }
+    return {
+      type: 'acp_tool_call',
+      timestamp: fallbackTimestamp,
+      id: asString(update.id ?? update.toolCallId),
+      tool: asString(update.tool ?? update.title),
+      args: isRecord(update.args) ? update.args : isRecord(update.rawInput) ? update.rawInput : {},
+      status: update.status === 'completed' || update.status === 'failed' ? update.status : 'running',
+      result,
+    };
+  }
+
+  return null;
+}
+
 export function parseStreamEventPayload(payload: unknown): SessionStreamEvent | null {
-  return parseRawEvent(payload);
+  const parsed = parseRawEvent(payload);
+  if (parsed) return parsed;
+
+  // Handle log-type events whose message may contain embedded JSON-RPC
+  if (isRecord(payload) && payload.type === 'log' && typeof payload.message === 'string') {
+    const msg = payload.message;
+    const jsonStart = msg.indexOf('{');
+    if (jsonStart >= 0) {
+      try {
+        const inner = JSON.parse(msg.slice(jsonStart));
+        const event = extractJsonRpcEvent(inner, typeof payload.timestamp === 'string' ? payload.timestamp : undefined);
+        if (event) return event;
+      } catch { /* ignore */ }
+    }
+  }
+  return null;
 }
 
 export function parseSessionLog(log: SessionLog): SessionStreamEvent {
@@ -132,50 +200,8 @@ export function parseSessionLog(log: SessionLog): SessionStreamEvent {
   }
 
   // Handle JSON-RPC agent messages if found
-  if (isRecord(parsedMessage) && parsedMessage.method === 'session/update' && isRecord(parsedMessage.params)) {
-    const params = parsedMessage.params as Record<string, unknown>;
-    const update = (isRecord(params.update) ? params.update : params) as Record<string, unknown>;
-    const updateType = asString(update.sessionUpdate || update.type);
-
-    if (updateType === 'agent_message_chunk' && isRecord(update.content)) {
-      return {
-        type: 'acp_message',
-        timestamp: log.timestamp,
-        role: 'agent',
-        content: asString((update.content as Record<string, unknown>).text),
-        done: false
-      };
-    }
-    
-    if (updateType === 'agent_thought_chunk' && isRecord(update.content)) {
-      return {
-        type: 'acp_thought',
-        timestamp: log.timestamp,
-        content: asString((update.content as Record<string, unknown>).text),
-        done: false
-      };
-    }
-
-    if (updateType === 'tool_call' || updateType === 'tool_call_update') {
-      // Extract result from content array (new protocol: content[].content.text)
-      let result: unknown = update.result ?? null;
-      if (result === null && Array.isArray(update.content)) {
-        const first = update.content[0];
-        if (isRecord(first) && isRecord(first.content)) {
-          result = (first.content as Record<string, unknown>).text ?? null;
-        }
-      }
-      return {
-        type: 'acp_tool_call',
-        timestamp: log.timestamp,
-        id: asString(update.id ?? update.toolCallId),
-        tool: asString(update.tool ?? update.title),
-        args: isRecord(update.args) ? update.args : isRecord(update.rawInput) ? update.rawInput : {},
-        status: update.status === 'completed' || update.status === 'failed' ? update.status : 'running',
-        result,
-      };
-    }
-  }
+  const jsonRpcEvent = extractJsonRpcEvent(parsedMessage, log.timestamp);
+  if (jsonRpcEvent) return jsonRpcEvent;
 
   const parsed = parseRawEvent(parsedMessage);
   if (parsed) {
