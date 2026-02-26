@@ -881,6 +881,12 @@
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar"
   },
+  "sessionsSidebar": {
+    "searchPlaceholder": "Search sessions...",
+    "noResults": "No sessions found",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
+  },
   "specsNavSidebar": {
     "title": "Specifications",
     "searchPlaceholder": "Search specs...",

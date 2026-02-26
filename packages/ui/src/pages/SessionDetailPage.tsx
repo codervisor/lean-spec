@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { 
-  AlertTriangle, ArrowLeft, Download, Copy, Play, Square, Pause, 
-  Activity, Search, Cpu, Zap, MessageSquare, FileCode, Timer
+  AlertTriangle, Download, Copy, Play, Square, Pause, 
+  Activity, Search, Cpu, Zap, MessageSquare, FileCode, Timer, PanelLeft
 } from 'lucide-react';
 import { 
   Button, cn, Badge, ScrollArea,
@@ -14,7 +14,6 @@ import type { Session, SessionLog, SessionStreamEvent } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { EmptyState } from '../components/shared/empty-state';
 import { PageTransition } from '../components/shared/page-transition';
-import { PageContainer } from '../components/shared/page-container';
 import { AcpConversation } from '../components/sessions/acp-conversation';
 import {
   sessionStatusConfig,
@@ -25,7 +24,6 @@ import {
   formatTokenCount,
 } from '../lib/session-utils';
 import { RunnerLogo } from '../components/library/ai-elements/runner-logo';
-import { useDisplayStore } from '../stores/display';
 import {
   appendStreamEvent,
   getAcpFilterType,
@@ -34,6 +32,7 @@ import {
   parseStreamEventPayload,
   type AcpFilterType,
 } from '../lib/session-stream';
+import { useSessionDetailLayoutContext } from '../components/session-detail-layout.context';
 
 export function SessionDetailPage() {
   const { t } = useTranslation('common');
@@ -56,7 +55,7 @@ export function SessionDetailPage() {
   const [viewMode, setViewMode] = useState<'messages' | 'verbose'>('messages');
   const [copySuccess, setCopySuccess] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
-  const { displayMode } = useDisplayStore();
+  const { setMobileOpen } = useSessionDetailLayoutContext();
 
   const loadSession = useCallback(async () => {
     if (!sessionId || !projectReady || projectLoading) return;
@@ -300,17 +299,15 @@ export function SessionDetailPage() {
 
   if (loading) {
     return (
-      <PageContainer>
-        <div className="py-10 text-center text-sm text-muted-foreground">
-          {t('actions.loading')}
-        </div>
-      </PageContainer>
+      <div className="flex-1 min-w-0 py-10 text-center text-sm text-muted-foreground">
+        {t('actions.loading')}
+      </div>
     );
   }
 
   if (error || !session) {
     return (
-      <PageContainer>
+      <div className="flex-1 min-w-0 flex items-center justify-center">
         <EmptyState
           icon={AlertTriangle}
           title={t('sessionDetail.state.notFoundTitle')}
@@ -319,13 +316,12 @@ export function SessionDetailPage() {
           actions={(
             <Link to={`${basePath}/sessions`} className="inline-flex">
               <Button variant="outline" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
                 {t('sessions.actions.back')}
               </Button>
             </Link>
           )}
         />
-      </PageContainer>
+      </div>
     );
   }
 
@@ -334,14 +330,20 @@ export function SessionDetailPage() {
   return (
     <PageTransition className="flex-1 min-w-0">
       <div className="h-[calc(100vh-3.5rem)] flex flex-col">
-        {/* Compact Header - sticky, matching SpecDetailPage */}
+        {/* Compact Header - sticky */}
         <header className="shrink-0 border-b bg-card">
-          <PageContainer
-            padding="none"
-            contentClassName="px-4 sm:px-6 lg:px-8 py-2 sm:py-3"
-          >
+          <div className="px-4 sm:px-6 py-2 sm:py-3">
             {/* Line 1: Title with runner logo + session ID + status badge */}
             <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+              {/* Mobile sidebar toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 lg:hidden shrink-0"
+                onClick={() => setMobileOpen(true)}
+              >
+                <PanelLeft className="h-4 w-4" />
+              </Button>
               <RunnerLogo runnerId={session.runner} size={24} />
               <h1 className="text-lg sm:text-xl font-bold tracking-tight">
                 {t('sessionDetail.title', { id: shortId(session.id) })}
@@ -512,19 +514,8 @@ export function SessionDetailPage() {
                 </Button>
               )}
 
-              <Link to={`${basePath}/sessions`} className="inline-flex">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-                  {t('sessions.actions.back')}
-                </Button>
-              </Link>
             </div>
-          </PageContainer>
+          </div>
         </header>
 
         {archiveError && (
@@ -535,10 +526,7 @@ export function SessionDetailPage() {
         )}
 
         {/* Main content area */}
-        <div className={cn(
-          'flex-1 min-h-0 flex flex-col overflow-hidden mx-auto w-full transition-[max-width] duration-300',
-          displayMode === 'wide' ? 'w-full' : 'max-w-6xl'
-        )}>
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden w-full">
           {(!isAcp) ? (
             <div className="flex-1 flex flex-col min-h-0">
                <div className="border-b px-4 py-2 flex items-center justify-between bg-muted/20 gap-4">

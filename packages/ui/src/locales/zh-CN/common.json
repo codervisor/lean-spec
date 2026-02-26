@@ -854,6 +854,12 @@
     "collapse": "收起侧边栏",
     "expand": "展开侧边栏"
   },
+  "sessionsSidebar": {
+    "searchPlaceholder": "搜索会话...",
+    "noResults": "没有匹配的会话",
+    "collapse": "收起侧边栏",
+    "expand": "展开侧边栏"
+  },
   "specsNavSidebar": {
     "title": "规范列表",
     "searchPlaceholder": "搜索规范...",

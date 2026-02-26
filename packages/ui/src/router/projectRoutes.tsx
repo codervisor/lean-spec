@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
 
 import { SpecDetailLayout } from '../components/spec-detail-layout';
+import { SessionDetailLayout } from '../components/session-detail-layout';
 import { ContextPage } from '../pages/ContextPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { DependenciesPage } from '../pages/DependenciesPage';
@@ -36,7 +37,10 @@ export function createProjectRoutes(): RouteObject[] {
       path: 'sessions',
       children: [
         { index: true, element: <SessionsPage /> },
-        { path: ':sessionId', element: <SessionDetailPage /> },
+        {
+          element: <SessionDetailLayout />,
+          children: [{ path: ':sessionId', element: <SessionDetailPage /> }],
+        },
       ],
     },
     { path: 'stats', element: <StatsPage /> },
