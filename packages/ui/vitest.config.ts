@@ -10,6 +10,12 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: './src/test/setup.ts',
+    server: {
+      deps: {
+        // Inline media-chrome so Vite's react alias resolves inside it
+        inline: ['media-chrome'],
+      },
+    },
   },
   resolve: {
     alias: {
