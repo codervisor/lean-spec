@@ -16,10 +16,9 @@ import {
   ReasoningContent,
   ReasoningTrigger,
   Tool,
+  ToolBody,
   ToolContent,
   ToolHeader,
-  ToolInput,
-  ToolOutput,
 } from '@/library';
 import type { SessionStreamEvent } from '../../types/api';
 import { useTranslation } from 'react-i18next';
@@ -129,8 +128,11 @@ export function AcpConversation({
                       state={toToolState(event.status)}
                     />
                     <ToolContent>
-                      <ToolInput input={event.args} />
-                      <ToolOutput output={event.result as string | undefined} rawOutput={event.result} />
+                      <ToolBody
+                        input={event.args}
+                        output={event.result as string | undefined}
+                        rawOutput={event.result}
+                      />
                     </ToolContent>
                   </Tool>
                 );
@@ -166,7 +168,7 @@ export function AcpConversation({
                   <Tool key={`acp-permission-${event.id}`} defaultOpen>
                     <ToolHeader type="dynamic-tool" toolName={event.tool} state="approval-requested" />
                     <ToolContent>
-                      <ToolInput input={{ tool: event.tool, args: event.args, options: event.options }} />
+                      <ToolBody input={{ tool: event.tool, args: event.args, options: event.options }} />
                       <div className="flex flex-wrap gap-2 pt-2">
                         {event.options.map((option) => (
                           <button

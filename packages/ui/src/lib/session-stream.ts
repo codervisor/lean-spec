@@ -133,26 +133,47 @@ export function parseSessionLog(log: SessionLog): SessionStreamEvent {
 
   // Handle JSON-RPC agent messages if found
   if (isRecord(parsedMessage) && parsedMessage.method === 'session/update' && isRecord(parsedMessage.params)) {
-    const update = parsedMessage.params.update;
-    if (isRecord(update)) {
-      if (update.sessionUpdate === 'agent_message_chunk' && isRecord(update.content)) {
-        return {
-          type: 'acp_message',
-          timestamp: log.timestamp,
-          role: 'agent',
-          content: asString(update.content.text),
-          done: false
-        };
+    const params = parsedMessage.params as Record<string, unknown>;
+    const update = (isRecord(params.update) ? params.update : params) as Record<string, unknown>;
+    const updateType = asString(update.sessionUpdate || update.type);
+
+    if (updateType === 'agent_message_chunk' && isRecord(update.content)) {
+      return {
+        type: 'acp_message',
+        timestamp: log.timestamp,
+        role: 'agent',
+        content: asString((update.content as Record<string, unknown>).text),
+        done: false
+      };
+    }
+    
+    if (updateType === 'agent_thought_chunk' && isRecord(update.content)) {
+      return {
+        type: 'acp_thought',
+        timestamp: log.timestamp,
+        content: asString((update.content as Record<string, unknown>).text),
+        done: false
+      };
+    }
+
+    if (updateType === 'tool_call' || updateType === 'tool_call_update') {
+      // Extract result from content array (new protocol: content[].content.text)
+      let result: unknown = update.result ?? null;
+      if (result === null && Array.isArray(update.content)) {
+        const first = update.content[0];
+        if (isRecord(first) && isRecord(first.content)) {
+          result = (first.content as Record<string, unknown>).text ?? null;
+        }
       }
-      
-      if (update.sessionUpdate === 'agent_thought_chunk' && isRecord(update.content)) {
-        return {
-          type: 'acp_thought',
-          timestamp: log.timestamp,
-          content: asString(update.content.text),
-          done: false
-        };
-      }
+      return {
+        type: 'acp_tool_call',
+        timestamp: log.timestamp,
+        id: asString(update.id ?? update.toolCallId),
+        tool: asString(update.tool ?? update.title),
+        args: isRecord(update.args) ? update.args : isRecord(update.rawInput) ? update.rawInput : {},
+        status: update.status === 'completed' || update.status === 'failed' ? update.status : 'running',
+        result,
+      };
     }
   }
 

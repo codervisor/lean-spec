@@ -1511,6 +1511,7 @@ fn map_acp_payload_to_logs(session_id: &str, payload: Value) -> Option<Vec<Sessi
 
     let update_type = update
         .get("type")
+        .or_else(|| update.get("sessionUpdate"))
         .and_then(|value| value.as_str())
         .unwrap_or_default();
 
@@ -1535,15 +1536,30 @@ fn map_acp_payload_to_logs(session_id: &str, payload: Value) -> Option<Vec<Sessi
             "content": update.get("content").and_then(|v| v.as_str()).or_else(|| update.get("text").and_then(|v| v.as_str())).unwrap_or(""),
             "done": update.get("done").and_then(|v| v.as_bool()).unwrap_or(false),
         })),
-        "tool_call" | "tool_call_update" => Some(json!({
-            "type": "acp_tool_call",
-            "timestamp": timestamp.to_rfc3339(),
-            "id": update.get("id").and_then(|v| v.as_str()).unwrap_or_default(),
-            "tool": update.get("tool").and_then(|v| v.as_str()).unwrap_or_default(),
-            "args": update.get("args").cloned().unwrap_or_else(|| json!({})),
-            "status": update.get("status").and_then(|v| v.as_str()).unwrap_or("running"),
-            "result": update.get("result").cloned().unwrap_or(Value::Null),
-        })),
+        "tool_call" | "tool_call_update" => {
+            // Support both old field names (id/tool/args/result) and new protocol
+            // field names (toolCallId/title/rawInput/content)
+            let result = update.get("result").cloned().unwrap_or_else(|| {
+                // New protocol nests result in content[].content.text
+                update
+                    .get("content")
+                    .and_then(|v| v.as_array())
+                    .and_then(|arr| arr.first())
+                    .and_then(|item| item.get("content"))
+                    .and_then(|content| content.get("text"))
+                    .cloned()
+                    .unwrap_or(Value::Null)
+            });
+            Some(json!({
+                "type": "acp_tool_call",
+                "timestamp": timestamp.to_rfc3339(),
+                "id": update.get("id").or_else(|| update.get("toolCallId")).and_then(|v| v.as_str()).unwrap_or_default(),
+                "tool": update.get("tool").or_else(|| update.get("title")).and_then(|v| v.as_str()).unwrap_or_default(),
+                "args": update.get("args").or_else(|| update.get("rawInput")).cloned().unwrap_or_else(|| json!({})),
+                "status": update.get("status").and_then(|v| v.as_str()).unwrap_or("running"),
+                "result": result,
+            }))
+        }
         "plan" => {
             let entries = update
                 .get("entries")

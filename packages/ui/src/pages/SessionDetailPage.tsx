@@ -26,11 +26,9 @@ import {
 import { RunnerLogo } from '../components/library/ai-elements/runner-logo';
 import {
   appendStreamEvent,
-  getAcpFilterType,
   isAcpSession,
   parseSessionLog,
   parseStreamEventPayload,
-  type AcpFilterType,
 } from '../lib/session-stream';
 import { useSessionDetailLayoutContext } from '../components/session-detail-layout.context';
 
@@ -51,7 +49,6 @@ export function SessionDetailPage() {
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [respondingPermissionIds, setRespondingPermissionIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const [levelFilter, setLevelFilter] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'messages' | 'verbose'>('messages');
   const [copySuccess, setCopySuccess] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
@@ -138,28 +135,19 @@ export function SessionDetailPage() {
 
   const isAcp = isAcpSession(session);
 
-  const availableLevels = useMemo(() => {
-    if (!isAcp) {
-      return Array.from(new Set(logs.map((log) => log.level))).sort();
-    }
-    const filters: AcpFilterType[] = ['messages', 'thoughts', 'tools', 'plan'];
-    return filters.filter((filter) => streamEvents.some((event) => getAcpFilterType(event) === filter));
-  }, [isAcp, logs, streamEvents]);
-
   const showHeartbeatLogs = viewMode === 'verbose';
 
   const filteredLogs = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     return logs.filter((log) => {
       if (!showHeartbeatLogs && log.message.includes('Session still running')) return false;
-      if (levelFilter.size > 0 && !levelFilter.has(log.level)) return false;
       if (normalizedQuery) {
         const haystack = `${log.level} ${log.message}`.toLowerCase();
         if (!haystack.includes(normalizedQuery)) return false;
       }
       return true;
     });
-  }, [levelFilter, logs, searchQuery, showHeartbeatLogs]);
+  }, [logs, searchQuery, showHeartbeatLogs]);
 
   const filteredStreamEvents = useMemo(() => {
     if (!isAcp) return [];
@@ -168,11 +156,6 @@ export function SessionDetailPage() {
       // In messages mode, hide log-type events (they show in verbose)
       if (viewMode === 'messages' && event.type === 'log') return false;
       if (event.type === 'log' && !showHeartbeatLogs && event.message.includes('Session still running')) return false;
-
-      const category = getAcpFilterType(event);
-      if (levelFilter.size > 0) {
-        if (!category || !levelFilter.has(category)) return false;
-      }
 
       if (!normalizedQuery) return true;
 
@@ -192,7 +175,7 @@ export function SessionDetailPage() {
       }
       return false;
     });
-  }, [isAcp, levelFilter, searchQuery, streamEvents, showHeartbeatLogs, viewMode]);
+  }, [isAcp, searchQuery, streamEvents, showHeartbeatLogs, viewMode]);
 
   const durationLabel = session ? formatSessionDuration(session) : null;
   const tokenLabel = session ? formatTokenCount(session.tokenCount) : null;
@@ -200,17 +183,7 @@ export function SessionDetailPage() {
 
   const shortId = (id: string) => id.length > 12 ? id.slice(0, 8) : id;
 
-  const handleToggleLevel = (level: string) => {
-    setLevelFilter((prev) => {
-      const next = new Set(prev);
-      if (next.has(level)) {
-        next.delete(level);
-      } else {
-        next.add(level);
-      }
-      return next;
-    });
-  };
+
 
   const handleStart = async () => {
     if (!session) return;
@@ -547,23 +520,6 @@ export function SessionDetailPage() {
                          <span>Verbose Logs</span>
                        </div>
                        <div className="h-4 w-px bg-border mx-1" />
-                       <div className="flex items-center gap-1">
-                        {availableLevels.map((level) => (
-                          <button
-                            key={level}
-                            onClick={() => handleToggleLevel(level)}
-                            className={cn(
-                              'rounded-md px-2 py-1 text-[10px] font-medium uppercase transition-colors border',
-                              levelFilter.has(level)
-                                ? 'border-primary/50 bg-primary/10 text-primary'
-                                : 'border-transparent text-muted-foreground hover:bg-muted'
-                            )}
-                          >
-                            {level}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="h-4 w-px bg-border mx-1" />
                       <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleDownload} title={t('sessionDetail.actions.download')}>
                         <Download className="h-4 w-4" />
                       </Button>
@@ -636,23 +592,6 @@ export function SessionDetailPage() {
                            </TabsTrigger>
                        </TabsList>
 
-                      <div className="h-4 w-px bg-border mx-1" />
-                       <div className="flex items-center gap-1">
-                        {availableLevels.filter((level) => level !== 'messages').map((level) => (
-                          <button
-                            key={level}
-                            onClick={() => handleToggleLevel(level)}
-                            className={cn(
-                              'rounded-md px-2 py-1 text-[10px] font-medium uppercase transition-colors border',
-                              levelFilter.has(level)
-                                ? 'border-primary/50 bg-primary/10 text-primary'
-                                : 'border-transparent text-muted-foreground hover:bg-muted'
-                            )}
-                          >
-                            {isAcp ? t(`sessionDetail.filters.acp.${level}`) : level}
-                          </button>
-                        ))}
-                      </div>
                       <div className="h-4 w-px bg-border mx-1" />
                       <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleDownload} title={t('sessionDetail.actions.download')}>
                         <Download className="h-4 w-4" />

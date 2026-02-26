@@ -10,9 +10,9 @@ import {
   Timer,
 } from 'lucide-react';
 import {
-  Badge,
   Button,
   cn,
+  formatRelativeTime,
   ScrollArea,
   SearchInput,
   Popover,
@@ -25,6 +25,7 @@ import { useSessions } from '../hooks/useSessionsQuery';
 import { useSessionsSidebarStore } from '../stores/sessions-sidebar';
 import { sessionStatusConfig, formatSessionDuration } from '../lib/session-utils';
 import { RunnerLogo } from './library/ai-elements/runner-logo';
+import { SessionStatusBadge } from './session-status-badge';
 import type { Session, SessionStatus } from '../types/api';
 
 interface SessionsNavSidebarProps {
@@ -107,7 +108,7 @@ export function SessionsNavSidebar({ mobileOpen = false, onMobileOpenChange }: S
     );
   };
 
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
 
   const sidebarVisible = mobileOpen || !collapsed;
 
@@ -233,8 +234,6 @@ export function SessionsNavSidebar({ mobileOpen = false, onMobileOpenChange }: S
             <div className="p-1.5 space-y-0.5">
               {filteredSessions.map((session) => {
                 const isActive = session.id === activeSessionId;
-                const statusCfg = sessionStatusConfig[session.status];
-                const StatusIcon = statusCfg?.icon;
                 const duration = formatSessionDuration(session);
                 const title = session.prompt
                   || (session.specIds?.length ? session.specIds.join(', ') : null)
@@ -245,38 +244,38 @@ export function SessionsNavSidebar({ mobileOpen = false, onMobileOpenChange }: S
                     key={session.id}
                     onClick={() => handleSessionClick(session)}
                     className={cn(
-                      'w-full text-left rounded-md px-2.5 py-2 transition-colors group',
+                      'w-full text-left rounded-md px-2.5 py-2 transition-colors group overflow-hidden',
                       isActive
-                        ? 'bg-accent text-accent-foreground'
-                        : 'hover:bg-muted/50'
+                        ? 'bg-accent text-accent-foreground font-medium'
+                        : 'hover:bg-accent/50'
                     )}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-1.5 w-full min-w-0">
                       <RunnerLogo runnerId={session.runner} size={20} className="shrink-0" />
-                      <span className="text-sm font-medium truncate flex-1">{title}</span>
+                      <span className="truncate text-xs leading-relaxed flex-1">{title}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-1 ml-7">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          'flex items-center gap-1 border-transparent h-4 px-1.5 py-0 text-[10px] font-medium',
-                          statusCfg?.className
-                        )}
-                      >
-                        {StatusIcon && <StatusIcon className="h-3 w-3" />}
-                        {t(`sessions.status.${session.status}`)}
-                      </Badge>
+                    <div className="flex items-center gap-1.5 mt-1 ml-[22px] w-[calc(100%-22px)]">
+                      <SessionStatusBadge
+                        status={session.status}
+                        iconOnly
+                        responsive={false}
+                      />
                       {duration && (
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                        <span className="inline-flex items-center gap-1 h-5 px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-muted text-muted-foreground shrink-0">
                           <Timer className="h-3 w-3" />
                           {duration}
                         </span>
                       )}
+                      {session.startedAt && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatRelativeTime(session.startedAt, i18n.language)}
+                        </span>
+                      )}
                     </div>
                     {(session.specIds?.length ?? 0) > 0 && (
-                      <div className="text-[10px] text-muted-foreground truncate mt-0.5 ml-7 flex items-center gap-0.5">
+                      <div className="text-[10px] text-muted-foreground truncate mt-0.5 ml-[22px] w-[calc(100%-22px)] flex items-center gap-0.5">
                         <Hash className="h-3 w-3 shrink-0" />
-                        {session.specIds.join(', ')}
+                        <span className="truncate">{session.specIds.join(', ')}</span>
                       </div>
                     )}
                   </button>
@@ -286,10 +285,19 @@ export function SessionsNavSidebar({ mobileOpen = false, onMobileOpenChange }: S
           )}
         </ScrollArea>
 
-        <div className="border-t px-3 py-2">
+        <div className="border-t px-3 py-2 flex items-center justify-between">
           <span className="text-[10px] text-muted-foreground">
             {t('sessionsPage.count', { count: filteredSessions.length })}
           </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 hidden lg:flex"
+            onClick={() => setCollapsed(true)}
+            title={t('sessionsSidebar.collapse')}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
         </div>
       </aside>
 

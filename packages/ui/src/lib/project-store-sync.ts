@@ -7,6 +7,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useSpecsPreferencesStore, useSpecsSidebarStore } from '../stores/specs-preferences';
+import { useSessionsSidebarStore } from '../stores/sessions-sidebar';
 import { useSearchStore } from '../stores/search';
 
 // Track the last synced project ID globally to detect changes synchronously
@@ -20,6 +21,7 @@ export function rehydrateProjectScopedStores(): void {
   // Zustand persist stores have a rehydrate() method on their persist API
   useSpecsPreferencesStore.persist.rehydrate();
   useSpecsSidebarStore.persist.rehydrate();
+  useSessionsSidebarStore.persist.rehydrate();
   useSearchStore.persist.rehydrate();
 }
 
