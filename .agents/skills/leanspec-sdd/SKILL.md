@@ -44,7 +44,7 @@ Activate this skill when any of the following are true:
 - If `draft` is enabled, move `draft` → `planned` once the spec is reviewed, then set `in-progress` **before coding**.
 - Skipping `planned` from `draft` requires a `--force` override (CLI/MCP/UI).
 - Document decisions and progress **inside the spec** as work happens.
-- Link dependencies using `link`/`unlink` as they are discovered.
+- Set up relationships as discovered: use `relationships` with `action=add` and `type=parent` for umbrella children, `type=depends_on` for blockers (see "Choosing Relationship Type" below).
 
 ### 4) Validate & Complete
 - Run `validate` (or `lean-spec validate`) before completion.
@@ -68,11 +68,67 @@ Use MCP tools when available. Use CLI as fallback.
 | View spec | `view` | `lean-spec view <spec>` |
 | Create spec | `create` | `lean-spec create <name>` |
 | Update status | `update` | `lean-spec update <spec> --status <status>` |
-| Dependencies | `deps` | `lean-spec deps <spec>` |
-| Relationships | `relationships` | `lean-spec rel <spec>` |
-| Link / unlink (deprecated) | `link` / `unlink` | `lean-spec link/unlink <spec> --depends-on <other>` |
+| View relationships | `relationships` | `lean-spec rel <spec>` |
+| Set parent | `relationships` (`action=add`, `type=parent`) | `lean-spec rel add <child> --parent <parent>` |
+| Add child | `relationships` (`action=add`, `type=child`) | `lean-spec rel add <parent> --child <child>` |
+| Add dependency | `relationships` (`action=add`, `type=depends_on`) | `lean-spec rel add <spec> --depends-on <other>` |
+| Remove dependency | `relationships` (`action=remove`, `type=depends_on`) | `lean-spec rel rm <spec> --depends-on <other>` |
+| Dependency graph | _(no dedicated MCP tool)_ | `lean-spec deps <spec>` |
+| List children | `relationships` (`action=view`) | `lean-spec children <parent>` |
 | Token count | `tokens` | `lean-spec tokens <spec>` |
 | Validate | `validate` | `lean-spec validate` |
+| Stats | `stats` | `lean-spec stats` |
+
+## Choosing Relationship Type
+
+**IMPORTANT**: This is a critical decision. Read carefully before linking specs.
+
+### Parent/Child (Umbrella Decomposition)
+
+Use when a large initiative is **broken into child specs** that together form the whole.
+
+- "This spec is a piece of that umbrella's scope"
+- Child spec doesn't make sense without parent context
+- Parent completes when **all children** complete
+- Children share the parent's theme/goal
+
+**Tools**: `relationships` with `action=add`, `type=parent`, `target=<parent>` (MCP) / `lean-spec rel add <child> --parent <parent>` (CLI)
+**View children**: `relationships` with `action=view` (read `hierarchy.children`) (MCP) / `lean-spec children <parent>` (CLI)
+
+**Example**: "CLI UX Overhaul" umbrella with children: "Help System", "Error Messages", "Progress Indicators"
+
+### Depends On (Technical Blocker)
+
+Use when a spec **cannot start** until another independent spec is done first.
+
+- "This spec needs that spec done first"
+- Both specs are **independent work items** with separate goals
+- Could be in completely unrelated areas
+- Removal of the dependency doesn't change the spec's scope
+
+**Tools**: `relationships` with `action=add`, `type=depends_on`, `target=<other>` (MCP) / `lean-spec rel add <spec> --depends-on <other>` (CLI)
+**Remove**: `relationships` with `action=remove`, `type=depends_on`, `target=<other>` (MCP) / `lean-spec rel rm <spec> --depends-on <other>` (CLI)
+
+**Example**: "Search API" depends on "Database Schema Migration"
+
+### Decision Flowchart
+
+1. **Is spec B part of spec A's scope?** → Parent/child (`relationships` + `type=parent`)
+2. **Does spec B just need spec A finished first?** → Depends on (`relationships` + `type=depends_on`)
+3. **Never use both** parent AND depends_on for the same spec pair.
+
+**Litmus test**: If spec A didn't exist, would spec B still make sense?
+- **NO** → B is a child of A → use `relationships` (`action=add`, `type=parent`)
+- **YES** → B depends on A → use `relationships` (`action=add`, `type=depends_on`)
+
+### Umbrella Workflow
+
+When breaking a large initiative into child specs:
+1. Create the umbrella spec: `create`
+2. Create each child spec: `create`
+3. Assign children to parent: `relationships` (`action=add`, `type=parent`) for each child
+4. Verify structure: `relationships` (`action=view`) or `children` on CLI
+5. Add cross-cutting deps between children if needed: `relationships` (`action=add`, `type=depends_on`)
 
 ## Best Practices (Summary)
 
@@ -80,32 +136,14 @@ Use MCP tools when available. Use CLI as fallback.
 - Never create spec files manually; use `create`.
 - **Always pass `content`, `title`, and all known fields in the `create` call** — never create an empty spec then edit it.
 - Keep specs short and focused; split when >2000 tokens.
-- Always check dependencies and link specs that block each other.
+- **Use parent/child for umbrella decomposition**, depends_on for technical blockers.
 - Document trade-offs and decisions as they happen.
 
-## Choosing Relationship Type
-
-**Parent/Child** = Decomposition (organizational)
-- "This spec is a piece of that umbrella's scope"
-- Spec doesn't make sense without the parent context
-- Parent completes when all children complete
-
-**Depends On** = Blocking (technical)
-- "This spec needs that spec done first"
-- Specs are independent work items
-- Could be completely unrelated areas
-
-**Rule**: Never use both parent AND depends_on for the same spec pair.
-
-**Test**: If the other spec didn't exist, would your spec still make sense?
-- NO → Use parent (it's part of that scope)
-- YES → Use depends_on (it's just a blocker)
-
 See detailed guidance in:
-- [references/WORKFLOW.md](./references/WORKFLOW.md)
-- [references/BEST-PRACTICES.md](./references/BEST-PRACTICES.md)
-- [references/EXAMPLES.md](./references/EXAMPLES.md)
-- [references/COMMANDS.md](./references/COMMANDS.md)
+- [references/workflow.md](./references/workflow.md)
+- [references/best-practices.md](./references/best-practices.md)
+- [references/examples.md](./references/examples.md)
+- [references/commands.md](./references/commands.md)
 
 ## Compatibility Notes
 

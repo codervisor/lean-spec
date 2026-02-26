@@ -158,6 +158,14 @@ enum Commands {
         /// Tags (comma-separated)
         #[arg(long)]
         tags: Option<String>,
+
+        /// Parent umbrella spec path or number
+        #[arg(long)]
+        parent: Option<String>,
+
+        /// Spec(s) this new spec depends on
+        #[arg(long = "depends-on", num_args = 1..)]
+        depends_on: Vec<String>,
     },
 
     /// List example projects
@@ -718,7 +726,11 @@ fn main() -> ExitCode {
             status,
             priority,
             tags,
-        } => commands::create::run(&specs_dir, &name, title, template, status, &priority, tags),
+            parent,
+            depends_on,
+        } => commands::create::run(
+            &specs_dir, &name, title, template, status, &priority, tags, parent, depends_on,
+        ),
         Commands::Rel {
             args,
             parent,

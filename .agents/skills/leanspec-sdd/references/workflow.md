@@ -26,7 +26,7 @@ This guide expands the workflow from SKILL.md with practical steps and decision 
 4. Validate token count
    - MCP: `tokens`
    - CLI: `lean-spec tokens <spec>`
-5. If >2000 tokens, split or move detail to sub-specs or references.
+5. If >2000 tokens, split into separate files (e.g. DESIGN.md, TESTING.md) or extract to references.
 
 ## Implementation Phase
 
@@ -37,9 +37,10 @@ This guide expands the workflow from SKILL.md with practical steps and decision 
    - MCP: `update`
    - CLI: `lean-spec update <spec> --status in-progress`
 3. Record decisions, constraints, and progress in the spec.
-4. Link dependencies as they emerge
-   - MCP: `link` / `unlink`
-   - CLI: `lean-spec link <spec> --depends-on <other>`
+4. **Set up relationships as they emerge:**
+   - If spec is part of an umbrella → use `relationships` with `action=add`, `type=parent` (MCP) / `lean-spec rel add <spec> --parent <parent>` (CLI)
+   - If spec is blocked by another independent spec → use `relationships` with `action=add`, `type=depends_on` (MCP) / `lean-spec rel add <spec> --depends-on <other>` (CLI)
+   - See SKILL.md "Choosing Relationship Type" for the decision flowchart
 
 ## Validation Phase
 
@@ -57,5 +58,5 @@ This guide expands the workflow from SKILL.md with practical steps and decision 
 - Spec created or verified
 - Status updated before coding
 - Decisions documented in spec
-- Dependencies linked
+- Relationships set (parent/child for umbrellas, depends_on for blockers)
 - Validation run before completion

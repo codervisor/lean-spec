@@ -52,6 +52,8 @@ pub async fn call_tool(name: &str, args: Value) -> Result<String, String> {
 
         // Relationship tools
         "relationships" => relationships::tool_relationships(&specs_dir, args),
+        "children" => relationships::tool_children(&specs_dir, args),
+        "deps" => relationships::tool_deps(&specs_dir, args),
 
         _ => Err(format!("Unknown tool: {}", name)),
     }

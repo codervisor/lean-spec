@@ -8,6 +8,7 @@
 - **Update status early**: `in-progress` before coding.
 - **Document decisions** as they happen.
 - **Link dependencies** to show true blockers.
+- **Use parent/child for umbrella decomposition** — don't use `depends_on` for child specs of an umbrella.
 - **Validate before completion**.
 - **Verify against reality**: Check actual code, commits, and changes when assessing progress.
 - **Keep AGENTS.md minimal** and project-specific.
@@ -20,12 +21,14 @@
 - Skipping discovery steps.
 - Writing specs that are implementation-only.
 - Letting specs drift from actual work.
+- **Using `depends_on` for umbrella child specs** — use parent/child (`relationships` + `type=parent`) instead.
+- **Using parent/child for unrelated blockers** — use `depends_on` (`relationships` + `type=depends_on`) instead.
 - Trusting spec status without verifying actual implementation.
 - Marking specs complete without checking commits, tests, or code changes.
 
 ## Context Economy Tactics
 
-- Split large specs into sub-specs or references.
+- Split large specs into separate files (DESIGN.md, TESTING.md, etc.) or references.
 - Prefer bullet points over long prose.
 - Remove redundant narrative.
 

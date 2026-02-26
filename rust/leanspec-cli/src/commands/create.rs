@@ -5,6 +5,7 @@ use colored::Colorize;
 use leanspec_core::types::LeanSpecConfig;
 use leanspec_core::utils::TemplateLoader;
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -29,6 +30,8 @@ pub fn run(
     status: Option<String>,
     priority: &str,
     tags: Option<String>,
+    parent: Option<String>,
+    depends_on: Vec<String>,
 ) -> Result<(), Box<dyn Error>> {
     // 1. Find project root and load config
     let project_root = find_project_root(specs_dir)?;
@@ -73,6 +76,9 @@ pub fn run(
         &tags_vec,
     )?;
 
+    // 6b. Apply optional relationships in frontmatter
+    let content = apply_relationships(content, parent.as_deref(), &depends_on)?;
+
     // 7. Write file
     let readme_path = spec_dir.join("README.md");
     fs::write(&readme_path, &content)?;
@@ -84,10 +90,44 @@ pub fn run(
         &resolved_status,
         priority,
         &tags_vec,
+        parent.as_deref(),
+        &depends_on,
         &readme_path,
     );
 
     Ok(())
+}
+
+fn apply_relationships(
+    content: String,
+    parent: Option<&str>,
+    depends_on: &[String],
+) -> Result<String, Box<dyn Error>> {
+    if parent.is_none() && depends_on.is_empty() {
+        return Ok(content);
+    }
+
+    let mut updates: HashMap<String, serde_yaml::Value> = HashMap::new();
+
+    if let Some(parent_path) = parent {
+        updates.insert(
+            "parent".to_string(),
+            serde_yaml::Value::String(parent_path.to_string()),
+        );
+    }
+
+    if !depends_on.is_empty() {
+        let seq = depends_on
+            .iter()
+            .map(|d| serde_yaml::Value::String(d.clone()))
+            .collect();
+        updates.insert("depends_on".to_string(), serde_yaml::Value::Sequence(seq));
+    }
+
+    let parser = leanspec_core::FrontmatterParser::new();
+    parser
+        .update_frontmatter(&content, &updates)
+        .map_err(|e| format!("Failed to apply relationships to frontmatter: {}", e).into())
 }
 
 fn get_next_spec_number(specs_dir: &str) -> Result<u32, Box<dyn Error>> {
@@ -259,6 +299,8 @@ fn print_success(
     status: &str,
     priority: &str,
     tags: &[String],
+    parent: Option<&str>,
+    depends_on: &[String],
     readme_path: &Path,
 ) {
     println!("{} {}", "✓".green(), "Created spec:".green());
@@ -268,6 +310,12 @@ fn print_success(
     println!("  {}: {}", "Priority".bold(), priority);
     if !tags.is_empty() {
         println!("  {}: {}", "Tags".bold(), tags.join(", "));
+    }
+    if let Some(parent_path) = parent {
+        println!("  {}: {}", "Parent".bold(), parent_path);
+    }
+    if !depends_on.is_empty() {
+        println!("  {}: {}", "Depends on".bold(), depends_on.join(", "));
     }
     println!("  {}: {}", "File".dimmed(), readme_path.display());
 }
