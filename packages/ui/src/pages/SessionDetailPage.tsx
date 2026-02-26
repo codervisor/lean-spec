@@ -77,8 +77,6 @@ export function SessionDetailPage() {
       const data = await api.getSessionLogs(sessionId);
       setLogs(data);
       const nextStreamEvents = data
-        .slice()
-        .reverse()
         .reduce<SessionStreamEvent[]>((acc, log) => appendStreamEvent(acc, parseSessionLog(log)), []);
       setStreamEvents(nextStreamEvents);
     } finally {
@@ -575,11 +573,13 @@ export function SessionDetailPage() {
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 relative">
+            <div className="flex-1 min-h-0 relative">
              {isAcp ? (
-                <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute inset-0">
                   <AcpConversation
+                    className="h-full border-0 rounded-none bg-transparent"
                     events={filteredStreamEvents}
+
                     loading={logsLoading}
                     emptyTitle={t('sessions.emptyLogs')}
                     emptyDescription={t('sessionDetail.logsDescription')}

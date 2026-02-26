@@ -23,6 +23,8 @@ import {
 } from '@/library';
 import type { SessionStreamEvent } from '../../types/api';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/library';
+import { CollapsibleJsonLog } from './collapsible-json-log';
 
 function toToolState(status: 'running' | 'completed' | 'failed'):
   | 'input-available'
@@ -55,12 +57,13 @@ export function AcpConversation({
   emptyDescription,
   onPermissionResponse,
   isPermissionResponding,
-}: AcpConversationProps) {
+  className,
+}: AcpConversationProps & { className?: string }) {
   const { t } = useTranslation('common');
 
   return (
-    <Conversation className="min-h-0 rounded-lg border border-border bg-muted/20">
-      <ConversationContent className="gap-3">
+    <Conversation className={cn("min-h-0 rounded-lg border border-border bg-muted/20 flex flex-col overflow-hidden", className)}>
+      <ConversationContent className="gap-3 flex-1 overflow-y-auto p-4">
         {loading ? (
           <div className="text-xs text-muted-foreground">{t('actions.loading')}</div>
         ) : events.length === 0 ? (
@@ -132,7 +135,7 @@ export function AcpConversation({
                 );
               }
 
-              case 'acp_permission_request':
+              case 'acp_permission_request': {
                 const responding = isPermissionResponding?.(event.id) ?? false;
                 return (
                   <Tool key={`acp-permission-${event.id}`} defaultOpen>
@@ -158,6 +161,7 @@ export function AcpConversation({
                     </ToolContent>
                   </Tool>
                 );
+              }
 
               case 'acp_mode_update':
                 return (
@@ -175,18 +179,24 @@ export function AcpConversation({
 
               case 'log':
               default: {
-                const isJson = (event.message.trim().startsWith('{') && event.message.trim().endsWith('}')) || 
-                               (event.message.trim().startsWith('[') && event.message.trim().endsWith(']'));
-                let displayMessage = event.message;
+                const trimmed = event.message.trim();
+                const isJson = (trimmed.startsWith('{') && trimmed.endsWith('}')) || 
+                               (trimmed.startsWith('[') && trimmed.endsWith(']'));
+
                 if (isJson) {
-                  try {
-                    displayMessage = JSON.stringify(JSON.parse(event.message), null, 2);
-                  } catch {}
+                  return (
+                    <CollapsibleJsonLog
+                      key={`acp-log-${index}`}
+                      timestamp={event.timestamp}
+                      level={event.level}
+                      rawMessage={event.message}
+                    />
+                  );
                 }
 
                 return (
-                  <div key={`acp-log-${index}`} className={`font-mono text-xs whitespace-pre-wrap ${isJson ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
-                    [{event.timestamp}] {event.level.toUpperCase()} {displayMessage}
+                  <div key={`acp-log-${index}`} className="font-mono text-xs whitespace-pre-wrap text-muted-foreground">
+                    [{event.timestamp}] {event.level.toUpperCase()} {event.message}
                   </div>
                 );
               }

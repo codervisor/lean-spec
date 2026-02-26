@@ -56,3 +56,6 @@ GEMINI.md
 # Local VSCode settings
 .vscode/settings.json
 *.local.code-workspace
+
+# Sessions
+.leanspec/sessions/

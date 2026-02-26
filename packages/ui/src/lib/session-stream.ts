@@ -120,10 +120,40 @@ export function parseStreamEventPayload(payload: unknown): SessionStreamEvent | 
 
 export function parseSessionLog(log: SessionLog): SessionStreamEvent {
   let parsedMessage: unknown = null;
-  try {
-    parsedMessage = JSON.parse(log.message);
-  } catch {
-    parsedMessage = null;
+  // Try to parse raw JSONRPC messages from STDOUT
+  const jsonStart = log.message.indexOf('{');
+  if (jsonStart >= 0) {
+    try {
+      const jsonContent = log.message.slice(jsonStart);
+      parsedMessage = JSON.parse(jsonContent);
+    } catch {
+      parsedMessage = null;
+    }
+  }
+
+  // Handle JSON-RPC agent messages if found
+  if (isRecord(parsedMessage) && parsedMessage.method === 'session/update' && isRecord(parsedMessage.params)) {
+    const update = parsedMessage.params.update;
+    if (isRecord(update)) {
+      if (update.sessionUpdate === 'agent_message_chunk' && isRecord(update.content)) {
+        return {
+          type: 'acp_message',
+          timestamp: log.timestamp,
+          role: 'agent',
+          content: asString(update.content.text),
+          done: false
+        };
+      }
+      
+      if (update.sessionUpdate === 'agent_thought_chunk' && isRecord(update.content)) {
+        return {
+          type: 'acp_thought',
+          timestamp: log.timestamp,
+          content: asString(update.content.text),
+          done: false
+        };
+      }
+    }
   }
 
   const parsed = parseRawEvent(parsedMessage);
