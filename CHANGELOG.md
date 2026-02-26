@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI Relationship Commands** ([spec 335](https://web.lean-spec.dev/specs/335)) - New Rust CLI commands for spec hierarchy and dependencies
+  - `children` command to list child specs of a given parent
+  - `deps` command to list dependencies and dependents of a spec
+  - `list` command now supports `--parent` filter for hierarchy traversal
+  - `create` command gains `--parent` and `--depends-on` options for relationship creation
+
+- **SDD Skill Documentation Overhaul** ([spec 335](https://web.lean-spec.dev/specs/335)) - Aligned skill documentation with actual CLI capabilities
+  - Rewritten SKILL.md with relationship management details and best practices
+  - Replaced COMMANDS.md/EXAMPLES.md with lowercase `commands.md`/`examples.md` references
+  - Expanded MCP relationship tools with full CRUD operations (`link`, `unlink`, `set_parent`, `list_children`)
+
 - **ACP Sessions Integration** ([spec 330](https://web.lean-spec.dev/specs/330)) - Agent-Client-Protocol support for interactive AI sessions
   - Human-in-the-loop permission response handling in UI and backend
   - Resume session functionality for paused ACP sessions
@@ -65,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed deprecated `badge-config.ts` from UI components root (moved to `lib/`)
 - Added new API types for sessions, files, and ACP in `types/api.ts`
 - Updated `pnpm-lock.yaml` and Rust `Cargo.lock` dependencies
+- Added server configuration to vitest for `media-chrome` inline dependency
 
 ## [0.2.24] - 2026-02-23
 
