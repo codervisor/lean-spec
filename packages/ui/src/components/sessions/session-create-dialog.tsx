@@ -18,7 +18,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import type { Session, SessionMode, Spec } from '../../types/api';
 import { api } from '../../lib/api';
-import { SpecContextAttachments } from '../spec-context-attachments';
+import { SpecContextTrigger, SpecContextChips } from '../spec-context-attachments';
 import { X } from 'lucide-react';
 
 const MODES: SessionMode[] = ['guided', 'autonomous']; // 'ralph' is deprecated
@@ -186,6 +186,15 @@ export function SessionCreateDialog({
             </Alert>
           )}
 
+          <div>
+            <SpecContextChips
+              specs={specs}
+              selectedSpecIds={selectedSpecIds}
+              onSelectedSpecIdsChange={setSelectedSpecIds}
+              className="pb-2"
+            />
+          </div>
+
           <PromptInput onSubmit={() => void runCreate()}>
             <PromptInputBody>
               <PromptInputTextarea
@@ -200,11 +209,10 @@ export function SessionCreateDialog({
 
             <PromptInputFooter>
               <div className="flex flex-wrap items-center gap-2">
-                <SpecContextAttachments
+                <SpecContextTrigger
                   specs={specs}
                   selectedSpecIds={selectedSpecIds}
                   onSelectedSpecIdsChange={setSelectedSpecIds}
-                  addLabel={t('sessions.labels.attachSpec')}
                   searchPlaceholder={t('sessions.select.search')}
                   emptyLabel={t('sessions.select.empty')}
                   triggerLabel={t('sessions.labels.attachSpec')}

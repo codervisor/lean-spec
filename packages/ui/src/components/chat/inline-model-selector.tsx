@@ -44,7 +44,7 @@ export function InlineModelSelector({
         variant="ghost"
         size="sm"
         disabled
-        className={cn('h-7 gap-1 text-xs text-muted-foreground', className)}
+        className={cn('h-6 gap-1 text-xs text-muted-foreground', className)}
       >
         <Loader2 className="h-3 w-3 animate-spin" />
         {t('actions.loading')}
@@ -58,7 +58,7 @@ export function InlineModelSelector({
         variant="ghost"
         size="sm"
         disabled
-        className={cn('h-7 text-xs text-destructive', className)}
+        className={cn('h-6 text-xs text-destructive', className)}
       >
         {t('chat.modelError')}
       </Button>
@@ -80,7 +80,7 @@ export function InlineModelSelector({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            'h-7 gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer',
+            'h-6 gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer',
             className
           )}
           disabled={disabled}
