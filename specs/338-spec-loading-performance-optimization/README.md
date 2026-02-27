@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-02-27
 priority: high
 tags:
@@ -8,7 +8,10 @@ tags:
 - api
 - architecture
 created_at: 2026-02-27T03:47:58.186849Z
-updated_at: 2026-02-27T03:47:58.186849Z
+updated_at: 2026-02-27T04:23:06.767553Z
+transitions:
+- status: in-progress
+  at: 2026-02-27T04:23:06.767553Z
 ---
 # Spec Loading Performance Optimization
 
@@ -58,13 +61,13 @@ The `?hierarchy=true` query on `GET /api/projects/:id/specs` triggers additional
 ### Phase 1: In-Memory Spec Cache (High Impact)
 
 - [ ] Add a `SpecCache` with file-watcher-based invalidation (leverage existing `FileWatcher` in `watcher.rs`)
-- [ ] Cache parsed spec metadata (frontmatter) in memory after first load
+- [x] Cache parsed spec metadata (frontmatter) in memory after first load
 - [ ] Invalidate individual spec entries on file change (not full cache flush)
-- [ ] Share cache across HTTP handlers and MCP tools
+- [x] Share cache across HTTP handlers and MCP tools
 
 ### Phase 2: Cached Hierarchy / Relationship Index (High Impact)
 
-- [ ] Cache the parent→children map and required_by index alongside the spec cache
+- [x] Cache the parent→children map and required_by index alongside the spec cache
 - [ ] Incrementally update relationship indices when a single spec changes (re-index only affected entries)
 - [ ] Pre-compute `HierarchyNode` tree and invalidate only affected subtrees on spec change
 - [ ] Ensure `relationships`, `children`, and `set_parent` MCP tools use cached indices instead of `load_all()`
@@ -72,14 +75,14 @@ The `?hierarchy=true` query on `GET /api/projects/:id/specs` triggers additional
 
 ### Phase 3: Lazy & Partial Loading (Medium Impact)
 
-- [ ] Separate metadata-only loading from full content loading
-- [ ] List/board/hierarchy endpoints return only frontmatter fields (no body content)
-- [ ] Load full content only on `view` requests
-- [ ] Optimize `load_exact()` to avoid `load_all()` — resolve path directly from spec ID
+- [x] Separate metadata-only loading from full content loading
+- [x] List/board/hierarchy endpoints return only frontmatter fields (no body content)
+- [x] Load full content only on `view` requests
+- [x] Optimize `load_exact()` to avoid `load_all()` — resolve path directly from spec ID
 
 ### Phase 4: Pagination & Streaming (Lower Priority)
 
-- [ ] Add `limit` and `offset` parameters to `ListSpecsQuery`
+- [x] Add `limit` and `offset` parameters to `ListSpecsQuery`
 - [ ] Support cursor-based pagination for large spec sets
 - [ ] Consider streaming responses for very large projects
 - [ ] For hierarchy mode: support collapsible subtree loading (load children on-demand)

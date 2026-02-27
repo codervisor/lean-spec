@@ -379,6 +379,8 @@ pub struct ListSpecsQuery {
     pub priority: Option<String>,
     pub tags: Option<String>,
     pub assignee: Option<String>,
+    pub limit: Option<usize>,
+    pub offset: Option<usize>,
     /// When true, return pre-built hierarchy tree structure for performance
     #[serde(default)]
     pub hierarchy: Option<bool>,

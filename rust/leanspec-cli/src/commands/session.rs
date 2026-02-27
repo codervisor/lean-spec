@@ -9,8 +9,19 @@ use std::time::Duration;
 fn build_manager() -> Result<SessionManager, Box<dyn Error>> {
     let sessions_dir = config_dir();
     std::fs::create_dir_all(&sessions_dir).map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
-    let db = SessionDatabase::new(sessions_dir.join("sessions.db"))
+    let unified_db_path = sessions_dir.join("leanspec.db");
+    let db = SessionDatabase::new(&unified_db_path)
         .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
+
+    let legacy_sessions_path = sessions_dir.join("sessions.db");
+    if db
+        .migrate_from_legacy_db(&legacy_sessions_path)
+        .map_err(|e| Box::<dyn Error>::from(e.to_string()))?
+    {
+        let migrated = legacy_sessions_path.with_extension("db.migrated");
+        let _ = std::fs::rename(&legacy_sessions_path, migrated);
+    }
+
     Ok(SessionManager::new(db))
 }
 

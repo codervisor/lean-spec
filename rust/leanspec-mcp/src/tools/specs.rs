@@ -16,7 +16,7 @@ use serde_json::{json, Value};
 
 pub(crate) fn tool_list(specs_dir: &str, args: Value) -> Result<String, String> {
     let loader = SpecLoader::new(specs_dir);
-    let specs = loader.load_all().map_err(|e| e.to_string())?;
+    let specs = loader.load_all_metadata().map_err(|e| e.to_string())?;
 
     let status_filter = args.get("status").and_then(|v| v.as_str());
     let tags_filter: Option<Vec<&str>> = args
@@ -82,17 +82,19 @@ pub(crate) fn tool_view(specs_dir: &str, args: Value) -> Result<String, String> 
         .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
 
-    let all_specs = loader.load_all().map_err(|e| e.to_string())?;
-    let children: Vec<String> = all_specs
-        .iter()
-        .filter(|s| s.frontmatter.parent.as_deref() == Some(spec.path.as_str()))
-        .map(|s| s.path.clone())
-        .collect();
-    let required_by: Vec<String> = all_specs
-        .iter()
-        .filter(|s| s.frontmatter.depends_on.contains(&spec.path))
-        .map(|s| s.path.clone())
-        .collect();
+    let relationship_index = loader
+        .load_relationship_index()
+        .map_err(|e| e.to_string())?;
+    let children = relationship_index
+        .children_by_parent
+        .get(&spec.path)
+        .cloned()
+        .unwrap_or_default();
+    let required_by = relationship_index
+        .required_by
+        .get(&spec.path)
+        .cloned()
+        .unwrap_or_default();
 
     let output = json!({
         "path": spec.path,
@@ -389,7 +391,7 @@ pub(crate) fn tool_update(specs_dir: &str, args: Value) -> Result<String, String
                 })).map_err(|e| e.to_string())?);
             }
 
-            let all_specs = loader.load_all().map_err(|e| e.to_string())?;
+            let all_specs = loader.load_all_metadata().map_err(|e| e.to_string())?;
             let umbrella_verification =
                 CompletionVerifier::verify_umbrella_completion(&spec.path, &all_specs);
 
@@ -550,6 +552,7 @@ pub(crate) fn tool_search(specs_dir: &str, args: Value) -> Result<String, String
     let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(10) as usize;
 
     let loader = SpecLoader::new(specs_dir);
+    // Search needs body content for full-text matching.
     let specs = loader.load_all().map_err(|e| e.to_string())?;
 
     // Check for empty query

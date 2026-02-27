@@ -27,7 +27,7 @@ fn link_specs(specs_dir: &str, args: Value) -> Result<String, String> {
         .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Target spec not found: {}", depends_on))?;
 
-    let all_specs = loader.load_all().map_err(|e| e.to_string())?;
+    let all_specs = loader.load_all_metadata().map_err(|e| e.to_string())?;
 
     if spec.frontmatter.depends_on.contains(&target.path) {
         return Ok(format!("{} already depends on {}", spec.path, target.path));
@@ -142,7 +142,7 @@ fn set_parent(specs_dir: &str, args: Value) -> Result<String, String> {
             .map_err(|e| e.to_string())?
             .ok_or_else(|| format!("Parent spec not found: {}", parent_path))?;
 
-        let all_specs = loader.load_all().map_err(|e| e.to_string())?;
+        let all_specs = loader.load_all_metadata().map_err(|e| e.to_string())?;
         validate_parent_assignment(&spec.path, &parent_spec.path, &all_specs)
             .map_err(|e| e.to_string())?;
 
@@ -199,15 +199,23 @@ pub(crate) fn tool_relationships(specs_dir: &str, args: Value) -> Result<String,
                 .map_err(|e| e.to_string())?
                 .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
 
-            let all_specs = loader.load_all().map_err(|e| e.to_string())?;
-            let children: Vec<_> = all_specs
-                .iter()
-                .filter(|s| s.frontmatter.parent.as_deref() == Some(spec.path.as_str()))
-                .collect();
-            let required_by: Vec<_> = all_specs
-                .iter()
-                .filter(|s| s.frontmatter.depends_on.contains(&spec.path))
-                .collect();
+            let all_specs = loader.load_all_metadata().map_err(|e| e.to_string())?;
+            let spec_map: HashMap<String, &leanspec_core::SpecInfo> =
+                all_specs.iter().map(|s| (s.path.clone(), s)).collect();
+            let relationship_index = loader
+                .load_relationship_index()
+                .map_err(|e| e.to_string())?;
+
+            let children_paths = relationship_index
+                .children_by_parent
+                .get(&spec.path)
+                .cloned()
+                .unwrap_or_default();
+            let required_by_paths = relationship_index
+                .required_by
+                .get(&spec.path)
+                .cloned()
+                .unwrap_or_default();
 
             let to_summary = |s: &leanspec_core::SpecInfo| {
                 json!({
@@ -225,17 +233,32 @@ pub(crate) fn tool_relationships(specs_dir: &str, args: Value) -> Result<String,
                 },
                 "hierarchy": {
                     "parent": spec.frontmatter.parent,
-                    "children": children.iter().map(|s| to_summary(s)).collect::<Vec<_>>()
+                    "children": children_paths
+                        .iter()
+                        .map(|path| {
+                            spec_map
+                                .get(path)
+                                .map(|s| to_summary(s))
+                                .unwrap_or_else(|| json!({ "path": path }))
+                        })
+                        .collect::<Vec<_>>()
                 },
                 "dependencies": {
                     "depends_on": spec.frontmatter.depends_on.iter().map(|path| {
-                        all_specs
-                            .iter()
-                            .find(|s| s.path == *path)
-                            .map(to_summary)
+                        spec_map
+                            .get(path)
+                            .map(|s| to_summary(s))
                             .unwrap_or_else(|| json!({ "path": path }))
                     }).collect::<Vec<_>>(),
-                    "required_by": required_by.iter().map(|s| to_summary(s)).collect::<Vec<_>>()
+                    "required_by": required_by_paths
+                        .iter()
+                        .map(|path| {
+                            spec_map
+                                .get(path)
+                                .map(|s| to_summary(s))
+                                .unwrap_or_else(|| json!({ "path": path }))
+                        })
+                        .collect::<Vec<_>>()
                 }
             });
 
@@ -298,16 +321,28 @@ pub(crate) fn tool_children(specs_dir: &str, args: Value) -> Result<String, Stri
         .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
 
-    let all_specs = loader.load_all().map_err(|e| e.to_string())?;
-    let children: Vec<_> = all_specs
-        .iter()
-        .filter(|s| s.frontmatter.parent.as_deref() == Some(parent.path.as_str()))
-        .map(|s| {
-            json!({
-                "path": s.path,
-                "title": s.title,
-                "status": s.frontmatter.status.to_string()
-            })
+    let all_specs = loader.load_all_metadata().map_err(|e| e.to_string())?;
+    let spec_map: HashMap<String, &leanspec_core::SpecInfo> =
+        all_specs.iter().map(|s| (s.path.clone(), s)).collect();
+    let relationship_index = loader
+        .load_relationship_index()
+        .map_err(|e| e.to_string())?;
+    let children: Vec<_> = relationship_index
+        .children_by_parent
+        .get(&parent.path)
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|path| {
+            if let Some(spec) = spec_map.get(&path) {
+                json!({
+                    "path": spec.path,
+                    "title": spec.title,
+                    "status": spec.frontmatter.status.to_string()
+                })
+            } else {
+                json!({"path": path})
+            }
         })
         .collect();
 
@@ -392,7 +427,7 @@ pub(crate) fn tool_deps(specs_dir: &str, args: Value) -> Result<String, String> 
         .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
 
-    let all_specs = loader.load_all().map_err(|e| e.to_string())?;
+    let all_specs = loader.load_all_metadata().map_err(|e| e.to_string())?;
     let specs_map: HashMap<String, leanspec_core::SpecInfo> =
         all_specs.into_iter().map(|s| (s.path.clone(), s)).collect();
 

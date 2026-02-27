@@ -2,9 +2,48 @@
 
 use crate::parsers::FrontmatterParser;
 use crate::types::{LeanSpecConfig, SpecInfo, SpecStatus};
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::sync::{OnceLock, RwLock};
+use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 use walkdir::WalkDir;
+
+#[derive(Debug, Clone, Default)]
+pub struct SpecRelationshipIndex {
+    pub children_by_parent: HashMap<String, Vec<String>>,
+    pub required_by: HashMap<String, Vec<String>>,
+}
+
+#[derive(Debug, Clone)]
+struct CachedSpecEntry {
+    modified_at: SystemTime,
+    metadata: Option<SpecInfo>,
+    full: Option<SpecInfo>,
+}
+
+impl Default for CachedSpecEntry {
+    fn default() -> Self {
+        Self {
+            modified_at: UNIX_EPOCH,
+            metadata: None,
+            full: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+struct CachedDirectory {
+    entries: HashMap<PathBuf, CachedSpecEntry>,
+    version: u64,
+    relationship_index: Option<(u64, SpecRelationshipIndex)>,
+}
+
+static SPEC_CACHE: OnceLock<RwLock<HashMap<PathBuf, CachedDirectory>>> = OnceLock::new();
+
+fn spec_cache() -> &'static RwLock<HashMap<PathBuf, CachedDirectory>> {
+    SPEC_CACHE.get_or_init(|| RwLock::new(HashMap::new()))
+}
 
 /// Errors that can occur during spec loading
 #[derive(Debug, Error)]
@@ -49,25 +88,157 @@ impl SpecLoader {
 
     /// Load all specs from the directory
     pub fn load_all(&self) -> Result<Vec<SpecInfo>, LoadError> {
+        self.load_all_internal(true)
+    }
+
+    /// Load all specs metadata without markdown body content.
+    ///
+    /// This is significantly faster for list/board/tree views because it avoids
+    /// storing full body content in memory.
+    pub fn load_all_metadata(&self) -> Result<Vec<SpecInfo>, LoadError> {
+        self.load_all_internal(false)
+    }
+
+    /// Load cached relationship indices (children and required_by).
+    pub fn load_relationship_index(&self) -> Result<SpecRelationshipIndex, LoadError> {
+        self.load_all_metadata()?;
+
+        let mut cache = spec_cache()
+            .write()
+            .expect("spec cache lock poisoned while building relationship index");
+        let directory = cache.entry(self.specs_dir.clone()).or_default();
+
+        if let Some((cached_version, index)) = &directory.relationship_index {
+            if *cached_version == directory.version {
+                return Ok(index.clone());
+            }
+        }
+
+        let mut children_by_parent: HashMap<String, Vec<String>> = HashMap::new();
+        let mut required_by: HashMap<String, Vec<String>> = HashMap::new();
+
+        for spec in directory
+            .entries
+            .values()
+            .filter_map(|entry| entry.metadata.as_ref())
+        {
+            if let Some(parent) = spec.frontmatter.parent.as_ref() {
+                children_by_parent
+                    .entry(parent.clone())
+                    .or_default()
+                    .push(spec.path.clone());
+            }
+
+            for dep in &spec.frontmatter.depends_on {
+                if dep != &spec.path {
+                    required_by
+                        .entry(dep.clone())
+                        .or_default()
+                        .push(spec.path.clone());
+                }
+            }
+        }
+
+        for values in children_by_parent.values_mut() {
+            values.sort();
+        }
+        for values in required_by.values_mut() {
+            values.sort();
+        }
+
+        let index = SpecRelationshipIndex {
+            children_by_parent,
+            required_by,
+        };
+        directory.relationship_index = Some((directory.version, index.clone()));
+
+        Ok(index)
+    }
+
+    fn load_all_internal(&self, include_content: bool) -> Result<Vec<SpecInfo>, LoadError> {
         if !self.specs_dir.exists() {
             return Err(LoadError::SpecsDirNotFound(self.specs_dir.clone()));
         }
 
-        let mut specs = Vec::new();
-
-        for entry in WalkDir::new(&self.specs_dir)
+        let readme_paths: Vec<PathBuf> = WalkDir::new(&self.specs_dir)
             .max_depth(3) // Allow sub-specs
             .into_iter()
             .filter_map(|e| e.ok())
-        {
-            let path = entry.path();
-
-            // Only process README.md files
-            if path.file_name().map(|n| n == "README.md").unwrap_or(false) {
-                if let Some(spec) = self.load_spec_from_path(path, false)? {
-                    specs.push(spec);
+            .filter_map(|entry| {
+                let path = entry.path();
+                if path.file_name().map(|n| n == "README.md").unwrap_or(false) {
+                    Some(path.to_path_buf())
+                } else {
+                    None
                 }
+            })
+            .collect();
+
+        let mut specs = Vec::new();
+        let mut cache = spec_cache()
+            .write()
+            .expect("spec cache lock poisoned while loading specs");
+        let directory = cache.entry(self.specs_dir.clone()).or_default();
+
+        let mut changed = false;
+        let seen_paths: HashSet<PathBuf> = readme_paths.iter().cloned().collect();
+
+        // Remove deleted files from cache
+        let previous_len = directory.entries.len();
+        directory
+            .entries
+            .retain(|path, _| seen_paths.contains(path));
+        if directory.entries.len() != previous_len {
+            changed = true;
+        }
+
+        for readme_path in readme_paths {
+            let modified_at = std::fs::metadata(&readme_path)
+                .and_then(|m| m.modified())
+                .unwrap_or(UNIX_EPOCH);
+
+            let cache_entry = directory.entries.entry(readme_path.clone()).or_default();
+
+            let has_requested_variant = if include_content {
+                cache_entry.full.is_some()
+            } else {
+                cache_entry.metadata.is_some()
+            };
+
+            let needs_reload = cache_entry.modified_at != modified_at || !has_requested_variant;
+
+            if needs_reload {
+                let loaded = self.load_spec_from_path(&readme_path, false, include_content)?;
+                cache_entry.modified_at = modified_at;
+
+                if include_content {
+                    cache_entry.full = loaded;
+                    cache_entry.metadata = cache_entry.full.as_ref().map(as_metadata_only_spec);
+                } else {
+                    cache_entry.metadata = loaded;
+                    cache_entry.full = None;
+                }
+
+                changed = true;
             }
+
+            let spec = if include_content {
+                cache_entry
+                    .full
+                    .clone()
+                    .or_else(|| cache_entry.metadata.clone())
+            } else {
+                cache_entry.metadata.clone()
+            };
+
+            if let Some(spec) = spec {
+                specs.push(spec);
+            }
+        }
+
+        if changed {
+            directory.version += 1;
+            directory.relationship_index = None;
         }
 
         // Sort by spec number/path
@@ -113,7 +284,7 @@ impl SpecLoader {
         // Try direct path first
         let readme_path = self.specs_dir.join(spec_path).join("README.md");
         if readme_path.exists() {
-            return self.load_spec_from_path(&readme_path, allow_archived);
+            return self.load_spec_from_path(&readme_path, allow_archived, true);
         }
 
         // Try fuzzy matching
@@ -127,7 +298,7 @@ impl SpecLoader {
                 if dir_name.contains(spec_path) || spec_path.contains(&*dir_name) {
                     let readme_path = entry.path().join("README.md");
                     if readme_path.exists() {
-                        return self.load_spec_from_path(&readme_path, allow_archived);
+                        return self.load_spec_from_path(&readme_path, allow_archived, true);
                     }
                 }
             }
@@ -144,22 +315,38 @@ impl SpecLoader {
         // Try direct path first
         let readme_path = self.specs_dir.join(spec_path).join("README.md");
         if readme_path.exists() {
-            return self.load_spec_from_path(&readme_path, allow_archived);
+            return self.load_spec_from_path(&readme_path, allow_archived, true);
         }
 
         // Try with just the number prefix - but only if it's a number
         // Support both "001" format and "1" format
         if spec_path.chars().all(|c| c.is_ascii_digit()) {
-            // Parse as number and also try as string with leading zeros
-            let spec_num = spec_path.parse::<u32>().ok();
+            let target_num = spec_path.parse::<u32>().ok();
+            for entry in WalkDir::new(&self.specs_dir)
+                .max_depth(2)
+                .into_iter()
+                .filter_map(|e| e.ok())
+            {
+                if !entry.file_type().is_dir() {
+                    continue;
+                }
 
-            // Load all specs to find exact number match
-            let all_specs = self.load_all()?;
-            for spec in all_specs {
-                if let Some(num) = spec.number() {
-                    // Match both "001" and "1" formats
-                    if Some(num) == spec_num || spec.path.starts_with(&format!("{}-", spec_path)) {
-                        return Ok(Some(spec));
+                let Some(dir_name) = entry.path().file_name().and_then(|n| n.to_str()) else {
+                    continue;
+                };
+
+                let Some(prefix) = dir_name.split('-').next() else {
+                    continue;
+                };
+
+                let Ok(current_num) = prefix.parse::<u32>() else {
+                    continue;
+                };
+
+                if Some(current_num) == target_num {
+                    let readme = entry.path().join("README.md");
+                    if readme.exists() {
+                        return self.load_spec_from_path(&readme, allow_archived, true);
                     }
                 }
             }
@@ -173,6 +360,7 @@ impl SpecLoader {
         &self,
         path: &Path,
         allow_archived: bool,
+        include_content: bool,
     ) -> Result<Option<SpecInfo>, LoadError> {
         let content = std::fs::read_to_string(path)?;
 
@@ -269,7 +457,7 @@ impl SpecLoader {
             path: spec_path,
             title,
             frontmatter,
-            content: body,
+            content: if include_content { body } else { String::new() },
             file_path: path.to_path_buf(),
             is_sub_spec,
             parent_spec,
@@ -289,7 +477,7 @@ impl SpecLoader {
         let readme_path = spec_dir.join("README.md");
         std::fs::write(&readme_path, template_content)?;
 
-        self.load_spec_from_path(&readme_path, false)?
+        self.load_spec_from_path(&readme_path, false, true)?
             .ok_or_else(|| LoadError::ParseError {
                 path: readme_path.display().to_string(),
                 reason: "Failed to load created spec".to_string(),
@@ -307,6 +495,12 @@ impl SpecLoader {
     pub fn specs_dir(&self) -> &Path {
         &self.specs_dir
     }
+}
+
+fn as_metadata_only_spec(spec: &SpecInfo) -> SpecInfo {
+    let mut metadata = spec.clone();
+    metadata.content.clear();
+    metadata
 }
 
 #[cfg(test)]
@@ -363,6 +557,21 @@ Content for {}.
         let spec = loader.load("001-test").unwrap().unwrap();
 
         assert_eq!(spec.path, "001-test");
+    }
+
+    #[test]
+    fn test_load_all_metadata_strips_content() {
+        let temp_dir = TempDir::new().unwrap();
+        let specs_dir = temp_dir.path().join("specs");
+        std::fs::create_dir_all(&specs_dir).unwrap();
+
+        create_test_spec(&specs_dir, "001-meta", "planned");
+
+        let loader = SpecLoader::new(&specs_dir);
+        let specs = loader.load_all_metadata().unwrap();
+
+        assert_eq!(specs.len(), 1);
+        assert!(specs[0].content.is_empty());
     }
 
     #[test]

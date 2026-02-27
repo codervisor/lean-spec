@@ -65,7 +65,19 @@ impl AppState {
         fs::create_dir_all(&sessions_dir).map_err(|e| {
             ServerError::ConfigError(format!("Failed to create sessions dir: {}", e))
         })?;
-        let session_db = SessionDatabase::new(sessions_dir.join("sessions.db"))?;
+        let unified_db_path = sessions_dir.join("leanspec.db");
+        let session_db = SessionDatabase::new(&unified_db_path)?;
+
+        let legacy_sessions_path = sessions_dir.join("sessions.db");
+        if session_db.migrate_from_legacy_db(&legacy_sessions_path)? {
+            mark_legacy_db_migrated(&legacy_sessions_path);
+        }
+
+        let legacy_chat_path = sessions_dir.join("chat.db");
+        if chat_store.migrate_from_legacy_db(&legacy_chat_path)? {
+            mark_legacy_db_migrated(&legacy_chat_path);
+        }
+
         let session_manager = Arc::new(SessionManager::new(session_db));
 
         let file_watcher = if watch_enabled() {
@@ -123,6 +135,18 @@ impl AppState {
             file_watcher,
             sse_connections,
         }
+    }
+}
+
+fn mark_legacy_db_migrated(path: &PathBuf) {
+    let migrated = path.with_extension("db.migrated");
+    if let Err(err) = fs::rename(path, &migrated) {
+        tracing::warn!(
+            "Failed to rename legacy database '{}' to '{}': {}",
+            path.display(),
+            migrated.display(),
+            err
+        );
     }
 }
 

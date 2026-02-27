@@ -10,7 +10,7 @@ pub(crate) fn tool_board(specs_dir: &str, args: Value) -> Result<String, String>
         .unwrap_or("status");
 
     let loader = SpecLoader::new(specs_dir);
-    let specs = loader.load_all().map_err(|e| e.to_string())?;
+    let specs = loader.load_all_metadata().map_err(|e| e.to_string())?;
 
     let mut groups: std::collections::HashMap<String, Vec<serde_json::Value>> =
         std::collections::HashMap::new();
@@ -74,7 +74,7 @@ pub(crate) fn tool_board(specs_dir: &str, args: Value) -> Result<String, String>
 
 pub(crate) fn tool_stats(specs_dir: &str) -> Result<String, String> {
     let loader = SpecLoader::new(specs_dir);
-    let specs = loader.load_all().map_err(|e| e.to_string())?;
+    let specs = loader.load_all_metadata().map_err(|e| e.to_string())?;
 
     let stats = SpecStats::compute(&specs);
 

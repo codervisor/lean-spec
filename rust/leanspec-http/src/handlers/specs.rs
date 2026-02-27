@@ -63,6 +63,15 @@ fn parse_status_filter(
     Ok(parsed)
 }
 
+fn apply_pagination<T>(items: Vec<T>, offset: Option<usize>, limit: Option<usize>) -> Vec<T> {
+    let start = offset.unwrap_or(0);
+    let iter = items.into_iter().skip(start);
+    match limit {
+        Some(limit) => iter.take(limit).collect(),
+        None => iter.collect(),
+    }
+}
+
 fn strip_frontmatter(content: &str) -> String {
     let trimmed = content.trim_start();
     if !trimmed.starts_with("---") {
@@ -513,7 +522,7 @@ pub async fn list_project_specs(
             }
         }
 
-        let filtered_specs: Vec<SpecSummary> = project
+        let mut filtered_specs: Vec<SpecSummary> = project
             .specs
             .values()
             .filter(|spec| {
@@ -558,17 +567,30 @@ pub async fn list_project_specs(
             })
             .collect();
 
+        // Keep output ordering stable for pagination.
+        filtered_specs.sort_by(|a, b| {
+            b.spec_number
+                .cmp(&a.spec_number)
+                .then_with(|| b.spec_name.cmp(&a.spec_name))
+        });
+
         let total = filtered_specs.len();
+        let hierarchy_requested = query.hierarchy.unwrap_or(false);
+        let paged_specs = if hierarchy_requested {
+            filtered_specs.clone()
+        } else {
+            apply_pagination(filtered_specs.clone(), query.offset, query.limit)
+        };
 
         // Build hierarchy if requested - computed server-side for performance
-        let hierarchy = if query.hierarchy.unwrap_or(false) {
+        let hierarchy = if hierarchy_requested {
             Some(build_hierarchy(filtered_specs.clone()))
         } else {
             None
         };
 
         return Ok(Json(ListSpecsResponse {
-            specs: filtered_specs,
+            specs: paged_specs,
             total,
             project_id: Some(project.id.clone()),
             hierarchy,
@@ -577,7 +599,13 @@ pub async fn list_project_specs(
 
     let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
-    let all_specs = loader.load_all().map_err(|e| {
+    let all_specs = loader.load_all_metadata().map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+    let relationship_index = loader.load_relationship_index().map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&e.to_string())),
@@ -599,44 +627,57 @@ pub async fn list_project_specs(
         search: None,
     };
 
-    let filtered_specs: Vec<SpecSummary> = all_specs
+    let mut filtered_specs: Vec<SpecSummary> = all_specs
         .iter()
         .filter(|s| filters.matches(s))
         .map(|s| SpecSummary::from_without_computed(s).with_project_id(&project.id))
         .collect();
 
-    let mut children_map: HashMap<String, Vec<String>> = HashMap::new();
-    for spec in &all_specs {
-        if let Some(parent) = spec.frontmatter.parent.as_deref() {
-            children_map
-                .entry(parent.to_string())
-                .or_default()
-                .push(spec.path.clone());
-        }
-    }
+    filtered_specs.sort_by(|a, b| {
+        b.spec_number
+            .cmp(&a.spec_number)
+            .then_with(|| b.spec_name.cmp(&a.spec_name))
+    });
 
     let filtered_specs: Vec<SpecSummary> = filtered_specs
         .into_iter()
         .map(|mut summary| {
-            summary.children = children_map
+            let required_by = relationship_index
+                .required_by
                 .get(&summary.spec_name)
                 .cloned()
                 .unwrap_or_default();
+            summary.required_by = required_by.clone();
+            summary.children = relationship_index
+                .children_by_parent
+                .get(&summary.spec_name)
+                .cloned()
+                .unwrap_or_default();
+            summary.relationships = Some(crate::types::SpecRelationships {
+                depends_on: summary.depends_on.clone(),
+                required_by: Some(required_by),
+            });
             summary
         })
         .collect();
 
     let total = filtered_specs.len();
+    let hierarchy_requested = query.hierarchy.unwrap_or(false);
+    let paged_specs = if hierarchy_requested {
+        filtered_specs.clone()
+    } else {
+        apply_pagination(filtered_specs.clone(), query.offset, query.limit)
+    };
 
     // Build hierarchy if requested - computed server-side for performance
-    let hierarchy = if query.hierarchy.unwrap_or(false) {
+    let hierarchy = if hierarchy_requested {
         Some(build_hierarchy(filtered_specs.clone()))
     } else {
         None
     };
 
     Ok(Json(ListSpecsResponse {
-        specs: filtered_specs,
+        specs: paged_specs,
         total,
         project_id: Some(project.id),
         hierarchy,

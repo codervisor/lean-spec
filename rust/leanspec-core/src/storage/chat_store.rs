@@ -6,7 +6,7 @@ use crate::error::{CoreError, CoreResult};
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -82,6 +82,80 @@ impl ChatStore {
             path: self.db_path.to_string_lossy().to_string(),
             size_bytes: metadata.len(),
         })
+    }
+
+    /// Import chat data from a legacy chat.db file into the current database.
+    pub fn migrate_from_legacy_db<P: AsRef<Path>>(&self, legacy_path: P) -> CoreResult<bool> {
+        let legacy_path = legacy_path.as_ref();
+        if !legacy_path.exists() || legacy_path == self.db_path.as_path() {
+            return Ok(false);
+        }
+
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|_| CoreError::Other("Failed to lock database".to_string()))?;
+
+        conn.execute(
+            "ATTACH DATABASE ?1 AS legacy_chat",
+            [legacy_path.to_string_lossy().as_ref()],
+        )
+        .map_err(|e| CoreError::Other(e.to_string()))?;
+
+        let mut imported = false;
+        let result = (|| -> CoreResult<()> {
+            if table_exists(&conn, "legacy_chat", "conversations")? {
+                conn.execute_batch(
+                    "INSERT OR IGNORE INTO conversations (
+                        id, project_id, title, provider_id, model_id,
+                        created_at, updated_at, message_count, last_message,
+                        tags, archived, cloud_id
+                    )
+                    SELECT
+                        id, project_id, title, provider_id, model_id,
+                        created_at, updated_at, message_count, last_message,
+                        tags, archived, cloud_id
+                    FROM legacy_chat.conversations",
+                )
+                .map_err(|e| CoreError::Other(e.to_string()))?;
+                imported = true;
+            }
+
+            if table_exists(&conn, "legacy_chat", "messages")? {
+                conn.execute_batch(
+                    "INSERT OR IGNORE INTO messages (
+                        id, conversation_id, project_id, role, content,
+                        timestamp, parts, metadata
+                    )
+                    SELECT
+                        id, conversation_id, project_id, role, content,
+                        timestamp, parts, metadata
+                    FROM legacy_chat.messages",
+                )
+                .map_err(|e| CoreError::Other(e.to_string()))?;
+                imported = true;
+            }
+
+            if table_exists(&conn, "legacy_chat", "sync_metadata")? {
+                conn.execute_batch(
+                    "INSERT OR IGNORE INTO sync_metadata (
+                        conversation_id, cloud_id, last_synced_at, sync_status, version
+                    )
+                    SELECT
+                        conversation_id, cloud_id, last_synced_at, sync_status, version
+                    FROM legacy_chat.sync_metadata",
+                )
+                .map_err(|e| CoreError::Other(e.to_string()))?;
+                imported = true;
+            }
+
+            Ok(())
+        })();
+
+        let _ = conn.execute("DETACH DATABASE legacy_chat", []);
+        result?;
+
+        Ok(imported)
     }
 
     pub fn list_sessions(&self, project_id: &str) -> Result<Vec<ChatSession>, String> {
@@ -474,21 +548,7 @@ fn now_ms() -> i64 {
 }
 
 fn resolve_db_path() -> CoreResult<PathBuf> {
-    if let Some(xdg) = std::env::var_os("XDG_DATA_HOME") {
-        let mut path = PathBuf::from(xdg);
-        path.push("lean-spec");
-        path.push("chat.db");
-        return Ok(path);
-    }
-
-    if let Some(dir) = dirs::data_dir() {
-        let mut path = dir;
-        path.push("lean-spec");
-        path.push("chat.db");
-        return Ok(path);
-    }
-
-    Ok(super::config::config_dir().join("chat.db"))
+    Ok(super::config::config_dir().join("leanspec.db"))
 }
 
 fn ensure_column(conn: &Connection, table: &str, column: &str, definition: &str) -> CoreResult<()> {
@@ -509,4 +569,17 @@ fn ensure_column(conn: &Connection, table: &str, column: &str, definition: &str)
         .map_err(|e| CoreError::Other(e.to_string()))?;
     }
     Ok(())
+}
+
+fn table_exists(conn: &Connection, schema: &str, table: &str) -> CoreResult<bool> {
+    let query = format!(
+        "SELECT 1 FROM {}.sqlite_master WHERE type='table' AND name=?1 LIMIT 1",
+        schema
+    );
+    let exists = conn
+        .query_row(&query, params![table], |_row| Ok(()))
+        .optional()
+        .map_err(|e| CoreError::Other(e.to_string()))?
+        .is_some();
+    Ok(exists)
 }

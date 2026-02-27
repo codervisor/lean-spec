@@ -220,6 +220,157 @@ impl SessionDatabase {
         Ok(())
     }
 
+    /// Import session data from a legacy sessions.db file into the current database.
+    pub fn migrate_from_legacy_db<P: AsRef<Path>>(&self, legacy_path: P) -> CoreResult<bool> {
+        let legacy_path = legacy_path.as_ref();
+        if !legacy_path.exists() {
+            return Ok(false);
+        }
+
+        let conn = self.conn()?;
+        conn.execute(
+            "ATTACH DATABASE ?1 AS legacy_sessions",
+            [legacy_path.to_string_lossy().as_ref()],
+        )
+        .map_err(|e| CoreError::DatabaseError(format!("Failed to attach legacy DB: {}", e)))?;
+
+        let mut imported = false;
+        let result = (|| -> CoreResult<()> {
+            if table_exists(&conn, "legacy_sessions", "sessions")? {
+                let prompt_expr = if column_exists(&conn, "legacy_sessions", "sessions", "prompt")?
+                {
+                    "prompt"
+                } else {
+                    "NULL"
+                };
+                let exit_code_expr =
+                    if column_exists(&conn, "legacy_sessions", "sessions", "exit_code")? {
+                        "exit_code"
+                    } else {
+                        "NULL"
+                    };
+                let ended_at_expr =
+                    if column_exists(&conn, "legacy_sessions", "sessions", "ended_at")? {
+                        "ended_at"
+                    } else {
+                        "NULL"
+                    };
+                let duration_ms_expr =
+                    if column_exists(&conn, "legacy_sessions", "sessions", "duration_ms")? {
+                        "duration_ms"
+                    } else {
+                        "NULL"
+                    };
+                let token_count_expr =
+                    if column_exists(&conn, "legacy_sessions", "sessions", "token_count")? {
+                        "token_count"
+                    } else {
+                        "NULL"
+                    };
+                let created_at_expr =
+                    if column_exists(&conn, "legacy_sessions", "sessions", "created_at")? {
+                        "created_at"
+                    } else {
+                        "started_at"
+                    };
+                let updated_at_expr =
+                    if column_exists(&conn, "legacy_sessions", "sessions", "updated_at")? {
+                        "updated_at"
+                    } else {
+                        "started_at"
+                    };
+
+                let sql = format!(
+                    "INSERT OR IGNORE INTO sessions (
+                        id, project_path, prompt, runner, mode, status,
+                        exit_code, started_at, ended_at, duration_ms, token_count,
+                        created_at, updated_at
+                    )
+                    SELECT
+                        id, project_path, {}, runner, mode, status,
+                        {}, started_at, {}, {}, {},
+                        {}, {}
+                    FROM legacy_sessions.sessions",
+                    prompt_expr,
+                    exit_code_expr,
+                    ended_at_expr,
+                    duration_ms_expr,
+                    token_count_expr,
+                    created_at_expr,
+                    updated_at_expr
+                );
+                conn.execute_batch(&sql).map_err(|e| {
+                    CoreError::DatabaseError(format!("Failed to import sessions: {}", e))
+                })?;
+                imported = true;
+            }
+
+            if table_exists(&conn, "legacy_sessions", "session_specs")? {
+                conn.execute_batch(
+                    "INSERT OR IGNORE INTO session_specs (session_id, spec_id, position)
+                     SELECT session_id, spec_id, position FROM legacy_sessions.session_specs",
+                )
+                .map_err(|e| {
+                    CoreError::DatabaseError(format!("Failed to import session_specs: {}", e))
+                })?;
+                imported = true;
+            } else if table_exists(&conn, "legacy_sessions", "sessions")?
+                && column_exists(&conn, "legacy_sessions", "sessions", "spec_id")?
+            {
+                conn.execute_batch(
+                    "INSERT OR IGNORE INTO session_specs (session_id, spec_id, position)
+                     SELECT id, spec_id, 0 FROM legacy_sessions.sessions WHERE spec_id IS NOT NULL",
+                )
+                .map_err(|e| {
+                    CoreError::DatabaseError(format!(
+                        "Failed to import legacy spec_id links: {}",
+                        e
+                    ))
+                })?;
+                imported = true;
+            }
+
+            if table_exists(&conn, "legacy_sessions", "session_metadata")? {
+                conn.execute_batch(
+                    "INSERT OR IGNORE INTO session_metadata (session_id, key, value)
+                     SELECT session_id, key, value FROM legacy_sessions.session_metadata",
+                )
+                .map_err(|e| {
+                    CoreError::DatabaseError(format!("Failed to import session_metadata: {}", e))
+                })?;
+                imported = true;
+            }
+
+            if table_exists(&conn, "legacy_sessions", "session_logs")? {
+                conn.execute_batch(
+                    "INSERT OR IGNORE INTO session_logs (id, session_id, timestamp, level, message)
+                     SELECT id, session_id, timestamp, level, message FROM legacy_sessions.session_logs",
+                )
+                .map_err(|e| {
+                    CoreError::DatabaseError(format!("Failed to import session_logs: {}", e))
+                })?;
+                imported = true;
+            }
+
+            if table_exists(&conn, "legacy_sessions", "session_events")? {
+                conn.execute_batch(
+                    "INSERT OR IGNORE INTO session_events (id, session_id, event_type, data, timestamp)
+                     SELECT id, session_id, event_type, data, timestamp FROM legacy_sessions.session_events",
+                )
+                .map_err(|e| {
+                    CoreError::DatabaseError(format!("Failed to import session_events: {}", e))
+                })?;
+                imported = true;
+            }
+
+            Ok(())
+        })();
+
+        let _ = conn.execute("DETACH DATABASE legacy_sessions", []);
+        result?;
+        Ok(imported)
+    }
+
     fn conn(&self) -> CoreResult<std::sync::MutexGuard<'_, Connection>> {
         self.conn
             .lock()
@@ -633,6 +784,32 @@ impl SessionDatabase {
 
         Ok(metadata)
     }
+}
+
+fn table_exists(conn: &Connection, schema: &str, table: &str) -> CoreResult<bool> {
+    let query = format!(
+        "SELECT 1 FROM {}.sqlite_master WHERE type='table' AND name=?1 LIMIT 1",
+        schema
+    );
+    let exists = conn
+        .query_row(&query, params![table], |_row| Ok(()))
+        .optional()
+        .map_err(|e| CoreError::DatabaseError(e.to_string()))?
+        .is_some();
+    Ok(exists)
+}
+
+fn column_exists(conn: &Connection, schema: &str, table: &str, column: &str) -> CoreResult<bool> {
+    let query = format!("PRAGMA {}.table_info({})", schema, table);
+    let mut stmt = conn
+        .prepare(&query)
+        .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
+    let columns = stmt
+        .query_map([], |row| row.get::<_, String>(1))
+        .map_err(|e| CoreError::DatabaseError(e.to_string()))?
+        .collect::<Result<Vec<String>, _>>()
+        .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
+    Ok(columns.iter().any(|c| c == column))
 }
 
 // Helper functions for parsing
