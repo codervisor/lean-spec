@@ -72,6 +72,33 @@ fn apply_pagination<T>(items: Vec<T>, offset: Option<usize>, limit: Option<usize
     }
 }
 
+fn resolve_pagination(
+    query: &ListSpecsQuery,
+) -> Result<(usize, Option<usize>), (StatusCode, Json<ApiError>)> {
+    if let Some(cursor) = query.cursor.as_ref() {
+        let offset = cursor.parse::<usize>().map_err(|_| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request("Invalid cursor value")),
+            )
+        })?;
+        let limit = Some(query.limit.unwrap_or(50));
+        Ok((offset, limit))
+    } else {
+        Ok((query.offset.unwrap_or(0), query.limit))
+    }
+}
+
+fn next_cursor(total: usize, offset: usize, limit: Option<usize>) -> Option<String> {
+    let limit = limit?;
+    let end = offset.saturating_add(limit);
+    if end < total {
+        Some(end.to_string())
+    } else {
+        None
+    }
+}
+
 fn strip_frontmatter(content: &str) -> String {
     let trimmed = content.trim_start();
     if !trimmed.starts_with("---") {
@@ -489,6 +516,8 @@ pub async fn list_project_specs(
     Query(query): Query<ListSpecsQuery>,
     headers: HeaderMap,
 ) -> ApiResult<Json<ListSpecsResponse>> {
+    let (page_offset, page_limit) = resolve_pagination(&query)?;
+
     if let Some(machine_id) = machine_id_from_headers(&headers) {
         let sync_state = state.sync_state.read().await;
         let machine = sync_state
@@ -634,7 +663,12 @@ pub async fn list_project_specs(
         let paged_specs = if hierarchy_requested {
             filtered_specs.clone()
         } else {
-            apply_pagination(filtered_specs.clone(), query.offset, query.limit)
+            apply_pagination(filtered_specs.clone(), Some(page_offset), page_limit)
+        };
+        let next_cursor = if hierarchy_requested {
+            None
+        } else {
+            next_cursor(total, page_offset, page_limit)
         };
 
         // Build hierarchy if requested - computed server-side for performance
@@ -647,6 +681,7 @@ pub async fn list_project_specs(
         return Ok(Json(ListSpecsResponse {
             specs: paged_specs,
             total,
+            next_cursor,
             project_id: Some(project.id.clone()),
             hierarchy,
         }));
@@ -727,7 +762,12 @@ pub async fn list_project_specs(
     let paged_specs = if hierarchy_requested {
         filtered_specs.clone()
     } else {
-        apply_pagination(filtered_specs.clone(), query.offset, query.limit)
+        apply_pagination(filtered_specs.clone(), Some(page_offset), page_limit)
+    };
+    let next_cursor = if hierarchy_requested {
+        None
+    } else {
+        next_cursor(total, page_offset, page_limit)
     };
 
     // Build hierarchy if requested - computed server-side for performance
@@ -743,6 +783,7 @@ pub async fn list_project_specs(
     Ok(Json(ListSpecsResponse {
         specs: paged_specs,
         total,
+        next_cursor,
         project_id: Some(project.id),
         hierarchy,
     }))

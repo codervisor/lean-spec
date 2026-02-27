@@ -123,6 +123,10 @@
       "specIdPlaceholder": "输入规范 ID",
       "prompt": "初始提示词",
       "promptPlaceholder": "为 AI 运行器提供的可选指令或上下文",
+      "promptTemplateDefault": "实现以下规范：\n\n{specs}",
+      "promptPreview": "实际发送提示预览",
+      "promptPreviewEmpty": "添加规范或输入自定义提示后可预览发送内容。",
+      "attachSpec": "@ 规范",
       "noSpec": "未关联规范",
       "tokens": "令牌",
       "cost": "预估费用",
@@ -309,6 +313,8 @@
     "toggleModelSettings": "切换模型设置",
     "openChat": "打开 AI 聊天",
     "openFullChat": "完整聊天",
+    "attachSpec": "@ 规范",
+    "specContextPrefix": "请将以下规范作为上下文：",
     "toolExecution": {
       "status": {
         "failed": "失败",

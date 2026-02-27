@@ -324,6 +324,7 @@ export const PromptInputActionAddAttachments = ({
 export interface PromptInputMessage {
   text: string;
   files: FileUIPart[];
+  referencedSources: SourceDocumentUIPart[];
 }
 
 export type PromptInputProps = Omit<
@@ -521,13 +522,13 @@ export const PromptInput = ({
       usingProvider
         ? controller?.attachments.clear()
         : setItems((prev) => {
-            for (const file of prev) {
-              if (file.url) {
-                URL.revokeObjectURL(file.url);
-              }
+          for (const file of prev) {
+            if (file.url) {
+              URL.revokeObjectURL(file.url);
             }
-            return [];
-          }),
+          }
+          return [];
+        }),
     [usingProvider, controller]
   );
 
@@ -695,9 +696,9 @@ export const PromptInput = ({
     const text = usingProvider
       ? controller.textInput.value
       : (() => {
-          const formData = new FormData(form);
-          return (formData.get("message") as string) || "";
-        })();
+        const formData = new FormData(form);
+        return (formData.get("message") as string) || "";
+      })();
 
     // Reset form immediately after capturing text to avoid race condition
     // where user input during async blob conversion would be lost
@@ -707,7 +708,7 @@ export const PromptInput = ({
 
     // Convert blob URLs to data URLs asynchronously
     Promise.all(
-      files.map(async ({ id, ...item }) => {
+      files.map(async (item) => {
         if (item.url?.startsWith("blob:")) {
           const dataUrl = await convertBlobUrlToDataUrl(item.url);
           // If conversion failed, keep the original blob URL
@@ -721,7 +722,20 @@ export const PromptInput = ({
     )
       .then((convertedFiles: FileUIPart[]) => {
         try {
-          const result = onSubmit({ text, files: convertedFiles }, event);
+          const result = onSubmit(
+            {
+              text,
+              files: convertedFiles,
+              referencedSources: referencedSources.map((source) => {
+                const sourceWithoutId = { ...source } as SourceDocumentUIPart & {
+                  id?: string;
+                };
+                delete sourceWithoutId.id;
+                return sourceWithoutId;
+              }),
+            },
+            event
+          );
 
           // Handle both sync and async onSubmit
           if (result instanceof Promise) {
@@ -883,15 +897,15 @@ export const PromptInputTextarea = ({
 
   const controlledProps = controller
     ? {
-        value: controller.textInput.value,
-        onChange: (e: ChangeEvent<HTMLTextAreaElement>) => {
-          controller.textInput.setInput(e.currentTarget.value);
-          onChange?.(e);
-        },
-      }
+      value: controller.textInput.value,
+      onChange: (e: ChangeEvent<HTMLTextAreaElement>) => {
+        controller.textInput.setInput(e.currentTarget.value);
+        onChange?.(e);
+      },
+    }
     : {
-        onChange,
-      };
+      onChange,
+    };
 
   return (
     <InputGroupTextarea

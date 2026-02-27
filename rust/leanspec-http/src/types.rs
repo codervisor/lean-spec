@@ -356,6 +356,8 @@ pub struct ListSpecsResponse {
     pub specs: Vec<SpecSummary>,
     pub total: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_cursor: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub project_id: Option<String>,
     /// Pre-built hierarchy tree (only when hierarchy=true query param)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -381,6 +383,7 @@ pub struct ListSpecsQuery {
     pub assignee: Option<String>,
     pub limit: Option<usize>,
     pub offset: Option<usize>,
+    pub cursor: Option<String>,
     /// When true, return pre-built hierarchy tree structure for performance
     #[serde(default)]
     pub hierarchy: Option<bool>,

@@ -5,6 +5,7 @@ use crate::types::{LeanSpecConfig, SpecInfo, SpecStatus};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::{OnceLock, RwLock};
+use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 use walkdir::WalkDir;
@@ -71,7 +72,6 @@ pub struct SpecLoader {
     specs_dir: PathBuf,
     #[allow(dead_code)]
     config: Option<LeanSpecConfig>,
-    parser: FrontmatterParser,
 }
 
 impl SpecLoader {
@@ -80,17 +80,14 @@ impl SpecLoader {
         Self {
             specs_dir: specs_dir.as_ref().to_path_buf(),
             config: None,
-            parser: FrontmatterParser::new(),
         }
     }
 
     /// Create a spec loader with configuration
     pub fn with_config<P: AsRef<Path>>(specs_dir: P, config: LeanSpecConfig) -> Self {
-        let parser = FrontmatterParser::with_config(config.clone());
         Self {
             specs_dir: specs_dir.as_ref().to_path_buf(),
             config: Some(config),
-            parser,
         }
     }
 
@@ -191,6 +188,53 @@ impl SpecLoader {
             .expect("spec cache lock poisoned while loading specs");
         let directory = cache.entry(self.specs_dir.clone()).or_default();
 
+        let mut cold_preloaded: HashMap<PathBuf, Result<Option<SpecInfo>, LoadError>> =
+            HashMap::new();
+        if directory.entries.is_empty() && readme_paths.len() > 1 {
+            let workers = thread::available_parallelism()
+                .map(|p| p.get())
+                .unwrap_or(4)
+                .min(readme_paths.len())
+                .max(1);
+            let chunk_size = (readme_paths.len() + workers - 1) / workers;
+
+            let specs_dir = self.specs_dir.clone();
+            let config = self.config.clone();
+            let mut handles = Vec::new();
+
+            for chunk in readme_paths.chunks(chunk_size) {
+                let paths = chunk.to_vec();
+                let specs_dir = specs_dir.clone();
+                let config = config.clone();
+
+                handles.push(thread::spawn(move || {
+                    let mut out = Vec::with_capacity(paths.len());
+                    for path in paths {
+                        let loaded = Self::load_spec_from_path_with_config(
+                            &specs_dir,
+                            config.clone(),
+                            &path,
+                            false,
+                            include_content,
+                        );
+                        out.push((path, loaded));
+                    }
+                    out
+                }));
+            }
+
+            for handle in handles {
+                let loaded_paths = handle.join().map_err(|_| LoadError::ParseError {
+                    path: self.specs_dir.display().to_string(),
+                    reason: "Cold-cache worker thread panicked".to_string(),
+                })?;
+
+                for (path, loaded) in loaded_paths {
+                    cold_preloaded.insert(path, loaded);
+                }
+            }
+        }
+
         let mut changed = false;
         let mut changed_paths: HashSet<String> = HashSet::new();
         let seen_paths: HashSet<PathBuf> = readme_paths.iter().cloned().collect();
@@ -231,7 +275,11 @@ impl SpecLoader {
 
             if needs_reload {
                 let previous_metadata = cache_entry.metadata.clone();
-                let loaded = self.load_spec_from_path(&readme_path, false, include_content)?;
+                let loaded = if let Some(preloaded) = cold_preloaded.remove(&readme_path) {
+                    preloaded?
+                } else {
+                    self.load_spec_from_path(&readme_path, false, include_content)?
+                };
                 cache_entry.modified_at = modified_at;
 
                 if include_content {
@@ -410,6 +458,22 @@ impl SpecLoader {
         allow_archived: bool,
         include_content: bool,
     ) -> Result<Option<SpecInfo>, LoadError> {
+        Self::load_spec_from_path_with_config(
+            &self.specs_dir,
+            self.config.clone(),
+            path,
+            allow_archived,
+            include_content,
+        )
+    }
+
+    fn load_spec_from_path_with_config(
+        specs_dir: &Path,
+        config: Option<LeanSpecConfig>,
+        path: &Path,
+        allow_archived: bool,
+        include_content: bool,
+    ) -> Result<Option<SpecInfo>, LoadError> {
         let content = std::fs::read_to_string(path)?;
 
         // Get spec directory name
@@ -449,7 +513,7 @@ impl SpecLoader {
         }
 
         // Skip top-level README.md (specs/README.md) - not a spec
-        if spec_dir == self.specs_dir {
+        if spec_dir == specs_dir {
             return Ok(None);
         }
 
@@ -464,7 +528,13 @@ impl SpecLoader {
         }
 
         // Parse frontmatter
-        let (mut frontmatter, body) = match self.parser.parse(&content) {
+        let parser = if let Some(config) = config {
+            FrontmatterParser::with_config(config)
+        } else {
+            FrontmatterParser::new()
+        };
+
+        let (mut frontmatter, body) = match parser.parse(&content) {
             Ok(result) => result,
             Err(e) => {
                 return Err(LoadError::ParseError {
@@ -487,10 +557,7 @@ impl SpecLoader {
             .unwrap_or_else(|| spec_path.clone());
 
         // Determine if sub-spec
-        let is_sub_spec = spec_dir
-            .parent()
-            .map(|p| p != self.specs_dir)
-            .unwrap_or(false);
+        let is_sub_spec = spec_dir.parent().map(|p| p != specs_dir).unwrap_or(false);
 
         let parent_spec = if is_sub_spec {
             spec_dir

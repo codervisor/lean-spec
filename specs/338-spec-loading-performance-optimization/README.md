@@ -83,14 +83,14 @@ The `?hierarchy=true` query on `GET /api/projects/:id/specs` triggers additional
 ### Phase 4: Pagination & Streaming (Lower Priority)
 
 - [x] Add `limit` and `offset` parameters to `ListSpecsQuery`
-- [ ] Support cursor-based pagination for large spec sets
+- [x] Support cursor-based pagination for large spec sets
 - [ ] Consider streaming responses for very large projects
 - [ ] For hierarchy mode: support collapsible subtree loading (load children on-demand)
 
 ### Phase 5: Parallel Loading (Optimization)
 
-- [ ] Use `rayon` or `tokio::spawn` for parallel file reads during cold cache
-- [ ] Batch YAML parsing across multiple files
+- [x] Use `rayon` or `tokio::spawn` for parallel file reads during cold cache
+- [x] Batch YAML parsing across multiple files
 
 ## Success Criteria
 

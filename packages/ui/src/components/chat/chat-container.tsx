@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { UIMessage } from '@ai-sdk/react';
 import type { ReactNode } from 'react';
+import type { SourceDocumentUIPart } from 'ai';
 import { ChatMessage } from './chat-message';
 import { ThinkingIndicator } from './thinking-indicator';
 import {
@@ -13,10 +14,15 @@ import {
   PromptInputTextarea,
   PromptInputFooter,
   PromptInputSubmit,
+  usePromptInputReferencedSources,
   Alert,
   AlertDescription,
 } from '@/library';
 import { MessageSquare, AlertCircle, RefreshCw } from 'lucide-react';
+import { useCurrentProject } from '../../hooks/useProjectQuery';
+import { useSpecsList } from '../../hooks/useSpecsQuery';
+import type { Spec } from '../../types/api';
+import { SpecContextAttachments } from '../spec-context-attachments';
 
 interface ChatContainerProps {
   messages: UIMessage[];
@@ -29,6 +35,79 @@ interface ChatContainerProps {
   footerContent?: ReactNode;
   /** Ref to the prompt input textarea */
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
+}
+
+function toSourceDocument(spec: Spec): SourceDocumentUIPart {
+  return {
+    type: 'source-document',
+    sourceId: spec.specName,
+    title: spec.title ?? spec.specName,
+    filename: spec.specName,
+    mediaType: 'text/markdown',
+  } as SourceDocumentUIPart;
+}
+
+function extractSourceId(source: SourceDocumentUIPart): string | null {
+  const sourceId = (source as { sourceId?: string }).sourceId;
+  const title = (source as { title?: string }).title;
+  const filename = (source as { filename?: string }).filename;
+  return sourceId ?? title ?? filename ?? null;
+}
+
+interface ChatSpecContextControlsProps {
+  specs: Spec[];
+  addLabel: string;
+  searchPlaceholder: string;
+  emptyLabel: string;
+  triggerLabel: string;
+}
+
+function ChatSpecContextControls({
+  specs,
+  addLabel,
+  searchPlaceholder,
+  emptyLabel,
+  triggerLabel,
+}: ChatSpecContextControlsProps) {
+  const refs = usePromptInputReferencedSources();
+
+  const selectedSpecIds = refs.sources
+    .map((source) => extractSourceId(source))
+    .filter((value): value is string => Boolean(value));
+
+  const handleChange = (next: string[]) => {
+    const prev = new Set(selectedSpecIds);
+    const nextSet = new Set(next);
+
+    for (const source of refs.sources) {
+      const id = extractSourceId(source);
+      if (id && !nextSet.has(id)) {
+        refs.remove(source.id);
+      }
+    }
+
+    for (const specId of next) {
+      if (prev.has(specId)) {
+        continue;
+      }
+      const spec = specs.find((item) => item.specName === specId);
+      if (spec) {
+        refs.add(toSourceDocument(spec));
+      }
+    }
+  };
+
+  return (
+    <SpecContextAttachments
+      specs={specs}
+      selectedSpecIds={selectedSpecIds}
+      onSelectedSpecIdsChange={handleChange}
+      addLabel={addLabel}
+      searchPlaceholder={searchPlaceholder}
+      emptyLabel={emptyLabel}
+      triggerLabel={triggerLabel}
+    />
+  );
 }
 
 function EmptyState() {
@@ -58,11 +137,22 @@ export function ChatContainer({
   inputRef,
 }: ChatContainerProps) {
   const { t } = useTranslation('common');
+  const { currentProject } = useCurrentProject();
+  const specsQuery = useSpecsList(currentProject?.id ?? null);
+  const specs = (specsQuery.data as Spec[] | undefined) ?? [];
   const hasMessages = messages.length > 0 || error;
 
-  const handleSubmit = (message: { text: string }) => {
+  const handleSubmit = (message: { text: string; referencedSources: SourceDocumentUIPart[] }) => {
     if (message.text.trim()) {
-      onSubmit(message.text);
+      const referencedSpecs = message.referencedSources
+        .map((source) => extractSourceId(source))
+        .filter((value): value is string => Boolean(value));
+
+      const textWithContext = referencedSpecs.length
+        ? `${t('chat.specContextPrefix')}\n${referencedSpecs.map((id) => `- ${id}`).join('\n')}\n\n${message.text}`
+        : message.text;
+
+      onSubmit(textWithContext);
     }
   };
 
@@ -119,7 +209,16 @@ export function ChatContainer({
             />
           </PromptInputBody>
           <PromptInputFooter>
-            {footerContent ?? <div className="flex-1" />}
+            <div className="flex flex-1 flex-wrap items-center gap-2">
+              <ChatSpecContextControls
+                specs={specs}
+                addLabel={t('chat.attachSpec')}
+                searchPlaceholder={t('sessions.select.search')}
+                emptyLabel={t('sessions.select.empty')}
+                triggerLabel={t('chat.attachSpec')}
+              />
+              {footerContent}
+            </div>
             <PromptInputSubmit
               disabled={isLoading}
               status={isLoading ? 'submitted' : undefined}

@@ -36,6 +36,11 @@ pub struct LeanSpecConfig {
     /// Validation configuration
     #[serde(default)]
     pub validation: ValidationConfig,
+
+    /// Template used to compose session prompts when prompt is omitted.
+    /// Supports a `{specs}` placeholder. If absent, specs are appended.
+    #[serde(default)]
+    pub session_prompt_template: Option<String>,
 }
 
 impl Default for LeanSpecConfig {
@@ -46,6 +51,7 @@ impl Default for LeanSpecConfig {
             pattern: None,
             frontmatter: FrontmatterConfig::default(),
             validation: ValidationConfig::default(),
+            session_prompt_template: None,
         }
     }
 }

@@ -89,26 +89,32 @@ fn build_context_prompt(
     spec_ids: &[String],
     user_prompt: Option<&str>,
 ) -> Option<String> {
-    if spec_ids.is_empty() {
-        return user_prompt
-            .filter(|p| !p.trim().is_empty())
-            .map(str::to_string);
+    if let Some(prompt) = user_prompt {
+        let trimmed = prompt.trim();
+        if !trimmed.is_empty() {
+            return Some(trimmed.to_string());
+        }
     }
 
     // Resolve the specs directory from the project's config (fall back to "specs").
-    let specs_dir = {
+    let (specs_dir, template) = {
         let config_path = PathBuf::from(project_path)
             .join(".lean-spec")
             .join("config.yaml");
-        let specs_subdir = if config_path.exists() {
-            LeanSpecConfig::load(&config_path)
-                .ok()
-                .map(|c| c.specs_dir)
-                .unwrap_or_else(|| PathBuf::from("specs"))
+        let config = if config_path.exists() {
+            LeanSpecConfig::load(&config_path).ok()
         } else {
-            PathBuf::from("specs")
+            None
         };
-        PathBuf::from(project_path).join(specs_subdir)
+        let specs_subdir = config
+            .as_ref()
+            .map(|value| value.specs_dir.clone())
+            .unwrap_or_else(|| PathBuf::from("specs"));
+        let template = config
+            .and_then(|value| value.session_prompt_template)
+            .unwrap_or_else(|| "Implement the following specs:\n\n{specs}".to_string());
+
+        (PathBuf::from(project_path).join(specs_subdir), template)
     };
 
     let mut spec_contents: Vec<String> = Vec::new();
@@ -126,33 +132,18 @@ fn build_context_prompt(
         }
     }
 
-    if spec_contents.is_empty() && user_prompt.map(|p| p.trim().is_empty()).unwrap_or(true) {
+    if spec_contents.is_empty() {
         return None;
     }
 
-    let mut parts: Vec<String> = Vec::new();
-
-    if !spec_contents.is_empty() {
-        let header = "Implement the following specs:";
-        parts.push(format!(
-            "{}\n\n{}",
-            header,
-            spec_contents.join("\n\n---\n\n")
-        ));
-    }
-
-    if let Some(prompt) = user_prompt {
-        let trimmed = prompt.trim();
-        if !trimmed.is_empty() {
-            parts.push(trimmed.to_string());
-        }
-    }
-
-    if parts.is_empty() {
-        None
+    let joined_specs = spec_contents.join("\n\n---\n\n");
+    let rendered = if template.contains("{specs}") {
+        template.replace("{specs}", &joined_specs)
     } else {
-        Some(parts.join("\n\n"))
-    }
+        format!("{}\n\n{}", template.trim(), joined_specs)
+    };
+
+    Some(rendered)
 }
 
 impl SessionManager {
@@ -1620,6 +1611,7 @@ async fn cleanup_session(
 mod tests {
     use super::*;
     use serde_json::json;
+    use std::fs;
 
     #[tokio::test]
     async fn test_create_session() {
@@ -1810,5 +1802,57 @@ mod tests {
             "params": {}
         });
         assert!(store_acp_payload_as_log("session-1", non_session_payload).is_none());
+    }
+
+    #[test]
+    fn test_build_context_prompt_uses_explicit_prompt_without_hidden_assembly() {
+        let temp_dir = tempfile::tempdir().expect("tempdir");
+        let project = temp_dir.path();
+        let specs_dir = project.join("specs").join("001-test-spec");
+        fs::create_dir_all(&specs_dir).expect("create specs dir");
+        fs::write(
+            specs_dir.join("README.md"),
+            "---\ntitle: Test\nstatus: planned\npriority: medium\n---\n\n## Overview\n\nBody",
+        )
+        .expect("write spec");
+
+        let resolved = build_context_prompt(
+            project.to_str().expect("project path"),
+            &["001-test-spec".to_string()],
+            Some("Use this exact prompt"),
+        );
+
+        assert_eq!(resolved.as_deref(), Some("Use this exact prompt"));
+    }
+
+    #[test]
+    fn test_build_context_prompt_uses_configured_template_when_prompt_omitted() {
+        let temp_dir = tempfile::tempdir().expect("tempdir");
+        let project = temp_dir.path();
+        let specs_dir = project.join("specs").join("001-test-spec");
+        fs::create_dir_all(&specs_dir).expect("create specs dir");
+        fs::write(
+            specs_dir.join("README.md"),
+            "---\ntitle: Test\nstatus: planned\npriority: medium\n---\n\n## Overview\n\nBody",
+        )
+        .expect("write spec");
+
+        let config_dir = project.join(".lean-spec");
+        fs::create_dir_all(&config_dir).expect("create config dir");
+        fs::write(
+            config_dir.join("config.yaml"),
+            "session_prompt_template: \"Session context:\\n\\n{specs}\"\n",
+        )
+        .expect("write config");
+
+        let resolved = build_context_prompt(
+            project.to_str().expect("project path"),
+            &["001-test-spec".to_string()],
+            None,
+        )
+        .expect("resolved prompt");
+
+        assert!(resolved.starts_with("Session context:"));
+        assert!(resolved.contains("## Overview"));
     }
 }

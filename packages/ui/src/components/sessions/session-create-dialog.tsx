@@ -1,18 +1,25 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
+  AlertDescription,
   Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  Input,
+  PromptInput,
+  PromptInputBody,
+  PromptInputFooter,
+  PromptInputSelect,
+  PromptInputSelectContent,
+  PromptInputSelectItem,
+  PromptInputSelectTrigger,
+  PromptInputSelectValue,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  cn,
 } from '@/library';
 import { useTranslation } from 'react-i18next';
 import type { Session, SessionMode, Spec } from '../../types/api';
 import { api } from '../../lib/api';
-import { SpecSearchSelect } from '../spec-search-select';
-import { SearchableSelect } from '../searchable-select';
+import { SpecContextAttachments } from '../spec-context-attachments';
+import { X } from 'lucide-react';
 
 const MODES: SessionMode[] = ['guided', 'autonomous']; // 'ralph' is deprecated
 
@@ -35,16 +42,18 @@ export function SessionCreateDialog({
   const [runners, setRunners] = useState<string[]>([]);
   const [runner, setRunner] = useState('claude');
   const [mode, setMode] = useState<SessionMode>('autonomous');
-  const [specId, setSpecId] = useState(defaultSpecId ?? '');
-  const [prompt, setPrompt] = useState('');
+  const [selectedSpecIds, setSelectedSpecIds] = useState<string[]>(defaultSpecId ? [defaultSpecId] : []);
+  const [promptTemplate, setPromptTemplate] = useState('');
   const [specs, setSpecs] = useState<Spec[]>([]);
+  const [specContents, setSpecContents] = useState<Record<string, string>>({});
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const canCreate = Boolean(projectPath);
 
   useEffect(() => {
-    setSpecId(defaultSpecId ?? '');
+    setSelectedSpecIds(defaultSpecId ? [defaultSpecId] : []);
   }, [defaultSpecId]);
 
   useEffect(() => {
@@ -70,16 +79,73 @@ export function SessionCreateDialog({
     void loadSpecs();
   }, [open, projectPath]);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    setError(null);
+    setPromptTemplate((prev) => prev || t('sessions.labels.promptTemplateDefault'));
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, [open, t]);
+
+  useEffect(() => {
+    if (!open || selectedSpecIds.length === 0) {
+      return;
+    }
+    const missing = selectedSpecIds.filter((specId) => !specContents[specId]);
+    if (missing.length === 0) {
+      return;
+    }
+
+    const loadMissingSpecs = async () => {
+      const entries = await Promise.all(
+        missing.map(async (specId) => {
+          try {
+            const detail = await api.getSpec(specId);
+            return [specId, detail.contentMd ?? detail.content ?? ''] as const;
+          } catch {
+            return [specId, ''] as const;
+          }
+        })
+      );
+      setSpecContents((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+    };
+
+    void loadMissingSpecs();
+  }, [open, selectedSpecIds, specContents]);
+
+  const composedPrompt = useMemo(() => {
+    const trimmedTemplate = promptTemplate.trim();
+    if (selectedSpecIds.length === 0) {
+      return trimmedTemplate;
+    }
+
+    const joinedSpecs = selectedSpecIds
+      .map((specId) => specContents[specId])
+      .filter((content): content is string => Boolean(content && content.trim()))
+      .join('\n\n---\n\n');
+
+    if (!joinedSpecs) {
+      return trimmedTemplate;
+    }
+    if (!trimmedTemplate) {
+      return joinedSpecs;
+    }
+    if (trimmedTemplate.includes('{specs}')) {
+      return trimmedTemplate.replace('{specs}', joinedSpecs);
+    }
+    return `${trimmedTemplate}\n\n${joinedSpecs}`;
+  }, [promptTemplate, selectedSpecIds, specContents]);
+
   const runCreate = useCallback(async () => {
     if (!projectPath) return;
     setCreating(true);
     setError(null);
     try {
-      const specIds = specId.trim() ? [specId.trim()] : [];
       const created = await api.createSession({
         projectPath,
-        specIds,
-        prompt: prompt.trim() || null,
+        specIds: selectedSpecIds,
+        prompt: composedPrompt || null,
         runner,
         mode,
       });
@@ -90,72 +156,107 @@ export function SessionCreateDialog({
       onOpenChange(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('sessions.errors.create'));
+      throw err;
     } finally {
       setCreating(false);
     }
-  }, [projectPath, specId, prompt, runner, mode, onCreated, onOpenChange, t]);
+  }, [projectPath, selectedSpecIds, composedPrompt, runner, mode, onCreated, onOpenChange, t]);
 
-  const runnerOptions = runners.map((value) => ({ value, label: value }));
-  const modeOptions = MODES.map((value) => ({ value, label: value }));
+  if (!open) {
+    return null;
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(520px,90vw)]">
-        <DialogHeader>
-          <DialogTitle>{t('sessions.dialogs.createTitle')}</DialogTitle>
-          <DialogDescription>{t('sessions.dialogs.createDescription')}</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-background/60 px-4 pt-20 backdrop-blur-sm">
+      <div className="w-[min(860px,96vw)] rounded-xl border bg-background shadow-2xl">
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <div>
+            <h2 className="text-sm font-semibold">{t('sessions.dialogs.createTitle')}</h2>
+            <p className="text-xs text-muted-foreground">{t('sessions.dialogs.createDescription')}</p>
+          </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onOpenChange(false)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="space-y-3 p-4">
           {error && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.spec')}</label>
-            <SpecSearchSelect
-              value={specId}
-              onValueChange={setSpecId}
-              specs={specs}
-              placeholder={t('sessions.labels.noSpec')}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.prompt')}</label>
-            <Input
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder={t('sessions.labels.promptPlaceholder')}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.runner')}</label>
-            <SearchableSelect
-              value={runner}
-              onValueChange={setRunner}
-              options={runnerOptions}
-              placeholder={t('sessions.labels.runner')}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.mode')}</label>
-            <SearchableSelect
-              value={mode}
-              onValueChange={(value) => setMode(value as SessionMode)}
-              options={modeOptions}
-              placeholder={t('sessions.labels.mode')}
-            />
+
+          <PromptInput onSubmit={() => void runCreate()}>
+            <PromptInputBody>
+              <PromptInputTextarea
+                ref={inputRef}
+                value={promptTemplate}
+                onChange={(e) => setPromptTemplate(e.target.value)}
+                placeholder={t('sessions.labels.promptPlaceholder')}
+                disabled={creating}
+                className="min-h-28"
+              />
+            </PromptInputBody>
+
+            <PromptInputFooter>
+              <div className="flex flex-wrap items-center gap-2">
+                <SpecContextAttachments
+                  specs={specs}
+                  selectedSpecIds={selectedSpecIds}
+                  onSelectedSpecIdsChange={setSelectedSpecIds}
+                  addLabel={t('sessions.labels.attachSpec')}
+                  searchPlaceholder={t('sessions.select.search')}
+                  emptyLabel={t('sessions.select.empty')}
+                  triggerLabel={t('sessions.labels.attachSpec')}
+                />
+
+                <PromptInputSelect value={runner} onValueChange={setRunner}>
+                  <PromptInputSelectTrigger className="h-8 w-auto rounded-full border border-border/70 px-3 py-1.5 text-xs">
+                    <PromptInputSelectValue placeholder={t('sessions.labels.runner')} />
+                  </PromptInputSelectTrigger>
+                  <PromptInputSelectContent>
+                    {runners.map((runnerValue) => (
+                      <PromptInputSelectItem key={runnerValue} value={runnerValue}>
+                        {runnerValue}
+                      </PromptInputSelectItem>
+                    ))}
+                  </PromptInputSelectContent>
+                </PromptInputSelect>
+
+                <PromptInputSelect value={mode} onValueChange={(value) => setMode(value as SessionMode)}>
+                  <PromptInputSelectTrigger className="h-8 w-auto rounded-full border border-border/70 px-3 py-1.5 text-xs">
+                    <PromptInputSelectValue placeholder={t('sessions.labels.mode')} />
+                  </PromptInputSelectTrigger>
+                  <PromptInputSelectContent>
+                    {MODES.map((modeValue) => (
+                      <PromptInputSelectItem key={modeValue} value={modeValue}>
+                        {t(`sessions.modes.${modeValue}`)}
+                      </PromptInputSelectItem>
+                    ))}
+                  </PromptInputSelectContent>
+                </PromptInputSelect>
+              </div>
+
+              <PromptInputSubmit
+                disabled={!canCreate || creating || (!promptTemplate.trim() && selectedSpecIds.length === 0)}
+                status={creating ? 'submitted' : undefined}
+              />
+            </PromptInputFooter>
+          </PromptInput>
+
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="mb-1 text-xs font-medium text-muted-foreground">{t('sessions.labels.promptPreview')}</div>
+            <pre
+              className={cn(
+                'max-h-56 overflow-auto whitespace-pre-wrap break-words rounded bg-background p-2 text-xs leading-relaxed',
+                !composedPrompt && 'text-muted-foreground'
+              )}
+            >
+              {composedPrompt || t('sessions.labels.promptPreviewEmpty')}
+            </pre>
           </div>
         </div>
-        <div className="mt-4 flex justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-            {t('actions.cancel')}
-          </Button>
-          <Button size="sm" onClick={() => void runCreate()} disabled={!canCreate || creating}>
-            {creating ? t('actions.loading') : t('sessions.actions.run')}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

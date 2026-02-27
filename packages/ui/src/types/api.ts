@@ -325,6 +325,9 @@ export interface ListParams {
   priority?: string;
   tag?: string;
   search?: string;
+  limit?: number;
+  offset?: number;
+  cursor?: string;
   /** When true, server returns pre-built hierarchy tree for performance */
   hierarchy?: boolean;
 }
@@ -332,6 +335,7 @@ export interface ListParams {
 export interface ListSpecsResponse {
   specs: Spec[];
   total: number;
+  nextCursor?: string;
   projectId?: string;
   /** Pre-built hierarchy tree (only when hierarchy=true query param) */
   hierarchy?: HierarchyNode[];

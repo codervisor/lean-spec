@@ -234,6 +234,9 @@ export class HttpBackendAdapter implements BackendAdapter {
         Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
           if (typeof value === 'string' && value.length > 0) acc.push([key, value]);
           if (typeof value === 'boolean') acc.push([key, String(value)]);
+          if (typeof value === 'number' && Number.isFinite(value)) {
+            acc.push([key, String(value)]);
+          }
           return acc;
         }, [])
       ).toString()

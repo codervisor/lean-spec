@@ -126,6 +126,10 @@
       "specIdPlaceholder": "Expected Spec ID",
       "prompt": "Initial Prompt",
       "promptPlaceholder": "Optional instructions or context for the AI runner",
+      "promptTemplateDefault": "Implement the following specs:\n\n{specs}",
+      "promptPreview": "Effective prompt preview",
+      "promptPreviewEmpty": "Attach specs or enter a custom prompt to preview what will be sent.",
+      "attachSpec": "@ spec",
       "noSpec": "No spec",
       "tokens": "Tokens",
       "cost": "Estimated cost",
@@ -339,6 +343,8 @@
     "toggleModelSettings": "Toggle model settings",
     "openChat": "Open AI Chat",
     "openFullChat": "Full Chat",
+    "attachSpec": "@ spec",
+    "specContextPrefix": "Use the following specs as context:",
     "toolExecution": {
       "status": {
         "failed": "Failed",
