@@ -83,7 +83,9 @@ export function SessionCreateDialog({
         runner,
         mode,
       });
-      await api.startSession(created.id);
+      // Start the runtime in the background — the server returns immediately
+      // and the session transitions from Pending to Running asynchronously.
+      void api.startSession(created.id);
       onCreated?.(created);
       onOpenChange(false);
     } catch (err) {

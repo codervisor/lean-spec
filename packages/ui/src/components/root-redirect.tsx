@@ -21,7 +21,7 @@ export function RootRedirect() {
   }
 
   // Check if there's a stored project ID
-  const storedId = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
+  const storedId = typeof window !== 'undefined' ? (sessionStorage.getItem(storageKey) ?? localStorage.getItem(storageKey)) : null;
   if (storedId) {
     const storedProject = projects.find((p) => p.id === storedId);
     if (storedProject) {

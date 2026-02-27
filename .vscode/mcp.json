@@ -5,7 +5,7 @@
 			"command": "npx",
 			"args": [
 				"-y",
-				"@leanspec/mcp@0.2.23"
+				"@leanspec/mcp@0.2.24"
 			]
 		}
 	}

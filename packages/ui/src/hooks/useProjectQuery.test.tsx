@@ -48,6 +48,7 @@ describe('useProjectQuery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    sessionStorage.clear();
 
     mockedApi.getProjects.mockResolvedValue({
       projects: [
@@ -70,8 +71,8 @@ describe('useProjectQuery', () => {
     expect(result.current.favoriteProjects).toHaveLength(1);
   });
 
-  it('derives current project from localStorage', async () => {
-    localStorage.setItem('leanspec-current-project', 'p2');
+  it('derives current project from sessionStorage', async () => {
+    sessionStorage.setItem('leanspec-current-project', 'p2');
     const queryClient = createQueryClient();
     const wrapper = createWrapper(queryClient);
 
@@ -94,7 +95,7 @@ describe('useProjectQuery', () => {
     });
 
     expect(mockedApi.setCurrentProjectId).toHaveBeenCalledWith('p1');
-    expect(localStorage.getItem('leanspec-current-project')).toBe('p1');
+    expect(sessionStorage.getItem('leanspec-current-project')).toBe('p1');
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: projectKeys.list('leanspec-current-project'),
     });

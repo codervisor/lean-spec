@@ -29,12 +29,24 @@ const PROJECT_ID_KEY = 'leanspec-current-project';
  */
 export function getCurrentProjectId(): string | null {
   if (typeof window === 'undefined') return null;
-  
-  // Check for direct key first
+
+  // Check sessionStorage first (tab-scoped, prevents cross-tab interference)
+  const sessionId = sessionStorage.getItem(PROJECT_ID_KEY);
+  if (sessionId) return sessionId;
+
+  // Check for machine-scoped keys in sessionStorage
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (key?.startsWith(`${PROJECT_ID_KEY}:`)) {
+      const value = sessionStorage.getItem(key);
+      if (value) return value;
+    }
+  }
+
+  // Fallback to localStorage for migration from older versions
   const directId = localStorage.getItem(PROJECT_ID_KEY);
   if (directId) return directId;
-  
-  // Check for machine-scoped keys (pattern: leanspec-current-project:machineId)
+
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key?.startsWith(`${PROJECT_ID_KEY}:`)) {
@@ -42,7 +54,7 @@ export function getCurrentProjectId(): string | null {
       if (value) return value;
     }
   }
-  
+
   return null;
 }
 
@@ -62,21 +74,21 @@ export function getProjectScopedKey(baseKey: string, projectId?: string | null):
 const projectScopedStorage: StateStorage = {
   getItem: (name: string): string | null => {
     if (typeof window === 'undefined') return null;
-    
+
     const scopedKey = getProjectScopedKey(name);
     return localStorage.getItem(scopedKey);
   },
-  
+
   setItem: (name: string, value: string): void => {
     if (typeof window === 'undefined') return;
-    
+
     const scopedKey = getProjectScopedKey(name);
     localStorage.setItem(scopedKey, value);
   },
-  
+
   removeItem: (name: string): void => {
     if (typeof window === 'undefined') return;
-    
+
     const scopedKey = getProjectScopedKey(name);
     localStorage.removeItem(scopedKey);
   },
@@ -112,20 +124,20 @@ export function useProjectScopedKey(baseKey: string): string {
  */
 export function migrateToProjectScoped(baseKey: string): void {
   if (typeof window === 'undefined') return;
-  
+
   const projectId = getCurrentProjectId();
   if (!projectId) return;
-  
+
   const globalValue = localStorage.getItem(baseKey);
   if (!globalValue) return;
-  
+
   const scopedKey = getProjectScopedKey(baseKey, projectId);
-  
+
   // Only migrate if scoped key doesn't exist yet
   if (!localStorage.getItem(scopedKey)) {
     localStorage.setItem(scopedKey, globalValue);
   }
-  
+
   // Remove global key
   localStorage.removeItem(baseKey);
 }

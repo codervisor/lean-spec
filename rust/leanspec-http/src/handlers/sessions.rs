@@ -374,19 +374,19 @@ pub async fn list_sessions(
 }
 
 /// Start a session
+///
+/// Spawns the runtime in the background and returns immediately with the
+/// current (Pending) session. The session status will transition to Running
+/// once the runtime is fully initialised, or to Failed if startup errors
+/// occur. Callers should poll or subscribe to session updates to track
+/// progress.
 pub async fn start_session(
     State(state): State<AppState>,
     Path(session_id): Path<String>,
 ) -> ApiResult<Json<SessionResponse>> {
     let manager = state.session_manager.clone();
 
-    manager.start_session(&session_id).await.map_err(|e| {
-        (
-            axum::http::StatusCode::BAD_REQUEST,
-            Json(ApiError::invalid_request(&e.to_string())),
-        )
-    })?;
-
+    // Verify the session exists before spawning
     let session = manager
         .get_session(&session_id)
         .await
@@ -398,6 +398,40 @@ pub async fn start_session(
             )
         })?;
 
+    // Reject if already running or in a terminal state
+    if session.is_running() {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request("Session is already running")),
+        ));
+    }
+    if session.status.is_terminal() {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request(&format!(
+                "Cannot start session with status: {:?}",
+                session.status
+            ))),
+        ));
+    }
+
+    // Spawn the heavy runtime startup in the background
+    let bg_manager = manager.clone();
+    let bg_session_id = session_id.clone();
+    tokio::spawn(async move {
+        if let Err(e) = bg_manager.start_session(&bg_session_id).await {
+            // Mark the session as failed so the UI can reflect the error
+            if let Ok(Some(mut s)) = bg_manager.get_session(&bg_session_id).await {
+                s.status = SessionStatus::Failed;
+                s.ended_at = Some(chrono::Utc::now());
+                s.touch();
+                let _ = bg_manager.update_session(&s).await;
+            }
+            tracing::error!(session_id = %bg_session_id, error = %e, "Background session start failed");
+        }
+    });
+
+    // Return immediately with the session in its current state
     Ok(Json(enrich_session_response(&manager, session).await))
 }
 

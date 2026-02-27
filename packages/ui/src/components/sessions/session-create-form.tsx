@@ -50,7 +50,9 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
                 runner,
                 mode,
             });
-            await startSession(session.id);
+            // Start the runtime in the background — the server returns immediately
+            // and the session transitions from Pending to Running asynchronously.
+            void startSession(session.id);
             onSuccess();
         } catch (error) {
             console.error(error);

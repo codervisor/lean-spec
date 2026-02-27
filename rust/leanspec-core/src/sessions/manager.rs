@@ -1221,6 +1221,11 @@ impl SessionManager {
         self.db.get_session(session_id)
     }
 
+    /// Update a session record in the database
+    pub async fn update_session(&self, session: &Session) -> CoreResult<()> {
+        self.db.update_session(session)
+    }
+
     /// List sessions with optional filters
     pub async fn list_sessions(
         &self,

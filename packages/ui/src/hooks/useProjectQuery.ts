@@ -55,7 +55,7 @@ export function useCurrentProject() {
   const { projects, isLoading, error, storageKey } = useProjects();
   const currentProjectId = typeof window === 'undefined'
     ? null
-    : localStorage.getItem(storageKey);
+    : sessionStorage.getItem(storageKey) ?? localStorage.getItem(storageKey);
 
   const currentProject = useMemo(() => {
     if (projects.length === 0) return null;
@@ -69,10 +69,10 @@ export function useCurrentProject() {
   useEffect(() => {
     if (typeof window === 'undefined' || isLoading) return;
     if (currentProject?.id) {
-      localStorage.setItem(storageKey, currentProject.id);
+      sessionStorage.setItem(storageKey, currentProject.id);
       api.setCurrentProjectId(currentProject.id);
     } else {
-      localStorage.removeItem(storageKey);
+      sessionStorage.removeItem(storageKey);
       api.setCurrentProjectId(null);
     }
   }, [currentProject?.id, isLoading, storageKey]);
@@ -91,7 +91,7 @@ export function useProjectMutations() {
 
   const switchProject = async (projectId: string) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(storageKey, projectId);
+      sessionStorage.setItem(storageKey, projectId);
     }
     api.setCurrentProjectId(projectId);
     // Rehydrate stores before query invalidation triggers re-renders
@@ -105,7 +105,7 @@ export function useProjectMutations() {
   ) => {
     const project = await api.createProject(path, options);
     if (typeof window !== 'undefined') {
-      localStorage.setItem(storageKey, project.id);
+      sessionStorage.setItem(storageKey, project.id);
     }
     api.setCurrentProjectId(project.id);
     await queryClient.invalidateQueries({ queryKey: projectKeys.list(storageKey) });
@@ -123,9 +123,9 @@ export function useProjectMutations() {
 
   const removeProject = async (projectId: string) => {
     await api.deleteProject(projectId);
-    const currentId = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
+    const currentId = typeof window !== 'undefined' ? sessionStorage.getItem(storageKey) : null;
     if (currentId === projectId && typeof window !== 'undefined') {
-      localStorage.removeItem(storageKey);
+      sessionStorage.removeItem(storageKey);
     }
     await queryClient.invalidateQueries({ queryKey: projectKeys.list(storageKey) });
   };
