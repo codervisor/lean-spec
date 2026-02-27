@@ -13,6 +13,13 @@ use walkdir::WalkDir;
 pub struct SpecRelationshipIndex {
     pub children_by_parent: HashMap<String, Vec<String>>,
     pub required_by: HashMap<String, Vec<String>>,
+    pub parent_by_child: HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct SpecHierarchyNode {
+    pub path: String,
+    pub child_nodes: Vec<SpecHierarchyNode>,
 }
 
 #[derive(Debug, Clone)]
@@ -36,7 +43,8 @@ impl Default for CachedSpecEntry {
 struct CachedDirectory {
     entries: HashMap<PathBuf, CachedSpecEntry>,
     version: u64,
-    relationship_index: Option<(u64, SpecRelationshipIndex)>,
+    relationship_index: SpecRelationshipIndex,
+    hierarchy_tree: Option<Vec<SpecHierarchyNode>>,
 }
 
 static SPEC_CACHE: OnceLock<RwLock<HashMap<PathBuf, CachedDirectory>>> = OnceLock::new();
@@ -103,56 +111,59 @@ impl SpecLoader {
     pub fn load_relationship_index(&self) -> Result<SpecRelationshipIndex, LoadError> {
         self.load_all_metadata()?;
 
+        let cache = spec_cache()
+            .read()
+            .expect("spec cache lock poisoned while reading relationship index");
+        let directory = cache
+            .get(&self.specs_dir)
+            .ok_or_else(|| LoadError::SpecsDirNotFound(self.specs_dir.clone()))?;
+
+        Ok(directory.relationship_index.clone())
+    }
+
+    /// Load cached hierarchy tree from metadata.
+    pub fn load_hierarchy_tree(&self) -> Result<Vec<SpecHierarchyNode>, LoadError> {
+        self.load_all_metadata()?;
+
         let mut cache = spec_cache()
             .write()
-            .expect("spec cache lock poisoned while building relationship index");
+            .expect("spec cache lock poisoned while building hierarchy tree");
         let directory = cache.entry(self.specs_dir.clone()).or_default();
 
-        if let Some((cached_version, index)) = &directory.relationship_index {
-            if *cached_version == directory.version {
-                return Ok(index.clone());
-            }
+        if let Some(tree) = &directory.hierarchy_tree {
+            return Ok(tree.clone());
         }
 
-        let mut children_by_parent: HashMap<String, Vec<String>> = HashMap::new();
-        let mut required_by: HashMap<String, Vec<String>> = HashMap::new();
-
-        for spec in directory
+        let all_paths: HashSet<String> = directory
             .entries
             .values()
             .filter_map(|entry| entry.metadata.as_ref())
-        {
-            if let Some(parent) = spec.frontmatter.parent.as_ref() {
-                children_by_parent
-                    .entry(parent.clone())
-                    .or_default()
-                    .push(spec.path.clone());
-            }
+            .map(|spec| spec.path.clone())
+            .collect();
 
-            for dep in &spec.frontmatter.depends_on {
-                if dep != &spec.path {
-                    required_by
-                        .entry(dep.clone())
-                        .or_default()
-                        .push(spec.path.clone());
-                }
-            }
-        }
+        let mut roots: Vec<String> = all_paths
+            .iter()
+            .filter(|path| {
+                directory
+                    .relationship_index
+                    .parent_by_child
+                    .get(*path)
+                    .map(|parent| !all_paths.contains(parent))
+                    .unwrap_or(true)
+            })
+            .cloned()
+            .collect();
+        roots.sort();
 
-        for values in children_by_parent.values_mut() {
-            values.sort();
-        }
-        for values in required_by.values_mut() {
-            values.sort();
-        }
+        let tree: Vec<SpecHierarchyNode> = roots
+            .into_iter()
+            .map(|root| {
+                build_hierarchy_node(&root, &directory.relationship_index.children_by_parent)
+            })
+            .collect();
 
-        let index = SpecRelationshipIndex {
-            children_by_parent,
-            required_by,
-        };
-        directory.relationship_index = Some((directory.version, index.clone()));
-
-        Ok(index)
+        directory.hierarchy_tree = Some(tree.clone());
+        Ok(tree)
     }
 
     fn load_all_internal(&self, include_content: bool) -> Result<Vec<SpecInfo>, LoadError> {
@@ -181,15 +192,26 @@ impl SpecLoader {
         let directory = cache.entry(self.specs_dir.clone()).or_default();
 
         let mut changed = false;
+        let mut changed_paths: HashSet<String> = HashSet::new();
         let seen_paths: HashSet<PathBuf> = readme_paths.iter().cloned().collect();
 
-        // Remove deleted files from cache
-        let previous_len = directory.entries.len();
-        directory
+        // Remove deleted files from cache and relationship index.
+        let removed_paths: Vec<PathBuf> = directory
             .entries
-            .retain(|path, _| seen_paths.contains(path));
-        if directory.entries.len() != previous_len {
-            changed = true;
+            .keys()
+            .filter(|path| !seen_paths.contains(*path))
+            .cloned()
+            .collect();
+        for removed_path in removed_paths {
+            if let Some(removed_entry) = directory.entries.remove(&removed_path) {
+                apply_relationship_delta(
+                    &mut directory.relationship_index,
+                    removed_entry.metadata.as_ref(),
+                    None,
+                );
+                collect_changed_paths(&mut changed_paths, removed_entry.metadata.as_ref(), None);
+                changed = true;
+            }
         }
 
         for readme_path in readme_paths {
@@ -208,6 +230,7 @@ impl SpecLoader {
             let needs_reload = cache_entry.modified_at != modified_at || !has_requested_variant;
 
             if needs_reload {
+                let previous_metadata = cache_entry.metadata.clone();
                 let loaded = self.load_spec_from_path(&readme_path, false, include_content)?;
                 cache_entry.modified_at = modified_at;
 
@@ -218,6 +241,17 @@ impl SpecLoader {
                     cache_entry.metadata = loaded;
                     cache_entry.full = None;
                 }
+
+                apply_relationship_delta(
+                    &mut directory.relationship_index,
+                    previous_metadata.as_ref(),
+                    cache_entry.metadata.as_ref(),
+                );
+                collect_changed_paths(
+                    &mut changed_paths,
+                    previous_metadata.as_ref(),
+                    cache_entry.metadata.as_ref(),
+                );
 
                 changed = true;
             }
@@ -238,7 +272,21 @@ impl SpecLoader {
 
         if changed {
             directory.version += 1;
-            directory.relationship_index = None;
+            if let Some(existing_tree) = directory.hierarchy_tree.as_mut() {
+                let all_paths: HashSet<String> = directory
+                    .entries
+                    .values()
+                    .filter_map(|entry| entry.metadata.as_ref())
+                    .map(|spec| spec.path.clone())
+                    .collect();
+
+                refresh_hierarchy_roots(
+                    existing_tree,
+                    &changed_paths,
+                    &directory.relationship_index,
+                    &all_paths,
+                );
+            }
         }
 
         // Sort by spec number/path
@@ -512,43 +560,47 @@ impl SpecLoader {
                 continue;
             }
 
-            let mut removed_any = false;
-            let previous_len = directory.entries.len();
+            let is_readme = path.is_file()
+                && path
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .map(|name| name.eq_ignore_ascii_case("README.md"))
+                    .unwrap_or(false);
+            let path_parent = path.parent().map(Path::to_path_buf);
 
-            directory.entries.retain(|entry_path, _| {
-                if path == entry_path {
-                    removed_any = true;
-                    return false;
-                }
-
-                if path.is_dir() && entry_path.starts_with(path) {
-                    removed_any = true;
-                    return false;
-                }
-
-                if path.is_file() {
-                    let is_readme = path
-                        .file_name()
-                        .and_then(|name| name.to_str())
-                        .map(|name| name.eq_ignore_ascii_case("README.md"))
-                        .unwrap_or(false);
-
+            let to_remove: Vec<PathBuf> = directory
+                .entries
+                .keys()
+                .filter(|entry_path| {
+                    if path == *entry_path {
+                        return true;
+                    }
+                    if path.is_dir() && entry_path.starts_with(path) {
+                        return true;
+                    }
                     if is_readme {
-                        let path_parent = path.parent();
-                        let entry_parent = entry_path.parent();
-                        if path_parent.is_some() && path_parent == entry_parent {
-                            removed_any = true;
-                            return false;
+                        if let Some(parent) = path_parent.as_ref() {
+                            return entry_path.parent() == Some(parent.as_path());
                         }
+                    }
+                    false
+                })
+                .cloned()
+                .collect();
+
+            if !to_remove.is_empty() {
+                for entry_path in to_remove {
+                    if let Some(removed_entry) = directory.entries.remove(&entry_path) {
+                        apply_relationship_delta(
+                            &mut directory.relationship_index,
+                            removed_entry.metadata.as_ref(),
+                            None,
+                        );
                     }
                 }
 
-                true
-            });
-
-            if removed_any || directory.entries.len() != previous_len {
                 directory.version += 1;
-                directory.relationship_index = None;
+                directory.hierarchy_tree = None;
                 changed = true;
             }
         }
@@ -573,6 +625,154 @@ fn as_metadata_only_spec(spec: &SpecInfo) -> SpecInfo {
     let mut metadata = spec.clone();
     metadata.content.clear();
     metadata
+}
+
+fn build_hierarchy_node(
+    path: &str,
+    children_by_parent: &HashMap<String, Vec<String>>,
+) -> SpecHierarchyNode {
+    let mut child_nodes: Vec<SpecHierarchyNode> = children_by_parent
+        .get(path)
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|child| build_hierarchy_node(&child, children_by_parent))
+        .collect();
+    child_nodes.sort_by(|a, b| a.path.cmp(&b.path));
+
+    SpecHierarchyNode {
+        path: path.to_string(),
+        child_nodes,
+    }
+}
+
+fn apply_relationship_delta(
+    index: &mut SpecRelationshipIndex,
+    old_spec: Option<&SpecInfo>,
+    new_spec: Option<&SpecInfo>,
+) {
+    if let Some(old_spec) = old_spec {
+        if let Some(old_parent) = old_spec.frontmatter.parent.as_ref() {
+            remove_map_vec_value(
+                &mut index.children_by_parent,
+                old_parent,
+                old_spec.path.as_str(),
+            );
+        }
+        index.parent_by_child.remove(&old_spec.path);
+
+        for dep in &old_spec.frontmatter.depends_on {
+            if dep != &old_spec.path {
+                remove_map_vec_value(&mut index.required_by, dep, old_spec.path.as_str());
+            }
+        }
+    }
+
+    if let Some(new_spec) = new_spec {
+        if let Some(new_parent) = new_spec.frontmatter.parent.as_ref() {
+            add_map_vec_value(
+                &mut index.children_by_parent,
+                new_parent,
+                new_spec.path.as_str(),
+            );
+            index
+                .parent_by_child
+                .insert(new_spec.path.clone(), new_parent.clone());
+        } else {
+            index.parent_by_child.remove(&new_spec.path);
+        }
+
+        for dep in &new_spec.frontmatter.depends_on {
+            if dep != &new_spec.path {
+                add_map_vec_value(&mut index.required_by, dep, new_spec.path.as_str());
+            }
+        }
+    }
+}
+
+fn collect_changed_paths(
+    changed_paths: &mut HashSet<String>,
+    old_spec: Option<&SpecInfo>,
+    new_spec: Option<&SpecInfo>,
+) {
+    if let Some(old_spec) = old_spec {
+        changed_paths.insert(old_spec.path.clone());
+        if let Some(parent) = old_spec.frontmatter.parent.as_ref() {
+            changed_paths.insert(parent.clone());
+        }
+    }
+
+    if let Some(new_spec) = new_spec {
+        changed_paths.insert(new_spec.path.clone());
+        if let Some(parent) = new_spec.frontmatter.parent.as_ref() {
+            changed_paths.insert(parent.clone());
+        }
+    }
+}
+
+fn refresh_hierarchy_roots(
+    roots: &mut Vec<SpecHierarchyNode>,
+    changed_paths: &HashSet<String>,
+    relationship_index: &SpecRelationshipIndex,
+    all_paths: &HashSet<String>,
+) {
+    if changed_paths.is_empty() {
+        return;
+    }
+
+    let affected_roots: HashSet<String> = changed_paths
+        .iter()
+        .map(|path| find_root_path(path, all_paths, &relationship_index.parent_by_child))
+        .collect();
+
+    for root in affected_roots {
+        roots.retain(|node| node.path != root);
+
+        if all_paths.contains(&root) && !relationship_index.parent_by_child.contains_key(&root) {
+            roots.push(build_hierarchy_node(
+                &root,
+                &relationship_index.children_by_parent,
+            ));
+        }
+    }
+
+    roots.sort_by(|a, b| a.path.cmp(&b.path));
+}
+
+fn find_root_path(
+    path: &str,
+    all_paths: &HashSet<String>,
+    parent_by_child: &HashMap<String, String>,
+) -> String {
+    let mut current = path.to_string();
+
+    while let Some(parent) = parent_by_child.get(&current) {
+        if !all_paths.contains(parent) {
+            break;
+        }
+        current = parent.clone();
+    }
+
+    current
+}
+
+fn add_map_vec_value(map: &mut HashMap<String, Vec<String>>, key: &str, value: &str) {
+    let values = map.entry(key.to_string()).or_default();
+    if !values.iter().any(|existing| existing == value) {
+        values.push(value.to_string());
+        values.sort();
+    }
+}
+
+fn remove_map_vec_value(map: &mut HashMap<String, Vec<String>>, key: &str, value: &str) {
+    let mut should_remove = false;
+    if let Some(values) = map.get_mut(key) {
+        values.retain(|existing| existing != value);
+        should_remove = values.is_empty();
+    }
+    if should_remove {
+        map.remove(key);
+    }
 }
 
 #[cfg(test)]

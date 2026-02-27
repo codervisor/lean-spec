@@ -68,9 +68,9 @@ The `?hierarchy=true` query on `GET /api/projects/:id/specs` triggers additional
 ### Phase 2: Cached Hierarchy / Relationship Index (High Impact)
 
 - [x] Cache the parent→children map and required_by index alongside the spec cache
-- [ ] Incrementally update relationship indices when a single spec changes (re-index only affected entries)
-- [ ] Pre-compute `HierarchyNode` tree and invalidate only affected subtrees on spec change
-- [ ] Ensure `relationships`, `children`, and `set_parent` MCP tools use cached indices instead of `load_all()`
+- [x] Incrementally update relationship indices when a single spec changes (re-index only affected entries)
+- [x] Pre-compute `HierarchyNode` tree and invalidate only affected subtrees on spec change
+- [x] Ensure `relationships`, `children`, and `set_parent` MCP tools use cached indices instead of `load_all()`
 - [x] Eliminate redundant client-side `buildHierarchy()` when server provides pre-built tree
 
 ### Phase 3: Lazy & Partial Loading (Medium Impact)

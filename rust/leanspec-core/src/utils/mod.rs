@@ -22,7 +22,7 @@ pub use hash::hash_content;
 pub use insights::Insights;
 pub use project_discovery::{DiscoveredProject, DiscoveryError, ProjectDiscovery};
 pub use spec_archiver::{ArchiveError, SpecArchiver};
-pub use spec_loader::{LoadError, SpecLoader, SpecRelationshipIndex};
+pub use spec_loader::{LoadError, SpecHierarchyNode, SpecLoader, SpecRelationshipIndex};
 pub use spec_writer::{MetadataUpdate, SpecWriter, WriteError};
 pub use stats::SpecStats;
 pub use template_loader::{TemplateError, TemplateLoader};

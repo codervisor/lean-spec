@@ -93,6 +93,41 @@ pub fn validate_parent_assignment(
     }
 }
 
+/// Validate setting a parent for a spec using a precomputed child->parent map.
+pub fn validate_parent_assignment_with_index(
+    child_spec: &str,
+    new_parent: &str,
+    parent_by_child: &HashMap<String, String>,
+) -> Result<(), RelationshipError> {
+    if child_spec == new_parent {
+        return Err(RelationshipError::ParentCycle {
+            path: vec![child_spec.to_string(), child_spec.to_string()],
+        });
+    }
+
+    let mut seen = HashSet::new();
+    let mut current = new_parent.to_string();
+    let mut path = vec![child_spec.to_string(), new_parent.to_string()];
+
+    loop {
+        let Some(parent) = parent_by_child.get(&current).cloned() else {
+            return Ok(());
+        };
+
+        if !seen.insert(parent.clone()) {
+            return Ok(());
+        }
+
+        if parent == child_spec {
+            path.push(child_spec.to_string());
+            return Err(RelationshipError::ParentCycle { path });
+        }
+
+        path.push(parent.clone());
+        current = parent;
+    }
+}
+
 /// Validate adding a dependency for a spec.
 pub fn validate_dependency_addition(
     spec: &str,

@@ -14,8 +14,8 @@ use leanspec_core::utils::{
 use leanspec_core::{
     global_frontmatter_validator, global_structure_validator, global_token_count_validator,
     global_token_counter, CompletionVerifier, DependencyGraph, FrontmatterParser, LeanSpecConfig,
-    MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecFilterOptions, SpecLoader, SpecStats,
-    SpecStatus, SpecWriter, TemplateLoader, TokenStatus, ValidationResult,
+    MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecFilterOptions, SpecHierarchyNode,
+    SpecLoader, SpecStats, SpecStatus, SpecWriter, TemplateLoader, TokenStatus, ValidationResult,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -180,6 +180,61 @@ fn build_hierarchy(specs: Vec<crate::types::SpecSummary>) -> Vec<crate::types::H
     });
 
     root_nodes
+}
+
+fn sort_hierarchy_nodes(nodes: &mut [crate::types::HierarchyNode]) {
+    nodes.sort_by(|a, b| match (b.spec.spec_number, a.spec.spec_number) {
+        (Some(bn), Some(an)) => bn.cmp(&an),
+        (Some(_), None) => std::cmp::Ordering::Less,
+        (None, Some(_)) => std::cmp::Ordering::Greater,
+        (None, None) => b.spec.spec_name.cmp(&a.spec.spec_name),
+    });
+
+    for node in nodes.iter_mut() {
+        sort_hierarchy_nodes(&mut node.child_nodes);
+    }
+}
+
+fn build_hierarchy_from_cached_tree(
+    tree: &[SpecHierarchyNode],
+    filtered_specs: &[crate::types::SpecSummary],
+) -> Vec<crate::types::HierarchyNode> {
+    use std::collections::{HashMap, HashSet};
+
+    let allowed: HashSet<String> = filtered_specs.iter().map(|s| s.spec_name.clone()).collect();
+    let spec_map: HashMap<String, crate::types::SpecSummary> = filtered_specs
+        .iter()
+        .map(|s| (s.spec_name.clone(), s.clone()))
+        .collect();
+
+    fn filter_nodes(
+        nodes: &[SpecHierarchyNode],
+        allowed: &HashSet<String>,
+        spec_map: &HashMap<String, crate::types::SpecSummary>,
+    ) -> Vec<crate::types::HierarchyNode> {
+        let mut out = Vec::new();
+
+        for node in nodes {
+            let child_nodes = filter_nodes(&node.child_nodes, allowed, spec_map);
+            if allowed.contains(&node.path) {
+                if let Some(spec) = spec_map.get(&node.path) {
+                    out.push(crate::types::HierarchyNode {
+                        spec: spec.clone(),
+                        child_nodes,
+                    });
+                }
+            } else {
+                // Promote matching descendants when the current node is filtered out.
+                out.extend(child_nodes);
+            }
+        }
+
+        out
+    }
+
+    let mut hierarchy = filter_nodes(tree, &allowed, &spec_map);
+    sort_hierarchy_nodes(&mut hierarchy);
+    hierarchy
 }
 
 fn render_template(template: &str, name: &str, status: &str, priority: &str, date: &str) -> String {
@@ -611,6 +666,12 @@ pub async fn list_project_specs(
             Json(ApiError::internal_error(&e.to_string())),
         )
     })?;
+    let cached_tree = loader.load_hierarchy_tree().map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
 
     let status_filter = parse_status_filter(&query.status)?;
 
@@ -671,7 +732,10 @@ pub async fn list_project_specs(
 
     // Build hierarchy if requested - computed server-side for performance
     let hierarchy = if hierarchy_requested {
-        Some(build_hierarchy(filtered_specs.clone()))
+        Some(build_hierarchy_from_cached_tree(
+            &cached_tree,
+            &filtered_specs,
+        ))
     } else {
         None
     };

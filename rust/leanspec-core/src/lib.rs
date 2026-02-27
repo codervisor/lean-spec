@@ -58,7 +58,8 @@ pub mod models_registry;
 pub use error::{CoreError, CoreResult};
 pub use parsers::FrontmatterParser;
 pub use relationships::{
-    validate_dependency_addition, validate_parent_assignment, RelationshipError,
+    validate_dependency_addition, validate_parent_assignment,
+    validate_parent_assignment_with_index, RelationshipError,
 };
 pub use types::{
     CheckboxItem, CompletionVerificationResult, ErrorSeverity, IncompleteChildSpec, LeanSpecConfig,
@@ -71,8 +72,8 @@ pub use utils::{
     ChecklistToggle, ChecklistToggleResult, CompleteDependencyGraph, DependencyGraph,
     DiscoveredProject, DiscoveryError, ImpactRadius, Insights, LoadError, MatchMode,
     MetadataUpdate, ProjectDiscovery, Replacement, ReplacementResult, SectionMode, SectionUpdate,
-    SpecArchiver, SpecLoader, SpecStats, SpecWriter, TemplateError, TemplateLoader, TokenCount,
-    TokenCounter, TokenStatus, WriteError,
+    SpecArchiver, SpecHierarchyNode, SpecLoader, SpecStats, SpecWriter, TemplateError,
+    TemplateLoader, TokenCount, TokenCounter, TokenStatus, WriteError,
 };
 pub use validators::{
     global_frontmatter_validator, global_structure_validator, global_token_count_validator,

@@ -1,6 +1,8 @@
 //! Relationship management tools
 
-use leanspec_core::{validate_dependency_addition, validate_parent_assignment, SpecLoader};
+use leanspec_core::{
+    validate_dependency_addition, validate_parent_assignment_with_index, SpecLoader,
+};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 
@@ -142,9 +144,15 @@ fn set_parent(specs_dir: &str, args: Value) -> Result<String, String> {
             .map_err(|e| e.to_string())?
             .ok_or_else(|| format!("Parent spec not found: {}", parent_path))?;
 
-        let all_specs = loader.load_all_metadata().map_err(|e| e.to_string())?;
-        validate_parent_assignment(&spec.path, &parent_spec.path, &all_specs)
+        let relationship_index = loader
+            .load_relationship_index()
             .map_err(|e| e.to_string())?;
+        validate_parent_assignment_with_index(
+            &spec.path,
+            &parent_spec.path,
+            &relationship_index.parent_by_child,
+        )
+        .map_err(|e| e.to_string())?;
 
         let mut updates: std::collections::HashMap<String, serde_yaml::Value> =
             std::collections::HashMap::new();
