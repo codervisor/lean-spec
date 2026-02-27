@@ -60,9 +60,9 @@ The `?hierarchy=true` query on `GET /api/projects/:id/specs` triggers additional
 
 ### Phase 1: In-Memory Spec Cache (High Impact)
 
-- [ ] Add a `SpecCache` with file-watcher-based invalidation (leverage existing `FileWatcher` in `watcher.rs`)
+- [x] Add a `SpecCache` with file-watcher-based invalidation (leverage existing `FileWatcher` in `watcher.rs`)
 - [x] Cache parsed spec metadata (frontmatter) in memory after first load
-- [ ] Invalidate individual spec entries on file change (not full cache flush)
+- [x] Invalidate individual spec entries on file change (not full cache flush)
 - [x] Share cache across HTTP handlers and MCP tools
 
 ### Phase 2: Cached Hierarchy / Relationship Index (High Impact)
@@ -71,7 +71,7 @@ The `?hierarchy=true` query on `GET /api/projects/:id/specs` triggers additional
 - [ ] Incrementally update relationship indices when a single spec changes (re-index only affected entries)
 - [ ] Pre-compute `HierarchyNode` tree and invalidate only affected subtrees on spec change
 - [ ] Ensure `relationships`, `children`, and `set_parent` MCP tools use cached indices instead of `load_all()`
-- [ ] Eliminate redundant client-side `buildHierarchy()` when server provides pre-built tree
+- [x] Eliminate redundant client-side `buildHierarchy()` when server provides pre-built tree
 
 ### Phase 3: Lazy & Partial Loading (Medium Impact)
 

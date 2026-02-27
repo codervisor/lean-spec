@@ -495,6 +495,78 @@ impl SpecLoader {
     pub fn specs_dir(&self) -> &Path {
         &self.specs_dir
     }
+
+    /// Invalidate cached spec entries for a changed path.
+    ///
+    /// Returns true when any cache entry was invalidated.
+    pub fn invalidate_cached_path<P: AsRef<Path>>(path: P) -> bool {
+        let path = path.as_ref();
+        let mut cache = spec_cache()
+            .write()
+            .expect("spec cache lock poisoned while invalidating path");
+
+        let mut changed = false;
+
+        for (specs_dir, directory) in cache.iter_mut() {
+            if !path.starts_with(specs_dir) {
+                continue;
+            }
+
+            let mut removed_any = false;
+            let previous_len = directory.entries.len();
+
+            directory.entries.retain(|entry_path, _| {
+                if path == entry_path {
+                    removed_any = true;
+                    return false;
+                }
+
+                if path.is_dir() && entry_path.starts_with(path) {
+                    removed_any = true;
+                    return false;
+                }
+
+                if path.is_file() {
+                    let is_readme = path
+                        .file_name()
+                        .and_then(|name| name.to_str())
+                        .map(|name| name.eq_ignore_ascii_case("README.md"))
+                        .unwrap_or(false);
+
+                    if is_readme {
+                        let path_parent = path.parent();
+                        let entry_parent = entry_path.parent();
+                        if path_parent.is_some() && path_parent == entry_parent {
+                            removed_any = true;
+                            return false;
+                        }
+                    }
+                }
+
+                true
+            });
+
+            if removed_any || directory.entries.len() != previous_len {
+                directory.version += 1;
+                directory.relationship_index = None;
+                changed = true;
+            }
+        }
+
+        changed
+    }
+
+    /// Invalidate all cache entries for a specs directory.
+    ///
+    /// Returns true when a cached directory existed and was removed.
+    pub fn invalidate_cached_specs_dir<P: AsRef<Path>>(specs_dir: P) -> bool {
+        let specs_dir = specs_dir.as_ref();
+        let mut cache = spec_cache()
+            .write()
+            .expect("spec cache lock poisoned while invalidating directory");
+
+        cache.remove(specs_dir).is_some()
+    }
 }
 
 fn as_metadata_only_spec(spec: &SpecInfo) -> SpecInfo {

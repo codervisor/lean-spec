@@ -279,8 +279,8 @@ export const HierarchyList = memo(function HierarchyList({
   // Use pre-built hierarchy from server if available, otherwise build client-side
   const roots = useMemo(() => {
     let baseRoots: TreeNode[];
-    if (hierarchy && hierarchy.length > 0) {
-      // Server already built the tree - filter it to only include allowed specs
+    if (hierarchy !== undefined) {
+      // Server already built the tree (possibly empty) - filter it to only include allowed specs.
       baseRoots = filterHierarchy(hierarchy, allowedSpecIds);
     } else {
       // Fallback to client-side building (already uses filtered specs)

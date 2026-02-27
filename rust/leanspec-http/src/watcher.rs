@@ -1,6 +1,7 @@
 //! File watcher for spec changes
 
 use crate::error::ServerError;
+use leanspec_core::SpecLoader;
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::Serialize;
 use std::collections::HashMap;
@@ -73,6 +74,10 @@ impl FileWatcher {
                                 if should_ignore_path(&path) {
                                     continue;
                                 }
+
+                                // Keep core spec cache coherent with on-disk changes.
+                                SpecLoader::invalidate_cached_path(&path);
+
                                 pending.insert(path, (kind, Instant::now()));
                             }
                         }
