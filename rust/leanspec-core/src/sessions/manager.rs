@@ -1833,7 +1833,7 @@ mod tests {
         fs::create_dir_all(&specs_dir).expect("create specs dir");
         fs::write(
             specs_dir.join("README.md"),
-            "---\ntitle: Test\nstatus: planned\npriority: medium\n---\n\n## Overview\n\nBody",
+            "---\ntitle: Test\nstatus: planned\npriority: medium\ncreated: 2026-02-27\n---\n\n# Test\n\n## Overview\n\nBody",
         )
         .expect("write spec");
 
