@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.25] - 2026-02-27
+
 ### Added
 - **Prompt-First Session Creation** ([spec 337](https://web.lean-spec.dev/specs/337)) - Redesigns session creation as a prompt-first experience
   - `SpecContextTrigger` and `SpecContextChips` components for attaching spec context
@@ -1216,6 +1218,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.25]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.25
 [0.2.24]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.24
 [0.2.23]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.23
 [0.2.22]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.22
