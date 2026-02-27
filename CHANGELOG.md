@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Prompt-First Session Creation** ([spec 337](https://web.lean-spec.dev/specs/337)) - Redesigns session creation as a prompt-first experience
+  - `SpecContextTrigger` and `SpecContextChips` components for attaching spec context
+  - Reusable spec-context pattern shared between sessions and chat
+  - Transparent, customizable prompt defaults replacing hidden system templates
+
+- **Sessions Management UI** - Comprehensive session browsing and management experience
+  - `SessionStatusBadge` component with color-coded status indicators
+  - `SessionsNavSidebar` with integrated status badges and session navigation
+  - Session detail layout with sidebar and context management
+  - `SessionDurationBadge` and `SessionModeBadge` display components
+  - `CollapsibleJsonLog` component for structured JSON log viewing
+  - Enhanced `SessionsPage` with improved filtering and project ID support
+  - Notification support for ACP session ID and initialization response
+
+- **Spec Hierarchy Management** - Parent assignment validation and cache invalidation
+  - Parent assignment validation with index-based checks
+  - Enhanced `HierarchyList` component with improved rendering
+  - Spec cache invalidation logic for consistent hierarchy state
+
+- **Legacy Database Migration** - Migration support from legacy databases
+  - Automated migration for existing spec data
+  - Optimized spec loading via enhanced `spec_loader`
+
 - **CLI Relationship Commands** ([spec 335](https://web.lean-spec.dev/specs/335)) - New Rust CLI commands for spec hierarchy and dependencies
   - `children` command to list child specs of a given parent
   - `deps` command to list dependencies and dependents of a spec
@@ -60,6 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed `desktop-build.yml` GitHub Actions workflow
   - Updated packages README to reflect new architecture
 
+- **Session Management** - Uses `sessionStorage` for project ID handling and improved session start process
+
 - **Component Performance** - Memoized `BoardView` and `ListView` for optimized rendering
   - Enhanced search functionality in `SpecsFilters`
 
@@ -73,6 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Context Prompt** - Simplified header assignment in `build_context_prompt` function
 
 ### Technical
+- Refactored CLI `create` and `list` command parameters to use params structs for better organization
+- Added Clippy guideline for using params structs in functions with more than 7 arguments
 - Removed deprecated `badge-config.ts` from UI components root (moved to `lib/`)
 - Added new API types for sessions, files, and ACP in `types/api.ts`
 - Updated `pnpm-lock.yaml` and Rust `Cargo.lock` dependencies
