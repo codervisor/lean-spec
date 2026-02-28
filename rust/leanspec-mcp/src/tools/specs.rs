@@ -452,11 +452,11 @@ fn parse_replacements(args: &Value) -> Result<Vec<Replacement>, String> {
         let old_string = item
             .get("oldString")
             .and_then(|v| v.as_str())
-            .ok_or("Missing replacements.oldString")?;
+            .ok_or("Each item in `replacements` requires both `oldString` (exact text to find) and `newString` (replacement text). Use `view` to read the current spec content first.")?;
         let new_string = item
             .get("newString")
             .and_then(|v| v.as_str())
-            .ok_or("Missing replacements.newString")?;
+            .ok_or("Each item in `replacements` requires both `oldString` and `newString`. oldString is the exact text to find, newString is the replacement.")?;
         let match_mode = item
             .get("matchMode")
             .and_then(|v| v.as_str())

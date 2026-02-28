@@ -22,7 +22,17 @@ use super::ToolExecutor;
 // ---------------------------------------------------------------------------
 
 pub fn tool_input<T: DeserializeOwned>(value: Value) -> Result<T, String> {
-    serde_json::from_value(value).map_err(|e| e.to_string())
+    serde_json::from_value(value).map_err(|e| {
+        let msg = e.to_string();
+        // Enhance common serde errors with actionable guidance
+        if msg.contains("missing field `oldString`") {
+            "Each item in `replacements` requires both `oldString` (exact text to find) and `newString` (replacement text). Use `view` to read the current spec content first.".to_string()
+        } else if msg.contains("missing field") {
+            format!("Invalid tool input: {msg}")
+        } else {
+            msg
+        }
+    })
 }
 
 // ---------------------------------------------------------------------------
