@@ -1,13 +1,13 @@
 ---
 status: complete
 created: 2026-02-26
-priority: high
+priority: critical
 tags:
 - skill
 - documentation
 - dx
 created_at: 2026-02-26T02:43:21.640718246Z
-updated_at: 2026-02-26T03:21:39.820928955Z
+updated_at: 2026-02-28T13:42:49.239145Z
 completed_at: 2026-02-26T03:21:39.820928955Z
 transitions:
 - status: in-progress
@@ -15,7 +15,6 @@ transitions:
 - status: complete
   at: 2026-02-26T03:21:39.820928955Z
 ---
-
 ## Overview
 
 The SDD skill (`.agents/skills/leanspec-sdd/`) documents CLI and MCP commands/tools that agents use to manage specs. An audit of the actual Rust MCP source (`rust/leanspec-mcp/src/tools/`) and CLI `--help` output reveals significant misalignments:

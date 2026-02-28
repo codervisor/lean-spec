@@ -1,5 +1,7 @@
 # Cloud Sync Bridge Setup
 
+> **⚠️ DEPRECATED**: The Sync Bridge package (`leanspec-sync-bridge`) has been deprecated and is no longer actively maintained. It has been excluded from the Cargo workspace. This documentation is kept for historical reference only.
+
 ## Overview
 
 The Sync Bridge connects a local LeanSpec workspace to the cloud UI. The local filesystem remains the source of truth. The bridge streams snapshots and deltas to the cloud and applies explicit metadata edits from the cloud to the local files.

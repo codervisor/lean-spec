@@ -19,7 +19,7 @@ lean-spec/
 │   ├── leanspec-mcp/  # Rust MCP server
 │   ├── leanspec-core/ # Shared Rust core
 │   ├── leanspec-http/ # HTTP server
-│   └── leanspec-sync-bridge/
+│   └── leanspec-sync-bridge/ # DEPRECATED - excluded from workspace
 │
 ├── docs-site/         # Docusaurus (separate repo via git subtree)
 ├── specs/             # Project specifications

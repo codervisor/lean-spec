@@ -1,10 +1,12 @@
 [workspace]
+exclude = [
+  "leanspec-sync-bridge", # deprecated
+]
 members = [
   "leanspec-core",
   "leanspec-cli",
   "leanspec-mcp",
   "leanspec-http",
-  "leanspec-sync-bridge",
 ]
 resolver = "2"
 
