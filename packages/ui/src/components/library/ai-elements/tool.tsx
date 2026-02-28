@@ -94,7 +94,7 @@ const statusIcons: Record<ToolPart["state"], ReactNode> = {
 };
 
 export const getStatusBadge = (status: ToolPart["state"]) => (
-  <Badge className="gap-1.5 rounded-full text-xs" variant="secondary">
+  <Badge className="gap-1.5 rounded-full text-xs flex-0" variant="secondary">
     {statusIcons[status]}
     {statusLabels[status]}
   </Badge>
@@ -130,22 +130,22 @@ export const ToolHeader = ({
       )}
       {...props}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="inline-flex">
+              <span className="inline-flex shrink-0">
                 <PrefixIcon className={iconClassName} />
               </span>
             </TooltipTrigger>
             <TooltipContent side="top">{resolvedToolName}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <span className="font-medium text-sm">
+        <span className="font-medium text-sm truncate" title={title ?? humanizeToolName(derivedName)}>
           {title ?? humanizeToolName(derivedName)}
         </span>
-        {getStatusBadge(state)}
-        <ToolDuration state={state} />
+        <span className="shrink-0">{getStatusBadge(state)}</span>
+        <span className="shrink-0"><ToolDuration state={state} /></span>
       </div>
       <ChevronDownIcon className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
     </CollapsibleTrigger>
