@@ -55,6 +55,14 @@ pub enum StreamEvent {
         output: serde_json::Value,
         dynamic: bool,
     },
+    #[serde(rename = "tool-output-error")]
+    ToolOutputError {
+        #[serde(rename = "toolCallId")]
+        tool_call_id: String,
+        #[serde(rename = "errorText")]
+        error_text: String,
+        dynamic: bool,
+    },
     #[serde(rename = "start-step")]
     StartStep,
     #[serde(rename = "finish-step")]

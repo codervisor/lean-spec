@@ -546,6 +546,11 @@ async fn run_openai_conversation(
                 Ok(r) => r,
                 Err(e) => {
                     let err = AiError::Tool(e.to_string());
+                    let _ = sender.send(StreamEvent::ToolOutputError {
+                        tool_call_id: call.id.clone(),
+                        error_text: err.to_string(),
+                        dynamic: true,
+                    });
                     let _ = sender.send(StreamEvent::FinishStep);
                     return Err((assistant_parts, err));
                 }

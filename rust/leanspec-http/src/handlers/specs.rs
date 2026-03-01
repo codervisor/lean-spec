@@ -1230,14 +1230,14 @@ pub async fn update_project_spec_raw(
         }
     }
 
-    loader
-        .update_spec(&spec_id, &request.content)
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?;
+    // Write directly to the resolved file_path (spec.file_path) instead of
+    // calling update_spec(&spec_id, ..) which doesn't do fuzzy path resolution.
+    fs::write(&spec.file_path, &request.content).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
 
     let new_hash = hash_raw_content(&request.content);
     Ok(Json(SpecRawResponse {
