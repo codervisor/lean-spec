@@ -16,11 +16,35 @@ import {
   PromptInputFooter,
   PromptInputSubmit,
   usePromptInputReferencedSources,
-  Alert,
-  AlertDescription,
+  Message,
+  MessageContent,
 } from '@/library';
 import { MessageSquare, AlertCircle, RefreshCw } from 'lucide-react';
 import { useCurrentProject } from '../../hooks/useProjectQuery';
+
+/**
+ * Returns true when the stream error is a tool error that's already displayed
+ * inside a tool invocation in the last message (so we don't double-show it).
+ */
+function isToolError(error: Error, messages: UIMessage[]): boolean {
+  const msg = error.message ?? '';
+  if (!msg.includes('Tool error') && !msg.includes('Tool execution failed')) {
+    return false;
+  }
+  // Check if the last assistant message has a tool part that could display this error
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== 'assistant' || !last.parts) return false;
+  return last.parts.some((part) => {
+    if (typeof part !== 'object' || part === null || !('type' in part)) return false;
+    const p = part as Record<string, unknown>;
+    return (
+      p.type === 'tool-call' ||
+      p.type === 'tool-invocation' ||
+      p.type === 'dynamic-tool' ||
+      (typeof p.type === 'string' && (p.type as string).startsWith('tool-'))
+    );
+  });
+}
 import { useSpecsList } from '../../hooks/useSpecsQuery';
 import type { Spec } from '../../types/api';
 import { SpecContextTrigger, SpecContextChips } from '../spec-context-attachments';
@@ -162,22 +186,30 @@ export function ChatContainer({
                   isLast={index === messages.length - 1}
                 />
               ))}
-              {error && (
-                <Alert variant="destructive" className="mx-4 my-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="flex items-center justify-between">
-                    <span>{error.message || t('chat.error')}</span>
-                    {onRetry && (
-                      <button
-                        onClick={onRetry}
-                        className="ml-4 flex items-center gap-1 text-sm underline hover:no-underline"
-                      >
-                        <RefreshCw className="h-3 w-3" />
-                        {t('actions.retry')}
-                      </button>
-                    )}
-                  </AlertDescription>
-                </Alert>
+              {error && !isToolError(error, messages) && (
+                <Message from="assistant">
+                  <MessageContent>
+                    <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-destructive">
+                            {error.message || t('chat.error')}
+                          </p>
+                          {onRetry && (
+                            <button
+                              onClick={onRetry}
+                              className="mt-2 flex items-center gap-1 text-xs text-destructive underline hover:no-underline"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                              {t('actions.retry')}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </MessageContent>
+                </Message>
               )}
               {isLoading && <ThinkingIndicator />}
             </>

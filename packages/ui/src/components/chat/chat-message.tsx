@@ -95,6 +95,12 @@ function renderToolPart(
   );
 }
 
+/**
+ * Pattern to match server-injected error text parts.
+ * These are added by the Rust server as `\n\n**Error:** <error_text>`.
+ */
+const SERVER_ERROR_TEXT_RE = /^\s*\*\*Error:\*\*\s*/;
+
 export function ChatMessage({ message, isLast }: ChatMessageProps) {
   // Build a lookup of tool-result parts by toolCallId so that tool-call parts
   // rendered from persisted messages can find the matching output.
@@ -114,6 +120,54 @@ export function ChatMessage({ message, isLast }: ChatMessageProps) {
     }
   }
 
+  // Build a set of orphaned tool-call IDs (no matching tool-result).
+  // Then scan text parts for error messages to pair with orphaned tools.
+  const orphanedToolCalls = new Map<string, { index: number; toolName: string }>();
+  const toolErrorTextIndices = new Set<number>();
+  const toolCallErrors = new Map<string, string>(); // toolCallId → error message
+
+  if (message.parts) {
+    // First pass: find orphaned tool-calls
+    for (let i = 0; i < message.parts.length; i++) {
+      const p = message.parts[i];
+      if (typeof p !== 'object' || p === null || !('type' in p)) continue;
+      const pObj = p as Record<string, unknown>;
+      if (pObj.type === 'tool-call') {
+        const callId = String(pObj.toolCallId ?? '');
+        if (callId && !toolResultMap.has(callId)) {
+          orphanedToolCalls.set(callId, { index: i, toolName: String(pObj.toolName ?? '') });
+        }
+      }
+    }
+
+    // Second pass: match error text parts to orphaned tool-calls
+    if (orphanedToolCalls.size > 0) {
+      for (let i = 0; i < message.parts.length; i++) {
+        const p = message.parts[i];
+        if (typeof p !== 'object' || p === null || !('type' in p)) continue;
+        const pObj = p as Record<string, unknown>;
+        if (pObj.type === 'text') {
+          const text = pObj.text as string;
+          if (text && SERVER_ERROR_TEXT_RE.test(text)) {
+            const errorMsg = text.replace(SERVER_ERROR_TEXT_RE, '').trim();
+            // Find the last orphaned tool-call before this text part
+            let lastOrphan: { id: string; toolName: string } | null = null;
+            for (const [id, info] of orphanedToolCalls) {
+              if (info.index < i) {
+                lastOrphan = { id, toolName: info.toolName };
+              }
+            }
+            if (lastOrphan) {
+              toolCallErrors.set(lastOrphan.id, errorMsg);
+              toolErrorTextIndices.add(i);
+              orphanedToolCalls.delete(lastOrphan.id);
+            }
+          }
+        }
+      }
+    }
+  }
+
   return (
     <Message from={message.role} className={cn(isLast && 'pb-2')}>
       <MessageContent>
@@ -125,8 +179,9 @@ export function ChatMessage({ message, isLast }: ChatMessageProps) {
           const partObj = part as Record<string, unknown>;
           const partType = partObj.type;
 
-          // Text part
+          // Text part — suppress if it was absorbed into a tool error
           if (partType === 'text') {
+            if (toolErrorTextIndices.has(index)) return null;
             const text = partObj.text as string;
             if (!text) return null;
             return <MessageResponse key={index}>{text}</MessageResponse>;
@@ -159,11 +214,46 @@ export function ChatMessage({ message, isLast }: ChatMessageProps) {
             );
           }
 
-          // Persisted tool-call part — merge with matching tool-result
+          // Persisted tool-call part — merge with matching tool-result or error
           if (partType === 'tool-call') {
             const callId = String(partObj.toolCallId ?? '');
             const matchingResult = callId ? toolResultMap.get(callId) : undefined;
-            const output = matchingResult?.output;
+            const output = matchingResult?.output ?? matchingResult?.result;
+
+            // Check for error absorbed from text part
+            const absorbedError = callId ? toolCallErrors.get(callId) : undefined;
+            if (absorbedError) {
+              return renderToolPart(
+                {
+                  toolCallId: callId,
+                  toolName: String(partObj.toolName ?? ''),
+                  description: undefined,
+                  input: partObj.input,
+                  output: undefined,
+                  state: 'error',
+                  errorMessage: absorbedError,
+                },
+                index
+              );
+            }
+
+            // Extract error info from tool result
+            let errorMessage: string | undefined;
+            let isToolError = false;
+
+            if (matchingResult?.isError === true) {
+              isToolError = true;
+              errorMessage = typeof output === 'string' ? output : JSON.stringify(output);
+            } else if (typeof output === 'object' && output !== null) {
+              const outputObj = output as Record<string, unknown>;
+              if (outputObj.type === 'error-text') {
+                isToolError = true;
+                errorMessage = typeof outputObj.text === 'string' ? outputObj.text : JSON.stringify(outputObj);
+              } else if (outputObj.type === 'error-json') {
+                isToolError = true;
+                errorMessage = JSON.stringify(outputObj.value ?? outputObj);
+              }
+            }
 
             return renderToolPart(
               {
@@ -171,9 +261,9 @@ export function ChatMessage({ message, isLast }: ChatMessageProps) {
                 toolName: String(partObj.toolName ?? ''),
                 description: undefined,
                 input: partObj.input,
-                output,
-                state: output !== undefined ? 'result' : 'call',
-                errorMessage: undefined,
+                output: isToolError ? undefined : output,
+                state: isToolError ? 'error' : (output !== undefined ? 'result' : 'call'),
+                errorMessage,
               },
               index
             );
@@ -182,6 +272,30 @@ export function ChatMessage({ message, isLast }: ChatMessageProps) {
           // tool-result is merged into tool-call above; skip standalone
           if (partType === 'tool-result') {
             return null;
+          }
+
+          // Tool error part (thrown errors from tool execution)
+          if (partType === 'tool-error') {
+            const toolError = partObj.error;
+            const errorMsg =
+              typeof toolError === 'string'
+                ? toolError
+                : toolError instanceof Error
+                  ? toolError.message
+                  : JSON.stringify(toolError);
+
+            return renderToolPart(
+              {
+                toolCallId: String(partObj.toolCallId ?? ''),
+                toolName: String(partObj.toolName ?? ''),
+                description: undefined,
+                input: partObj.input,
+                output: undefined,
+                state: 'error',
+                errorMessage: errorMsg,
+              },
+              index
+            );
           }
 
           // skip step-start markers
