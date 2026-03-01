@@ -293,12 +293,19 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
                 let _ = sender.send(StreamEvent::Finish);
                 let _ = done_tx.send(Some(parts));
             }
-            Err(err) => {
+            Err((mut parts, err)) => {
+                let error_text = err.to_string();
                 let _ = sender.send(StreamEvent::Error {
-                    error_text: err.to_string(),
+                    error_text: error_text.clone(),
                 });
+
+                // Add the error message as a text part so it gets persisted
+                parts.push(UIMessagePart::Text {
+                    text: format!("\n\n**Error:** {}", error_text),
+                });
+
                 let _ = sender.send(StreamEvent::Finish);
-                let _ = done_tx.send(None);
+                let _ = done_tx.send(Some(parts));
             }
         }
     });
@@ -422,13 +429,13 @@ async fn run_openai_conversation(
         sender,
         text_id,
     }: OpenAiConversationParams<'_>,
-) -> Result<Vec<UIMessagePart>, AiError> {
+) -> Result<Vec<UIMessagePart>, (Vec<UIMessagePart>, AiError)> {
     let mut assistant_parts: Vec<UIMessagePart> = Vec::new();
 
     for step in 0..max_steps {
         let _ = sender.send(StreamEvent::StartStep);
 
-        let round = stream_openai_round(
+        let round_result = stream_openai_round(
             &client,
             model_id,
             messages,
@@ -438,7 +445,12 @@ async fn run_openai_conversation(
             sender,
             text_id,
         )
-        .await?;
+        .await;
+
+        let (round, err_opt) = match round_result {
+            Ok(r) => (r, None),
+            Err((r, e)) => (r, Some(e)),
+        };
 
         if !round.reasoning.is_empty() {
             assistant_parts.push(UIMessagePart::Reasoning {
@@ -450,6 +462,11 @@ async fn run_openai_conversation(
             assistant_parts.push(UIMessagePart::Text {
                 text: round.text.clone(),
             });
+        }
+
+        if let Some(e) = err_opt {
+            let _ = sender.send(StreamEvent::FinishStep);
+            return Err((assistant_parts, e));
         }
 
         if round.tool_calls.is_empty() {
@@ -485,9 +502,17 @@ async fn run_openai_conversation(
             } else {
                 call.arguments.as_str()
             };
-            let input = serde_json::from_str::<serde_json::Value>(arguments).map_err(|e| {
-                AiError::Tool(format!("Invalid tool input JSON for {}: {}", call.name, e))
-            })?;
+            let input = match serde_json::from_str::<serde_json::Value>(arguments) {
+                Ok(v) => v,
+                Err(e) => {
+                    let err =
+                        AiError::Tool(format!("Invalid tool input JSON for {}: {}", call.name, e));
+                    let _ = sender.send(StreamEvent::FinishStep);
+                    // Add an error text part directly so the user sees something went wrong,
+                    // though the front-end stream event format might handle errors itself.
+                    return Err((assistant_parts, err));
+                }
+            };
 
             let _ = sender.send(StreamEvent::ToolInputStart {
                 tool_call_id: call.id.clone(),
@@ -511,10 +536,20 @@ async fn run_openai_conversation(
             let registry = tools.clone();
             let tool_name = call.name.clone();
             let exec_input = input.clone();
-            let result =
+            let result_res =
                 tokio::task::spawn_blocking(move || registry.execute(&tool_name, exec_input))
                     .await
-                    .map_err(|e| AiError::Tool(e.to_string()))??;
+                    .map_err(|e| AiError::Tool(e.to_string()))
+                    .and_then(|r| r);
+
+            let result = match result_res {
+                Ok(r) => r,
+                Err(e) => {
+                    let err = AiError::Tool(e.to_string());
+                    let _ = sender.send(StreamEvent::FinishStep);
+                    return Err((assistant_parts, err));
+                }
+            };
 
             let output_value = serde_json::from_str::<serde_json::Value>(&result)
                 .unwrap_or_else(|_| serde_json::Value::String(result.clone()));
@@ -542,8 +577,9 @@ async fn run_openai_conversation(
         let _ = sender.send(StreamEvent::FinishStep);
 
         if step + 1 >= max_steps {
-            return Err(AiError::InvalidRequest(
-                "Reached max_steps while tool calls remain".to_string(),
+            return Err((
+                assistant_parts,
+                AiError::InvalidRequest("Reached max_steps while tool calls remain".to_string()),
             ));
         }
     }
@@ -561,7 +597,7 @@ async fn stream_openai_round(
     use_openai_compat: bool,
     sender: &mpsc::UnboundedSender<StreamEvent>,
     text_id: &str,
-) -> Result<OpenAiRoundResult, AiError> {
+) -> Result<OpenAiRoundResult, (OpenAiRoundResult, AiError)> {
     let mut builder = CreateChatCompletionRequestArgs::default();
     builder.model(model_id);
     builder.messages(messages.to_vec());
@@ -579,15 +615,33 @@ async fn stream_openai_round(
             builder.max_completion_tokens(max_tokens);
         }
     }
-    let request = builder
-        .build()
-        .map_err(|e| AiError::Provider(e.to_string()))?;
+    let request = match builder.build() {
+        Ok(req) => req,
+        Err(e) => {
+            return Err((
+                OpenAiRoundResult {
+                    text: String::new(),
+                    reasoning: String::new(),
+                    tool_calls: Vec::new(),
+                },
+                AiError::Provider(e.to_string()),
+            ));
+        }
+    };
 
-    let mut stream = client
-        .chat()
-        .create_stream(request)
-        .await
-        .map_err(|e| AiError::Provider(e.to_string()))?;
+    let mut stream = match client.chat().create_stream(request).await {
+        Ok(s) => s,
+        Err(e) => {
+            return Err((
+                OpenAiRoundResult {
+                    text: String::new(),
+                    reasoning: String::new(),
+                    tool_calls: Vec::new(),
+                },
+                AiError::Provider(e.to_string()),
+            ));
+        }
+    };
 
     let mut text_started = false;
     let mut text = String::new();
@@ -596,8 +650,16 @@ async fn stream_openai_round(
     let reasoning_id = format!("reasoning_{}", text_id);
     let mut tool_calls: Vec<ToolCallAccumulator> = Vec::new();
 
-    while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|e| AiError::Stream(e.to_string()))?;
+    let mut exit_error = None;
+
+    while let Some(chunk_result) = stream.next().await {
+        let chunk = match chunk_result {
+            Ok(c) => c,
+            Err(e) => {
+                exit_error = Some(AiError::Stream(e.to_string()));
+                break;
+            }
+        };
 
         // Some OpenAI-compatible providers (e.g. DeepSeek via OpenRouter) send
         // `reasoning_content` as an extra field in the delta. Because async-openai
@@ -679,11 +741,17 @@ async fn stream_openai_round(
         })
         .collect();
 
-    Ok(OpenAiRoundResult {
+    let round_result = OpenAiRoundResult {
         text,
         reasoning: reasoning_text,
         tool_calls: completed_tool_calls,
-    })
+    };
+
+    if let Some(err) = exit_error {
+        Err((round_result, err))
+    } else {
+        Ok(round_result)
+    }
 }
 
 fn collect_tool_call_chunks(
@@ -754,34 +822,41 @@ async fn run_anthropic_conversation(
     max_tokens: Option<u32>,
     sender: &mpsc::UnboundedSender<StreamEvent>,
     text_id: &str,
-) -> Result<Vec<UIMessagePart>, AiError> {
+) -> Result<Vec<UIMessagePart>, (Vec<UIMessagePart>, AiError)> {
     let max_tokens = max_tokens.unwrap_or(4096) as usize;
-    let request = anthropic::types::MessagesRequestBuilder::default()
+    let request = match anthropic::types::MessagesRequestBuilder::default()
         .model(model_id.to_string())
         .messages(messages)
         .system(system)
         .max_tokens(max_tokens)
         .stream(true)
         .build()
-        .map_err(|e| AiError::Provider(e.to_string()))?;
+    {
+        Ok(req) => req,
+        Err(e) => return Err((Vec::new(), AiError::Provider(e.to_string()))),
+    };
 
-    let mut stream = client
-        .messages_stream(request)
-        .await
-        .map_err(|e| AiError::Provider(e.to_string()))?;
+    let mut stream = match client.messages_stream(request).await {
+        Ok(s) => s,
+        Err(e) => return Err((Vec::new(), AiError::Provider(e.to_string()))),
+    };
 
     let mut text_started = false;
     let mut text = String::new();
     let reasoning_id = format!("reasoning_{}", text_id);
-    // NOTE: The anthropic crate (v0.0.8) only exposes TextDelta in ContentBlockDelta.
-    // Thinking/reasoning content blocks (`type: "thinking"`) are not modelled yet.
-    // When the crate is updated to support ContentBlockDelta::ThinkingDelta, emit
-    // ReasoningStart/ReasoningDelta/ReasoningEnd events using `reasoning_id` here.
-    let _ = &reasoning_id; // suppress unused warning until crate supports thinking
+    let _ = &reasoning_id;
     let _ = sender.send(StreamEvent::StartStep);
 
-    while let Some(event) = stream.next().await {
-        let event = event.map_err(|e| AiError::Stream(e.to_string()))?;
+    let mut exit_error = None;
+
+    while let Some(event_result) = stream.next().await {
+        let event = match event_result {
+            Ok(evt) => evt,
+            Err(e) => {
+                exit_error = Some(AiError::Stream(e.to_string()));
+                break;
+            }
+        };
         if let anthropic::types::MessagesStreamEvent::ContentBlockDelta { delta, .. } = event {
             let anthropic::types::ContentBlockDelta::TextDelta { text: delta_text } = delta;
             if !text_started {
@@ -809,7 +884,12 @@ async fn run_anthropic_conversation(
     if !text.is_empty() {
         parts.push(UIMessagePart::Text { text });
     }
-    Ok(parts)
+
+    if let Some(err) = exit_error {
+        Err((parts, err))
+    } else {
+        Ok(parts)
+    }
 }
 
 #[cfg(test)]

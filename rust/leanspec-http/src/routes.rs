@@ -6,6 +6,7 @@ use axum::{
     body::Body,
     extract::State,
     http::{Method, Request, StatusCode},
+    middleware::Next,
     response::{IntoResponse, Response},
 };
 use axum::{
@@ -311,6 +312,7 @@ pub fn create_router(state: AppState) -> Router {
                 ),
         )
         .layer(middleware::from_fn_with_state(state, readonly_guard))
+        .layer(middleware::from_fn(log_error_body))
 }
 
 fn resolve_ui_dist_path(config: &ServerConfig) -> Option<PathBuf> {
@@ -356,6 +358,47 @@ fn resolve_ui_dist_path(config: &ServerConfig) -> Option<PathBuf> {
     }
 
     None
+}
+
+/// Middleware that logs the response body for error responses (4xx/5xx).
+///
+/// This ensures error details are always visible in traces regardless of which
+/// `IntoResponse` path is taken (direct `ApiError`, tuple, etc.).
+async fn log_error_body(req: Request<Body>, next: Next) -> Response {
+    let method = req.method().clone();
+    let uri = req.uri().clone();
+    let response = next.run(req).await;
+    let status = response.status();
+
+    if status.is_server_error() || status.is_client_error() {
+        let (parts, body) = response.into_parts();
+        let bytes = axum::body::to_bytes(body, 64 * 1024)
+            .await
+            .unwrap_or_default();
+        let body_str = String::from_utf8_lossy(&bytes);
+
+        if status.is_server_error() {
+            tracing::error!(
+                method = %method,
+                uri = %uri,
+                status = %status.as_u16(),
+                body = %body_str,
+                "Error response"
+            );
+        } else {
+            tracing::debug!(
+                method = %method,
+                uri = %uri,
+                status = %status.as_u16(),
+                body = %body_str,
+                "Client error response"
+            );
+        }
+
+        return Response::from_parts(parts, Body::from(bytes));
+    }
+
+    response
 }
 
 async fn readonly_guard(
