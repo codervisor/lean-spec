@@ -1,0 +1,1 @@
+export type StatusTransition = { status: SpecStatus, at: string, };

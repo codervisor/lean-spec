@@ -1,0 +1,1 @@
+export type SpecTokenResponse = { tokenCount: number, tokenStatus: string, tokenBreakdown: TokenBreakdown, };

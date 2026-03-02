@@ -1,0 +1,1 @@
+export type UpdateMetadataResponse = { success: boolean, specId: string, frontmatter: FrontmatterResponse, };

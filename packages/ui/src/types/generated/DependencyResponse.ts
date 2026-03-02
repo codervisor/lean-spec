@@ -1,0 +1,1 @@
+export type DependencyResponse = { spec: SpecSummary, dependsOn: Array<SpecSummary>, requiredBy: Array<SpecSummary>, };

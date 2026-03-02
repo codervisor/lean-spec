@@ -1,0 +1,1 @@
+export type FrontmatterResponse = { status: string, created: string, priority: string | null, tags: Array<string>, dependsOn: Array<string>, parent: string | null, assignee: string | null, createdAt: string | null, updatedAt: string | null, completedAt: string | null, };

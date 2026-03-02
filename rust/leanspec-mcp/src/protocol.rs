@@ -71,6 +71,25 @@ impl McpResponse {
             }),
         }
     }
+
+    /// Create an error response that includes a structured error code in `data`.
+    pub fn error_with_code(
+        id: Option<Value>,
+        jsonrpc_code: i32,
+        message: &str,
+        error_code: &str,
+    ) -> Self {
+        Self {
+            jsonrpc: "2.0".to_string(),
+            id,
+            result: None,
+            error: Some(McpError {
+                code: jsonrpc_code,
+                message: message.to_string(),
+                data: Some(serde_json::json!({ "errorCode": error_code })),
+            }),
+        }
+    }
 }
 
 /// Tool definition for MCP
@@ -149,6 +168,26 @@ async fn handle_tool_call(id: Option<Value>, params: Value) -> McpResponse {
             });
             McpResponse::success(id, response)
         }
-        Err(e) => McpResponse::error_with_id(id, -32000, &e),
+        Err(e) => {
+            // Classify the error to include a structured error code
+            let error_code = classify_tool_error(&e);
+            McpResponse::error_with_code(id, -32000, &e, error_code)
+        }
+    }
+}
+
+/// Classify a tool error string into a structured error code.
+fn classify_tool_error(message: &str) -> &'static str {
+    let lower = message.to_lowercase();
+    if lower.contains("not found") {
+        "SPEC_NOT_FOUND"
+    } else if lower.contains("validation") {
+        "VALIDATION_FAILED"
+    } else if lower.contains("already exists") {
+        "INVALID_REQUEST"
+    } else if lower.contains("circular") {
+        "CIRCULAR_DEPENDENCY"
+    } else {
+        "INTERNAL_ERROR"
     }
 }

@@ -1,0 +1,1 @@
+export type ValidationResponse = { isValid: boolean, errors: Array<ValidationError>, };

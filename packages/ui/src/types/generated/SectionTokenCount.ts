@@ -1,0 +1,1 @@
+export type SectionTokenCount = { heading: string, tokens: number, };

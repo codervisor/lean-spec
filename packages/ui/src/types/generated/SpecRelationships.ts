@@ -1,0 +1,1 @@
+export type SpecRelationships = { dependsOn: Array<string>, requiredBy: Array<string> | null, };

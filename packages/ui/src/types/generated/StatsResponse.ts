@@ -1,0 +1,1 @@
+export type StatsResponse = { totalProjects: number, totalSpecs: number, specsByStatus: Array<StatusCountItem>, specsByPriority: Array<PriorityCountItem>, completionRate: number, projectId: string | null, };

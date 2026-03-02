@@ -1,0 +1,1 @@
+export type DependencyGraphResponse = { projectId: string | null, nodes: Array<DependencyNode>, edges: Array<DependencyEdge>, };

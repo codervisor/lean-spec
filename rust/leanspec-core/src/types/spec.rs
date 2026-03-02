@@ -2,9 +2,11 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 /// Status of a spec
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "kebab-case")]
 pub enum SpecStatus {
     Draft,
@@ -46,7 +48,8 @@ impl std::str::FromStr for SpecStatus {
 }
 
 /// Priority of a spec
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "lowercase")]
 pub enum SpecPriority {
     Low,
@@ -84,7 +87,8 @@ impl std::str::FromStr for SpecPriority {
 }
 
 /// A status transition record for tracking spec lifecycle
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../packages/ui/src/types/generated/")]
 pub struct StatusTransition {
     pub status: SpecStatus,
     pub at: DateTime<Utc>,

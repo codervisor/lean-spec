@@ -1,0 +1,1 @@
+export type ConfigFeatures = { aiAgents: boolean | null, };

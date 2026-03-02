@@ -1,0 +1,1 @@
+export type DraftStatusConfig = { enabled: boolean | null, };

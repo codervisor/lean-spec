@@ -1,0 +1,1 @@
+export type SearchRequest = { query: string, filters: SearchFilters | null, projectId: string | null, };

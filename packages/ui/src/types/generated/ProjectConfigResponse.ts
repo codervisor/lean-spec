@@ -1,0 +1,1 @@
+export type ProjectConfigResponse = { file: ContextFile | null, parsed: LeanSpecConfig | null, };

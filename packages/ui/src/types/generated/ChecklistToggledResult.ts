@@ -1,0 +1,1 @@
+export type ChecklistToggledResult = { itemText: string, checked: boolean, line: number, };

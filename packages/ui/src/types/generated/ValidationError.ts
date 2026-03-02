@@ -1,0 +1,1 @@
+export type ValidationError = { severity: string, message: string, spec: string | null, };

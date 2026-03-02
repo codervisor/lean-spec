@@ -1,0 +1,1 @@
+export type CreateSpecRequest = { name: string, title: string | null, status: string | null, priority: string | null, tags: Array<string> | null, assignee: string | null, dependsOn: Array<string> | null, template: string | null, content: string | null, };

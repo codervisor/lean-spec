@@ -1,0 +1,1 @@
+export type ProjectContextResponse = { agentInstructions: Array<ContextFile>, config: ProjectConfigResponse, projectDocs: Array<ContextFile>, totalTokens: number, projectRoot: string, };

@@ -1,0 +1,1 @@
+export type SpecRawResponse = { content: string, contentHash: string, filePath: string, };

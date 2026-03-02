@@ -1,0 +1,1 @@
+export type BatchMetadataResponse = { specs: { [key in string]?: SpecMetadata }, };

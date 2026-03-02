@@ -1,0 +1,1 @@
+export type DependencyNode = { id: string, name: string, number: number, status: string, priority: string, tags: Array<string>, };

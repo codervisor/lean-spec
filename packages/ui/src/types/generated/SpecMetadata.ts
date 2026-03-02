@@ -1,0 +1,1 @@
+export type SpecMetadata = { tokenCount: number, tokenStatus: string, validationStatus: string, };

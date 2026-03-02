@@ -1,0 +1,1 @@
+export type SearchResponse = { results: Array<SpecSummary>, total: number, query: string, projectId: string | null, };

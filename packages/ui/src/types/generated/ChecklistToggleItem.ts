@@ -1,0 +1,1 @@
+export type ChecklistToggleItem = { itemText: string, checked: boolean, };

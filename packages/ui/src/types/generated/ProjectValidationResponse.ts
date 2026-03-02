@@ -1,0 +1,1 @@
+export type ProjectValidationResponse = { projectId: string, path: string, validation: ProjectValidationSummary, };

@@ -1,0 +1,1 @@
+export type SubSpec = { name: string, file: string, content: string, };

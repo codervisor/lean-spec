@@ -1,0 +1,1 @@
+export type StatusCountItem = { status: string, count: number, };

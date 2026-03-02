@@ -1,0 +1,1 @@
+export type SpecValidationError = { severity: string, message: string, line: number | null, type: string, suggestion: string | null, };

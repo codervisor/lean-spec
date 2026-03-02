@@ -1,0 +1,1 @@
+export type LeanSpecConfig = { template: string | null, specsDir: string | null, structure: ConfigStructure | null, features: ConfigFeatures | null, draftStatus: DraftStatusConfig | null, templates: { [key in string]?: string } | null, };

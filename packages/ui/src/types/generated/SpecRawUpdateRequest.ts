@@ -1,0 +1,1 @@
+export type SpecRawUpdateRequest = { content: string, expectedContentHash: string | null, };

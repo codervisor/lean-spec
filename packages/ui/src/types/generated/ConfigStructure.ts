@@ -1,0 +1,1 @@
+export type ConfigStructure = { pattern: string | null, prefix: string | null, dateFormat: string | null, sequenceDigits: number | null, defaultFile: string | null, };

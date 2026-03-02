@@ -1,0 +1,1 @@
+export type SpecPriority = "low" | "medium" | "high" | "critical";

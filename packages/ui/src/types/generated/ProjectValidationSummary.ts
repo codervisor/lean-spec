@@ -1,0 +1,1 @@
+export type ProjectValidationSummary = { isValid: boolean, error: string | null, specsDir: string | null, };

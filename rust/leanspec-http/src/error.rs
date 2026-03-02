@@ -3,7 +3,7 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
-use leanspec_core::CoreError;
+use leanspec_core::{CoreError, ErrorCode, StructuredError};
 use serde::Serialize;
 use serde_json::Value;
 use thiserror::Error;
@@ -67,53 +67,30 @@ pub struct StructuredApiError {
     pub details: Option<Value>,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum ErrorCode {
-    NotFound,
-    ProjectNotFound,
-    SpecNotFound,
-    NoProject,
-    InvalidRequest,
-    Unauthorized,
-    ValidationFailed,
-    DatabaseError,
-    ConfigError,
-    ToolNotFound,
-    ToolError,
-    InternalError,
-}
-
-impl ErrorCode {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::NotFound => "NOT_FOUND",
-            Self::ProjectNotFound => "PROJECT_NOT_FOUND",
-            Self::SpecNotFound => "SPEC_NOT_FOUND",
-            Self::NoProject => "NO_PROJECT",
-            Self::InvalidRequest => "INVALID_REQUEST",
-            Self::Unauthorized => "UNAUTHORIZED",
-            Self::ValidationFailed => "VALIDATION_FAILED",
-            Self::DatabaseError => "DATABASE_ERROR",
-            Self::ConfigError => "CONFIG_ERROR",
-            Self::ToolNotFound => "TOOL_NOT_FOUND",
-            Self::ToolError => "TOOL_ERROR",
-            Self::InternalError => "INTERNAL_ERROR",
+/// Map an `ErrorCode` to the appropriate HTTP status.
+///
+/// This is the single place where error codes are mapped to HTTP semantics.
+pub fn error_code_to_status(code: ErrorCode) -> StatusCode {
+    match code {
+        ErrorCode::NotFound | ErrorCode::ProjectNotFound | ErrorCode::SpecNotFound => {
+            StatusCode::NOT_FOUND
         }
-    }
-
-    pub fn http_status(self) -> StatusCode {
-        match self {
-            Self::NotFound | Self::ProjectNotFound | Self::SpecNotFound => StatusCode::NOT_FOUND,
-            Self::NoProject | Self::InvalidRequest | Self::ValidationFailed => {
-                StatusCode::BAD_REQUEST
-            }
-            Self::Unauthorized => StatusCode::UNAUTHORIZED,
-            Self::ToolNotFound => StatusCode::NOT_FOUND,
-            Self::ToolError => StatusCode::BAD_REQUEST,
-            Self::DatabaseError | Self::ConfigError | Self::InternalError => {
-                StatusCode::INTERNAL_SERVER_ERROR
-            }
+        ErrorCode::NoProject | ErrorCode::InvalidRequest | ErrorCode::ValidationFailed => {
+            StatusCode::BAD_REQUEST
         }
+        ErrorCode::CircularDependency | ErrorCode::TokenLimitExceeded => {
+            StatusCode::UNPROCESSABLE_ENTITY
+        }
+        ErrorCode::Unauthorized => StatusCode::UNAUTHORIZED,
+        ErrorCode::ToolNotFound => StatusCode::NOT_FOUND,
+        ErrorCode::ToolError => StatusCode::BAD_REQUEST,
+        ErrorCode::ModelNotAvailable => StatusCode::SERVICE_UNAVAILABLE,
+        ErrorCode::AiProviderError => StatusCode::BAD_GATEWAY,
+        ErrorCode::IoError
+        | ErrorCode::DatabaseError
+        | ErrorCode::ConfigError
+        | ErrorCode::SerializationError
+        | ErrorCode::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }
 
@@ -180,6 +157,16 @@ impl ApiError {
 
     pub fn internal_error(reason: &str) -> Self {
         Self::new("INTERNAL_ERROR", reason)
+    }
+}
+
+impl From<StructuredError> for ApiError {
+    fn from(err: StructuredError) -> Self {
+        let mut api_err = Self::new(err.code.as_str(), err.message);
+        if let Some(details) = err.details {
+            api_err = api_err.with_details(details);
+        }
+        api_err
     }
 }
 
@@ -263,18 +250,24 @@ pub fn to_api_error<E: std::fmt::Display>(code: &str, e: E) -> (StatusCode, Json
 
 fn map_error_code_to_status(code: &str) -> StatusCode {
     match code {
-        "NOT_FOUND" => ErrorCode::NotFound.http_status(),
-        "PROJECT_NOT_FOUND" => ErrorCode::ProjectNotFound.http_status(),
-        "SPEC_NOT_FOUND" => ErrorCode::SpecNotFound.http_status(),
-        "NO_PROJECT" => ErrorCode::NoProject.http_status(),
-        "INVALID_REQUEST" => ErrorCode::InvalidRequest.http_status(),
-        "UNAUTHORIZED" => ErrorCode::Unauthorized.http_status(),
-        "VALIDATION_FAILED" => ErrorCode::ValidationFailed.http_status(),
-        "DATABASE_ERROR" => ErrorCode::DatabaseError.http_status(),
-        "CONFIG_ERROR" => ErrorCode::ConfigError.http_status(),
-        "TOOL_NOT_FOUND" => ErrorCode::ToolNotFound.http_status(),
-        "TOOL_ERROR" => ErrorCode::ToolError.http_status(),
-        _ => ErrorCode::InternalError.http_status(),
+        "NOT_FOUND" => error_code_to_status(ErrorCode::NotFound),
+        "PROJECT_NOT_FOUND" => error_code_to_status(ErrorCode::ProjectNotFound),
+        "SPEC_NOT_FOUND" => error_code_to_status(ErrorCode::SpecNotFound),
+        "NO_PROJECT" => error_code_to_status(ErrorCode::NoProject),
+        "INVALID_REQUEST" => error_code_to_status(ErrorCode::InvalidRequest),
+        "UNAUTHORIZED" => error_code_to_status(ErrorCode::Unauthorized),
+        "VALIDATION_FAILED" => error_code_to_status(ErrorCode::ValidationFailed),
+        "DATABASE_ERROR" => error_code_to_status(ErrorCode::DatabaseError),
+        "CONFIG_ERROR" => error_code_to_status(ErrorCode::ConfigError),
+        "TOOL_NOT_FOUND" => error_code_to_status(ErrorCode::ToolNotFound),
+        "TOOL_ERROR" => error_code_to_status(ErrorCode::ToolError),
+        "CIRCULAR_DEPENDENCY" => error_code_to_status(ErrorCode::CircularDependency),
+        "TOKEN_LIMIT_EXCEEDED" => error_code_to_status(ErrorCode::TokenLimitExceeded),
+        "IO_ERROR" => error_code_to_status(ErrorCode::IoError),
+        "SERIALIZATION_ERROR" => error_code_to_status(ErrorCode::SerializationError),
+        "AI_PROVIDER_ERROR" => error_code_to_status(ErrorCode::AiProviderError),
+        "MODEL_NOT_AVAILABLE" => error_code_to_status(ErrorCode::ModelNotAvailable),
+        _ => error_code_to_status(ErrorCode::InternalError),
     }
 }
 

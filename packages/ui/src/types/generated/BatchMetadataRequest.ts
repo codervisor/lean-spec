@@ -1,0 +1,1 @@
+export type BatchMetadataRequest = { specNames: Array<string>, };

@@ -61,7 +61,7 @@ pub mod models_registry;
 pub use compute::{
     global_token_counter, Insights, SpecStats, TokenCount, TokenCounter, TokenStatus,
 };
-pub use error::{CoreError, CoreResult};
+pub use error::{CoreError, CoreResult, ErrorCode, StructuredError};
 pub use io::{
     hash_content, DiscoveredProject, DiscoveryError, ProjectDiscovery, TemplateError,
     TemplateLoader,

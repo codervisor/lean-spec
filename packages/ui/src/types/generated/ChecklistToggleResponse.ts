@@ -1,0 +1,1 @@
+export type ChecklistToggleResponse = { success: boolean, contentHash: string, toggled: Array<ChecklistToggledResult>, };

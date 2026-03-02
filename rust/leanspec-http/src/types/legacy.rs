@@ -14,7 +14,8 @@ use std::collections::HashMap;
 use ts_rs::TS;
 
 /// Lightweight spec for list views
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SpecSummary {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -155,7 +156,8 @@ impl SpecSummary {
 }
 
 /// Full spec detail for view
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SpecDetail {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -195,7 +197,8 @@ pub struct SpecDetail {
 }
 
 /// Raw spec content response
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SpecRawResponse {
     pub content: String,
@@ -204,7 +207,8 @@ pub struct SpecRawResponse {
 }
 
 /// Request to update raw spec content
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SpecRawUpdateRequest {
     pub content: String,
@@ -212,7 +216,8 @@ pub struct SpecRawUpdateRequest {
 }
 
 /// Request to toggle checklist items in a spec
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ChecklistToggleRequest {
     pub toggles: Vec<ChecklistToggleItem>,
@@ -222,7 +227,8 @@ pub struct ChecklistToggleRequest {
 }
 
 /// A single checklist toggle item
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ChecklistToggleItem {
     pub item_text: String,
@@ -230,7 +236,8 @@ pub struct ChecklistToggleItem {
 }
 
 /// Response from checklist toggle
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ChecklistToggleResponse {
     pub success: bool,
@@ -239,7 +246,8 @@ pub struct ChecklistToggleResponse {
 }
 
 /// Result of a single checklist toggle
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ChecklistToggledResult {
     pub item_text: String,
@@ -248,7 +256,8 @@ pub struct ChecklistToggledResult {
 }
 
 /// Create spec request
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct CreateSpecRequest {
     pub name: String,
@@ -333,7 +342,8 @@ impl SpecDetail {
 }
 
 /// Spec relationships container
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SpecRelationships {
     pub depends_on: Vec<String>,
@@ -342,7 +352,8 @@ pub struct SpecRelationships {
 }
 
 /// Sub-spec metadata for spec detail payloads
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SubSpec {
     pub name: String,
@@ -351,7 +362,8 @@ pub struct SubSpec {
 }
 
 /// Response for list specs endpoint
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ListSpecsResponse {
     pub specs: Vec<SpecSummary>,
@@ -366,16 +378,19 @@ pub struct ListSpecsResponse {
 }
 
 /// Hierarchical node for tree view - pre-computed server-side for performance
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct HierarchyNode {
     #[serde(flatten)]
+    #[ts(flatten)]
     pub spec: SpecSummary,
     pub child_nodes: Vec<HierarchyNode>,
 }
 
 /// Query parameters for list specs
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize, Default, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ListSpecsQuery {
     pub status: Option<String>,
@@ -391,7 +406,8 @@ pub struct ListSpecsQuery {
 }
 
 /// Response for search endpoint
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SearchResponse {
     pub results: Vec<SpecSummary>,
@@ -402,7 +418,8 @@ pub struct SearchResponse {
 }
 
 /// Request body for search
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SearchRequest {
     pub query: String,
@@ -413,7 +430,8 @@ pub struct SearchRequest {
 }
 
 /// Search filters
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize, Default, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SearchFilters {
     pub status: Option<String>,
@@ -422,7 +440,8 @@ pub struct SearchFilters {
 }
 
 /// Statistics response
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct StatsResponse {
     pub total_projects: usize,
@@ -434,14 +453,16 @@ pub struct StatsResponse {
     pub project_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct StatusCountItem {
     pub status: String,
     pub count: usize,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct PriorityCountItem {
     pub priority: String,
@@ -504,7 +525,8 @@ impl StatsResponse {
 }
 
 /// Dependency graph response
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct DependencyResponse {
     pub spec: SpecSummary,
@@ -513,7 +535,8 @@ pub struct DependencyResponse {
 }
 
 /// Project-level dependency graph
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct DependencyGraphResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -522,7 +545,8 @@ pub struct DependencyGraphResponse {
     pub edges: Vec<DependencyEdge>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct DependencyNode {
     pub id: String,
@@ -533,7 +557,8 @@ pub struct DependencyNode {
     pub tags: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct DependencyEdge {
     pub source: String,
@@ -543,7 +568,8 @@ pub struct DependencyEdge {
 }
 
 /// Validation result
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ValidationResponse {
     pub is_valid: bool,
@@ -551,7 +577,8 @@ pub struct ValidationResponse {
 }
 
 /// Spec token response
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SpecTokenResponse {
     pub token_count: usize,
@@ -560,7 +587,8 @@ pub struct SpecTokenResponse {
 }
 
 /// Section token count for h2 sections
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SectionTokenCount {
     pub heading: String,
@@ -568,7 +596,8 @@ pub struct SectionTokenCount {
 }
 
 /// Detailed content breakdown
-#[derive(Debug, Clone, Serialize, Default)]
+#[derive(Debug, Clone, Serialize, Default, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct DetailedBreakdown {
     /// Tokens in code blocks
@@ -582,7 +611,8 @@ pub struct DetailedBreakdown {
 }
 
 /// Token breakdown for a spec
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct TokenBreakdown {
     pub frontmatter: usize,
@@ -593,7 +623,8 @@ pub struct TokenBreakdown {
 }
 
 /// Spec validation response
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SpecValidationResponse {
     pub status: String,
@@ -601,7 +632,8 @@ pub struct SpecValidationResponse {
 }
 
 /// Spec validation error
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SpecValidationError {
     pub severity: String,
@@ -615,21 +647,24 @@ pub struct SpecValidationError {
 }
 
 /// Batch metadata request
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct BatchMetadataRequest {
     pub spec_names: Vec<String>,
 }
 
 /// Batch metadata response - tokens and validation for multiple specs
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct BatchMetadataResponse {
     pub specs: HashMap<String, SpecMetadata>,
 }
 
 /// Metadata for a single spec (tokens + validation)
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct SpecMetadata {
     pub token_count: usize,
@@ -638,7 +673,8 @@ pub struct SpecMetadata {
 }
 
 /// Project validation summary
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectValidationResponse {
     pub project_id: String,
@@ -646,7 +682,8 @@ pub struct ProjectValidationResponse {
     pub validation: ProjectValidationSummary,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectValidationSummary {
     pub is_valid: bool,
@@ -656,7 +693,8 @@ pub struct ProjectValidationSummary {
     pub specs_dir: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ValidationError {
     pub severity: String,
@@ -676,7 +714,8 @@ impl From<&leanspec_core::ValidationError> for ValidationError {
 }
 
 /// Metadata update request
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct MetadataUpdate {
     pub status: Option<String>,
@@ -695,7 +734,8 @@ pub struct MetadataUpdate {
 }
 
 /// Metadata update response
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateMetadataResponse {
     pub success: bool,
@@ -704,7 +744,8 @@ pub struct UpdateMetadataResponse {
 }
 
 /// Frontmatter response for API
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct FrontmatterResponse {
     pub status: String,
@@ -766,7 +807,8 @@ pub struct ContextFile {
 }
 
 /// LeanSpec configuration structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct LeanSpecConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -783,14 +825,16 @@ pub struct LeanSpecConfig {
     pub templates: Option<std::collections::HashMap<String, String>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct DraftStatusConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigStructure {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -805,7 +849,8 @@ pub struct ConfigStructure {
     pub default_file: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigFeatures {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -813,7 +858,8 @@ pub struct ConfigFeatures {
 }
 
 /// Project config container
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectConfigResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -823,7 +869,8 @@ pub struct ProjectConfigResponse {
 }
 
 /// Project context response
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectContextResponse {
     pub agent_instructions: Vec<ContextFile>,

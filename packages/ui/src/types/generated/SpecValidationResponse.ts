@@ -1,0 +1,1 @@
+export type SpecValidationResponse = { status: string, errors: Array<SpecValidationError>, };

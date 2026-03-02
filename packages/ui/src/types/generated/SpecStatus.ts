@@ -1,0 +1,1 @@
+export type SpecStatus = "draft" | "planned" | "in-progress" | "complete" | "archived";

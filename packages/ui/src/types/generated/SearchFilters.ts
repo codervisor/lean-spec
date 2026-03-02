@@ -1,0 +1,1 @@
+export type SearchFilters = { status: string | null, priority: string | null, tags: Array<string> | null, };

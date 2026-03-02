@@ -1,0 +1,1 @@
+export type PriorityCountItem = { priority: string, count: number, };
