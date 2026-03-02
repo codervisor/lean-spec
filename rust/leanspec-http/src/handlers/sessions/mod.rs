@@ -1,6 +1,5 @@
 mod runners;
-#[allow(clippy::module_inception)]
-mod sessions;
+mod session_handlers;
 
 pub use runners::*;
-pub use sessions::*;
+pub use session_handlers::*;
