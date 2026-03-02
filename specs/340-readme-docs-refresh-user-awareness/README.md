@@ -9,8 +9,10 @@ tags:
 - growth
 - docs-site
 - dx
+depends_on:
+- 347-automated-screenshot-video-capture
 created_at: 2026-03-02T02:26:30.274686385Z
-updated_at: 2026-03-02T02:26:30.274686385Z
+updated_at: 2026-03-02T02:41:47.556310697Z
 ---
 
 # README & Documentation Refresh for User Awareness
