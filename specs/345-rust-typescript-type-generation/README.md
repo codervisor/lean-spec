@@ -89,7 +89,7 @@ cargo test export_bindings  # dedicated test for type export
 ## Checklist
 
 - [x] Add `ts-rs` to `leanspec-http` and `leanspec-core` dependencies
-- [ ] Add `#[derive(TS)]` to all HTTP request/response structs
+- [x] Add `#[derive(TS)]` to all HTTP request/response structs
 - [ ] Add `#[derive(TS)]` to core spec/session types
 - [x] Create `export_bindings` test target
 - [x] Generate initial `types/generated/` directory
@@ -129,3 +129,8 @@ cargo test export_bindings
 - Checklist progress: **5/8 complete (62%)**.
 
 - Generated binding files now emit exported type aliases to avoid UI compile errors.
+- HTTP type coverage is now broad and exportable through `rust/leanspec-http/tests/export_bindings.rs` (48 generated files in `packages/ui/src/types/generated/`).
+- Core TS derives currently cover shared spec enums/types (`SpecStatus`, `SpecPriority`, `StatusTransition`); broader core session-type derivation remains open.
+- UI migration to consume generated bindings directly is still pending (no active imports from `src/types/generated` yet).
+
+- Checklist progress: **6/8 complete (75%)**.

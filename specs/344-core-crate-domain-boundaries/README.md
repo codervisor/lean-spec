@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-03-02
 priority: medium
 tags:
@@ -15,6 +15,8 @@ updated_at: 2026-03-02T03:02:29.433016985Z
 transitions:
 - status: in-progress
   at: 2026-03-02T03:02:29.433016985Z
+- status: complete
+  at: 2026-03-02T15:56:00Z
 ---
 # Phase 3: Reorganize leanspec-core Internals
 
@@ -119,13 +121,13 @@ leanspec-core/src/
 - [x] Create `io/` module with templates, discovery, hash
 - [x] Create `compute/` module with tokens, insights
 - [x] Update `lib.rs` re-exports to include both old and new paths
-- [ ] Update all internal references within `leanspec-core`
+- [x] Update all internal references within `leanspec-core`
 - [x] Update `leanspec-cli` imports
 - [x] Update `leanspec-http` imports
 - [x] Update `leanspec-mcp` imports
 - [x] `cargo build --workspace` — compiles
 - [x] `cargo test --workspace` — all pass
-- [ ] Remove deprecated `utils/` re-exports after dependents are updated
+- [x] Remove deprecated `utils/` re-exports after dependents are updated
 
 ## Test
 
@@ -143,15 +145,16 @@ cargo clippy --workspace -- -D warnings
 - New module trees exist: `spec_ops/`, `io/`, and `compute/`.
 - `leanspec-core/src/lib.rs` exports new modules while retaining `utils` compatibility.
 - Rust workspace build and tests pass (`cargo build --workspace`, `cargo test --workspace`).
-- Remaining migration items (imports/re-exports cleanup and `utils` deprecation removal) are still open.
-
-
-- Checklist progress: **5/11 complete (45%)**.
+- Completed migration cleanup:
+  - Removed `pub mod utils;` from `rust/leanspec-core/src/lib.rs`.
+  - Deleted deprecated compatibility module `rust/leanspec-core/src/utils/mod.rs`.
+  - Updated remaining repo usage in `rust/leanspec-sync-bridge/src/main.rs` to import `hash_content` from top-level re-exports.
 
 
 - Migrated active imports in CLI/HTTP/core call sites away from `utils` to `io/spec_ops/compute` where applicable.
 - `leanspec-mcp` has no direct `leanspec_core::utils` imports remaining.
-- Checklist progress: **9/11 complete (82%)**.
+- Workspace crates still compile after cleanup (`cargo build -p leanspec-core -p leanspec-http -p leanspec-mcp`).
+- Checklist progress: **11/11 complete (100%)**.
 
 ## Notes
 

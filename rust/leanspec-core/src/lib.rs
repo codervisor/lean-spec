@@ -36,7 +36,6 @@ pub mod relationships;
 pub mod search;
 pub mod spec_ops;
 pub mod types;
-pub mod utils;
 pub mod validators;
 
 #[cfg(any(feature = "sessions", feature = "storage"))]

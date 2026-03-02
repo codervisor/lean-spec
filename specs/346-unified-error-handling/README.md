@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-03-02
 priority: low
 tags:
@@ -14,6 +14,8 @@ updated_at: 2026-03-02T03:02:29.446486134Z
 transitions:
 - status: in-progress
   at: 2026-03-02T03:02:29.446486134Z
+- status: complete
+  at: 2026-03-02T15:56:00Z
 ---
 # Phase 5: Unified Error Handling
 
@@ -117,15 +119,15 @@ function handleApiError(error: ApiError): string {
 
 ## Checklist
 
-- [ ] Define `ErrorCode` enum in `leanspec-core`
-- [ ] Create `StructuredError` struct with code, message, details
-- [ ] Implement `From<CoreError>` → `StructuredError` mapping
-- [ ] Update `leanspec-http` error handler to use `StructuredError`
-- [ ] Ensure all HTTP responses use consistent error format
+- [x] Define `ErrorCode` enum in `leanspec-core`
+- [x] Create `StructuredError` struct with code, message, details
+- [x] Implement `From<CoreError>` → `StructuredError` mapping
+- [x] Update `leanspec-http` error handler to use `StructuredError`
+- [x] Ensure all HTTP responses use consistent error format
 - [x] Create TypeScript `ApiError` type matching Rust `StructuredError`
 - [x] Add centralized error handler in UI
 - [x] Add i18n error message keys (en + zh)
-- [ ] Update MCP error responses to include error codes
+- [x] Update MCP error responses to include error codes
 - [x] `cargo test` — all pass
 - [x] `pnpm test` — all pass
 
@@ -157,7 +159,12 @@ cargo test --workspace
 - Added centralized UI error mapper: `packages/ui/src/lib/api-error.ts`.
 - Added structured UI error type aligned with server contract in `packages/ui/src/lib/backend-adapter/core.ts` (`StructuredApiError` + `APIError.toStructured()`).
 - Added bilingual API error-code i18n entries in `packages/ui/src/locales/en/errors.json` and `packages/ui/src/locales/zh-CN/errors.json`.
-- Checklist progress: **5/11 complete (45%)**.
+- Core unification is now in place:
+  - `ErrorCode` + `StructuredError` defined in `rust/leanspec-core/src/error.rs`.
+  - Core-to-structured mapping implemented (`From<&CoreError>`).
+  - HTTP maps core codes to status in one place (`rust/leanspec-http/src/error.rs`) and supports `From<StructuredError>` for `ApiError`.
+  - MCP error responses include machine-readable codes in `data.errorCode` (`rust/leanspec-mcp/src/protocol.rs`).
+- Checklist progress: **11/11 complete (100%)**.
 
 ## Notes
 
