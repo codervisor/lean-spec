@@ -127,21 +127,42 @@ export class HttpBackendAdapter implements BackendAdapter {
     if (!response.ok) {
       const raw = await response.text();
       let message = raw || response.statusText;
+      let code: string | undefined;
+      let details: unknown;
 
       try {
         const parsed = JSON.parse(raw);
-        if (typeof parsed.message === 'string') {
-          message = parsed.message;
-        } else if (typeof parsed.error === 'string') {
-          message = parsed.error;
-        } else if (typeof parsed.detail === 'string') {
-          message = parsed.detail;
+        const structured =
+          parsed && typeof parsed === 'object' && parsed.error && typeof parsed.error === 'object'
+            ? parsed.error
+            : null;
+
+        if (structured && typeof structured.message === 'string') {
+          message = structured.message;
+          if (typeof structured.code === 'string') {
+            code = structured.code;
+          }
+          details = structured.details;
+        } else {
+          if (typeof parsed.message === 'string') {
+            message = parsed.message;
+          } else if (typeof parsed.error === 'string') {
+            message = parsed.error;
+          } else if (typeof parsed.detail === 'string') {
+            message = parsed.detail;
+          }
+          if (typeof parsed.code === 'string') {
+            code = parsed.code;
+          }
+          if (parsed && typeof parsed === 'object' && 'details' in parsed) {
+            details = parsed.details;
+          }
         }
       } catch {
         // Fall back to raw message
       }
 
-      throw new APIError(response.status, message || response.statusText);
+      throw new APIError(response.status, message || response.statusText, { code, details });
     }
 
     if (response.status === 204) {

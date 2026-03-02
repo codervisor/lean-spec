@@ -11,6 +11,7 @@ use leanspec_core::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use ts_rs::TS;
 
 /// Lightweight spec for list views
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -744,7 +745,8 @@ impl From<&leanspec_core::SpecFrontmatter> for FrontmatterResponse {
 }
 
 /// Health check response
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct HealthResponse {
     pub status: String,
@@ -752,7 +754,8 @@ pub struct HealthResponse {
 }
 
 /// Context file representation
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "camelCase")]
 pub struct ContextFile {
     pub name: String,

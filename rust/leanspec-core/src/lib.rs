@@ -28,10 +28,13 @@
 //! }
 //! ```
 
+pub mod compute;
 pub mod error;
+pub mod io;
 pub mod parsers;
 pub mod relationships;
 pub mod search;
+pub mod spec_ops;
 pub mod types;
 pub mod utils;
 pub mod validators;

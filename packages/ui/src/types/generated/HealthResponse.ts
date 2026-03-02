@@ -1,0 +1,1 @@
+type HealthResponse = { status: string, version: string, };

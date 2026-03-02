@@ -36,6 +36,7 @@ futures-util = "0.3"
 reqwest = {version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"]}
 serde.workspace = true
 serde_json.workspace = true
+ts-rs = {version = "10.1", features = ["chrono-impl"]}
 sha2 = "0.10"
 
 # Date/time

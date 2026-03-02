@@ -1,0 +1,691 @@
+use clap::{ArgAction, Parser, Subcommand};
+
+#[derive(Parser)]
+#[command(name = "lean-spec")]
+#[command(
+    author,
+    version,
+    about = "Lightweight spec methodology for AI-powered development"
+)]
+#[command(propagate_version = true)]
+pub(crate) struct Cli {
+    #[command(subcommand)]
+    pub(crate) command: Commands,
+
+    /// Specs directory path (default: ./specs)
+    #[arg(short = 'd', long, global = true)]
+    pub(crate) specs_dir: Option<String>,
+
+    /// Output format: text, json
+    #[arg(short = 'o', long, global = true, default_value = "text")]
+    pub(crate) output: String,
+
+    /// Suppress non-essential output
+    #[arg(short, long, global = true)]
+    pub(crate) quiet: bool,
+}
+
+#[derive(Subcommand)]
+pub(crate) enum Commands {
+    /// Dispatch specs to AI coding agents
+    Agent {
+        /// Action: run, list, status, config
+        #[arg(default_value = "help")]
+        action: String,
+
+        /// Specs to dispatch (for run action)
+        specs: Option<Vec<String>>,
+
+        /// Agent type (claude, copilot, aider, gemini, cursor, continue)
+        #[arg(long, default_value = "claude")]
+        agent: Option<String>,
+
+        /// Create worktrees for parallel implementation
+        #[arg(long)]
+        parallel: bool,
+
+        /// Do not update spec status to in-progress
+        #[arg(long)]
+        no_status_update: bool,
+
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Analyze spec complexity and structure
+    Analyze {
+        /// Spec path or number
+        spec: String,
+    },
+
+    /// Archive spec(s) by setting status to archived
+    Archive {
+        /// Spec paths or numbers (supports batch operations)
+        #[arg(required = true)]
+        specs: Vec<String>,
+
+        /// Preview changes without applying
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Backfill timestamps from git history
+    Backfill {
+        /// Specific specs to backfill
+        specs: Option<Vec<String>>,
+
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
+
+        /// Overwrite existing values
+        #[arg(long)]
+        force: bool,
+
+        /// Include assignee from git author
+        #[arg(long)]
+        assignee: bool,
+
+        /// Include status transitions
+        #[arg(long)]
+        transitions: bool,
+
+        /// Include all optional fields
+        #[arg(long)]
+        all: bool,
+
+        /// Create frontmatter for files without it
+        #[arg(long)]
+        bootstrap: bool,
+    },
+
+    /// Show project board view
+    Board {
+        /// Group by: status, priority, assignee, tag, parent
+        #[arg(short, long, default_value = "status")]
+        group_by: String,
+    },
+
+    /// Check for sequence conflicts
+    Check {
+        /// Attempt to fix conflicts
+        #[arg(long)]
+        fix: bool,
+    },
+
+    /// List child specs for a parent
+    Children {
+        /// Spec path or number
+        spec: String,
+    },
+
+    /// Remove specified line ranges from spec
+    Compact {
+        /// Spec to compact
+        spec: String,
+
+        /// Line range to remove (e.g., 145-153)
+        #[arg(long = "remove")]
+        removes: Vec<String>,
+
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Create a new spec
+    Create {
+        /// Spec name (e.g., "my-feature")
+        name: String,
+
+        /// Spec title
+        #[arg(short, long)]
+        title: Option<String>,
+
+        /// Template to use
+        #[arg(short = 'T', long)]
+        template: Option<String>,
+
+        /// Initial status
+        #[arg(short, long)]
+        status: Option<String>,
+
+        /// Priority level
+        #[arg(short, long, default_value = "medium")]
+        priority: String,
+
+        /// Tags (comma-separated)
+        #[arg(long)]
+        tags: Option<String>,
+
+        /// Parent umbrella spec path or number
+        #[arg(long)]
+        parent: Option<String>,
+
+        /// Spec(s) this new spec depends on
+        #[arg(long = "depends-on", num_args = 1..)]
+        depends_on: Vec<String>,
+    },
+
+    /// List example projects
+    Examples,
+
+    /// Manage spec relationships (hierarchy and dependencies)
+    ///
+    /// Use parent/child for hierarchy and depends-on for blockers.
+    /// Never use both for the same spec pair.
+    ///
+    /// Examples:
+    ///   lean-spec rel add 257 --parent 250
+    ///   lean-spec rel add 257 --depends-on 254
+    ///   lean-spec rel rm 257 --depends-on 254
+    Rel {
+        /// Arguments: <spec> or <action> <spec>
+        #[arg(required = true, num_args = 1..=2)]
+        args: Vec<String>,
+
+        /// Set or clear parent relationship
+        #[arg(long, num_args = 0..=1, default_missing_value = "")]
+        parent: Option<String>,
+
+        /// Add or remove child relationships
+        #[arg(long = "child", num_args = 1..)]
+        child: Vec<String>,
+
+        /// Add or remove dependency relationships
+        #[arg(long = "depends-on", num_args = 1..)]
+        depends_on: Vec<String>,
+    },
+
+    /// List files in a spec directory
+    Files {
+        /// Spec path or number
+        spec: String,
+
+        /// Show file sizes
+        #[arg(short, long)]
+        size: bool,
+    },
+
+    /// Show timeline with dependencies
+    Gantt {
+        /// Filter by status
+        #[arg(short, long)]
+        status: Option<String>,
+    },
+
+    /// Initialize LeanSpec in current directory
+    Init {
+        /// Skip prompts and use defaults
+        #[arg(short, long)]
+        yes: bool,
+
+        /// Initialize an example project
+        #[arg(long)]
+        example: Option<String>,
+
+        /// Skip AI tool configuration (symlinks)
+        #[arg(long)]
+        no_ai_tools: bool,
+
+        /// Skip MCP server configuration
+        #[arg(long)]
+        no_mcp: bool,
+
+        /// Install LeanSpec agent skills (project-level default)
+        #[arg(long)]
+        skill: bool,
+
+        /// Install skills to .github/skills/
+        #[arg(long)]
+        skill_github: bool,
+
+        /// Install skills to .claude/skills/
+        #[arg(long)]
+        skill_claude: bool,
+
+        /// Install skills to .cursor/skills/
+        #[arg(long)]
+        skill_cursor: bool,
+
+        /// Install skills to .codex/skills/
+        #[arg(long)]
+        skill_codex: bool,
+
+        /// Install skills to .gemini/skills/
+        #[arg(long)]
+        skill_gemini: bool,
+
+        /// Install skills to .vscode/skills/
+        #[arg(long)]
+        skill_vscode: bool,
+
+        /// Install skills to user-level directories (e.g., ~/.copilot/skills)
+        #[arg(long)]
+        skill_user: bool,
+
+        /// Skip skill installation entirely
+        #[arg(long)]
+        no_skill: bool,
+    },
+
+    /// Manage agent skills via skills.sh
+    Skill {
+        /// Action: install, update, list
+        #[arg(default_value = "help")]
+        action: String,
+    },
+
+    /// List all specs with optional filtering
+    List {
+        /// Filter by status: draft, planned, in-progress, complete, archived
+        #[arg(short, long)]
+        status: Option<String>,
+
+        /// Filter by tag
+        #[arg(short, long)]
+        tag: Option<Vec<String>>,
+
+        /// Filter by priority: low, medium, high, critical
+        #[arg(short, long)]
+        priority: Option<String>,
+
+        /// Filter by assignee
+        #[arg(short, long)]
+        assignee: Option<String>,
+
+        /// Show compact output
+        #[arg(short, long)]
+        compact: bool,
+
+        /// Show parent-child hierarchy tree
+        #[arg(long)]
+        hierarchy: bool,
+    },
+
+    /// Show spec dependency graph
+    Deps {
+        /// Spec path or number
+        spec: String,
+
+        /// Maximum depth to traverse
+        #[arg(short = 'D', long, default_value = "3")]
+        depth: usize,
+
+        /// Show upstream dependencies only
+        #[arg(long)]
+        upstream: bool,
+
+        /// Show downstream dependents only
+        #[arg(long)]
+        downstream: bool,
+    },
+
+    /// Start MCP server for AI assistants
+    Mcp,
+
+    /// Migrate specs from other SDD tools
+    Migrate {
+        /// Path to directory containing specs to migrate
+        input_path: String,
+
+        /// Automatic migration
+        #[arg(long)]
+        auto: bool,
+
+        /// AI-assisted migration (copilot, claude, gemini)
+        #[arg(long = "with")]
+        ai_provider: Option<String>,
+
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
+
+        /// Process N docs at a time
+        #[arg(long)]
+        batch_size: Option<usize>,
+
+        /// Don't validate after migration
+        #[arg(long)]
+        skip_validation: bool,
+
+        /// Auto-run backfill after migration
+        #[arg(long)]
+        backfill: bool,
+    },
+
+    /// Migrate specs from archived/ folder to status-based archiving
+    MigrateArchived {
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Open spec in editor
+    Open {
+        /// Spec path or number
+        spec: String,
+
+        /// Editor to use (default: $EDITOR or platform default)
+        #[arg(short, long)]
+        editor: Option<String>,
+    },
+
+    /// Search specs
+    Search {
+        /// Search query (supports AND/OR/NOT, field filters, phrases, fuzzy)
+        /// Examples: "api AND security", "tag:rust status:planned", "\"user authentication\"", "auth~2"
+        query: String,
+
+        /// Maximum results
+        #[arg(short, long, default_value = "10")]
+        limit: usize,
+    },
+
+    /// Split spec into multiple files
+    Split {
+        /// Spec to split
+        spec: String,
+
+        /// Output file with line range (e.g., README.md:1-150)
+        #[arg(long = "output")]
+        outputs: Vec<String>,
+
+        /// Update cross-references in README
+        #[arg(long)]
+        update_refs: bool,
+
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Show spec statistics
+    Stats {
+        /// Show detailed statistics
+        #[arg(long)]
+        detailed: bool,
+    },
+
+    /// Manage spec templates
+    Templates {
+        /// Action: list, show, add, remove
+        #[arg(short, long)]
+        action: Option<String>,
+
+        /// Template name (for show, add, remove)
+        name: Option<String>,
+    },
+
+    /// Show creation/completion timeline
+    Timeline {
+        /// Number of months to show
+        #[arg(short, long, default_value = "6")]
+        months: usize,
+    },
+
+    /// Count tokens in a spec or any file
+    Tokens {
+        /// Spec or file path to count (omit to count all specs)
+        path: Option<String>,
+
+        /// Show detailed breakdown
+        #[arg(short, long)]
+        verbose: bool,
+    },
+
+    /// Start local web UI for spec management
+    Ui {
+        /// Port to run on
+        #[arg(short, long, default_value = "3000")]
+        port: String,
+
+        /// Don't open browser automatically
+        #[arg(long)]
+        no_open: bool,
+
+        /// Enable multi-project mode
+        #[arg(long)]
+        multi_project: bool,
+
+        /// Run in development mode (LeanSpec monorepo only)
+        #[arg(long)]
+        dev: bool,
+
+        /// Preview without running
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Update a spec's frontmatter
+    Update {
+        /// Spec path(s) or number(s)
+        #[arg(required = true, num_args = 1..)]
+        specs: Vec<String>,
+
+        /// New status
+        #[arg(short, long)]
+        status: Option<String>,
+
+        /// New priority
+        #[arg(short, long)]
+        priority: Option<String>,
+
+        /// New assignee
+        #[arg(short, long)]
+        assignee: Option<String>,
+
+        /// Add tags
+        #[arg(long)]
+        add_tags: Option<String>,
+
+        /// Remove tags
+        #[arg(long)]
+        remove_tags: Option<String>,
+
+        /// Replace text (repeatable: --replace "old" "new")
+        #[arg(long = "replace", num_args = 2, value_names = ["OLD", "NEW"], action = ArgAction::Append)]
+        replacements: Vec<String>,
+
+        /// Replace all matches (applies to all --replace entries)
+        #[arg(long, conflicts_with = "match_first")]
+        match_all: bool,
+
+        /// Replace first match only (applies to all --replace entries)
+        #[arg(long, conflicts_with = "match_all")]
+        match_first: bool,
+
+        /// Check checklist item (repeatable)
+        #[arg(long, action = ArgAction::Append)]
+        check: Vec<String>,
+
+        /// Uncheck checklist item (repeatable)
+        #[arg(long, action = ArgAction::Append)]
+        uncheck: Vec<String>,
+
+        /// Section heading to update
+        #[arg(long)]
+        section: Option<String>,
+
+        /// Replace content for section
+        #[arg(long, conflicts_with_all = ["append", "prepend"])]
+        section_content: Option<String>,
+
+        /// Append content to section
+        #[arg(long, conflicts_with = "section_content")]
+        append: Option<String>,
+
+        /// Prepend content to section
+        #[arg(long, conflicts_with = "section_content")]
+        prepend: Option<String>,
+
+        /// Replace full body content (frontmatter preserved)
+        #[arg(long)]
+        content: Option<String>,
+
+        /// Skip completion verification or stage skipping guard (draft -> in-progress/complete)
+        #[arg(short, long)]
+        force: bool,
+    },
+
+    /// Validate specs for issues
+    Validate {
+        /// Specific spec to validate (validates all if not provided)
+        spec: Option<String>,
+
+        /// Check dependency alignment
+        #[arg(long)]
+        check_deps: bool,
+
+        /// Treat warnings as errors
+        #[arg(long)]
+        strict: bool,
+
+        /// Only show warnings (exit 0)
+        #[arg(long)]
+        warnings_only: bool,
+    },
+
+    /// View a spec's details
+    View {
+        /// Spec path or number
+        spec: String,
+
+        /// Show raw markdown
+        #[arg(long)]
+        raw: bool,
+    },
+
+    /// Manage AI coding sessions
+    Session {
+        #[command(subcommand)]
+        action: SessionSubcommand,
+    },
+
+    /// Manage AI runner configurations
+    Runner {
+        #[command(subcommand)]
+        action: RunnerSubcommand,
+    },
+}
+
+#[derive(Subcommand)]
+pub(crate) enum SessionSubcommand {
+    Create {
+        #[arg(long)]
+        project_path: String,
+
+        /// Spec IDs to attach as context (repeatable: --spec 028 --spec 320)
+        #[arg(long, action = clap::ArgAction::Append)]
+        spec: Vec<String>,
+
+        /// Optional custom prompt/instructions for the session
+        #[arg(long)]
+        prompt: Option<String>,
+
+        #[arg(long)]
+        runner: Option<String>,
+
+        #[arg(long, default_value = "autonomous")]
+        mode: String,
+    },
+    Run {
+        #[arg(long)]
+        project_path: String,
+
+        /// Spec IDs to attach as context (repeatable: --spec 028 --spec 320)
+        #[arg(long, action = clap::ArgAction::Append)]
+        spec: Vec<String>,
+
+        /// Optional custom prompt/instructions for the session
+        #[arg(long)]
+        prompt: Option<String>,
+
+        #[arg(long)]
+        runner: Option<String>,
+
+        #[arg(long, default_value = "autonomous")]
+        mode: String,
+    },
+    Start {
+        session_id: String,
+    },
+    Pause {
+        session_id: String,
+    },
+    Resume {
+        session_id: String,
+    },
+    Stop {
+        session_id: String,
+    },
+    Archive {
+        session_id: String,
+
+        #[arg(long)]
+        output_dir: Option<String>,
+
+        #[arg(long, default_value_t = false)]
+        compress: bool,
+    },
+    RotateLogs {
+        session_id: String,
+
+        #[arg(long, default_value_t = 10_000)]
+        keep: usize,
+    },
+    Delete {
+        session_id: String,
+    },
+    View {
+        session_id: String,
+    },
+    List {
+        #[arg(long)]
+        spec: Option<String>,
+        #[arg(long)]
+        status: Option<String>,
+        #[arg(long)]
+        runner: Option<String>,
+    },
+    Logs {
+        session_id: String,
+    },
+}
+
+#[derive(Subcommand)]
+pub(crate) enum RunnerSubcommand {
+    /// List configured runners
+    List {
+        /// Optional project path (defaults to current directory)
+        #[arg(long)]
+        project_path: Option<String>,
+    },
+    /// Show a runner configuration
+    Show {
+        runner_id: String,
+
+        /// Optional project path (defaults to current directory)
+        #[arg(long)]
+        project_path: Option<String>,
+    },
+    /// Validate runners by checking command availability
+    Validate {
+        runner_id: Option<String>,
+
+        /// Optional project path (defaults to current directory)
+        #[arg(long)]
+        project_path: Option<String>,
+    },
+    /// Open runners config file
+    Config {
+        /// Use global config instead of project config
+        #[arg(long)]
+        global: bool,
+
+        /// Optional project path (defaults to current directory)
+        #[arg(long)]
+        project_path: Option<String>,
+    },
+}

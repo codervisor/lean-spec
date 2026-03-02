@@ -5,6 +5,7 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use leanspec_core::CoreError;
 use serde::Serialize;
+use serde_json::Value;
 use thiserror::Error;
 
 /// Server-level errors
@@ -59,24 +60,92 @@ impl From<CoreError> for ServerError {
 /// API response error type
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ApiError {
-    pub error: String,
+pub struct StructuredApiError {
     pub code: String,
+    pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub details: Option<String>,
+    pub details: Option<Value>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ErrorCode {
+    NotFound,
+    ProjectNotFound,
+    SpecNotFound,
+    NoProject,
+    InvalidRequest,
+    Unauthorized,
+    ValidationFailed,
+    DatabaseError,
+    ConfigError,
+    ToolNotFound,
+    ToolError,
+    InternalError,
+}
+
+impl ErrorCode {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::NotFound => "NOT_FOUND",
+            Self::ProjectNotFound => "PROJECT_NOT_FOUND",
+            Self::SpecNotFound => "SPEC_NOT_FOUND",
+            Self::NoProject => "NO_PROJECT",
+            Self::InvalidRequest => "INVALID_REQUEST",
+            Self::Unauthorized => "UNAUTHORIZED",
+            Self::ValidationFailed => "VALIDATION_FAILED",
+            Self::DatabaseError => "DATABASE_ERROR",
+            Self::ConfigError => "CONFIG_ERROR",
+            Self::ToolNotFound => "TOOL_NOT_FOUND",
+            Self::ToolError => "TOOL_ERROR",
+            Self::InternalError => "INTERNAL_ERROR",
+        }
+    }
+
+    pub fn http_status(self) -> StatusCode {
+        match self {
+            Self::NotFound | Self::ProjectNotFound | Self::SpecNotFound => StatusCode::NOT_FOUND,
+            Self::NoProject | Self::InvalidRequest | Self::ValidationFailed => {
+                StatusCode::BAD_REQUEST
+            }
+            Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            Self::ToolNotFound => StatusCode::NOT_FOUND,
+            Self::ToolError => StatusCode::BAD_REQUEST,
+            Self::DatabaseError | Self::ConfigError | Self::InternalError => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiError {
+    pub error: StructuredApiError,
+    pub code: String,
+    pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub details: Option<Value>,
 }
 
 impl ApiError {
     pub fn new(code: &str, error: impl Into<String>) -> Self {
+        let message = error.into();
         Self {
-            error: error.into(),
+            error: StructuredApiError {
+                code: code.to_string(),
+                message: message.clone(),
+                details: None,
+            },
             code: code.to_string(),
+            message,
             details: None,
         }
     }
 
-    pub fn with_details(mut self, details: impl Into<String>) -> Self {
-        self.details = Some(details.into());
+    pub fn with_details(mut self, details: impl Into<Value>) -> Self {
+        let value = details.into();
+        self.details = Some(value.clone());
+        self.error.details = Some(value);
         self
     }
 
@@ -119,19 +188,14 @@ pub type ApiResult<T> = Result<T, (StatusCode, Json<ApiError>)>;
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        let status = match self.code.as_str() {
-            "NOT_FOUND" | "PROJECT_NOT_FOUND" | "SPEC_NOT_FOUND" => StatusCode::NOT_FOUND,
-            "NO_PROJECT" | "INVALID_REQUEST" => StatusCode::BAD_REQUEST,
-            "UNAUTHORIZED" => StatusCode::UNAUTHORIZED,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
-        };
+        let status = map_error_code_to_status(&self.code);
 
         // Log the error with appropriate level based on status code
         match status {
             StatusCode::INTERNAL_SERVER_ERROR => {
                 tracing::error!(
                     code = %self.code,
-                    error = %self.error,
+                    error = %self.message,
                     details = ?self.details,
                     status = %status.as_u16(),
                     "API error response"
@@ -140,7 +204,7 @@ impl IntoResponse for ApiError {
             StatusCode::NOT_FOUND | StatusCode::BAD_REQUEST => {
                 tracing::debug!(
                     code = %self.code,
-                    error = %self.error,
+                    error = %self.message,
                     details = ?self.details,
                     status = %status.as_u16(),
                     "API error response"
@@ -149,7 +213,7 @@ impl IntoResponse for ApiError {
             _ => {
                 tracing::warn!(
                     code = %self.code,
-                    error = %self.error,
+                    error = %self.message,
                     details = ?self.details,
                     status = %status.as_u16(),
                     "API error response"
@@ -164,11 +228,7 @@ impl IntoResponse for ApiError {
 /// Helper to convert various errors to API errors with logging
 pub fn to_api_error<E: std::fmt::Display>(code: &str, e: E) -> (StatusCode, Json<ApiError>) {
     let api_error = ApiError::new(code, e.to_string());
-    let status = match code {
-        "NOT_FOUND" | "PROJECT_NOT_FOUND" | "SPEC_NOT_FOUND" => StatusCode::NOT_FOUND,
-        "NO_PROJECT" | "INVALID_REQUEST" => StatusCode::BAD_REQUEST,
-        _ => StatusCode::INTERNAL_SERVER_ERROR,
-    };
+    let status = map_error_code_to_status(code);
 
     // Log the error with context
     match status {
@@ -199,6 +259,23 @@ pub fn to_api_error<E: std::fmt::Display>(code: &str, e: E) -> (StatusCode, Json
     }
 
     (status, Json(api_error))
+}
+
+fn map_error_code_to_status(code: &str) -> StatusCode {
+    match code {
+        "NOT_FOUND" => ErrorCode::NotFound.http_status(),
+        "PROJECT_NOT_FOUND" => ErrorCode::ProjectNotFound.http_status(),
+        "SPEC_NOT_FOUND" => ErrorCode::SpecNotFound.http_status(),
+        "NO_PROJECT" => ErrorCode::NoProject.http_status(),
+        "INVALID_REQUEST" => ErrorCode::InvalidRequest.http_status(),
+        "UNAUTHORIZED" => ErrorCode::Unauthorized.http_status(),
+        "VALIDATION_FAILED" => ErrorCode::ValidationFailed.http_status(),
+        "DATABASE_ERROR" => ErrorCode::DatabaseError.http_status(),
+        "CONFIG_ERROR" => ErrorCode::ConfigError.http_status(),
+        "TOOL_NOT_FOUND" => ErrorCode::ToolNotFound.http_status(),
+        "TOOL_ERROR" => ErrorCode::ToolError.http_status(),
+        _ => ErrorCode::InternalError.http_status(),
+    }
 }
 
 /// Helper to create internal error with immediate logging and backtrace capture
