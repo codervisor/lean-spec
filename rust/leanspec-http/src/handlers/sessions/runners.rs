@@ -502,8 +502,6 @@ pub async fn set_default_runner(
     Ok(Json(response))
 }
 
-/// WebSocket endpoint for real-time log streaming
-
 fn resolve_scope_path(project_path: &str, scope: RunnerScope) -> PathBuf {
     match scope {
         RunnerScope::Project => project_runners_path(PathBuf::from(project_path).as_path()),
