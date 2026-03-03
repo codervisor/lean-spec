@@ -254,10 +254,10 @@ Toast when session completes, fails, or needs HITL attention.
 - [x] Phase 1: Pre-filter hub from spec detail "Sessions" button
 - [x] Phase 2: Replace floating button with top navigation sessions popover
 - [x] Phase 2: Implement expanded sessions popover with active sessions + logs
-- [ ] Add session status indicators to specs nav sidebar
+- [x] Add session status indicators to specs nav sidebar
 - [x] Upgrade session creation to prompt-first with multi-spec support
-- [ ] Add keyboard shortcuts
-- [ ] Add session notifications
+- [x] Add keyboard shortcuts
+- [x] Add session notifications
 - [x] Update translations (en + zh-CN)
 
 ## Test
@@ -287,12 +287,12 @@ Completed and verified:
 - Spec-context prefilter flow exists via spec detail Sessions button -> sessions popover with spec filter -> "View all" opens hub with `?spec=` prefilter.
 - Phase 2 pivot implemented as top navigation sessions popover (replacing bottom bar direction).
 - Session creation upgraded to prompt-first flow with optional multi-spec attachments (`selectedSpecIds`) and auto-start.
+- Session status indicators added to specs nav sidebar.
+- Session keyboard shortcuts implemented (`Cmd+Shift+S` for new session, `Cmd+Shift+L` for sessions popover).
+- Session lifecycle notifications implemented for completed/failed/paused transitions.
 - i18n updates present for implemented sessions UX labels in both `en` and `zh-CN` locales.
 
 Still pending:
-- Session status indicators in specs nav sidebar.
-- Session-specific keyboard shortcuts (`Cmd+Shift+S`, `Cmd+Shift+L`).
-- Session lifecycle notifications (complete/fail/HITL).
 - End-to-end/manual validation checklist remains open.
 
 Pivot note:

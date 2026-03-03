@@ -34,6 +34,7 @@ import type { Spec } from '../types/api';
 import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useSpecsList } from '../hooks/useSpecsQuery';
+import { useSessions } from '../hooks/useSessionsQuery';
 import { useSpecsPreferencesStore, useSpecsSidebarStore } from '../stores/specs-preferences';
 import { storage, STORAGE_KEYS } from '../lib/storage';
 
@@ -52,10 +53,46 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const { currentProject } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const specsQuery = useSpecsList(resolvedProjectId ?? null);
+  const sessionsQuery = useSessions(resolvedProjectId ?? null);
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
 
   const specs = useMemo(() => (specsQuery.data as Spec[]) ?? [], [specsQuery.data]);
+  const sessions = useMemo(() => sessionsQuery.data ?? [], [sessionsQuery.data]);
   const loading = !currentProject || specsQuery.isLoading;
+
+  const sessionStatusBySpec = useMemo(() => {
+    const map = new Map<string, 'running' | 'attention' | 'completed'>();
+    const completedWindowMs = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    for (const session of sessions) {
+      for (const specId of session.specIds ?? []) {
+        const current = map.get(specId);
+        if (current === 'running') continue;
+
+        if (session.status === 'running') {
+          map.set(specId, 'running');
+          continue;
+        }
+
+        if (!current && (session.status === 'pending' || session.status === 'paused')) {
+          map.set(specId, 'attention');
+          continue;
+        }
+
+        const endedAtMs = session.endedAt ? new Date(session.endedAt).getTime() : NaN;
+        const startedAtMs = session.startedAt ? new Date(session.startedAt).getTime() : NaN;
+        const recentTs = Number.isFinite(endedAtMs) ? endedAtMs : startedAtMs;
+        const isRecent = Number.isFinite(recentTs) && now - recentTs < completedWindowMs;
+
+        if (!current && session.status === 'completed' && isRecent) {
+          map.set(specId, 'completed');
+        }
+      }
+    }
+
+    return map;
+  }, [sessions]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [tagSearchQuery, setTagSearchQuery] = useState('');
@@ -146,10 +183,10 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
       switch (sortBy) {
         case 'id-asc': return (a.specNumber || 0) - (b.specNumber || 0);
         case 'updated-desc': { if (!a.updatedAt) return 1; if (!b.updatedAt) return -1; const d = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(); return d || (b.specNumber || 0) - (a.specNumber || 0); }
-        case 'title-asc': { const c = (a.title||a.specName||'').toLowerCase().localeCompare((b.title||b.specName||'').toLowerCase()); return c || (b.specNumber||0) - (a.specNumber||0); }
-        case 'title-desc': { const c = (b.title||b.specName||'').toLowerCase().localeCompare((a.title||a.specName||'').toLowerCase()); return c || (b.specNumber||0) - (a.specNumber||0); }
-        case 'priority-desc': { return (priorityOrder[b.priority||'']||0) - (priorityOrder[a.priority||'']||0) || (b.specNumber||0) - (a.specNumber||0); }
-        case 'priority-asc': { return (priorityOrder[a.priority||'']||0) - (priorityOrder[b.priority||'']||0) || (b.specNumber||0) - (a.specNumber||0); }
+        case 'title-asc': { const c = (a.title || a.specName || '').toLowerCase().localeCompare((b.title || b.specName || '').toLowerCase()); return c || (b.specNumber || 0) - (a.specNumber || 0); }
+        case 'title-desc': { const c = (b.title || b.specName || '').toLowerCase().localeCompare((a.title || a.specName || '').toLowerCase()); return c || (b.specNumber || 0) - (a.specNumber || 0); }
+        case 'priority-desc': { return (priorityOrder[b.priority || ''] || 0) - (priorityOrder[a.priority || ''] || 0) || (b.specNumber || 0) - (a.specNumber || 0); }
+        case 'priority-asc': { return (priorityOrder[a.priority || ''] || 0) - (priorityOrder[b.priority || ''] || 0) || (b.specNumber || 0) - (a.specNumber || 0); }
         default: return (b.specNumber || 0) - (a.specNumber || 0);
       }
     });
@@ -319,6 +356,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
               onMobileClose={() => onMobileOpenChange?.(false)}
               t={t}
               language={i18n.language}
+              sessionStatusBySpec={sessionStatusBySpec}
             />
           </div>
         </aside>

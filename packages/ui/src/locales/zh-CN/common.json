@@ -13,6 +13,11 @@
     "manageMachines": "管理设备",
     "collapse": "收起",
     "closeMenu": "关闭菜单",
+    "indicators": {
+      "running": "会话运行中",
+      "attention": "会话需要关注",
+      "completedRecent": "会话最近已完成"
+    },
     "dashboard": "仪表板",
     "allSpecifications": "所有规范",
     "sessions": "会话",
@@ -849,6 +854,8 @@
       "quickSearch": "打开快速搜索",
       "toggleChat": "切换 AI 聊天",
       "toggleChatSidebar": "切换 AI 聊天侧边栏",
+      "toggleSessionsPopover": "切换会话弹出层",
+      "newSession": "新建会话",
       "focusChatInput": "聚焦聊天输入框",
       "newConversation": "新建对话",
       "viewHistory": "查看历史记录",

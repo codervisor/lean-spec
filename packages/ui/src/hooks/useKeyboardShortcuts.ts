@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useChat } from '../contexts';
 import { useCurrentProject } from './useProjectQuery';
+import { useSessionsUiStore } from '../stores/sessions-ui';
 
 export interface KeyboardShortcut {
   key: string;
@@ -57,9 +58,10 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
 export function useGlobalShortcuts() {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
-  const { projectId } = useParams<{ projectId: string }>();
+  const { projectId, specName } = useParams<{ projectId: string; specName?: string }>();
   const { currentProject } = useCurrentProject();
   const { toggleChat, createConversation, toggleHistory, isOpen, openChat, closeChat } = useChat();
+  const { toggleDrawer, openCreateDialog } = useSessionsUiStore();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : null;
 
@@ -104,10 +106,19 @@ export function useGlobalShortcuts() {
       key: 'l',
       ctrl: true,
       shift: true,
-      description: t('keyboardShortcuts.items.toggleChatSidebar'),
+      description: t('keyboardShortcuts.items.toggleSessionsPopover'),
       action: useCallback(() => {
-        toggleChat();
-      }, [toggleChat]),
+        toggleDrawer();
+      }, [toggleDrawer]),
+    },
+    {
+      key: 's',
+      ctrl: true,
+      shift: true,
+      description: t('keyboardShortcuts.items.newSession'),
+      action: useCallback(() => {
+        openCreateDialog(specName);
+      }, [openCreateDialog, specName]),
     },
     {
       key: 'i',

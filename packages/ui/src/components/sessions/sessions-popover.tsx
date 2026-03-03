@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Pause, Play, Square, TerminalSquare, Plus, X, Filter } from 'lucide-react';
@@ -21,11 +21,19 @@ export function SessionsPopover() {
   const { currentProject } = useCurrentProject();
   const { data: sessions = [] } = useSessions(currentProject?.id ?? null);
   const { startSession, pauseSession, resumeSession, stopSession } = useSessionMutations(currentProject?.id ?? null);
-  const { isDrawerOpen, specFilter, openDrawer, closeDrawer, setSpecFilter } = useSessionsUiStore();
+  const {
+    isDrawerOpen,
+    specFilter,
+    createDialogNonce,
+    openDrawer,
+    closeDrawer,
+    setSpecFilter,
+  } = useSessionsUiStore();
 
   const [open, setOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [activeLogSessionId, setActiveLogSessionId] = useState<string | null>(null);
+  const prevCreateDialogNonce = useRef(createDialogNonce);
 
   // Sync store-driven open state with local popover state
   useEffect(() => {
@@ -33,6 +41,13 @@ export function SessionsPopover() {
       setOpen(true);
     }
   }, [isDrawerOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (createDialogNonce === prevCreateDialogNonce.current) return;
+    prevCreateDialogNonce.current = createDialogNonce;
+    setOpen(false);
+    setCreateOpen(true);
+  }, [createDialogNonce]);
 
   const handleOpenChange = useCallback((nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -274,6 +289,7 @@ export function SessionsPopover() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         projectPath={currentProject?.path}
+        defaultSpecId={specFilter}
       />
     </>
   );

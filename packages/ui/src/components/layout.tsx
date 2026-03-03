@@ -6,6 +6,7 @@ import { MainSidebar } from './main-sidebar';
 import { MachineSwitcher } from './machine-switcher';
 import { ChatSidebar } from './chat/chat-sidebar';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useSessionStatusToasts } from '../hooks/useSessionStatusToasts';
 import { ErrorBoundary } from './shared/error-boundary';
 import { BackToTop } from './shared/back-to-top';
 import { useKeyboardShortcuts } from '../contexts';
@@ -42,6 +43,7 @@ function LayoutContent({
 
   // Register global keyboard shortcuts
   useGlobalShortcuts();
+  useSessionStatusToasts(projectId ?? currentProject?.id ?? null);
 
   useEffect(() => {
     // Sync project context with the URL parameter

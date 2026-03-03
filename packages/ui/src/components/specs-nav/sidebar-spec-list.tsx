@@ -6,6 +6,7 @@ import {
   HierarchyTree,
   type SortOption,
 } from '@/library';
+import { Check, Clock3 } from 'lucide-react';
 import {
   List,
   type ListImperativeAPI,
@@ -34,6 +35,7 @@ interface SidebarSpecListProps {
   onMobileClose?: () => void;
   t: (key: string) => string;
   language: string;
+  sessionStatusBySpec: Map<string, 'running' | 'attention' | 'completed'>;
 }
 
 export function SidebarSpecList({
@@ -52,6 +54,7 @@ export function SidebarSpecList({
   onMobileClose,
   t,
   language,
+  sessionStatusBySpec,
 }: SidebarSpecListProps) {
   const RowComponent = useCallback(
     (rowProps: { index: number; style: CSSProperties }) => {
@@ -59,6 +62,7 @@ export function SidebarSpecList({
       const spec = filteredSpecs[index];
       const isActive = spec?.specName === activeSpecId;
       const displayTitle = spec?.title || spec?.specName;
+      const sessionStatus = sessionStatusBySpec.get(spec.specName);
       if (!spec) return <div style={style} />;
 
       return (
@@ -107,6 +111,40 @@ export function SidebarSpecList({
                   {spec.updatedAt && (
                     <span className="text-[10px] text-muted-foreground">{formatRelativeTime(spec.updatedAt, language)}</span>
                   )}
+                  {sessionStatus === 'running' && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className="h-2 w-2 rounded-full bg-emerald-500"
+                          aria-label={t('sessions.indicators.running')}
+                          title={t('sessions.indicators.running')}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{t('sessions.indicators.running')}</TooltipContent>
+                    </Tooltip>
+                  )}
+                  {sessionStatus === 'attention' && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Clock3
+                          className="h-3 w-3 text-amber-500"
+                          aria-label={t('sessions.indicators.attention')}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{t('sessions.indicators.attention')}</TooltipContent>
+                    </Tooltip>
+                  )}
+                  {sessionStatus === 'completed' && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Check
+                          className="h-3 w-3 text-emerald-500"
+                          aria-label={t('sessions.indicators.completedRecent')}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{t('sessions.indicators.completedRecent')}</TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
               </Link>
             </TooltipTrigger>
@@ -120,7 +158,7 @@ export function SidebarSpecList({
         </div>
       );
     },
-    [activeSpecId, basePath, filteredSpecs, language, onMobileClose, t]
+    [activeSpecId, basePath, filteredSpecs, language, onMobileClose, sessionStatusBySpec, t]
   );
 
   if (loading) return <SpecsNavSidebarSkeleton />;

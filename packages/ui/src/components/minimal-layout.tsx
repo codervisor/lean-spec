@@ -4,8 +4,10 @@ import { ErrorBoundary } from './shared/error-boundary';
 import { PageTransition } from './shared/page-transition';
 import { BackToTop } from './shared/back-to-top';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useSessionStatusToasts } from '../hooks/useSessionStatusToasts';
 import { useKeyboardShortcuts } from '../contexts';
 import { useLayoutStore } from '../stores/layout';
+import { useCurrentProject } from '../hooks/useProjectQuery';
 import type { ReactNode } from 'react';
 
 /**
@@ -15,9 +17,11 @@ import type { ReactNode } from 'react';
 function MinimalLayoutContent({ navigationRightSlot }: { navigationRightSlot?: ReactNode }) {
   const { toggleSidebar } = useLayoutStore();
   const { toggleHelp } = useKeyboardShortcuts();
+  const { currentProject } = useCurrentProject();
 
   // Register global keyboard shortcuts
   useGlobalShortcuts();
+  useSessionStatusToasts(currentProject?.id ?? null);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

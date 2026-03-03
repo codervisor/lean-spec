@@ -90,6 +90,11 @@
     "emptyLogs": "No logs recorded yet.",
     "status": {
       "pending": "Pending",
+      "indicators": {
+        "running": "Session running",
+        "attention": "Session needs attention",
+        "completedRecent": "Session completed recently"
+      },
       "running": "Running",
       "paused": "Paused",
       "completed": "Completed",
@@ -849,6 +854,8 @@
       "quickSearch": "Open quick search",
       "toggleChat": "Toggle AI chat",
       "toggleChatSidebar": "Toggle AI chat sidebar",
+      "toggleSessionsPopover": "Toggle sessions popover",
+      "newSession": "Start new session",
       "focusChatInput": "Focus chat input",
       "newConversation": "New conversation",
       "viewHistory": "View history",
