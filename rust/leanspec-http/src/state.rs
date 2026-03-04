@@ -17,6 +17,9 @@ use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::{RwLock, Semaphore};
 
+type RunnerModelsCacheMap = HashMap<String, (Instant, Vec<String>)>;
+type RunnerModelsCache = Arc<RwLock<RunnerModelsCacheMap>>;
+
 /// Shared application state
 #[derive(Clone)]
 pub struct AppState {
@@ -45,7 +48,7 @@ pub struct AppState {
     pub sse_connections: Arc<Semaphore>,
 
     /// Runner model discovery cache (keyed by "<project_path>:<runner_id>")
-    pub runner_models_cache: Arc<RwLock<HashMap<String, (Instant, Vec<String>)>>>,
+    pub runner_models_cache: RunnerModelsCache,
 }
 
 impl AppState {

@@ -123,10 +123,6 @@ pub enum SessionMode {
     /// Run all phases automatically
     #[default]
     Autonomous,
-    /// Autonomous with quality loops (Ralph mode)
-    /// Deprecated: kept for backward compatibility with existing sessions only.
-    #[deprecated(note = "Ralph mode is deprecated; use Autonomous instead")]
-    Ralph,
 }
 
 /// Session status

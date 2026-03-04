@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   AlertDescription,
+  Badge,
   Button,
   PromptInput,
   PromptInputBody,
@@ -80,8 +81,8 @@ export function SessionCreateDialog({
       try {
         setRunnerLoading(true);
         const resp = await api.listRunners(projectPath ?? undefined);
-        const available = (resp.runners ?? []).filter((r) => r.available === true);
-        const defs = available.sort((a, b) => {
+        const candidates = (resp.runners ?? []).filter((r) => Boolean(r.command) && r.available !== false);
+        const defs = candidates.sort((a, b) => {
           if (resp.default && a.id === resp.default) return -1;
           if (resp.default && b.id === resp.default) return 1;
           const left = a.name ?? a.id;
@@ -235,6 +236,11 @@ export function SessionCreateDialog({
                         <span className="flex items-center gap-2">
                           <RunnerLogo runnerId={def.id} size={16} className="rounded-sm" />
                           {getRunnerLabel(def.id)}
+                          {def.available !== true && (
+                            <Badge variant="outline" className="h-5 px-1.5 text-[10px] text-muted-foreground">
+                              {t('settings.runners.validation.checking')}
+                            </Badge>
+                          )}
                         </span>
                       </PromptInputSelectItem>
                     ))}

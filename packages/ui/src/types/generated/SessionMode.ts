@@ -3,4 +3,4 @@
 /**
  * Session mode - controls behavior during execution
  */
-export type SessionMode = "guided" | "autonomous" | "ralph";
+export type SessionMode = "guided" | "autonomous";

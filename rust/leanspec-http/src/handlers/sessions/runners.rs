@@ -605,9 +605,7 @@ fn parse_model_list_output(output: &str) -> Vec<String> {
             continue;
         }
 
-        let cleaned = line
-            .trim_start_matches(|c| matches!(c, '-' | '*' | '•' | '|' | ' '))
-            .trim();
+        let cleaned = line.trim_start_matches(['-', '*', '•', '|', ' ']).trim();
         let candidate = cleaned.split_whitespace().next().unwrap_or_default();
         if candidate.is_empty() {
             continue;

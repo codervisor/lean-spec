@@ -815,12 +815,9 @@ fn column_exists(conn: &Connection, schema: &str, table: &str, column: &str) -> 
 // Helper functions for parsing
 
 /// Parse a mode string from the database.
-/// "ralph" is kept for backward compatibility with existing sessions.
-#[allow(deprecated)]
 fn parse_mode(s: &str) -> SessionMode {
     match s {
         "guided" => SessionMode::Guided,
-        "ralph" => SessionMode::Ralph,
         _ => SessionMode::Autonomous,
     }
 }

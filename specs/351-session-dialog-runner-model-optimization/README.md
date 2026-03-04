@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-03-03
 priority: high
 tags:
@@ -11,12 +11,14 @@ tags:
 depends_on:
 - 267-ai-session-runner-configuration
 created_at: 2026-03-03T07:26:50.559807Z
-updated_at: 2026-03-04T05:57:27.884081508Z
+updated_at: 2026-03-04T06:06:39.347241449Z
+completed_at: 2026-03-04T06:06:39.347241449Z
 transitions:
 - status: in-progress
   at: 2026-03-04T05:57:27.884081508Z
+- status: complete
+  at: 2026-03-04T06:06:39.347241449Z
 ---
-
 # Session Create Dialog: Runner & Model Selection Optimization
 
 ## Overview
@@ -36,8 +38,8 @@ The session creation dialog has several UX issues with runner and model selectio
 - [x] Only show runners where `available === true`
 - [x] Order: default runner first, then alphabetical
 - [x] Remove hardcoded fallback list (`claude, copilot, codex, opencode, aider, cline`)
-- [ ] Match the same filtering/ordering as the Settings → Runners page
-- [ ] Show runner availability badge or subtle indicator if validation is pending
+- [x] Match the same filtering/ordering as the Settings → Runners page
+- [x] Show runner availability badge or subtle indicator if validation is pending
 
 ### 2. Runner Model Configuration in Settings
 
@@ -83,7 +85,7 @@ Runner CLIs have varying model listing capabilities:
 
 - [x] Remove `ralph` entry from `sessionModeConfig` in `session-utils.ts` (already excluded from `MODES` array, so it's dead code)
 - [x] Remove any remaining `ralph` references in session creation UI components
-- [ ] Verify no backend code depends on `ralph` mode string
+- [x] Verify no backend code depends on `ralph` mode string
 
 ## Implementation Strategy
 
@@ -129,10 +131,8 @@ Completed and verified:
 - Session model selector switched to runner-specific models and hidden when no models are configured.
 - `ralph` removed from session create UI mode selection and session mode config map.
 
-Still pending:
-- "Match the same filtering/ordering as the Settings -> Runners page" is not fully true yet (session dialog uses strict `available===true` + default-first sort; settings page filtering/sort behavior differs).
-- "Show runner availability badge or subtle indicator if validation is pending" is not implemented in the session create dialog at runner-item level.
-- "Verify no backend code depends on `ralph` mode string" is not satisfied yet; backend still retains deprecated `ralph` parsing/enum compatibility.
+Remaining gaps:
+- None. Previously pending items were completed: session runner filtering now mirrors settings availability semantics for runnable runners, pending validation is surfaced in the runner picker, and backend/session mode no longer depends on `ralph`.
 
 Test evidence:
 - `cargo test --manifest-path rust/Cargo.toml -p leanspec-http` -> pass

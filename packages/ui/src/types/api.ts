@@ -17,7 +17,6 @@ export type TokenStatus = 'optimal' | 'good' | 'warning' | 'critical';
 export type ValidationStatus = 'pass' | 'warn' | 'fail';
 
 export type SessionStatus = GeneratedSessionStatus;
-/** @deprecated 'ralph' is deprecated and kept only for backward-compatibility with existing sessions */
 export type SessionMode = GeneratedSessionMode;
 export type SessionProtocol = 'acp' | 'subprocess';
 
