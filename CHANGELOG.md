@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Sessions UX Overhaul** ([spec 348](https://web.lean-spec.dev/specs/348)) - New `SessionsPopover` with model selection, status indicators, and toast notifications
+- **Spec Search Backend** - Backend-driven search with relevance ranking and enriched query support
+- **Prompt Input Refactor** - Splits monolithic prompt input into modular `core`, `context`, `hooks`, and compound components
+- **Generated TypeScript Bindings** - Expands generated API types for sessions, runners, stats, and validation with pre-push verification
+- **Runner Research Skill** - Dedicated skill for tracking runner ecosystem changes and compatibility
+- **MCP Tooling Expansion** - Adds `view`, `update`, `validate`, `tokens`, `stats`, and `search` MCP tools
+
+### Changed
+- **Rust Crate Modularity** - Reorganizes core, HTTP, and MCP crates into domain-focused modules (`spec_ops`, `compute`, `io`)
+- **CLI Argument Architecture** - Moves CLI argument parsing into dedicated `cli_args` module
+- **Spec Detail and Navigation UI** - Modular spec detail sections, sub-spec tabs, and improved sidebar filtering
+
+### Fixed
+- **Tool Error Feedback** - Clearer error messages for missing fields and structured HTTP error logging
+- **UI Responsiveness** - Fixes status badge and tool header layout on constrained widths
+- **Context Prompt Test** - Fixes missing `created` field in `build_context_prompt` test frontmatter
+
+### Technical
+- Adds `Aider` artifacts to `.gitignore`
+
 ## [0.2.25] - 2026-02-27
 
 ### Added
