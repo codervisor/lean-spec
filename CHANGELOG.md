@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.26] - 2026-03-04
+
 ### Added
 - **Sessions UX Overhaul** ([spec 348](https://web.lean-spec.dev/specs/348)) - New `SessionsPopover` with model selection, status indicators, and toast notifications
 - **Spec Search Backend** - Backend-driven search with relevance ranking and enriched query support

@@ -1794,7 +1794,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "leanspec-cli"
-version = "0.2.25"
+version = "0.2.26"
 dependencies = [
  "assert_cmd",
  "chrono",
@@ -1817,7 +1817,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-core"
-version = "0.2.25"
+version = "0.2.26"
 dependencies = [
  "agent-client-protocol",
  "anthropic",
@@ -1852,7 +1852,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-http"
-version = "0.2.25"
+version = "0.2.26"
 dependencies = [
  "async-stream",
  "axum",
@@ -1884,7 +1884,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-mcp"
-version = "0.2.25"
+version = "0.2.26"
 dependencies = [
  "assert-json-diff",
  "chrono",
