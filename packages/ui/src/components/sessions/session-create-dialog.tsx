@@ -4,6 +4,15 @@ import {
   AlertDescription,
   Badge,
   Button,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   PromptInput,
   PromptInputBody,
   PromptInputFooter,
@@ -14,6 +23,7 @@ import {
   PromptInputSelectValue,
   PromptInputSubmit,
   PromptInputTextarea,
+  cn,
 } from '@/library';
 import { useTranslation } from 'react-i18next';
 import type { Session, SessionMode, Spec, RunnerDefinition } from '../../types/api';
@@ -22,7 +32,7 @@ import { SpecContextTrigger, SpecContextChips } from '../spec-context-attachment
 import { RunnerLogo } from '../library/ai-elements/runner-logo';
 import { sessionModeConfig } from '../../lib/session-utils';
 import { useSessionCreatePreferencesStore } from '../../stores/session-create-preferences';
-import { X } from 'lucide-react';
+import { Check, ChevronDown, Plus, X } from 'lucide-react';
 
 const MODES: SessionMode[] = ['guided', 'autonomous'];
 
@@ -51,10 +61,21 @@ export function SessionCreateDialog({
   const [promptTemplate, setPromptTemplate] = useState('');
   const [specs, setSpecs] = useState<Spec[]>([]);
   const [fetchedModels, setFetchedModels] = useState<string[]>([]);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [modelSearch, setModelSearch] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { getModelForRunner, setModelForRunner } = useSessionCreatePreferencesStore();
+  const [prevModelFetchKey, setPrevModelFetchKey] = useState('');
+
+  // Reset model state during render when runner/project changes (getDerivedStateFromProps pattern)
+  const modelFetchKey = `${runner}:${projectPath ?? ''}:${runnerDefs.length}`;
+  if (modelFetchKey !== prevModelFetchKey) {
+    setPrevModelFetchKey(modelFetchKey);
+    setFetchedModels([]);
+    setModel('');
+  }
 
   const canCreate = Boolean(projectPath);
 
@@ -120,8 +141,6 @@ export function SessionCreateDialog({
     // If the runner has model providers configured, fetch models from registry
     if (selected?.modelProviders?.length && selected.id) {
       let cancelled = false;
-      setFetchedModels([]);
-      setModel('');
       api.getRunnerModels(selected.id, projectPath ?? undefined).then((resp) => {
         if (cancelled) return;
         const models = resp.models ?? [];
@@ -136,8 +155,6 @@ export function SessionCreateDialog({
       });
       return () => { cancelled = true; };
     }
-    setFetchedModels([]);
-    setModel('');
   }, [runner, runnerDefs, projectPath, getModelForRunner]);
 
   useEffect(() => {
@@ -271,19 +288,88 @@ export function SessionCreateDialog({
                   </PromptInputSelect>
                 )}
 
-                {runnerModels.length > 0 && (
-                  <PromptInputSelect value={model} onValueChange={handleModelChange}>
-                    <PromptInputSelectTrigger className="h-8 w-auto rounded-full border border-border/70 px-3 py-1.5 text-xs">
-                      <PromptInputSelectValue placeholder={t('sessions.labels.model')} />
-                    </PromptInputSelectTrigger>
-                    <PromptInputSelectContent>
-                      {runnerModels.map((modelId) => (
-                        <PromptInputSelectItem key={modelId} value={modelId}>
-                          {modelId}
-                        </PromptInputSelectItem>
-                      ))}
-                    </PromptInputSelectContent>
-                  </PromptInputSelect>
+                {runner && (
+                  <Popover open={modelOpen} onOpenChange={setModelOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        role="combobox"
+                        aria-expanded={modelOpen}
+                        className="h-8 w-auto rounded-full border border-border/70 px-3 py-1.5 text-xs font-normal"
+                        disabled={creating}
+                      >
+                        <span className={model ? '' : 'text-muted-foreground'}>
+                          {model || t('sessions.labels.model')}
+                        </span>
+                        <ChevronDown className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0" align="start">
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder={t('settings.runners.placeholders.searchOrTypeModel')}
+                          value={modelSearch}
+                          onValueChange={setModelSearch}
+                        />
+                        <CommandList>
+                          <CommandEmpty>{t('settings.runners.noModelsFound')}</CommandEmpty>
+                          {(() => {
+                            const filtered = modelSearch.trim()
+                              ? runnerModels.filter(m => m.toLowerCase().includes(modelSearch.toLowerCase()))
+                              : runnerModels;
+                            return filtered.length > 0 ? (
+                              <CommandGroup>
+                                {filtered.map((modelId) => (
+                                  <CommandItem
+                                    key={modelId}
+                                    value={modelId}
+                                    onSelect={() => {
+                                      handleModelChange(modelId);
+                                      setModelOpen(false);
+                                      setModelSearch('');
+                                    }}
+                                  >
+                                    <Check className={cn('mr-2 h-4 w-4', model === modelId ? 'opacity-100' : 'opacity-0')} />
+                                    {modelId}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            ) : null;
+                          })()}
+                          {modelSearch.trim() && !runnerModels.includes(modelSearch.trim()) && (
+                            <CommandGroup heading={t('settings.runners.customModel')}>
+                              <CommandItem
+                                value={modelSearch.trim()}
+                                onSelect={() => {
+                                  handleModelChange(modelSearch.trim());
+                                  setModelOpen(false);
+                                  setModelSearch('');
+                                }}
+                              >
+                                <Plus className="mr-2 h-4 w-4" />
+                                {t('settings.runners.useCustomModel', { model: modelSearch.trim() })}
+                              </CommandItem>
+                            </CommandGroup>
+                          )}
+                          {model && (
+                            <CommandGroup>
+                              <CommandItem
+                                value="__clear__"
+                                onSelect={() => {
+                                  handleModelChange('');
+                                  setModelOpen(false);
+                                  setModelSearch('');
+                                }}
+                                className="text-muted-foreground"
+                              >
+                                {t('settings.runners.clearModel')}
+                              </CommandItem>
+                            </CommandGroup>
+                          )}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 )}
 
                 {runnerLoading && (

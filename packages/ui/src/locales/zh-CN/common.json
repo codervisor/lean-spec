@@ -709,6 +709,7 @@
         "command": "claude",
         "args": "--dangerously-skip-permissions\n--print",
         "defaultModel": "claude-3-7-sonnet",
+        "searchOrTypeModel": "搜索或输入模型...",
         "modelProviders": "anthropic\nopenai",
         "env": "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}"
       },
@@ -725,6 +726,10 @@
         "commandRequired": "命令为必填项",
         "envInvalid": "每行环境变量必须为 KEY=VALUE"
       },
+      "customModel": "自定义",
+      "useCustomModel": "使用 \"{{model}}\"",
+      "clearModel": "清除模型",
+      "noModelsFound": "输入模型名称",
       "searchPlaceholder": "搜索运行器...",
       "noResults": "没有符合筛选条件的运行器",
       "sort": {

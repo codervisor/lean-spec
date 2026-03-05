@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { useTranslation } from 'react-i18next';
 import {
   AlertCircle,
+  Check,
   CheckCircle,
+  ChevronsUpDown,
   Plus,
   RefreshCw,
   Trash2,
@@ -15,6 +17,12 @@ import {
 import {
   Badge,
   Button,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -22,11 +30,9 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Textarea,
   DropdownMenu,
   DropdownMenuContent,
@@ -694,11 +700,24 @@ function RunnerDialog({ runner, existingIds, projectPath, onSave, onCancel }: Ru
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [modelSearch, setModelSearch] = useState('');
+  const [prevModelFetchKey, setPrevModelFetchKey] = useState('');
+
+  // Adjust loading state during render when fetch key changes (getDerivedStateFromProps pattern)
+  const shouldFetchModels = Boolean(runner?.id && runner?.modelProviders?.length);
+  const modelFetchKey = shouldFetchModels ? `${runner?.id}:${projectPath ?? ''}` : '';
+  if (modelFetchKey !== prevModelFetchKey) {
+    setPrevModelFetchKey(modelFetchKey);
+    setModelsLoading(shouldFetchModels);
+    if (!shouldFetchModels) {
+      setAvailableModels([]);
+    }
+  }
 
   useEffect(() => {
     if (!runner?.id || !runner.modelProviders?.length) return;
     let cancelled = false;
-    setModelsLoading(true);
     api.getRunnerModels(runner.id, projectPath ?? undefined)
       .then((resp) => {
         if (!cancelled) setAvailableModels(resp.models ?? []);
@@ -828,31 +847,88 @@ function RunnerDialog({ runner, existingIds, projectPath, onSave, onCancel }: Ru
 
           <div className="space-y-2">
             <Label htmlFor="runner-default-model">{t('settings.runners.fields.defaultModel')}</Label>
-            {availableModels.length > 0 ? (
-              <Select
-                value={formData.model || undefined}
-                onValueChange={(value) => setFormData({ ...formData, model: value })}
-              >
-                <SelectTrigger id="runner-default-model">
-                  <SelectValue placeholder={t('settings.runners.placeholders.defaultModel')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableModels.map((modelId) => (
-                    <SelectItem key={modelId} value={modelId}>
-                      {modelId}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                id="runner-default-model"
-                value={formData.model}
-                onChange={(event) => setFormData({ ...formData, model: event.target.value })}
-                placeholder={modelsLoading ? t('settings.runners.validation.checking') : t('settings.runners.placeholders.defaultModel')}
-                disabled={modelsLoading}
-              />
-            )}
+            <Popover open={modelOpen} onOpenChange={setModelOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={modelOpen}
+                  className="w-full justify-between font-normal"
+                  disabled={modelsLoading}
+                  id="runner-default-model"
+                >
+                  <span className={formData.model ? '' : 'text-muted-foreground'}>
+                    {formData.model || (modelsLoading ? t('settings.runners.validation.checking') : t('settings.runners.placeholders.defaultModel'))}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command shouldFilter={false}>
+                  <CommandInput
+                    placeholder={t('settings.runners.placeholders.searchOrTypeModel')}
+                    value={modelSearch}
+                    onValueChange={setModelSearch}
+                  />
+                  <CommandList>
+                    <CommandEmpty>{t('settings.runners.noModelsFound')}</CommandEmpty>
+                    {(() => {
+                      const filtered = modelSearch.trim()
+                        ? availableModels.filter(m => m.toLowerCase().includes(modelSearch.toLowerCase()))
+                        : availableModels;
+                      return filtered.length > 0 ? (
+                        <CommandGroup>
+                          {filtered.map((modelId) => (
+                            <CommandItem
+                              key={modelId}
+                              value={modelId}
+                              onSelect={() => {
+                                setFormData({ ...formData, model: modelId });
+                                setModelOpen(false);
+                                setModelSearch('');
+                              }}
+                            >
+                              <Check className={cn('mr-2 h-4 w-4', formData.model === modelId ? 'opacity-100' : 'opacity-0')} />
+                              {modelId}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      ) : null;
+                    })()}
+                    {modelSearch.trim() && !availableModels.includes(modelSearch.trim()) && (
+                      <CommandGroup heading={t('settings.runners.customModel')}>
+                        <CommandItem
+                          value={modelSearch.trim()}
+                          onSelect={() => {
+                            setFormData({ ...formData, model: modelSearch.trim() });
+                            setModelOpen(false);
+                            setModelSearch('');
+                          }}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          {t('settings.runners.useCustomModel', { model: modelSearch.trim() })}
+                        </CommandItem>
+                      </CommandGroup>
+                    )}
+                    {formData.model && (
+                      <CommandGroup>
+                        <CommandItem
+                          value="__clear__"
+                          onSelect={() => {
+                            setFormData({ ...formData, model: '' });
+                            setModelOpen(false);
+                            setModelSearch('');
+                          }}
+                          className="text-muted-foreground"
+                        >
+                          {t('settings.runners.clearModel')}
+                        </CommandItem>
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">

@@ -709,6 +709,7 @@
         "command": "claude",
         "args": "--dangerously-skip-permissions\n--print",
         "defaultModel": "claude-3-7-sonnet",
+        "searchOrTypeModel": "Search or type a model...",
         "modelProviders": "anthropic\nopenai",
         "env": "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}"
       },
@@ -725,6 +726,10 @@
         "commandRequired": "Command is required",
         "envInvalid": "Each environment line must be KEY=VALUE"
       },
+      "customModel": "Custom",
+      "useCustomModel": "Use \"{{model}}\"",
+      "clearModel": "Clear model",
+      "noModelsFound": "Type a model name",
       "searchPlaceholder": "Search runners...",
       "noResults": "No runners match your filters",
       "sort": {
