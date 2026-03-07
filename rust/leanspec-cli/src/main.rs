@@ -154,9 +154,9 @@ fn main() -> ExitCode {
             let project_path = std::env::current_dir()
                 .map_err(|e| Box::<dyn std::error::Error>::from(e.to_string()))
                 .and_then(|path| {
-                    commands::session::run_direct(
-                        path.to_string_lossy().into_owned(),
-                        spec,
+                    commands::session::run_direct(commands::session::RunDirectRequest {
+                        project_path: path.to_string_lossy().into_owned(),
+                        specs: spec,
                         prompt,
                         runner,
                         model,
@@ -165,7 +165,7 @@ fn main() -> ExitCode {
                         worktree,
                         parallel,
                         merge_strategy,
-                    )
+                    })
                 });
             project_path
         }

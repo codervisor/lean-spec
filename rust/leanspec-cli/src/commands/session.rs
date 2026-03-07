@@ -225,6 +225,31 @@ struct CreateSessionRequest {
     start: bool,
 }
 
+pub struct RunDirectRequest {
+    pub project_path: String,
+    pub specs: Vec<String>,
+    pub prompt: Option<String>,
+    pub runner: Option<String>,
+    pub model: Option<String>,
+    pub dry_run: bool,
+    pub acp: bool,
+    pub worktree: bool,
+    pub parallel: bool,
+    pub merge_strategy: Option<String>,
+}
+
+struct ParallelRunRequest {
+    manager: SessionManager,
+    project_path: String,
+    specs: Vec<String>,
+    prompt: Option<String>,
+    runner: Option<String>,
+    model: Option<String>,
+    acp: bool,
+    merge_strategy: Option<MergeStrategy>,
+    mode: SessionMode,
+}
+
 fn create_session(request: CreateSessionRequest) -> Result<(), Box<dyn Error>> {
     let CreateSessionRequest {
         project_path,
@@ -248,7 +273,8 @@ fn create_session(request: CreateSessionRequest) -> Result<(), Box<dyn Error>> {
         let merge_strategy = parse_merge_strategy(merge_strategy)?;
 
         if parallel {
-            return run_parallel_sessions(
+            let _ = worktree;
+            return run_parallel_sessions(ParallelRunRequest {
                 manager,
                 project_path,
                 specs,
@@ -256,10 +282,9 @@ fn create_session(request: CreateSessionRequest) -> Result<(), Box<dyn Error>> {
                 runner,
                 model,
                 acp,
-                worktree,
                 merge_strategy,
                 mode,
-            )
+            })
             .await;
         }
 
@@ -294,18 +319,19 @@ fn create_session(request: CreateSessionRequest) -> Result<(), Box<dyn Error>> {
     })
 }
 
-pub fn run_direct(
-    project_path: String,
-    specs: Vec<String>,
-    prompt: Option<String>,
-    runner: Option<String>,
-    model: Option<String>,
-    dry_run: bool,
-    acp: bool,
-    worktree: bool,
-    parallel: bool,
-    merge_strategy: Option<String>,
-) -> Result<(), Box<dyn Error>> {
+pub fn run_direct(request: RunDirectRequest) -> Result<(), Box<dyn Error>> {
+    let RunDirectRequest {
+        project_path,
+        specs,
+        prompt,
+        runner,
+        model,
+        dry_run,
+        acp,
+        worktree,
+        parallel,
+        merge_strategy,
+    } = request;
     let missing_prompt = prompt
         .as_deref()
         .map(|value| value.trim().is_empty())
@@ -317,17 +343,18 @@ pub fn run_direct(
     }
 
     if dry_run {
-        return print_dry_run_command(
+        return print_dry_run_command(RunDirectRequest {
             project_path,
             specs,
             prompt,
             runner,
             model,
+            dry_run,
             acp,
             worktree,
             parallel,
             merge_strategy,
-        );
+        });
     }
 
     create_session(CreateSessionRequest {
@@ -345,17 +372,19 @@ pub fn run_direct(
     })
 }
 
-fn print_dry_run_command(
-    project_path: String,
-    specs: Vec<String>,
-    prompt: Option<String>,
-    runner: Option<String>,
-    model: Option<String>,
-    acp: bool,
-    worktree: bool,
-    parallel: bool,
-    merge_strategy: Option<String>,
-) -> Result<(), Box<dyn Error>> {
+fn print_dry_run_command(request: RunDirectRequest) -> Result<(), Box<dyn Error>> {
+    let RunDirectRequest {
+        project_path,
+        specs,
+        prompt,
+        runner,
+        model,
+        dry_run: _,
+        acp,
+        worktree,
+        parallel,
+        merge_strategy,
+    } = request;
     let project_path_buf = std::path::PathBuf::from(&project_path);
     let registry = RunnerRegistry::load(project_path_buf.as_path())
         .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
@@ -725,18 +754,18 @@ fn parse_merge_strategy(value: Option<String>) -> Result<Option<MergeStrategy>, 
         .map_err(|e| Box::<dyn Error>::from(e.to_string()))
 }
 
-async fn run_parallel_sessions(
-    manager: SessionManager,
-    project_path: String,
-    specs: Vec<String>,
-    prompt: Option<String>,
-    runner: Option<String>,
-    model: Option<String>,
-    acp: bool,
-    _worktree: bool,
-    merge_strategy: Option<MergeStrategy>,
-    mode: SessionMode,
-) -> Result<(), Box<dyn Error>> {
+async fn run_parallel_sessions(request: ParallelRunRequest) -> Result<(), Box<dyn Error>> {
+    let ParallelRunRequest {
+        manager,
+        project_path,
+        specs,
+        prompt,
+        runner,
+        model,
+        acp,
+        merge_strategy,
+        mode,
+    } = request;
     if specs.len() < 2 {
         return Err(Box::<dyn Error>::from(
             "Parallel execution requires at least two --spec values",
