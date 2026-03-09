@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Git Worktree Session Isolation** ([spec 358](https://web.lean-spec.dev/specs/358)) - Isolates parallel agent sessions using Git worktrees
+  - Worktree lifecycle management with status tracking (created, running, completed, merging, merged, conflict, abandoned)
+  - Merge strategies: auto-merge, squash, pull request, manual
+  - Registry persistence via `.leanspec-worktrees/registry.json` with garbage collection
+  - CLI commands for `merge`, `cleanup`, and `gc` operations
+  - Branch removal fix for streamlined worktree cleanup
+- **Shell-Based Runner Execution** ([spec 357](https://web.lean-spec.dev/specs/357)) - Structured `run_direct` functionality with protocol overrides and model specifications
+  - Per-runner `protocol` field supporting `acp` and `shell` execution modes
+  - `CreateSessionOptions` struct for cleaner session creation parameter passing
+  - Project-scoped memory support in session management
+- **Dynamic Runner Model Discovery** ([spec 353](https://web.lean-spec.dev/specs/353)) - Replaces hardcoded `available_models` with `model_providers` in runner schema
+  - `resolve_runner_models()` fetches agentic-capable models from models.dev providers
+  - Filters to text I/O models with tool_call support; excludes embedding/audio-only
+  - Bundled registry fallback for offline use
+  - API endpoint for per-runner dynamic model lists
+- **KaTeX Math Rendering** ([spec 354](https://web.lean-spec.dev/specs/354)) - Adds LaTeX math rendering to spec detail markdown
+  - `remarkMath` and `rehypeKatex` plugins for `$...$` and `$$...$$` syntax
+- **Session Create Preferences** - Persists model selection per runner across sessions
+  - Zustand store backed by localStorage with `setModelForRunner`/`getModelForRunner`
+- **Progressive Spec List Rendering** - Deferred rendering for large spec lists
+  - `useDeferredValue()` for non-blocking renders with skeleton loading states
+  - In-process cache for batch metadata
+- **Session Stream Tests** - Comprehensive test suite for ACP session streaming
+
+### Changed
+- **Model Selection UI** - Searchable popover with custom model input in `SessionCreateDialog` and `RunnerSettingsTab`
+  - Dynamic model fetching based on selected runner's `model_providers`
+  - Stored model preference with fallback to runner default
+- **ACP Event Handling** - Stabilized event keys in `AcpConversation` preventing key shifts during in-place merges
+  - Preserved line breaks in reasoning display and refined tool call logic
+  - Active status checks with interval updates in `SessionDetailPage`
+- **Skill Installation** - Smart detection of installed AI tools via `RunnerRegistry::detect_available()`
+  - Selective installation to detected agents only (claude-code, copilot, cursor, gemini-cli, codex, etc.)
+  - Removes deprecated `ralph` runner mode
+- **Token Management** - Refactors global token counter to use `LazyLock`
+- **Specs Query Invalidation** - Improved cache invalidation and inline badge editing performance
+
+### Fixed
+- **StatsPage Error Handling** - Handles undefined `specsByStatus` to prevent runtime errors
+- **DashboardClient** - Improved error handling for missing data
+- **MCP Package Version** - Updates MCP package version in VSCode configuration
+
+### Technical
+- Refactors session creation internals to `CreateSessionOptions` struct
+- Strips numeric prefix from spec names with dedicated utility and tests
+- Updates dependencies across packages
+
 ## [0.2.26] - 2026-03-04
 
 ### Added
