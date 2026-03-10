@@ -1,5 +1,5 @@
 ---
-status: draft
+status: planned
 created: 2026-03-10
 priority: high
 tags:
@@ -9,9 +9,8 @@ tags:
 - sub-specs
 - ux
 created_at: 2026-03-10T07:04:50.554684423Z
-updated_at: 2026-03-10T07:04:50.554684423Z
+updated_at: 2026-03-10T07:26:29.034502059Z
 ---
-
 # Deprecate SubSpec Display and Redesign as Artifacts Sub-Tree
 
 ## Overview
