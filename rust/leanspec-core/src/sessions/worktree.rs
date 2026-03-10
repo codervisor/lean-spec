@@ -24,7 +24,6 @@ pub const WORKTREE_CLEANED_AT_KEY: &str = "worktree_cleaned_at";
 
 const REGISTRY_DIR_NAME: &str = ".leanspec-worktrees";
 const REGISTRY_FILE_NAME: &str = "registry.json";
-const MARKER_FILE_NAME: &str = ".leanspec-session";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -194,7 +193,9 @@ impl GitWorktreeManager {
     pub fn for_project<P: AsRef<Path>>(project_path: P) -> CoreResult<Self> {
         let project_path = project_path.as_ref().to_path_buf();
         let repo_root = resolve_repo_root(&project_path)?;
-        let registry_path = repo_root.join(REGISTRY_DIR_NAME).join(REGISTRY_FILE_NAME);
+        let registry_path = resolve_git_common_dir(&repo_root)?
+            .join(REGISTRY_DIR_NAME)
+            .join(REGISTRY_FILE_NAME);
         let worktree_root = env::var("LEANSPEC_WORKTREE_ROOT")
             .map(PathBuf::from)
             .unwrap_or_else(|_| env::temp_dir().join("leanspec-worktrees"));
@@ -256,11 +257,6 @@ impl GitWorktreeManager {
             spec_ids: spec_ids.to_vec(),
         };
 
-        fs::write(
-            worktree_path.join(MARKER_FILE_NAME),
-            serde_json::to_vec_pretty(&worktree_session)?,
-        )?;
-
         let mut registry = self.load_registry()?;
         registry.sessions.push(worktree_session.clone());
         self.save_registry(&registry)?;
@@ -318,6 +314,8 @@ impl GitWorktreeManager {
 
         let strategy = strategy.unwrap_or(worktree.merge_strategy);
 
+        self.commit_worktree_changes(&worktree)?;
+
         if matches!(strategy, MergeStrategy::PullRequest | MergeStrategy::Manual) {
             worktree.status = WorktreeStatus::Completed;
             self.upsert_session(&worktree)?;
@@ -356,7 +354,13 @@ impl GitWorktreeManager {
             });
         }
 
-        git_run(&self.repo_root, &["merge", "--abort"])?;
+        let abort = git_run_allow_failure(&self.repo_root, &["merge", "--abort"])?;
+        if !abort.success && !abort.stderr.contains("MERGE_HEAD missing") {
+            return Err(CoreError::ToolError(format!(
+                "git merge --abort failed: {}",
+                abort.stderr.trim()
+            )));
+        }
 
         match strategy {
             MergeStrategy::AutoMerge => {
@@ -523,14 +527,24 @@ impl GitWorktreeManager {
             registry.sessions.push(updated.clone());
         }
 
-        if updated.worktree_path.exists() {
-            fs::write(
-                updated.worktree_path.join(MARKER_FILE_NAME),
-                serde_json::to_vec_pretty(updated)?,
-            )?;
+        self.save_registry(&registry)
+    }
+
+    fn commit_worktree_changes(&self, worktree: &WorktreeSession) -> CoreResult<()> {
+        if !has_uncommitted_changes(&worktree.worktree_path)? {
+            return Ok(());
         }
 
-        self.save_registry(&registry)
+        git_run(&worktree.worktree_path, &["add", "-A"])?;
+        git_run(
+            &worktree.worktree_path,
+            &[
+                "commit",
+                "-m",
+                &format!("LeanSpec session {}", worktree.session_id),
+            ],
+        )?;
+        Ok(())
     }
 
     fn load_registry(&self) -> CoreResult<WorktreeRegistry> {
@@ -625,6 +639,27 @@ fn current_branch(repo_root: &Path) -> CoreResult<String> {
     Ok(branch)
 }
 
+fn resolve_git_common_dir(repo_root: &Path) -> CoreResult<PathBuf> {
+    let git_dir = PathBuf::from(git_output(repo_root, &["rev-parse", "--git-common-dir"])?);
+    if git_dir.is_absolute() {
+        Ok(git_dir)
+    } else {
+        Ok(repo_root.join(git_dir))
+    }
+}
+
+fn has_uncommitted_changes(repo_root: &Path) -> CoreResult<bool> {
+    let status = git_output_allow_failure(repo_root, &["status", "--porcelain"])?;
+    if !status.success {
+        return Err(CoreError::ToolError(format!(
+            "git status --porcelain failed: {}",
+            status.stderr.trim()
+        )));
+    }
+
+    Ok(!status.stdout.trim().is_empty())
+}
+
 fn ensure_clean_branch_worktree(repo_root: &Path, expected_branch: &str) -> CoreResult<()> {
     let branch = current_branch(repo_root)?;
     if branch != expected_branch {
@@ -634,8 +669,7 @@ fn ensure_clean_branch_worktree(repo_root: &Path, expected_branch: &str) -> Core
         )));
     }
 
-    let status = git_output_allow_failure(repo_root, &["status", "--porcelain"])?;
-    if !status.stdout.trim().is_empty() {
+    if has_uncommitted_changes(repo_root)? {
         return Err(CoreError::ValidationError(
             "Merge requires a clean target branch worktree".to_string(),
         ));
