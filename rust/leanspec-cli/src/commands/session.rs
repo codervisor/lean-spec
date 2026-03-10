@@ -1099,7 +1099,14 @@ async fn start_and_wait(manager: SessionManager, session_id: &str) -> Result<(),
                 session.id.bold(),
                 session.status
             );
-            break;
+            if matches!(session.status, SessionStatus::Completed) {
+                break;
+            }
+
+            return Err(Box::<dyn Error>::from(format!(
+                "Session {} completed with status {:?}",
+                session.id, session.status
+            )));
         }
 
         tokio::time::sleep(Duration::from_millis(500)).await;
