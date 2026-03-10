@@ -1,0 +1,11 @@
+services:
+  leanspec:
+    image: ghcr.io/codervisor/leanspec:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      # Replace with the path to your project directory
+      - /path/to/your/project:/specs
+    command: ["--project", "/specs"]
+    environment:
+      - PORT=3000

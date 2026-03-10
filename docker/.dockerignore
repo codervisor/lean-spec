@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.github
+*.log
+*.md
+packages
+rust
+specs
+docs
+docs-site
+scripts
+.lean-spec
+.env*
