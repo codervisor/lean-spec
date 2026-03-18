@@ -1,0 +1,39 @@
+# Auto-generate SPECS.md index on spec changes
+# This enables git-native spec browsing on GitHub without a running server.
+
+name: Render Specs Index
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'specs/**'
+
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install lean-spec CLI
+        run: npm install -g lean-spec@latest
+
+      - name: Generate SPECS.md
+        run: lean-spec render
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add SPECS.md
+          if git diff --cached --quiet; then
+            echo "No changes to SPECS.md"
+          else
+            git commit -m "docs: auto-update SPECS.md index"
+            git push
+          fi

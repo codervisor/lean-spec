@@ -29,6 +29,7 @@ pub mod chat_store;
 pub mod config;
 pub mod error;
 pub mod handlers;
+pub mod middleware;
 pub mod project_registry;
 pub mod routes;
 pub mod sessions;
@@ -60,13 +61,14 @@ pub async fn start_server(host: &str, port: u16) -> Result<(), ServerError> {
     tracing::info!("LeanSpec HTTP server listening on {}:{}", host, port);
 
     axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
         .await
         .map_err(|e| ServerError::ServerError(e.to_string()))?;
 
     Ok(())
 }
 
-/// Start the server with a custom config
+/// Start the server with a custom config and graceful shutdown support
 pub async fn start_server_with_config(
     host: &str,
     port: u16,
@@ -82,8 +84,35 @@ pub async fn start_server_with_config(
     tracing::info!("LeanSpec HTTP server listening on {}:{}", host, port);
 
     axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
         .await
         .map_err(|e| ServerError::ServerError(e.to_string()))?;
 
+    tracing::info!("Server shut down gracefully");
     Ok(())
+}
+
+/// Listen for SIGTERM/SIGINT for graceful shutdown in cloud environments.
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("Failed to install SIGTERM handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => { tracing::info!("Received Ctrl+C, starting graceful shutdown"); },
+        _ = terminate => { tracing::info!("Received SIGTERM, starting graceful shutdown"); },
+    }
 }

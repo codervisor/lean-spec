@@ -210,6 +210,9 @@ fn main() -> ExitCode {
             commands::migrate_archived::run(&specs_dir, dry_run)
         }
         Commands::Open { spec, editor } => commands::open::run(&specs_dir, &spec, editor),
+        Commands::Render { output } => {
+            commands::render::run(&specs_dir, output.as_deref(), &cli.output)
+        }
         Commands::Search { query, limit } => {
             commands::search::run(&specs_dir, &query, limit, &cli.output)
         }

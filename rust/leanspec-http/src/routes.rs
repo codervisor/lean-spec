@@ -10,7 +10,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum::{
-    middleware,
+    middleware as axum_mw,
     routing::{delete, get, patch, post, put},
     Router,
 };
@@ -22,6 +22,7 @@ use tracing::Level;
 
 use crate::config::ServerConfig;
 use crate::handlers;
+use crate::middleware;
 use crate::state::AppState;
 
 /// Create the application router with all routes
@@ -54,8 +55,10 @@ pub fn create_router(state: AppState) -> Router {
 
     #[allow(unused_mut)]
     let mut router = Router::new()
-        // Health endpoint
+        // Health endpoints
         .route("/health", get(handlers::health_check))
+        .route("/health/live", get(handlers::health_live))
+        .route("/health/ready", get(handlers::health_ready))
         .route("/api/chat/config", get(handlers::get_chat_config))
         .route("/api/chat/config", put(handlers::update_chat_config))
         .route("/api/chat/sessions", get(handlers::list_chat_sessions))
@@ -312,8 +315,9 @@ pub fn create_router(state: AppState) -> Router {
                     },
                 ),
         )
-        .layer(middleware::from_fn_with_state(state, readonly_guard))
-        .layer(middleware::from_fn(log_error_body))
+        .layer(axum_mw::from_fn(middleware::api_key_auth))
+        .layer(axum_mw::from_fn_with_state(state, readonly_guard))
+        .layer(axum_mw::from_fn(log_error_body))
 }
 
 fn resolve_ui_dist_path(config: &ServerConfig) -> Option<PathBuf> {
@@ -405,7 +409,7 @@ async fn log_error_body(req: Request<Body>, next: Next) -> Response {
 async fn readonly_guard(
     State(state): State<AppState>,
     request: Request<Body>,
-    next: middleware::Next,
+    next: axum_mw::Next,
 ) -> Response {
     if !state.config.security.readonly {
         return next.run(request).await;

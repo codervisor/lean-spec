@@ -411,6 +411,13 @@ pub(crate) enum Commands {
         editor: Option<String>,
     },
 
+    /// Render SPECS.md index for git-native viewing (GitHub, GitLab, etc.)
+    Render {
+        /// Output file path (default: SPECS.md)
+        #[arg(short = 'O', long)]
+        output: Option<String>,
+    },
+
     /// Search specs
     Search {
         /// Search query (supports AND/OR/NOT, field filters, phrases, fuzzy)

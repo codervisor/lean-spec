@@ -115,29 +115,48 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         format!("leanspec_http={level},tower_http={level}")
     };
 
-    // Use pretty format in dev mode, compact in production
-    let fmt_layer = if is_dev_mode {
-        tracing_subscriber::fmt::layer()
-            .with_target(true)
-            .with_thread_ids(false)
-            .with_file(true)
-            .with_line_number(true)
-            .with_ansi(true)
-    } else {
-        tracing_subscriber::fmt::layer()
-            .with_target(true)
-            .with_thread_ids(false)
-            .with_file(false)
-            .with_line_number(false)
-            .with_ansi(true)
-    };
+    // LEANSPEC_LOG_FORMAT: "text" (default) or "json" for cloud log aggregators
+    let log_format = std::env::var("LEANSPEC_LOG_FORMAT")
+        .unwrap_or_else(|_| "text".to_string());
 
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| filter.into()),
-        )
-        .with(fmt_layer)
-        .init();
+    let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| filter.into());
+
+    if log_format == "json" {
+        // JSON structured logging for cloud environments (Datadog, CloudWatch, Grafana)
+        let json_layer = tracing_subscriber::fmt::layer()
+            .json()
+            .with_target(true)
+            .with_thread_ids(false)
+            .with_ansi(false);
+
+        tracing_subscriber::registry()
+            .with(env_filter)
+            .with(json_layer)
+            .init();
+    } else {
+        // Use pretty format in dev mode, compact in production
+        let fmt_layer = if is_dev_mode {
+            tracing_subscriber::fmt::layer()
+                .with_target(true)
+                .with_thread_ids(false)
+                .with_file(true)
+                .with_line_number(true)
+                .with_ansi(true)
+        } else {
+            tracing_subscriber::fmt::layer()
+                .with_target(true)
+                .with_thread_ids(false)
+                .with_file(false)
+                .with_line_number(false)
+                .with_ansi(true)
+        };
+
+        tracing_subscriber::registry()
+            .with(env_filter)
+            .with(fmt_layer)
+            .init();
+    };
 
     // Load config
     let mut config = load_server_config(&args);

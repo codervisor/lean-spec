@@ -22,6 +22,7 @@ RUN groupadd -r leanspec && useradd -r -g leanspec -m -d /home/leanspec leanspec
 
 ENV LEANSPEC_UI_DIST=/app/ui-dist
 ENV HOME=/home/leanspec
+ENV LEANSPEC_LOG_FORMAT=json
 
 EXPOSE 3000
 

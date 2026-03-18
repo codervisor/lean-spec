@@ -1,0 +1,23 @@
+# Render deployment blueprint for LeanSpec
+# Docs: https://docs.render.com/blueprint-spec
+
+services:
+  - type: web
+    name: leanspec
+    runtime: image
+    image:
+      url: ghcr.io/codervisor/leanspec:latest
+    envVars:
+      - key: LEANSPEC_DATA_DIR
+        value: /data
+      - key: LEANSPEC_LOG_FORMAT
+        value: json
+      - key: LEANSPEC_API_KEY
+        generateValue: true
+      - key: PORT
+        value: "3000"
+    healthCheckPath: /health/ready
+    disk:
+      name: leanspec-data
+      mountPath: /data
+      sizeGB: 1

@@ -242,8 +242,18 @@ fn default_max_recent() -> usize {
     10
 }
 
-/// Get the LeanSpec config directory path
+/// Get the LeanSpec config directory path.
+///
+/// Checks `LEANSPEC_DATA_DIR` env var first, falling back to `~/.lean-spec/`.
+/// This allows cloud containers with ephemeral filesystems to use a custom
+/// persistent volume path.
 pub fn config_dir() -> PathBuf {
+    if let Ok(data_dir) = std::env::var("LEANSPEC_DATA_DIR") {
+        let path = PathBuf::from(&data_dir);
+        if !data_dir.is_empty() {
+            return path;
+        }
+    }
     dirs::home_dir()
         .map(|h| h.join(".lean-spec"))
         .unwrap_or_else(|| PathBuf::from(".lean-spec"))
@@ -401,6 +411,19 @@ mod tests {
         let path = resolve_database_path(Some("sqlite://~/.lean-spec/custom.db"))
             .expect("home-relative sqlite path should resolve");
         assert!(path.ends_with(".lean-spec/custom.db"));
+    }
+
+    #[test]
+    fn config_dir_respects_leanspec_data_dir_env() {
+        let original = std::env::var("LEANSPEC_DATA_DIR").ok();
+        std::env::set_var("LEANSPEC_DATA_DIR", "/tmp/leanspec-test-data");
+        let dir = config_dir();
+        assert_eq!(dir, PathBuf::from("/tmp/leanspec-test-data"));
+        // Restore
+        match original {
+            Some(val) => std::env::set_var("LEANSPEC_DATA_DIR", val),
+            None => std::env::remove_var("LEANSPEC_DATA_DIR"),
+        }
     }
 
     #[test]

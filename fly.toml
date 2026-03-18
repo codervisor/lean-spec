@@ -1,0 +1,40 @@
+# Fly.io deployment configuration for LeanSpec
+# Deploy: fly launch --copy-config
+# Docs: https://fly.io/docs/reference/configuration/
+
+app = "leanspec"
+primary_region = "iad"
+
+[build]
+  image = "ghcr.io/codervisor/leanspec:latest"
+
+[env]
+  LEANSPEC_DATA_DIR = "/data"
+  LEANSPEC_LOG_FORMAT = "json"
+  PORT = "3000"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.checks]
+    [http_service.checks.liveness]
+      port = 3000
+      type = "http"
+      interval = "15s"
+      timeout = "2s"
+      path = "/health/live"
+
+    [http_service.checks.readiness]
+      port = 3000
+      type = "http"
+      interval = "15s"
+      timeout = "5s"
+      path = "/health/ready"
+
+[mounts]
+  source = "leanspec_data"
+  destination = "/data"

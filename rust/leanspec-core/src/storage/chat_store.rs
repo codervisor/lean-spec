@@ -81,6 +81,14 @@ impl ChatStore {
         Ok(store)
     }
 
+    /// Quick connectivity check: runs a trivial query against the database.
+    pub fn health_check(&self) -> bool {
+        let Ok(conn) = self.conn.lock() else {
+            return false;
+        };
+        conn.execute_batch("SELECT 1").is_ok()
+    }
+
     pub fn storage_info(&self) -> Result<ChatStorageInfo, String> {
         let metadata = std::fs::metadata(&self.db_path).map_err(|e| e.to_string())?;
         Ok(ChatStorageInfo {
