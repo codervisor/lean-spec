@@ -166,6 +166,18 @@ pub(crate) enum Commands {
         /// Spec(s) this new spec depends on
         #[arg(long = "depends-on", num_args = 1..)]
         depends_on: Vec<String>,
+
+        /// Full markdown content for the spec body (may include frontmatter)
+        #[arg(long, allow_hyphen_values = true)]
+        content: Option<String>,
+
+        /// Read spec content from a file path (takes precedence over --content)
+        #[arg(short, long)]
+        file: Option<String>,
+
+        /// Assignee for the spec
+        #[arg(short, long)]
+        assignee: Option<String>,
     },
 
     /// List example projects

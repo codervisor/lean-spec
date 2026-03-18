@@ -5,11 +5,6 @@
 //! - --file option for reading content from file
 //! - Precedence rules between different content sources
 //! - Frontmatter merging and CLI option overrides
-//!
-//! Note: Many tests are marked #[ignore] because the --content, --file,
-//! and --description options are not yet implemented in the Rust CLI.
-//! These tests document the expected behavior from the TypeScript CLI
-//! and will be enabled once the features are implemented.
 
 mod common;
 use common::*;
@@ -17,19 +12,16 @@ use common::*;
 use std::path::Path;
 
 // Helper function to create a spec with content options
-#[allow(dead_code)]
 fn create_spec_with_content(cwd: &Path, name: &str, content: &str) -> ExecResult {
     exec_cli(&["create", name, "--content", content], cwd)
 }
 
 // Helper function to create a spec from file
-#[allow(dead_code)]
 fn create_spec_from_file(cwd: &Path, name: &str, file_path: &str) -> ExecResult {
     exec_cli(&["create", name, "--file", file_path], cwd)
 }
 
 #[test]
-#[ignore = "--content option not implemented in Rust CLI yet"]
 fn test_create_with_full_markdown_content() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -51,7 +43,7 @@ Custom design section.
 Custom implementation notes."#;
 
     let result = create_spec_with_content(cwd, "my-feature", content);
-    assert!(result.success, "create with content should succeed");
+    assert!(result.success, "create with content should succeed: stdout={} stderr={}", result.stdout, result.stderr);
 
     let spec_dir = cwd.join("specs").join("001-my-feature");
     assert!(dir_exists(&spec_dir), "spec directory should exist");
@@ -75,7 +67,6 @@ Custom implementation notes."#;
 }
 
 #[test]
-#[ignore = "--content option not implemented in Rust CLI yet"]
 fn test_create_with_content_that_has_frontmatter() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -97,7 +88,7 @@ This spec has frontmatter included."#;
     let result = create_spec_with_content(cwd, "my-feature", content);
     assert!(
         result.success,
-        "create with frontmatter content should succeed"
+        "create with frontmatter content should succeed: stdout={} stderr={}", result.stdout, result.stderr
     );
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
@@ -121,7 +112,6 @@ This spec has frontmatter included."#;
 }
 
 #[test]
-#[ignore = "--content option not implemented in Rust CLI yet"]
 fn test_create_override_content_frontmatter_with_cli_options() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -154,7 +144,7 @@ Content with frontmatter."#;
     );
     assert!(
         result.success,
-        "create with override options should succeed"
+        "create with override options should succeed: stdout={} stderr={}", result.stdout, result.stderr
     );
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
@@ -175,7 +165,6 @@ Content with frontmatter."#;
 }
 
 #[test]
-#[ignore = "--content option not implemented in Rust CLI yet"]
 fn test_create_content_without_frontmatter_uses_defaults() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -187,7 +176,7 @@ fn test_create_content_without_frontmatter_uses_defaults() {
 Just body content, no frontmatter."#;
 
     let result = create_spec_with_content(cwd, "my-feature", content);
-    assert!(result.success, "create without frontmatter should succeed");
+    assert!(result.success, "create without frontmatter should succeed: stdout={} stderr={}", result.stdout, result.stderr);
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
     let file_content = read_file(&readme_path);
@@ -205,7 +194,6 @@ Just body content, no frontmatter."#;
 }
 
 #[test]
-#[ignore = "--file option not implemented in Rust CLI yet"]
 fn test_create_from_file() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -226,7 +214,7 @@ File-based design."#;
     write_file(&content_file_path, content);
 
     let result = create_spec_from_file(cwd, "my-feature", "spec-content.md");
-    assert!(result.success, "create from file should succeed");
+    assert!(result.success, "create from file should succeed: stdout={} stderr={}", result.stdout, result.stderr);
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
     let file_content = read_file(&readme_path);
@@ -242,7 +230,6 @@ File-based design."#;
 }
 
 #[test]
-#[ignore = "--file option not implemented in Rust CLI yet"]
 fn test_create_from_file_absolute_path() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -257,7 +244,7 @@ Content from absolute path."#;
     write_file(&content_file_path, content);
 
     let result = create_spec_from_file(cwd, "my-feature", content_file_path.to_str().unwrap());
-    assert!(result.success, "create from absolute path should succeed");
+    assert!(result.success, "create from absolute path should succeed: stdout={} stderr={}", result.stdout, result.stderr);
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
     let file_content = read_file(&readme_path);
@@ -269,7 +256,6 @@ Content from absolute path."#;
 }
 
 #[test]
-#[ignore = "--file option not implemented in Rust CLI yet"]
 fn test_create_from_nonexistent_file() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -288,7 +274,6 @@ fn test_create_from_nonexistent_file() {
 }
 
 #[test]
-#[ignore = "--file option not implemented in Rust CLI yet"]
 fn test_create_from_directory_fails() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -304,7 +289,6 @@ fn test_create_from_directory_fails() {
 }
 
 #[test]
-#[ignore = "--file and --content options not implemented in Rust CLI yet"]
 fn test_create_file_takes_precedence_over_content() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -328,7 +312,7 @@ fn test_create_file_takes_precedence_over_content() {
         ],
         cwd,
     );
-    assert!(result.success, "create with both options should succeed");
+    assert!(result.success, "create with both options should succeed: stdout={} stderr={}", result.stdout, result.stderr);
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
     let spec_content = read_file(&readme_path);
@@ -345,7 +329,7 @@ fn test_create_file_takes_precedence_over_content() {
 }
 
 #[test]
-#[ignore = "--content and --description options not implemented in Rust CLI yet"]
+#[ignore = "--description option not implemented in Rust CLI yet"]
 fn test_create_content_takes_precedence_over_description() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -408,7 +392,6 @@ fn test_create_with_description_when_no_content() {
 }
 
 #[test]
-#[ignore = "--content option not implemented in Rust CLI yet"]
 fn test_create_with_large_content() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -419,7 +402,7 @@ fn test_create_with_large_content() {
     let large_content = format!("# Large Content\n\n{}", "A".repeat(15000));
 
     let result = create_spec_with_content(cwd, "my-feature", &large_content);
-    assert!(result.success, "create with large content should succeed");
+    assert!(result.success, "create with large content should succeed: stdout={} stderr={}", result.stdout, result.stderr);
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
     let file_content = read_file(&readme_path);
@@ -435,7 +418,6 @@ fn test_create_with_large_content() {
 }
 
 #[test]
-#[ignore = "--file option not implemented in Rust CLI yet"]
 fn test_create_with_special_characters() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -457,7 +439,7 @@ const x = `template ${string}`;
     let result = create_spec_from_file(cwd, "my-feature", "special-content.md");
     assert!(
         result.success,
-        "create with special characters should succeed"
+        "create with special characters should succeed: stdout={} stderr={}", result.stdout, result.stderr
     );
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
@@ -470,7 +452,6 @@ const x = `template ${string}`;
 }
 
 #[test]
-#[ignore = "--content option not implemented in Rust CLI yet"]
 fn test_create_with_title_and_content() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -494,7 +475,7 @@ This is the content body."#;
     );
     assert!(
         result.success,
-        "create with title and content should succeed"
+        "create with title and content should succeed: stdout={} stderr={}", result.stdout, result.stderr
     );
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
@@ -507,7 +488,6 @@ This is the content body."#;
 }
 
 #[test]
-#[ignore = "--content option not implemented in Rust CLI yet"]
 fn test_create_with_assignee_and_content() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -531,7 +511,7 @@ Content for the spec."#;
     );
     assert!(
         result.success,
-        "create with assignee and content should succeed"
+        "create with assignee and content should succeed: stdout={} stderr={}", result.stdout, result.stderr
     );
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
@@ -549,7 +529,6 @@ Content for the spec."#;
 }
 
 #[test]
-#[ignore = "--file option not implemented in Rust CLI yet"]
 fn test_create_with_minimal_content() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -562,7 +541,7 @@ fn test_create_with_minimal_content() {
     write_file(&content_file_path, content);
 
     let result = create_spec_from_file(cwd, "my-feature", "minimal-content.md");
-    assert!(result.success, "create with minimal content should succeed");
+    assert!(result.success, "create with minimal content should succeed: stdout={} stderr={}", result.stdout, result.stderr);
 
     let spec_dir = cwd.join("specs").join("001-my-feature");
     assert!(dir_exists(&spec_dir), "spec directory should exist");

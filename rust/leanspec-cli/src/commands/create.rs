@@ -32,6 +32,9 @@ pub struct CreateParams {
     pub tags: Option<String>,
     pub parent: Option<String>,
     pub depends_on: Vec<String>,
+    pub content: Option<String>,
+    pub file: Option<String>,
+    pub assignee: Option<String>,
 }
 
 /// Strip a leading numeric prefix like "006-" from a spec name.
@@ -49,31 +52,36 @@ pub fn run(params: CreateParams) -> Result<(), Box<dyn Error>> {
     let name = &params.name;
     let title = params.title;
     let template = params.template;
-    let status = params.status;
+    let explicit_status = params.status;
+    let explicit_priority = if params.priority == "medium" {
+        None // "medium" is the clap default, treat as not explicitly set
+    } else {
+        Some(params.priority.clone())
+    };
     let priority = &params.priority;
     let tags = params.tags;
     let parent = params.parent;
     let depends_on = params.depends_on;
+    let content_override = params.content;
+    let file_override = params.file;
+    let assignee = params.assignee;
+    let has_content_source = content_override.is_some() || file_override.is_some();
+
     // 1. Find project root and load config
     let project_root = find_project_root(specs_dir)?;
-    let config = load_config(&project_root)?;
 
-    // 2. Resolve status (with draft detection)
-    let resolved_status = status.unwrap_or_else(|| {
-        if is_draft_status_enabled(&project_root) {
-            "draft".to_string()
-        } else {
-            "planned".to_string()
-        }
-    });
+    // 2. Resolve status
+    let resolved_status = explicit_status
+        .clone()
+        .unwrap_or_else(|| {
+            if is_draft_status_enabled(&project_root) {
+                "draft".to_string()
+            } else {
+                "planned".to_string()
+            }
+        });
 
-    // 3. Load template from filesystem
-    let template_loader = TemplateLoader::with_config(&project_root, config);
-    let template_content = template_loader
-        .load(template.as_deref())
-        .map_err(|e| format!("Failed to load template: {}", e))?;
-
-    // 4. Generate spec number
+    // 3. Generate spec number
     let next_number = get_next_spec_number(specs_dir)?;
     let name = strip_numeric_prefix(name);
     let spec_name = format!("{:03}-{}", next_number, name);
@@ -85,21 +93,63 @@ pub fn run(params: CreateParams) -> Result<(), Box<dyn Error>> {
 
     fs::create_dir_all(&spec_dir)?;
 
-    // 5. Generate title and parse tags
+    // 4. Generate title and parse tags
     let title = title.unwrap_or_else(|| generate_title(name));
     let tags_vec: Vec<String> = parse_tags(tags);
 
-    // 6. Apply variable substitution
-    let content = apply_variables(
-        &template_content,
-        &title,
-        &resolved_status,
-        priority,
-        &tags_vec,
-    )?;
+    // 5. Build final content — two distinct paths:
+    //    a) Content/file path: merge_frontmatter (preserves content frontmatter, CLI overrides)
+    //    b) Template path: variable substitution (original behavior)
+    let content = if has_content_source {
+        // Read from file or use --content directly
+        let raw_content = if let Some(file_path) = file_override.as_deref() {
+            let path = Path::new(file_path);
+            if !path.exists() {
+                return Err(format!("File not found: {}", file_path).into());
+            }
+            if path.is_dir() {
+                return Err(format!("Path is a directory, not a file: {}", file_path).into());
+            }
+            fs::read_to_string(path)?
+        } else {
+            content_override.unwrap()
+        };
 
-    // 6b. Apply optional relationships in frontmatter
-    let content = apply_relationships(content, parent.as_deref(), &depends_on)?;
+        let now = Utc::now();
+        let created_date = now.format("%Y-%m-%d").to_string();
+
+        let merge_input = MergeFrontmatterInput {
+            content: &raw_content,
+            title: &title,
+            status: explicit_status.as_deref(),
+            default_status: &resolved_status,
+            priority: explicit_priority.as_deref(),
+            default_priority: priority,
+            tags: &tags_vec,
+            assignee: assignee.as_deref(),
+            parent: parent.as_deref(),
+            depends_on: &depends_on,
+            created_date: &created_date,
+            now,
+        };
+        merge_frontmatter(&merge_input)?
+    } else {
+        // Template path: load template, substitute variables, apply relationships
+        let config = load_config(&project_root)?;
+        let template_loader = TemplateLoader::with_config(&project_root, config);
+        let template_content = template_loader
+            .load(template.as_deref())
+            .map_err(|e| format!("Failed to load template: {}", e))?;
+
+        let content = apply_variables(
+            &template_content,
+            &title,
+            &resolved_status,
+            priority,
+            &tags_vec,
+        )?;
+        apply_relationships(content, parent.as_deref(), &depends_on)?
+    };
 
     // 7. Write file
     let readme_path = spec_dir.join("README.md");
@@ -118,6 +168,47 @@ pub fn run(params: CreateParams) -> Result<(), Box<dyn Error>> {
     });
 
     Ok(())
+}
+
+fn apply_variables(
+    template: &str,
+    title: &str,
+    status: &str,
+    priority: &str,
+    tags: &[String],
+) -> Result<String, Box<dyn Error>> {
+    let now = Utc::now();
+    let created_date = now.format("%Y-%m-%d").to_string();
+    let created_at = now.to_rfc3339();
+
+    let mut content = template.to_string();
+
+    // Replace template variables
+    content = content.replace("{name}", title);
+    content = content.replace("{title}", title);
+    content = content.replace("{date}", &created_date);
+    content = content.replace("{status}", status);
+    content = content.replace("{priority}", priority);
+
+    // Handle frontmatter replacements
+    content = content.replace("status: planned", &format!("status: {}", status));
+    content = content.replace("priority: medium", &format!("priority: {}", priority));
+
+    // Replace tags in frontmatter
+    if !tags.is_empty() {
+        let tags_yaml = tags
+            .iter()
+            .map(|t| format!("  - {}", t))
+            .collect::<Vec<_>>()
+            .join("\n");
+        content = content.replace("tags: []", &format!("tags:\n{}", tags_yaml));
+    }
+
+    // Add created_at timestamp to frontmatter
+    let frontmatter_end = content.find("---\n\n").ok_or("Invalid template format")?;
+    content.insert_str(frontmatter_end, &format!("created_at: '{}'\n", created_at));
+
+    Ok(content)
 }
 
 fn apply_relationships(
@@ -151,6 +242,172 @@ fn apply_relationships(
         .update_frontmatter(&content, &updates)
         .map_err(|e| format!("Failed to apply relationships to frontmatter: {}", e).into())
 }
+
+/// Ensure required frontmatter fields (`status`, `created`) are present.
+/// The FrontmatterParser requires them, but user-provided content often omits them.
+/// Missing fields are injected with sensible defaults so the parser succeeds.
+fn ensure_required_frontmatter_fields(content: &str, status: &str, created_date: &str) -> String {
+    // Only process if content has frontmatter delimiters
+    if !content.starts_with("---\n") && !content.starts_with("---\r\n") {
+        return content.to_string();
+    }
+
+    let end_marker = content[4..].find("\n---");
+    if let Some(end_pos) = end_marker {
+        let fm_block = &content[4..4 + end_pos];
+        let mut to_inject = String::new();
+
+        let has_status = fm_block.contains("\nstatus:") || fm_block.starts_with("status:");
+        if !has_status {
+            to_inject.push_str(&format!("\nstatus: {}", status));
+        }
+
+        let has_created = fm_block.contains("\ncreated:") || fm_block.starts_with("created:");
+        if !has_created {
+            to_inject.push_str(&format!("\ncreated: '{}'", created_date));
+        }
+
+        if !to_inject.is_empty() {
+            let insert_pos = 4 + end_pos;
+            let mut result = content[..insert_pos].to_string();
+            result.push_str(&to_inject);
+            result.push_str(&content[insert_pos..]);
+            return result;
+        }
+    }
+
+    content.to_string()
+}
+
+struct MergeFrontmatterInput<'a> {
+    content: &'a str,
+    title: &'a str,
+    /// Explicit status from CLI flag (None = not provided, use content's or default)
+    status: Option<&'a str>,
+    /// Fallback status when content has no frontmatter or no status field
+    default_status: &'a str,
+    /// Explicit priority from CLI flag (None = not provided, use content's or default)
+    priority: Option<&'a str>,
+    /// Fallback priority for no-frontmatter path
+    default_priority: &'a str,
+    tags: &'a [String],
+    assignee: Option<&'a str>,
+    parent: Option<&'a str>,
+    depends_on: &'a [String],
+    created_date: &'a str,
+    now: chrono::DateTime<Utc>,
+}
+
+/// Merge frontmatter into content, mirroring MCP's merge_frontmatter behavior.
+///
+/// When content already has frontmatter, only explicitly-set CLI flags override.
+/// When content has no frontmatter, a default frontmatter block is generated.
+fn merge_frontmatter(input: &MergeFrontmatterInput<'_>) -> Result<String, Box<dyn Error>> {
+    use leanspec_core::{FrontmatterParser, SpecFrontmatter, SpecPriority, SpecStatus};
+
+    let parser = FrontmatterParser::new();
+
+    // If content has frontmatter but is missing required fields, inject defaults
+    // so the parser doesn't reject it. This is common when users/AI pass partial frontmatter.
+    let content = ensure_required_frontmatter_fields(
+        input.content,
+        input.default_status,
+        input.created_date,
+    );
+    let content = content.as_str();
+
+    match parser.parse(content) {
+        Ok((mut fm, body)) => {
+            // Only override frontmatter fields that were explicitly set via CLI flags
+            if let Some(s) = input.status {
+                fm.status = s.parse().map_err(|_| format!("Invalid status: {}", s))?;
+            }
+            if let Some(p) = input.priority {
+                fm.priority = Some(
+                    p.parse()
+                        .map_err(|_| format!("Invalid priority: {}", p))?,
+                );
+            }
+            if !input.tags.is_empty() {
+                fm.tags = input.tags.to_vec();
+            }
+            if fm.created.trim().is_empty() {
+                fm.created = input.created_date.to_string();
+            }
+            if fm.created_at.is_none() {
+                fm.created_at = Some(input.now);
+            }
+            fm.updated_at = Some(input.now);
+            if let Some(a) = input.assignee {
+                fm.assignee = Some(a.to_string());
+            }
+            if let Some(p) = input.parent {
+                fm.parent = Some(p.to_string());
+            }
+            if !input.depends_on.is_empty() {
+                fm.depends_on = input.depends_on.to_vec();
+            }
+
+            // Ensure H1 title is present
+            let trimmed_body = body.trim_start();
+            let final_body = if trimmed_body.starts_with("# ") || trimmed_body.starts_with("#\n") {
+                body
+            } else {
+                format!("# {}\n\n{}", input.title, trimmed_body)
+            };
+
+            Ok(parser.stringify(&fm, &final_body))
+        }
+        Err(leanspec_core::parsers::ParseError::NoFrontmatter) => {
+            // Build frontmatter from scratch using defaults
+            let status_parsed: SpecStatus = input
+                .default_status
+                .parse()
+                .map_err(|_| format!("Invalid status: {}", input.default_status))?;
+            let priority_parsed: Option<SpecPriority> = Some(
+                input
+                    .default_priority
+                    .parse()
+                    .map_err(|_| format!("Invalid priority: {}", input.default_priority))?,
+            );
+
+            let fm = SpecFrontmatter {
+                status: status_parsed,
+                created: input.created_date.to_string(),
+                priority: priority_parsed,
+                tags: input.tags.to_vec(),
+                depends_on: input.depends_on.to_vec(),
+                parent: input.parent.map(String::from),
+                assignee: input.assignee.map(String::from),
+                reviewer: None,
+                issue: None,
+                pr: None,
+                epic: None,
+                breaking: None,
+                due: None,
+                updated: None,
+                completed: None,
+                created_at: Some(input.now),
+                updated_at: Some(input.now),
+                completed_at: None,
+                transitions: Vec::new(),
+                custom: std::collections::HashMap::new(),
+            };
+
+            // Ensure H1 title is present
+            let body = content.trim_start();
+            let final_body = if body.starts_with("# ") || body.starts_with("#\n") {
+                body.to_string()
+            } else {
+                format!("# {}\n\n{}", input.title, body)
+            };
+
+            Ok(parser.stringify(&fm, &final_body))
+        }
+        Err(e) => Err(format!("Failed to parse content frontmatter: {}", e).into()),
+    }
+}
+
 
 fn get_next_spec_number(specs_dir: &str) -> Result<u32, Box<dyn Error>> {
     let specs_path = Path::new(specs_dir);
@@ -256,46 +513,6 @@ fn is_draft_status_enabled(project_root: &Path) -> bool {
     false
 }
 
-fn apply_variables(
-    template: &str,
-    title: &str,
-    status: &str,
-    priority: &str,
-    tags: &[String],
-) -> Result<String, Box<dyn Error>> {
-    let now = Utc::now();
-    let created_date = now.format("%Y-%m-%d").to_string();
-    let created_at = now.to_rfc3339();
-
-    let mut content = template.to_string();
-
-    // Replace template variables
-    content = content.replace("{name}", title);
-    content = content.replace("{title}", title);
-    content = content.replace("{date}", &created_date);
-    content = content.replace("{status}", status);
-    content = content.replace("{priority}", priority);
-
-    // Handle frontmatter replacements
-    content = content.replace("status: planned", &format!("status: {}", status));
-    content = content.replace("priority: medium", &format!("priority: {}", priority));
-
-    // Replace tags in frontmatter
-    if !tags.is_empty() {
-        let tags_yaml = tags
-            .iter()
-            .map(|t| format!("  - {}", t))
-            .collect::<Vec<_>>()
-            .join("\n");
-        content = content.replace("tags: []", &format!("tags:\n{}", tags_yaml));
-    }
-
-    // Add created_at timestamp to frontmatter
-    let frontmatter_end = content.find("---\n\n").ok_or("Invalid template format")?;
-    content.insert_str(frontmatter_end, &format!("created_at: '{}'\n", created_at));
-
-    Ok(content)
-}
 
 fn generate_title(name: &str) -> String {
     name.split('-')
@@ -358,120 +575,104 @@ fn print_success(info: &SuccessInfo) {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_apply_variables_basic() {
-        // Use a minimal template for testing
-        let template = r#"---
-status: planned
-priority: medium
-tags: []
----
+    fn test_now() -> chrono::DateTime<Utc> {
+        chrono::DateTime::parse_from_rfc3339("2025-01-15T12:00:00Z")
+            .unwrap()
+            .with_timezone(&Utc)
+    }
 
-# {name}
-
-Created: {date}
-"#;
-        let result = apply_variables(template, "Test Feature", "planned", "medium", &[]);
-        assert!(result.is_ok(), "should successfully populate template");
-
-        let content = result.unwrap();
-
-        // Check title replacement
-        assert!(
-            content.contains("# Test Feature"),
-            "should replace title placeholder"
-        );
-
-        // Check frontmatter
-        assert!(
-            content.starts_with("---\n"),
-            "should start with frontmatter"
-        );
-        assert!(
-            content.contains("status: planned"),
-            "should have correct status"
-        );
-        assert!(
-            content.contains("priority: medium"),
-            "should have default priority"
-        );
-        assert!(content.contains("tags: []"), "should have empty tags array");
-        assert!(
-            content.contains("created_at:"),
-            "should have created_at timestamp"
-        );
+    fn make_input<'a>(
+        content: &'a str,
+        title: &'a str,
+        status: Option<&'a str>,
+        priority: Option<&'a str>,
+        tags: &'a [String],
+        assignee: Option<&'a str>,
+    ) -> MergeFrontmatterInput<'a> {
+        MergeFrontmatterInput {
+            content,
+            title,
+            status,
+            default_status: "planned",
+            priority,
+            default_priority: "medium",
+            tags,
+            assignee,
+            parent: None,
+            depends_on: &[],
+            created_date: "2025-01-15",
+            now: test_now(),
+        }
     }
 
     #[test]
-    fn test_apply_variables_with_priority() {
-        let template = r#"---
-status: planned
-priority: medium
-tags: []
----
-
-# {name}
-"#;
-        let result = apply_variables(template, "Test", "in-progress", "high", &[]);
-        assert!(result.is_ok(), "should succeed with priority");
-
-        let content = result.unwrap();
-        assert!(
-            content.contains("priority: high"),
-            "should replace priority"
-        );
-        assert!(
-            content.contains("status: in-progress"),
-            "should have correct status"
-        );
+    fn test_merge_frontmatter_explicit_override() {
+        let content = "---\nstatus: draft\npriority: low\ntags: []\n---\n\n# My Feature\n\nBody text.\n";
+        let input = make_input(content, "My Feature", Some("planned"), Some("medium"), &[], None);
+        let result = merge_frontmatter(&input);
+        assert!(result.is_ok(), "should successfully merge: {:?}", result.err());
+        let output = result.unwrap();
+        assert!(output.contains("status: planned"), "explicit CLI status should override");
+        assert!(output.contains("priority: medium"), "explicit CLI priority should override");
+        assert!(output.contains("# My Feature"), "should preserve title heading");
+        assert!(output.contains("Body text."), "should preserve body");
     }
 
     #[test]
-    fn test_apply_variables_with_tags() {
-        let template = r#"---
-status: planned
-priority: medium
-tags: []
----
+    fn test_merge_frontmatter_preserves_content_values_when_not_explicit() {
+        let content = "---\nstatus: in-progress\npriority: high\ntags: []\n---\n\n# My Feature\n\nBody text.\n";
+        // status=None, priority=None => content values preserved
+        let input = make_input(content, "My Feature", None, None, &[], None);
+        let result = merge_frontmatter(&input);
+        assert!(result.is_ok(), "should merge: {:?}", result.err());
+        let output = result.unwrap();
+        assert!(output.contains("status: in-progress"), "should preserve content status");
+        assert!(output.contains("priority: high"), "should preserve content priority");
+    }
 
-# {name}
-"#;
+    #[test]
+    fn test_merge_frontmatter_content_without_frontmatter() {
+        let content = "# Simple Content\n\nJust body, no frontmatter.";
+        let input = make_input(content, "Simple Content", None, None, &[], None);
+        let result = merge_frontmatter(&input);
+        assert!(result.is_ok(), "should build frontmatter from scratch");
+        let output = result.unwrap();
+        assert!(output.starts_with("---\n"), "should start with frontmatter");
+        assert!(output.contains("status: planned"), "should have default status");
+        assert!(output.contains("# Simple Content"), "should preserve content");
+    }
+
+    #[test]
+    fn test_merge_frontmatter_with_tags() {
+        let content = "# Test\n\nBody.";
         let tags = vec!["feature".to_string(), "backend".to_string()];
-        let result = apply_variables(template, "Test", "planned", "medium", &tags);
-        assert!(result.is_ok(), "should succeed with tags");
-
-        let content = result.unwrap();
-        assert!(content.contains("  - feature"), "should contain first tag");
-        assert!(content.contains("  - backend"), "should contain second tag");
-        assert!(
-            !content.contains("tags: []"),
-            "should not have empty tags array"
-        );
+        let input = make_input(content, "Test", None, None, &tags, None);
+        let result = merge_frontmatter(&input);
+        assert!(result.is_ok());
+        let output = result.unwrap();
+        assert!(output.contains("feature"), "should contain first tag");
+        assert!(output.contains("backend"), "should contain second tag");
     }
 
     #[test]
-    fn test_apply_variables_all_options() {
-        let template = r#"---
-status: planned
-priority: medium
-tags: []
----
+    fn test_merge_frontmatter_with_assignee() {
+        let content = "# Test\n\nBody.";
+        let input = make_input(content, "Test", None, None, &[], Some("john.doe"));
+        let result = merge_frontmatter(&input);
+        assert!(result.is_ok());
+        let output = result.unwrap();
+        assert!(output.contains("assignee: john.doe"), "should have assignee");
+    }
 
-# {name}
-"#;
-        let tags = vec!["api".to_string(), "v2".to_string()];
-        let result = apply_variables(template, "Complete Feature", "complete", "critical", &tags);
-        assert!(result.is_ok(), "should succeed with all options");
-
-        let content = result.unwrap();
-        assert!(content.contains("# Complete Feature"), "should have title");
-        assert!(content.contains("status: complete"), "should have status");
-        assert!(
-            content.contains("priority: critical"),
-            "should have priority"
-        );
-        assert!(content.contains("  - api"), "should have first tag");
-        assert!(content.contains("  - v2"), "should have second tag");
+    #[test]
+    fn test_merge_frontmatter_adds_title_when_missing() {
+        let content = "Just body text, no heading.";
+        let input = make_input(content, "My Title", None, None, &[], None);
+        let result = merge_frontmatter(&input);
+        assert!(result.is_ok());
+        let output = result.unwrap();
+        assert!(output.contains("# My Title"), "should prepend H1 title");
+        assert!(output.contains("Just body text"), "should preserve body");
     }
 
     #[test]

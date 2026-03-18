@@ -70,6 +70,9 @@ fn main() -> ExitCode {
             tags,
             parent,
             depends_on,
+            content,
+            file,
+            assignee,
         } => commands::create::run(commands::create::CreateParams {
             specs_dir: specs_dir.clone(),
             name,
@@ -80,6 +83,9 @@ fn main() -> ExitCode {
             tags,
             parent,
             depends_on,
+            content,
+            file,
+            assignee,
         }),
         Commands::Rel {
             args,
