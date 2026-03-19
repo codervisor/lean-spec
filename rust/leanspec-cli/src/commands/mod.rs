@@ -39,4 +39,5 @@ pub mod migrate;
 pub mod migrate_archived;
 pub mod split;
 pub mod templates;
+pub mod tui;
 pub mod ui;

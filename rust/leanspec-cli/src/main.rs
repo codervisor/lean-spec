@@ -268,6 +268,7 @@ fn main() -> ExitCode {
         Commands::Tokens { path, verbose } => {
             commands::tokens::run(&specs_dir, path.as_deref(), verbose, &cli.output)
         }
+        Commands::Tui { view } => commands::tui::run(&specs_dir, &view),
         Commands::Ui {
             port,
             no_open,

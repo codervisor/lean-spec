@@ -20,6 +20,7 @@ colored.workspace = true
 dialoguer.workspace = true
 indicatif.workspace = true
 leanspec-core = {path = "../leanspec-core", features = ["sessions", "storage", "github"]}
+ratatui.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true

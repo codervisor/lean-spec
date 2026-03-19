@@ -489,6 +489,13 @@ pub(crate) enum Commands {
         verbose: bool,
     },
 
+    /// Interactive terminal UI for spec management
+    Tui {
+        /// Initial view: board, list
+        #[arg(long, default_value = "board")]
+        view: String,
+    },
+
     /// Start local web UI for spec management
     Ui {
         /// Port to run on
