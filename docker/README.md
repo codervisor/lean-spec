@@ -4,14 +4,6 @@ Run the LeanSpec UI in a Docker container — useful for CI/CD, team self-hostin
 
 ## Quick Start
 
-### Using Docker Compose (recommended)
-
-```sh
-docker compose up
-```
-
-Open http://localhost:3000 in your browser. Projects are managed through the UI — use the project discovery or add projects manually.
-
 ### Using Docker directly
 
 ```sh
@@ -44,21 +36,7 @@ docker run -p 3000:3000 \
   --project /projects/my-project
 ```
 
-Or in `docker-compose.yml`:
-
-```yaml
-services:
-  leanspec:
-    image: ghcr.io/codervisor/leanspec:latest
-    ports:
-      - "3000:3000"
-    volumes:
-      - leanspec-data:/home/leanspec/.lean-spec
-      - /path/to/project-a:/projects/project-a:ro
-      - /path/to/project-b:/projects/project-b:ro
-```
-
-Once mounted, projects can be discovered and registered through the UI.
+An example `docker-compose.yml` is available in `deploy/examples/`.
 
 ## Data Persistence
 
@@ -112,6 +90,6 @@ ghcr.io/codervisor/leanspec:<version>   # e.g. 0.2.27
 
 The image uses a two-stage build:
 - **Builder stage** (`node:20-slim`): installs `@leanspec/http-linux-x64` and `@leanspec/ui` from npm
-- **Runtime stage** (`debian:12-slim`): copies only the Rust binary and pre-built UI static files — no Node at runtime
+- **Runtime stage** (`debian:bookworm-slim`): copies only the Rust binary and pre-built UI static files — no Node at runtime
 
 No Rust compilation happens at build time.

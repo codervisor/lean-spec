@@ -14,15 +14,16 @@ docker run -d \
   ghcr.io/codervisor/leanspec:latest
 ```
 
-Or use docker-compose:
+Or use the example docker-compose file:
 
 ```bash
-cd docker && docker compose up -d
+cd deploy/examples && docker compose up -d
 ```
 
 ### Fly.io
 
 ```bash
+cp deploy/fly.toml .
 fly launch --copy-config
 fly secrets set LEANSPEC_API_KEY=your-secret-key
 fly deploy
@@ -37,7 +38,7 @@ fly deploy
 
 ### Render
 
-1. Create a new Blueprint from `render.yaml`
+1. Create a new Blueprint from `deploy/render.yaml`
 2. Render auto-generates `LEANSPEC_API_KEY`
 3. Persistent disk is configured automatically
 
