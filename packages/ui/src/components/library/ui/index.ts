@@ -117,6 +117,9 @@ export {
 // Input
 export { Input, type InputProps } from './input';
 
+// Label
+export { Label } from './label';
+
 // Input Group
 export {
   InputGroup,
