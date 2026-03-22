@@ -3,11 +3,10 @@
 #![cfg(feature = "storage")]
 
 use crate::error::{CoreError, CoreResult};
-use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sqlx::SqlitePool;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -50,43 +49,24 @@ pub struct ChatMessageInput {
     pub metadata: Option<Value>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ChatStore {
-    conn: Mutex<Connection>,
+    pool: SqlitePool,
     db_path: PathBuf,
 }
 
 impl ChatStore {
-    pub fn new() -> CoreResult<Self> {
-        let db_path = super::config::default_database_path();
-        Self::new_with_db_path(db_path)
+    /// Create a ChatStore backed by the given pool.
+    pub fn new(pool: SqlitePool, db_path: PathBuf) -> Self {
+        Self { pool, db_path }
     }
 
-    pub fn new_with_db_path<P: AsRef<Path>>(db_path: P) -> CoreResult<Self> {
-        let db_path = db_path.as_ref().to_path_buf();
-        if let Some(parent) = db_path.parent() {
-            std::fs::create_dir_all(parent).map_err(|e| CoreError::Other(e.to_string()))?;
-        }
-
-        let conn = Connection::open(&db_path).map_err(|e| CoreError::Other(e.to_string()))?;
-        conn.execute_batch("PRAGMA journal_mode=WAL;\n             PRAGMA busy_timeout=5000;")
-            .map_err(|e| CoreError::Other(e.to_string()))?;
-
-        let store = Self {
-            conn: Mutex::new(conn),
-            db_path,
-        };
-
-        store.init_schema()?;
-        Ok(store)
-    }
-
-    /// Quick connectivity check: runs a trivial query against the database.
-    pub fn health_check(&self) -> bool {
-        let Ok(conn) = self.conn.lock() else {
-            return false;
-        };
-        conn.execute_batch("SELECT 1").is_ok()
+    /// Quick connectivity check
+    pub async fn health_check(&self) -> bool {
+        sqlx::query("SELECT 1")
+            .execute(&self.pool)
+            .await
+            .is_ok()
     }
 
     pub fn storage_info(&self) -> Result<ChatStorageInfo, String> {
@@ -98,27 +78,27 @@ impl ChatStore {
     }
 
     /// Import chat data from a legacy chat.db file into the current database.
-    pub fn migrate_from_legacy_db<P: AsRef<Path>>(&self, legacy_path: P) -> CoreResult<bool> {
+    pub async fn migrate_from_legacy_db<P: AsRef<Path>>(
+        &self,
+        legacy_path: P,
+    ) -> CoreResult<bool> {
         let legacy_path = legacy_path.as_ref();
         if !legacy_path.exists() || legacy_path == self.db_path.as_path() {
             return Ok(false);
         }
 
-        let conn = self
-            .conn
-            .lock()
-            .map_err(|_| CoreError::Other("Failed to lock database".to_string()))?;
+        let legacy_str = legacy_path.to_string_lossy().to_string();
+        let attach_sql = format!("ATTACH DATABASE '{}' AS legacy_chat", legacy_str);
 
-        conn.execute(
-            "ATTACH DATABASE ?1 AS legacy_chat",
-            [legacy_path.to_string_lossy().as_ref()],
-        )
-        .map_err(|e| CoreError::Other(e.to_string()))?;
+        sqlx::query(&attach_sql)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| CoreError::Other(e.to_string()))?;
 
         let mut imported = false;
-        let result = (|| -> CoreResult<()> {
-            if table_exists(&conn, "legacy_chat", "conversations")? {
-                conn.execute_batch(
+        let result: CoreResult<()> = async {
+            if table_exists(&self.pool, "legacy_chat", "conversations").await? {
+                sqlx::query(
                     "INSERT OR IGNORE INTO conversations (
                         id, project_id, title, provider_id, model_id,
                         created_at, updated_at, message_count, last_message,
@@ -130,12 +110,14 @@ impl ChatStore {
                         tags, archived, cloud_id
                     FROM legacy_chat.conversations",
                 )
+                .execute(&self.pool)
+                .await
                 .map_err(|e| CoreError::Other(e.to_string()))?;
                 imported = true;
             }
 
-            if table_exists(&conn, "legacy_chat", "messages")? {
-                conn.execute_batch(
+            if table_exists(&self.pool, "legacy_chat", "messages").await? {
+                sqlx::query(
                     "INSERT OR IGNORE INTO messages (
                         id, conversation_id, project_id, role, content,
                         timestamp, parts, metadata
@@ -145,12 +127,14 @@ impl ChatStore {
                         timestamp, parts, metadata
                     FROM legacy_chat.messages",
                 )
+                .execute(&self.pool)
+                .await
                 .map_err(|e| CoreError::Other(e.to_string()))?;
                 imported = true;
             }
 
-            if table_exists(&conn, "legacy_chat", "sync_metadata")? {
-                conn.execute_batch(
+            if table_exists(&self.pool, "legacy_chat", "sync_metadata").await? {
+                sqlx::query(
                     "INSERT OR IGNORE INTO sync_metadata (
                         conversation_id, cloud_id, last_synced_at, sync_status, version
                     )
@@ -158,49 +142,40 @@ impl ChatStore {
                         conversation_id, cloud_id, last_synced_at, sync_status, version
                     FROM legacy_chat.sync_metadata",
                 )
+                .execute(&self.pool)
+                .await
                 .map_err(|e| CoreError::Other(e.to_string()))?;
                 imported = true;
             }
 
             Ok(())
-        })();
+        }
+        .await;
 
-        let _ = conn.execute("DETACH DATABASE legacy_chat", []);
+        let _ = sqlx::query("DETACH DATABASE legacy_chat")
+            .execute(&self.pool)
+            .await;
         result?;
 
         Ok(imported)
     }
 
-    pub fn list_sessions(&self, project_id: &str) -> Result<Vec<ChatSession>, String> {
-        let conn = self.conn.lock().map_err(|_| "Failed to lock database")?;
-        let mut stmt = conn
-            .prepare(
-                "SELECT id, project_id, title, provider_id, model_id, created_at, updated_at, message_count, last_message\n                 FROM conversations\n                 WHERE project_id = ?1\n                 ORDER BY updated_at DESC",
-            )
-            .map_err(|e| e.to_string())?;
+    pub async fn list_sessions(&self, project_id: &str) -> Result<Vec<ChatSession>, String> {
+        let rows = sqlx::query_as::<_, ChatSessionRow>(
+            "SELECT id, project_id, title, provider_id, model_id, created_at, updated_at, message_count, last_message
+             FROM conversations
+             WHERE project_id = ?
+             ORDER BY updated_at DESC",
+        )
+        .bind(project_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
 
-        let sessions = stmt
-            .query_map(params![project_id], |row| {
-                Ok(ChatSession {
-                    id: row.get(0)?,
-                    project_id: row.get(1)?,
-                    title: row.get(2)?,
-                    provider_id: row.get(3)?,
-                    model_id: row.get(4)?,
-                    created_at: row.get(5)?,
-                    updated_at: row.get(6)?,
-                    message_count: row.get(7)?,
-                    preview: row.get(8)?,
-                })
-            })
-            .map_err(|e| e.to_string())?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| e.to_string())?;
-
-        Ok(sessions)
+        Ok(rows.into_iter().map(|r| r.into()).collect())
     }
 
-    pub fn create_session(
+    pub async fn create_session(
         &self,
         id: &str,
         project_id: &str,
@@ -208,11 +183,19 @@ impl ChatStore {
         model_id: Option<String>,
     ) -> Result<ChatSession, String> {
         let now = now_ms();
-        let conn = self.conn.lock().map_err(|_| "Failed to lock database")?;
-        conn.execute(
-            "INSERT INTO conversations (id, project_id, title, provider_id, model_id, created_at, updated_at, message_count, last_message)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 0, NULL)",
-            params![id, project_id, "New Chat", provider_id, model_id, now, now],
+        sqlx::query(
+            "INSERT INTO conversations (id, project_id, title, provider_id, model_id, created_at, updated_at, message_count, last_message)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL)",
         )
+        .bind(id)
+        .bind(project_id)
+        .bind("New Chat")
+        .bind(&provider_id)
+        .bind(&model_id)
+        .bind(now)
+        .bind(now)
+        .execute(&self.pool)
+        .await
         .map_err(|e| e.to_string())?;
 
         Ok(ChatSession {
@@ -228,68 +211,35 @@ impl ChatStore {
         })
     }
 
-    pub fn get_session(&self, session_id: &str) -> Result<Option<ChatSession>, String> {
-        let conn = self.conn.lock().map_err(|_| "Failed to lock database")?;
-        conn.query_row(
-            "SELECT id, project_id, title, provider_id, model_id, created_at, updated_at, message_count, last_message\n             FROM conversations WHERE id = ?1",
-            params![session_id],
-            |row| {
-                Ok(ChatSession {
-                    id: row.get(0)?,
-                    project_id: row.get(1)?,
-                    title: row.get(2)?,
-                    provider_id: row.get(3)?,
-                    model_id: row.get(4)?,
-                    created_at: row.get(5)?,
-                    updated_at: row.get(6)?,
-                    message_count: row.get(7)?,
-                    preview: row.get(8)?,
-                })
-            },
+    pub async fn get_session(&self, session_id: &str) -> Result<Option<ChatSession>, String> {
+        let row = sqlx::query_as::<_, ChatSessionRow>(
+            "SELECT id, project_id, title, provider_id, model_id, created_at, updated_at, message_count, last_message
+             FROM conversations WHERE id = ?",
         )
-        .optional()
-        .map_err(|e| e.to_string())
+        .bind(session_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        Ok(row.map(|r| r.into()))
     }
 
-    pub fn get_messages(&self, session_id: &str) -> Result<Vec<ChatMessage>, String> {
-        let conn = self.conn.lock().map_err(|_| "Failed to lock database")?;
-        let mut stmt = conn
-            .prepare(
-                "SELECT id, conversation_id, project_id, role, content, timestamp, parts, metadata\n                 FROM messages\n                 WHERE conversation_id = ?1\n                 ORDER BY timestamp ASC",
-            )
-            .map_err(|e| e.to_string())?;
+    pub async fn get_messages(&self, session_id: &str) -> Result<Vec<ChatMessage>, String> {
+        let rows = sqlx::query_as::<_, ChatMessageRow>(
+            "SELECT id, conversation_id, project_id, role, content, timestamp, parts, metadata
+             FROM messages
+             WHERE conversation_id = ?
+             ORDER BY timestamp ASC",
+        )
+        .bind(session_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
 
-        let messages = stmt
-            .query_map(params![session_id], |row| {
-                let parts: Option<String> = row.get(6)?;
-                let parts = match parts {
-                    Some(value) => serde_json::from_str(&value).ok(),
-                    None => None,
-                };
-                let metadata: Option<String> = row.get(7)?;
-                let metadata = match metadata {
-                    Some(value) => serde_json::from_str(&value).ok(),
-                    None => None,
-                };
-                Ok(ChatMessage {
-                    id: row.get(0)?,
-                    session_id: row.get(1)?,
-                    project_id: row.get(2)?,
-                    role: row.get(3)?,
-                    content: row.get(4)?,
-                    timestamp: row.get(5)?,
-                    parts,
-                    metadata,
-                })
-            })
-            .map_err(|e| e.to_string())?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| e.to_string())?;
-
-        Ok(messages)
+        Ok(rows.into_iter().map(|r| r.into()).collect())
     }
 
-    pub fn update_session(
+    pub async fn update_session(
         &self,
         session_id: &str,
         title: Option<String>,
@@ -297,28 +247,36 @@ impl ChatStore {
         model_id: Option<String>,
     ) -> Result<Option<ChatSession>, String> {
         let now = now_ms();
-        let conn = self.conn.lock().map_err(|_| "Failed to lock database")?;
-        conn.execute(
-            "UPDATE conversations\n             SET title = COALESCE(?2, title),\n                 provider_id = COALESCE(?3, provider_id),\n                 model_id = COALESCE(?4, model_id),\n                 updated_at = ?5\n             WHERE id = ?1",
-            params![session_id, title, provider_id, model_id, now],
+        sqlx::query(
+            "UPDATE conversations
+             SET title = COALESCE(?, title),
+                 provider_id = COALESCE(?, provider_id),
+                 model_id = COALESCE(?, model_id),
+                 updated_at = ?
+             WHERE id = ?",
         )
+        .bind(&title)
+        .bind(&provider_id)
+        .bind(&model_id)
+        .bind(now)
+        .bind(session_id)
+        .execute(&self.pool)
+        .await
         .map_err(|e| e.to_string())?;
-        drop(conn);
-        self.get_session(session_id)
+
+        self.get_session(session_id).await
     }
 
-    pub fn delete_session(&self, session_id: &str) -> Result<bool, String> {
-        let conn = self.conn.lock().map_err(|_| "Failed to lock database")?;
-        let deleted = conn
-            .execute(
-                "DELETE FROM conversations WHERE id = ?1",
-                params![session_id],
-            )
+    pub async fn delete_session(&self, session_id: &str) -> Result<bool, String> {
+        let result = sqlx::query("DELETE FROM conversations WHERE id = ?")
+            .bind(session_id)
+            .execute(&self.pool)
+            .await
             .map_err(|e| e.to_string())?;
-        Ok(deleted > 0)
+        Ok(result.rows_affected() > 0)
     }
 
-    pub fn replace_messages(
+    pub async fn replace_messages(
         &self,
         session_id: &str,
         provider_id: Option<String>,
@@ -326,27 +284,25 @@ impl ChatStore {
         messages: Vec<ChatMessageInput>,
     ) -> Result<Option<ChatSession>, String> {
         let now = now_ms();
-        let mut conn = self.conn.lock().map_err(|_| "Failed to lock database")?;
-        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
 
-        let session_project_id: Option<String> = tx
-            .query_row(
-                "SELECT project_id FROM conversations WHERE id = ?1",
-                params![session_id],
-                |row| row.get(0),
-            )
-            .optional()
-            .map_err(|e| e.to_string())?;
+        let project_id: Option<String> = sqlx::query_scalar(
+            "SELECT project_id FROM conversations WHERE id = ?",
+        )
+        .bind(session_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
 
-        let Some(project_id) = session_project_id else {
+        let Some(project_id) = project_id else {
             return Ok(None);
         };
 
-        tx.execute(
-            "DELETE FROM messages WHERE conversation_id = ?1",
-            params![session_id],
-        )
-        .map_err(|e| e.to_string())?;
+        sqlx::query("DELETE FROM messages WHERE conversation_id = ?")
+            .bind(session_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
 
         for message in &messages {
             let id = message
@@ -357,48 +313,54 @@ impl ChatStore {
             let parts = message
                 .parts
                 .as_ref()
-                .map(|value| serde_json::to_string(value).unwrap_or_default());
+                .map(|v| serde_json::to_string(v).unwrap_or_default());
             let metadata = message
                 .metadata
                 .as_ref()
-                .map(|value| serde_json::to_string(value).unwrap_or_default());
-            tx.execute(
-                "INSERT INTO messages (id, conversation_id, project_id, role, content, timestamp, parts, metadata)\n                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-                params![
-                    id,
-                    session_id,
-                    project_id,
-                    message.role,
-                    message.content,
-                    timestamp,
-                    parts,
-                    metadata
-                ],
+                .map(|v| serde_json::to_string(v).unwrap_or_default());
+            sqlx::query(
+                "INSERT INTO messages (id, conversation_id, project_id, role, content, timestamp, parts, metadata)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             )
+            .bind(&id)
+            .bind(session_id)
+            .bind(&project_id)
+            .bind(&message.role)
+            .bind(&message.content)
+            .bind(timestamp)
+            .bind(&parts)
+            .bind(&metadata)
+            .execute(&mut *tx)
+            .await
             .map_err(|e| e.to_string())?;
         }
 
         let last_message = messages.last().map(|msg| msg.content.clone());
-        tx.execute(
-            "UPDATE conversations\n             SET message_count = ?2,\n                 last_message = ?3,\n                 updated_at = ?4,\n                 provider_id = COALESCE(?5, provider_id),\n                 model_id = COALESCE(?6, model_id)\n             WHERE id = ?1",
-            params![
-                session_id,
-                messages.len() as i64,
-                last_message,
-                now,
-                provider_id,
-                model_id
-            ],
+        sqlx::query(
+            "UPDATE conversations
+             SET message_count = ?,
+                 last_message = ?,
+                 updated_at = ?,
+                 provider_id = COALESCE(?, provider_id),
+                 model_id = COALESCE(?, model_id)
+             WHERE id = ?",
         )
+        .bind(messages.len() as i64)
+        .bind(&last_message)
+        .bind(now)
+        .bind(&provider_id)
+        .bind(&model_id)
+        .bind(session_id)
+        .execute(&mut *tx)
+        .await
         .map_err(|e| e.to_string())?;
 
-        tx.commit().map_err(|e| e.to_string())?;
-        drop(conn);
-        self.get_session(session_id)
+        tx.commit().await.map_err(|e| e.to_string())?;
+        self.get_session(session_id).await
     }
 
     /// Append messages to a session without deleting existing ones.
-    pub fn append_messages(
+    pub async fn append_messages(
         &self,
         session_id: &str,
         provider_id: Option<String>,
@@ -406,22 +368,20 @@ impl ChatStore {
         messages: Vec<ChatMessageInput>,
     ) -> Result<Option<ChatSession>, String> {
         if messages.is_empty() {
-            return self.get_session(session_id);
+            return self.get_session(session_id).await;
         }
         let now = now_ms();
-        let mut conn = self.conn.lock().map_err(|_| "Failed to lock database")?;
-        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
 
-        let session_project_id: Option<String> = tx
-            .query_row(
-                "SELECT project_id FROM conversations WHERE id = ?1",
-                params![session_id],
-                |row| row.get(0),
-            )
-            .optional()
-            .map_err(|e| e.to_string())?;
+        let project_id: Option<String> = sqlx::query_scalar(
+            "SELECT project_id FROM conversations WHERE id = ?",
+        )
+        .bind(session_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
 
-        let Some(project_id) = session_project_id else {
+        let Some(project_id) = project_id else {
             return Ok(None);
         };
 
@@ -434,115 +394,50 @@ impl ChatStore {
             let parts = message
                 .parts
                 .as_ref()
-                .map(|value| serde_json::to_string(value).unwrap_or_default());
+                .map(|v| serde_json::to_string(v).unwrap_or_default());
             let metadata = message
                 .metadata
                 .as_ref()
-                .map(|value| serde_json::to_string(value).unwrap_or_default());
-            tx.execute(
+                .map(|v| serde_json::to_string(v).unwrap_or_default());
+            sqlx::query(
                 "INSERT INTO messages (id, conversation_id, project_id, role, content, timestamp, parts, metadata)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-                params![
-                    id,
-                    session_id,
-                    project_id,
-                    message.role,
-                    message.content,
-                    timestamp,
-                    parts,
-                    metadata
-                ],
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             )
+            .bind(&id)
+            .bind(session_id)
+            .bind(&project_id)
+            .bind(&message.role)
+            .bind(&message.content)
+            .bind(timestamp)
+            .bind(&parts)
+            .bind(&metadata)
+            .execute(&mut *tx)
+            .await
             .map_err(|e| e.to_string())?;
         }
 
         let last_message = messages.last().map(|msg| msg.content.clone());
-        tx.execute(
+        sqlx::query(
             "UPDATE conversations
-             SET message_count = message_count + ?2,
-                 last_message = COALESCE(?3, last_message),
-                 updated_at = ?4,
-                 provider_id = COALESCE(?5, provider_id),
-                 model_id = COALESCE(?6, model_id)
-             WHERE id = ?1",
-            params![
-                session_id,
-                messages.len() as i64,
-                last_message,
-                now,
-                provider_id,
-                model_id
-            ],
+             SET message_count = message_count + ?,
+                 last_message = COALESCE(?, last_message),
+                 updated_at = ?,
+                 provider_id = COALESCE(?, provider_id),
+                 model_id = COALESCE(?, model_id)
+             WHERE id = ?",
         )
+        .bind(messages.len() as i64)
+        .bind(&last_message)
+        .bind(now)
+        .bind(&provider_id)
+        .bind(&model_id)
+        .bind(session_id)
+        .execute(&mut *tx)
+        .await
         .map_err(|e| e.to_string())?;
 
-        tx.commit().map_err(|e| e.to_string())?;
-        drop(conn);
-        self.get_session(session_id)
-    }
-
-    fn init_schema(&self) -> CoreResult<()> {
-        let conn = self
-            .conn
-            .lock()
-            .map_err(|_| CoreError::Other("Failed to lock database".to_string()))?;
-        let current_version: i64 = conn
-            .query_row("PRAGMA user_version", [], |row| row.get(0))
-            .map_err(|e| CoreError::Other(e.to_string()))?;
-
-        if current_version < 1 {
-            conn.execute_batch(
-                "CREATE TABLE IF NOT EXISTS conversations (
-                    id TEXT PRIMARY KEY,
-                    project_id TEXT NOT NULL,
-                    title TEXT NOT NULL,
-                    provider_id TEXT,
-                    model_id TEXT,
-                    created_at INTEGER NOT NULL,
-                    updated_at INTEGER NOT NULL,
-                    message_count INTEGER DEFAULT 0,
-                    last_message TEXT,
-                    tags TEXT,
-                    archived INTEGER DEFAULT 0,
-                    cloud_id TEXT
-                );
-                CREATE TABLE IF NOT EXISTS messages (
-                    id TEXT PRIMARY KEY,
-                    conversation_id TEXT NOT NULL,
-                    project_id TEXT NOT NULL,
-                    role TEXT NOT NULL,
-                    content TEXT NOT NULL,
-                    timestamp INTEGER NOT NULL,
-                    parts TEXT,
-                    metadata TEXT,
-                    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
-                );
-                CREATE TABLE IF NOT EXISTS sync_metadata (
-                    conversation_id TEXT PRIMARY KEY,
-                    cloud_id TEXT,
-                    last_synced_at INTEGER,
-                    sync_status TEXT CHECK(sync_status IN ('local-only', 'synced', 'conflict', 'pending')),
-                    version INTEGER DEFAULT 1,
-                    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
-                );
-                CREATE INDEX IF NOT EXISTS idx_conversations_project_id ON conversations(project_id);
-                CREATE INDEX IF NOT EXISTS idx_conversations_created_at ON conversations(created_at);
-                CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated_at);
-                CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
-                CREATE INDEX IF NOT EXISTS idx_messages_project_id ON messages(project_id);
-                CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);",
-            )
-            .map_err(|e| CoreError::Other(e.to_string()))?;
-
-            conn.execute("PRAGMA user_version = 1", [])
-                .map_err(|e| CoreError::Other(e.to_string()))?;
-        }
-
-        ensure_column(&conn, "conversations", "provider_id", "provider_id TEXT")?;
-        ensure_column(&conn, "conversations", "model_id", "model_id TEXT")?;
-        ensure_column(&conn, "messages", "parts", "parts TEXT")?;
-
-        Ok(())
+        tx.commit().await.map_err(|e| e.to_string())?;
+        self.get_session(session_id).await
     }
 }
 
@@ -560,35 +455,76 @@ fn now_ms() -> i64 {
         .unwrap_or(0)
 }
 
-fn ensure_column(conn: &Connection, table: &str, column: &str, definition: &str) -> CoreResult<()> {
-    let mut stmt = conn
-        .prepare(&format!("PRAGMA table_info({})", table))
-        .map_err(|e| CoreError::Other(e.to_string()))?;
-    let existing: Vec<String> = stmt
-        .query_map([], |row| row.get(1))
-        .map_err(|e| CoreError::Other(e.to_string()))?
-        .collect::<Result<Vec<String>, _>>()
-        .map_err(|e| CoreError::Other(e.to_string()))?;
-
-    if !existing.iter().any(|col| col == column) {
-        conn.execute(
-            &format!("ALTER TABLE {} ADD COLUMN {}", table, definition),
-            [],
-        )
-        .map_err(|e| CoreError::Other(e.to_string()))?;
-    }
-    Ok(())
-}
-
-fn table_exists(conn: &Connection, schema: &str, table: &str) -> CoreResult<bool> {
+async fn table_exists(pool: &SqlitePool, schema: &str, table: &str) -> CoreResult<bool> {
     let query = format!(
-        "SELECT 1 FROM {}.sqlite_master WHERE type='table' AND name=?1 LIMIT 1",
+        "SELECT 1 FROM {}.sqlite_master WHERE type='table' AND name=? LIMIT 1",
         schema
     );
-    let exists = conn
-        .query_row(&query, params![table], |_row| Ok(()))
-        .optional()
+    let exists = sqlx::query(&query)
+        .bind(table)
+        .fetch_optional(pool)
+        .await
         .map_err(|e| CoreError::Other(e.to_string()))?
         .is_some();
     Ok(exists)
+}
+
+// Internal row types for sqlx::FromRow
+
+#[derive(sqlx::FromRow)]
+struct ChatSessionRow {
+    id: String,
+    project_id: String,
+    title: String,
+    provider_id: Option<String>,
+    model_id: Option<String>,
+    created_at: i64,
+    updated_at: i64,
+    message_count: i64,
+    last_message: Option<String>,
+}
+
+impl From<ChatSessionRow> for ChatSession {
+    fn from(r: ChatSessionRow) -> Self {
+        Self {
+            id: r.id,
+            project_id: r.project_id,
+            title: r.title,
+            provider_id: r.provider_id,
+            model_id: r.model_id,
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+            message_count: r.message_count,
+            preview: r.last_message,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct ChatMessageRow {
+    id: String,
+    conversation_id: String,
+    project_id: String,
+    role: String,
+    content: String,
+    timestamp: i64,
+    parts: Option<String>,
+    metadata: Option<String>,
+}
+
+impl From<ChatMessageRow> for ChatMessage {
+    fn from(r: ChatMessageRow) -> Self {
+        let parts = r.parts.and_then(|v| serde_json::from_str(&v).ok());
+        let metadata = r.metadata.and_then(|v| serde_json::from_str(&v).ok());
+        Self {
+            id: r.id,
+            session_id: r.conversation_id,
+            project_id: r.project_id,
+            role: r.role,
+            content: r.content,
+            timestamp: r.timestamp,
+            parts,
+            metadata,
+        }
+    }
 }

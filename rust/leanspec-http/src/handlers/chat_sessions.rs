@@ -58,21 +58,12 @@ pub async fn list_chat_sessions(
         }
     };
 
-    let store = state.chat_store.clone();
-    let sessions = tokio::task::spawn_blocking(move || store.list_sessions(&project_id))
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e)),
-            )
-        })?;
+    let sessions = state.chat_store.list_sessions(&project_id).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e)),
+        )
+    })?;
 
     Ok(Json(sessions))
 }
@@ -81,30 +72,21 @@ pub async fn create_chat_session(
     State(state): State<AppState>,
     Json(payload): Json<CreateSessionRequest>,
 ) -> ApiResult<Json<ChatSession>> {
-    let store = state.chat_store.clone();
-    let payload_clone = payload.clone();
-
-    let session = tokio::task::spawn_blocking(move || {
-        store.create_session(
+    let session = state
+        .chat_store
+        .create_session(
             &uuid::Uuid::new_v4().to_string(),
-            &payload_clone.project_id,
-            payload_clone.provider_id,
-            payload_clone.model_id,
+            &payload.project_id,
+            payload.provider_id,
+            payload.model_id,
         )
-    })
-    .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e)),
-        )
-    })?;
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e)),
+            )
+        })?;
 
     Ok(Json(session))
 }
@@ -113,17 +95,10 @@ pub async fn get_chat_session(
     State(state): State<AppState>,
     Path(session_id): Path<String>,
 ) -> ApiResult<Json<SessionWithMessagesResponse>> {
-    let store = state.chat_store.clone();
-    let session_id_clone = session_id.clone();
-
-    let session = tokio::task::spawn_blocking(move || store.get_session(&session_id_clone))
+    let session = state
+        .chat_store
+        .get_session(&session_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -135,15 +110,10 @@ pub async fn get_chat_session(
         return Err((StatusCode::NOT_FOUND, Json(ApiError::not_found("Session"))));
     };
 
-    let store = state.chat_store.clone();
-    let messages = tokio::task::spawn_blocking(move || store.get_messages(&session_id))
+    let messages = state
+        .chat_store
+        .get_messages(&session_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -159,30 +129,16 @@ pub async fn update_chat_session(
     Path(session_id): Path<String>,
     Json(payload): Json<UpdateSessionRequest>,
 ) -> ApiResult<Json<ChatSession>> {
-    let store = state.chat_store.clone();
-    let payload_clone = payload.clone();
-
-    let session = tokio::task::spawn_blocking(move || {
-        store.update_session(
-            &session_id,
-            payload_clone.title,
-            payload_clone.provider_id,
-            payload_clone.model_id,
-        )
-    })
-    .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e)),
-        )
-    })?;
+    let session = state
+        .chat_store
+        .update_session(&session_id, payload.title, payload.provider_id, payload.model_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e)),
+            )
+        })?;
 
     let Some(session) = session else {
         return Err((StatusCode::NOT_FOUND, Json(ApiError::not_found("Session"))));
@@ -195,15 +151,10 @@ pub async fn delete_chat_session(
     State(state): State<AppState>,
     Path(session_id): Path<String>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let store = state.chat_store.clone();
-    let deleted = tokio::task::spawn_blocking(move || store.delete_session(&session_id))
+    let deleted = state
+        .chat_store
+        .delete_session(&session_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -223,30 +174,16 @@ pub async fn replace_chat_messages(
     Path(session_id): Path<String>,
     Json(payload): Json<ReplaceMessagesRequest>,
 ) -> ApiResult<Json<ChatSession>> {
-    let store = state.chat_store.clone();
-    let payload_clone = payload.clone();
-
-    let session = tokio::task::spawn_blocking(move || {
-        store.replace_messages(
-            &session_id,
-            payload_clone.provider_id,
-            payload_clone.model_id,
-            payload_clone.messages,
-        )
-    })
-    .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e)),
-        )
-    })?;
+    let session = state
+        .chat_store
+        .replace_messages(&session_id, payload.provider_id, payload.model_id, payload.messages)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e)),
+            )
+        })?;
 
     let Some(session) = session else {
         return Err((StatusCode::NOT_FOUND, Json(ApiError::not_found("Session"))));
@@ -258,22 +195,12 @@ pub async fn replace_chat_messages(
 pub async fn get_chat_storage_info(
     State(state): State<AppState>,
 ) -> ApiResult<Json<ChatStorageInfo>> {
-    let store = state.chat_store.clone();
-
-    let info = tokio::task::spawn_blocking(move || store.storage_info())
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e)),
-            )
-        })?;
+    let info = state.chat_store.storage_info().map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e)),
+        )
+    })?;
 
     Ok(Json(info))
 }

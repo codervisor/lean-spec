@@ -48,7 +48,7 @@ async fn test_validate_detects_invalid_frontmatter() {
 
     let config = leanspec_http::ServerConfig::default();
     let registry = leanspec_http::ProjectRegistry::new_with_file_path(registry_file).unwrap();
-    let state = leanspec_http::AppState::with_registry(config, registry);
+    let state = leanspec_http::AppState::with_registry(config, registry).await;
     {
         let mut reg = state.registry.write().await;
         let _ = reg.add(temp_dir.path());

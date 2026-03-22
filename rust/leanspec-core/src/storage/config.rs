@@ -269,12 +269,13 @@ pub fn default_database_path() -> PathBuf {
     config_dir().join("leanspec.db")
 }
 
-/// Resolve the configured database path.
+/// Resolve the configured database path (for SQLite).
 ///
-/// Currently supported URL format:
+/// Supported URL formats:
 /// - sqlite:///absolute/path/to/db.db
 /// - sqlite://~/.lean-spec/leanspec.db
 /// - sqlite://relative/path.db (resolved under config_dir)
+/// - postgres://user:pass@host:5432/dbname (returns the path component for display)
 pub fn resolve_database_path(database_url: Option<&str>) -> CoreResult<PathBuf> {
     let Some(url) = database_url
         .map(str::trim)
@@ -283,10 +284,15 @@ pub fn resolve_database_path(database_url: Option<&str>) -> CoreResult<PathBuf> 
         return Ok(default_database_path());
     };
 
+    // For non-sqlite URLs, return a synthetic path (actual connection uses the URL directly)
+    if url.starts_with("postgres://") || url.starts_with("postgresql://") {
+        return Ok(PathBuf::from("(postgres)"));
+    }
+
     let sqlite_prefix = "sqlite://";
     if !url.starts_with(sqlite_prefix) {
         return Err(CoreError::ConfigError(format!(
-            "Unsupported database URL '{}': only sqlite:// is currently supported",
+            "Unsupported database URL '{}': supported schemes are sqlite://, postgres://",
             url
         )));
     }
@@ -427,9 +433,16 @@ mod tests {
     }
 
     #[test]
-    fn resolve_database_path_rejects_non_sqlite_urls() {
-        let error = resolve_database_path(Some("postgres://localhost/leanspec"))
-            .expect_err("non-sqlite urls should be rejected");
+    fn resolve_database_path_accepts_postgres_urls() {
+        let path = resolve_database_path(Some("postgres://localhost/leanspec"))
+            .expect("postgres urls should be accepted");
+        assert_eq!(path, PathBuf::from("(postgres)"));
+    }
+
+    #[test]
+    fn resolve_database_path_rejects_unknown_schemes() {
+        let error = resolve_database_path(Some("mysql://localhost/leanspec"))
+            .expect_err("unknown schemes should be rejected");
         assert!(matches!(error, CoreError::ConfigError(_)));
     }
 }

@@ -11,16 +11,19 @@ use std::error::Error;
 use std::path::PathBuf;
 use std::time::Duration;
 
-fn build_manager() -> Result<SessionManager, Box<dyn Error>> {
+async fn build_manager() -> Result<SessionManager, Box<dyn Error>> {
     let sessions_dir = config_dir();
     std::fs::create_dir_all(&sessions_dir).map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
     let unified_db_path = sessions_dir.join("leanspec.db");
-    let db = SessionDatabase::new(&unified_db_path)
+    let database = leanspec_core::db::Database::connect(&unified_db_path)
+        .await
         .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
+    let db = SessionDatabase::new(database.pool().clone());
 
     let legacy_sessions_path = sessions_dir.join("sessions.db");
     if db
         .migrate_from_legacy_db(&legacy_sessions_path)
+        .await
         .map_err(|e| Box::<dyn Error>::from(e.to_string()))?
     {
         let migrated = legacy_sessions_path.with_extension("db.migrated");
@@ -268,7 +271,7 @@ fn create_session(request: CreateSessionRequest) -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         let mode = parse_mode(&mode)?;
         let merge_strategy = parse_merge_strategy(merge_strategy)?;
 
@@ -466,7 +469,7 @@ fn start_session(session_id: &str) -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         start_and_wait(manager, &session_id).await
     })
 }
@@ -477,7 +480,7 @@ fn pause_session(session_id: &str) -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         manager
             .pause_session(&session_id)
             .await
@@ -505,7 +508,7 @@ fn resume_session(session_id: &str) -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         manager
             .resume_session(&session_id)
             .await
@@ -533,7 +536,7 @@ fn stop_session(session_id: &str) -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         manager
             .stop_session(&session_id)
             .await
@@ -565,7 +568,7 @@ fn archive_session(
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         let archive_path = manager
             .archive_session(
                 &session_id,
@@ -593,7 +596,7 @@ fn rotate_logs(session_id: &str, keep: usize) -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         let deleted = manager
             .rotate_logs(&session_id, keep)
             .await
@@ -615,7 +618,7 @@ fn delete_session(session_id: &str) -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         manager
             .delete_session(&session_id)
             .await
@@ -631,7 +634,7 @@ fn view_session(session_id: &str) -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         let session = manager
             .get_session(&session_id)
             .await
@@ -692,7 +695,7 @@ fn list_sessions(
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         let status_filter = match status {
             Some(value) => Some(parse_status(&value)?),
             None => None,
@@ -728,7 +731,7 @@ fn show_logs(session_id: &str) -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         let logs = manager
             .get_logs(&session_id, Some(1000))
             .await
@@ -877,7 +880,7 @@ fn list_worktrees(all: bool) -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         let sessions = manager
             .list_sessions(None, None, None, None)
             .await
@@ -927,7 +930,7 @@ fn merge_session_worktree(
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         let mut session = manager
             .get_session(&session_id)
             .await
@@ -944,7 +947,7 @@ fn cleanup_session_worktree(session_id: &str, keep_branch: bool) -> Result<(), B
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         let mut session = manager
             .get_session(&session_id)
             .await
@@ -982,7 +985,7 @@ fn gc_worktrees() -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
     rt.block_on(async move {
-        let manager = build_manager()?;
+        let manager = build_manager().await?;
         let sessions = manager
             .list_sessions(None, None, None, None)
             .await

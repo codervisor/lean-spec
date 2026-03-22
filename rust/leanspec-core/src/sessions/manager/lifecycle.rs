@@ -275,7 +275,7 @@ impl SessionManager {
             }
         }
 
-        self.db.insert_session(&session)?;
+        self.db.insert_session(&session).await?;
 
         Ok(session)
     }
@@ -285,7 +285,7 @@ impl SessionManager {
         // Load session
         let mut session = self
             .db
-            .get_session(session_id)?
+            .get_session(session_id).await?
             .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         // Check if already running
@@ -531,13 +531,13 @@ impl SessionManager {
                                 notify.notify_one();
                             }
 
-                            if let Ok(Some(mut session)) = db_stdout.get_session(&session_id_stdout)
+                            if let Ok(Some(mut session)) = db_stdout.get_session(&session_id_stdout).await
                             {
                                 session
                                     .metadata
                                     .insert("acp_session_id".to_string(), acp_id);
                                 session.touch();
-                                let _ = db_stdout.update_session(&session);
+                                let _ = db_stdout.update_session(&session).await;
                             }
                         }
 
@@ -558,7 +558,7 @@ impl SessionManager {
                             store_acp_payload_as_log(&session_id_stdout, payload)
                         {
                             for log in mapped_logs {
-                                let _ = db_stdout.insert_log(&log);
+                                let _ = db_stdout.insert_log(&log).await;
                                 let _ = stdout_sender.send(log);
                             }
                             continue;
@@ -575,7 +575,7 @@ impl SessionManager {
                 };
 
                 // Save to database
-                let _ = db_stdout.insert_log(&log);
+                let _ = db_stdout.insert_log(&log).await;
                 let _ = stdout_sender.send(log);
             }
         });
@@ -595,7 +595,7 @@ impl SessionManager {
                 };
 
                 // Save to database
-                let _ = db_stderr.insert_log(&log);
+                let _ = db_stderr.insert_log(&log).await;
                 let _ = stderr_sender.send(log);
             }
         });
@@ -649,12 +649,12 @@ impl SessionManager {
             };
 
             if supports_load_session {
-                if let Ok(Some(mut current)) = self.db.get_session(session_id) {
+                if let Ok(Some(mut current)) = self.db.get_session(session_id).await {
                     current
                         .metadata
                         .insert("acp_load_session_supported".to_string(), "true".to_string());
                     current.touch();
-                    let _ = self.db.update_session(&current);
+                    let _ = self.db.update_session(&current).await;
                 }
             }
 
@@ -749,7 +749,7 @@ impl SessionManager {
                         session_id,
                         LogLevel::Warning,
                         "ACP session ID unavailable; skipped initial session/prompt",
-                    );
+                    ).await;
                 }
 
                 let _ = self.db.insert_log(&SessionLog {
@@ -764,7 +764,7 @@ impl SessionManager {
                         "done": true,
                     })
                     .to_string(),
-                });
+                }).await;
             }
         }
 
@@ -777,8 +777,8 @@ impl SessionManager {
             }
         }
         session.touch();
-        self.db.update_session(&session)?;
-        self.db.insert_event(session_id, EventType::Started, None)?;
+        self.db.update_session(&session).await?;
+        self.db.insert_event(session_id, EventType::Started, None).await?;
         let started_message = match session_timeout {
             Some(timeout) => format!(
                 "Session started (runner: {}, timeout: {}s)",
@@ -788,7 +788,7 @@ impl SessionManager {
             None => format!("Session started (runner: {})", session.runner),
         };
         self.db
-            .log_message(session_id, LogLevel::Info, &started_message)?;
+            .log_message(session_id, LogLevel::Info, &started_message).await?;
 
         // Spawn background task to wait for completion
         let session_id_owned = session_id.to_string();
@@ -831,21 +831,21 @@ impl SessionManager {
                         let _ = child.kill().await;
                     }
 
-                    if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned) {
+                    if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned).await {
                         session.status = SessionStatus::Completed;
                         session.ended_at = Some(chrono::Utc::now());
                         session.update_duration();
                         session.touch();
-                        let _ = db_clone.update_session(&session);
+                        let _ = db_clone.update_session(&session).await;
                         let _ =
-                            db_clone.insert_event(&session_id_owned, EventType::Completed, None);
+                            db_clone.insert_event(&session_id_owned, EventType::Completed, None).await;
                     }
-                    let _ = finalize_worktree_state(&db_clone, &session_id_owned, true);
+                    let _ = finalize_worktree_state(&db_clone, &session_id_owned, true).await;
                     let _ = db_clone.log_message(
                         &session_id_owned,
                         LogLevel::Info,
                         "ACP session completed (agent turn ended)",
-                    );
+                    ).await;
 
                     cleanup_session(&session_id_owned, &active_sessions_clone, &broadcasts_clone)
                         .await;
@@ -864,24 +864,24 @@ impl SessionManager {
                             let _ = child.kill().await;
                         }
 
-                        if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned) {
+                        if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned).await {
                             session.status = SessionStatus::Failed;
                             session.ended_at = Some(chrono::Utc::now());
                             session.update_duration();
                             session.touch();
-                            let _ = db_clone.update_session(&session);
+                            let _ = db_clone.update_session(&session).await;
                             let _ = db_clone.insert_event(
                                 &session_id_owned,
                                 EventType::Failed,
                                 Some(timeout_message.clone()),
-                            );
+                            ).await;
                         }
-                        let _ = finalize_worktree_state(&db_clone, &session_id_owned, false);
+                        let _ = finalize_worktree_state(&db_clone, &session_id_owned, false).await;
                         let _ = db_clone.log_message(
                             &session_id_owned,
                             LogLevel::Error,
                             &timeout_message,
-                        );
+                        ).await;
 
                         cleanup_session(
                             &session_id_owned,
@@ -901,7 +901,7 @@ impl SessionManager {
                             "Session still running (elapsed: {}s)",
                             started_at.elapsed().as_secs()
                         ),
-                    );
+                    ).await;
                     last_heartbeat_at = Instant::now();
                 }
 
@@ -921,24 +921,24 @@ impl SessionManager {
                 let status = match status_result {
                     Ok(status) => status,
                     Err(err) => {
-                        if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned) {
+                        if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned).await {
                             session.status = SessionStatus::Failed;
                             session.ended_at = Some(chrono::Utc::now());
                             session.update_duration();
                             session.touch();
-                            let _ = db_clone.update_session(&session);
+                            let _ = db_clone.update_session(&session).await;
                             let _ = db_clone.insert_event(
                                 &session_id_owned,
                                 EventType::Failed,
                                 Some(format!("Process wait error: {}", err)),
-                            );
+                            ).await;
                             let _ = db_clone.log_message(
                                 &session_id_owned,
                                 LogLevel::Error,
                                 &format!("Process wait error: {}", err),
-                            );
+                            ).await;
                         }
-                        let _ = finalize_worktree_state(&db_clone, &session_id_owned, false);
+                        let _ = finalize_worktree_state(&db_clone, &session_id_owned, false).await;
                         cleanup_session(
                             &session_id_owned,
                             &active_sessions_clone,
@@ -949,7 +949,7 @@ impl SessionManager {
                     }
                 };
 
-                if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned) {
+                if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned).await {
                     session.exit_code = status.code();
                     session.status = if status.success() {
                         SessionStatus::Completed
@@ -959,13 +959,13 @@ impl SessionManager {
                     session.ended_at = Some(chrono::Utc::now());
                     session.update_duration();
                     session.touch();
-                    let _ = db_clone.update_session(&session);
+                    let _ = db_clone.update_session(&session).await;
                     let event_type = if status.success() {
                         EventType::Completed
                     } else {
                         EventType::Failed
                     };
-                    let _ = db_clone.insert_event(&session_id_owned, event_type, None);
+                    let _ = db_clone.insert_event(&session_id_owned, event_type, None).await;
                     if status.success() {
                         let _ = db_clone.log_message(
                             &session_id_owned,
@@ -977,7 +977,7 @@ impl SessionManager {
                                     .map(|code| format!(" (exit code: {})", code))
                                     .unwrap_or_default()
                             ),
-                        );
+                        ).await;
                     } else {
                         let _ = db_clone.log_message(
                             &session_id_owned,
@@ -989,10 +989,10 @@ impl SessionManager {
                                     .map(|code| format!(" (exit code: {})", code))
                                     .unwrap_or_default()
                             ),
-                        );
+                        ).await;
                     }
                 }
-                let _ = finalize_worktree_state(&db_clone, &session_id_owned, status.success());
+                let _ = finalize_worktree_state(&db_clone, &session_id_owned, status.success()).await;
 
                 cleanup_session(&session_id_owned, &active_sessions_clone, &broadcasts_clone).await;
                 break;
@@ -1007,7 +1007,7 @@ impl SessionManager {
         // Load session
         let mut session = self
             .db
-            .get_session(session_id)?
+            .get_session(session_id).await?
             .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         if !session.status.can_stop() {
@@ -1051,11 +1051,11 @@ impl SessionManager {
         session.ended_at = Some(chrono::Utc::now());
         session.update_duration();
         session.touch();
-        self.db.update_session(&session)?;
+        self.db.update_session(&session).await?;
         self.db
-            .insert_event(session_id, EventType::Cancelled, None)?;
+            .insert_event(session_id, EventType::Cancelled, None).await?;
         self.db
-            .log_message(session_id, LogLevel::Info, "Session stopped by user")?;
+            .log_message(session_id, LogLevel::Info, "Session stopped by user").await?;
 
         // Clean up broadcast channel
         {
@@ -1211,7 +1211,7 @@ impl SessionManager {
     ) -> CoreResult<PathBuf> {
         let session = self
             .db
-            .get_session(session_id)?
+            .get_session(session_id).await?
             .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         let base_dir = options.output_dir.unwrap_or_else(|| {
@@ -1231,7 +1231,7 @@ impl SessionManager {
         };
         let archive_path = base_dir.join(file_name);
 
-        let logs = self.db.get_logs(session_id, None)?;
+        let logs = self.db.get_logs(session_id, None).await?;
 
         if options.compress {
             let file = File::create(&archive_path).map_err(|e| {
@@ -1271,7 +1271,7 @@ impl SessionManager {
             session_id,
             EventType::Archived,
             Some(archive_path.to_string_lossy().to_string()),
-        )?;
+        ).await?;
 
         Ok(archive_path)
     }
@@ -1280,7 +1280,7 @@ impl SessionManager {
     pub async fn pause_session(&self, session_id: &str) -> CoreResult<()> {
         let mut session = self
             .db
-            .get_session(session_id)?
+            .get_session(session_id).await?
             .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         if !session.status.can_pause() {
@@ -1301,10 +1301,10 @@ impl SessionManager {
 
         session.status = SessionStatus::Paused;
         session.touch();
-        self.db.update_session(&session)?;
-        self.db.insert_event(session_id, EventType::Paused, None)?;
+        self.db.update_session(&session).await?;
+        self.db.insert_event(session_id, EventType::Paused, None).await?;
         self.db
-            .log_message(session_id, LogLevel::Info, "Session paused")?;
+            .log_message(session_id, LogLevel::Info, "Session paused").await?;
 
         Ok(())
     }
@@ -1313,7 +1313,7 @@ impl SessionManager {
     pub async fn resume_session(&self, session_id: &str) -> CoreResult<()> {
         let mut session = self
             .db
-            .get_session(session_id)?
+            .get_session(session_id).await?
             .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         if !session.status.can_resume() {
@@ -1334,10 +1334,10 @@ impl SessionManager {
 
         session.status = SessionStatus::Running;
         session.touch();
-        self.db.update_session(&session)?;
-        self.db.insert_event(session_id, EventType::Resumed, None)?;
+        self.db.update_session(&session).await?;
+        self.db.insert_event(session_id, EventType::Resumed, None).await?;
         self.db
-            .log_message(session_id, LogLevel::Info, "Session resumed")?;
+            .log_message(session_id, LogLevel::Info, "Session resumed").await?;
 
         Ok(())
     }
@@ -1345,7 +1345,7 @@ impl SessionManager {
     /// Get session details
     pub async fn cleanup_stale_sessions(&self) -> CoreResult<usize> {
         // Find sessions marked as running but not in active_sessions
-        let all_sessions = self.db.list_sessions(None, None, None, None)?;
+        let all_sessions = self.db.list_sessions(None, None, None, None).await?;
         let active_ids = {
             let active = self.active_sessions.read().await;
             active
@@ -1362,12 +1362,12 @@ impl SessionManager {
                 session.ended_at = Some(chrono::Utc::now());
                 session.update_duration();
                 session.touch();
-                self.db.update_session(&session)?;
+                self.db.update_session(&session).await?;
                 self.db.insert_event(
                     &session.id,
                     EventType::Failed,
                     Some("Process disappeared".to_string()),
-                )?;
+                ).await?;
                 cleaned += 1;
             }
         }
@@ -1627,12 +1627,12 @@ async fn cleanup_session(
     }
 }
 
-fn finalize_worktree_state(
+async fn finalize_worktree_state(
     db: &Arc<SessionDatabase>,
     session_id: &str,
     completed_successfully: bool,
 ) -> CoreResult<()> {
-    let Some(mut session) = db.get_session(session_id)? else {
+    let Some(mut session) = db.get_session(session_id).await? else {
         return Ok(());
     };
 
@@ -1683,7 +1683,7 @@ fn finalize_worktree_state(
                     "Worktree merge conflict in: {}",
                     outcome.conflicted_files.join(", ")
                 ),
-            )?;
+            ).await?;
         } else if outcome.merged {
             manager.cleanup_session(session_id, false)?;
             session.metadata.insert(
@@ -1698,12 +1698,12 @@ fn finalize_worktree_state(
                 session_id,
                 LogLevel::Info,
                 "Worktree merged back into target branch and cleaned up",
-            )?;
+            ).await?;
         }
     }
 
     session.touch();
-    db.update_session(&session)?;
+    db.update_session(&session).await?;
     Ok(())
 }
 
@@ -1715,7 +1715,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_session() {
-        let db = SessionDatabase::new_in_memory().unwrap();
+        let db_instance = crate::db::Database::connect_in_memory().await.unwrap();
+        let db = SessionDatabase::new(db_instance.pool().clone());
         let manager = SessionManager::new(db);
 
         let session = manager
@@ -1741,7 +1742,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_session_with_acp_override() {
-        let db = SessionDatabase::new_in_memory().unwrap();
+        let db_instance = crate::db::Database::connect_in_memory().await.unwrap();
+        let db = SessionDatabase::new(db_instance.pool().clone());
         let manager = SessionManager::new(db);
 
         let session = manager
@@ -1772,7 +1774,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_sessions() {
-        let db = SessionDatabase::new_in_memory().unwrap();
+        let db_instance = crate::db::Database::connect_in_memory().await.unwrap();
+        let db = SessionDatabase::new(db_instance.pool().clone());
         let manager = SessionManager::new(db);
 
         // Create sessions
@@ -1813,7 +1816,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_session_lifecycle() {
-        let db = SessionDatabase::new_in_memory().unwrap();
+        let db_instance = crate::db::Database::connect_in_memory().await.unwrap();
+        let db = SessionDatabase::new(db_instance.pool().clone());
         let manager = SessionManager::new(db);
 
         // Create session
@@ -1841,7 +1845,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_session_no_specs() {
-        let db = SessionDatabase::new_in_memory().unwrap();
+        let db_instance = crate::db::Database::connect_in_memory().await.unwrap();
+        let db = SessionDatabase::new(db_instance.pool().clone());
         let manager = SessionManager::new(db);
 
         let session = manager
@@ -1861,7 +1866,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_session_multiple_specs() {
-        let db = SessionDatabase::new_in_memory().unwrap();
+        let db_instance = crate::db::Database::connect_in_memory().await.unwrap();
+        let db = SessionDatabase::new(db_instance.pool().clone());
         let manager = SessionManager::new(db);
 
         let session = manager

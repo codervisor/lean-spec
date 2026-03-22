@@ -185,7 +185,7 @@ pub async fn create_test_state(temp_dir: &TempDir) -> AppState {
 
     let config = ServerConfig::default();
     let registry = ProjectRegistry::new_with_file_path(test_registry_file(temp_dir)).unwrap();
-    let state = AppState::with_registry(config, registry);
+    let state = AppState::with_registry(config, registry).await;
 
     // Add project via the registry
     {
@@ -200,5 +200,5 @@ pub async fn create_test_state(temp_dir: &TempDir) -> AppState {
 pub async fn create_empty_state(temp_dir: &TempDir) -> AppState {
     let config = ServerConfig::default();
     let registry = ProjectRegistry::new_with_file_path(test_registry_file(temp_dir)).unwrap();
-    AppState::with_registry(config, registry)
+    AppState::with_registry(config, registry).await
 }

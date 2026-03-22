@@ -95,16 +95,10 @@ pub async fn chat_stream(
         })?;
 
         // Fetch existing messages from DB
-        let store = state.chat_store.clone();
-        let sid = session_id.to_string();
-        let db_messages = tokio::task::spawn_blocking(move || store.get_messages(&sid))
+        let db_messages = state
+            .chat_store
+            .get_messages(session_id)
             .await
-            .map_err(|e| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    axum::Json(ApiError::internal_error(&e.to_string())),
-                )
-            })?
             .map_err(|e| {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -215,15 +209,14 @@ pub async fn chat_stream(
             }
 
             if !new_messages.is_empty() {
-                let _ = tokio::task::spawn_blocking(move || {
-                    store.append_messages(
+                let _ = store
+                    .append_messages(
                         &session_id,
                         Some(provider_id_for_store),
                         Some(model_id_for_store),
                         new_messages,
                     )
-                })
-                .await;
+                    .await;
             }
         });
     }
@@ -272,12 +265,11 @@ async fn fetch_session_context(
     state: AppState,
     session_id: &str,
 ) -> Option<(Option<String>, Option<String>)> {
-    let store = state.chat_store.clone();
-    let session_id = session_id.to_string();
-    let session = tokio::task::spawn_blocking(move || store.get_session(&session_id))
+    let session = state
+        .chat_store
+        .get_session(session_id)
         .await
         .ok()
-        .and_then(|result| result.ok())
         .flatten()?;
 
     Some((session.provider_id, session.model_id))

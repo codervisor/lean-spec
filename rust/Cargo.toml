@@ -42,6 +42,9 @@ ratatui = "0.30"
 # Async runtime
 tokio = {version = "1.42", features = ["full"]}
 
+# Database
+sqlx = {version = "0.8", features = ["runtime-tokio", "sqlite", "migrate"]}
+
 # Testing
 pretty_assertions = "1.4"
 tempfile = "3.14"

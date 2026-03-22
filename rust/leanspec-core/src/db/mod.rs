@@ -1,144 +1,129 @@
 //! Database infrastructure module
 //!
-//! Provides shared SQLite connection management with WAL mode,
-//! connection pooling support, and common database operations.
+//! Provides an async SQLite connection pool via sqlx with WAL mode,
+//! automatic migrations, and common database operations.
 //!
 //! This module is only available when the `sessions` or `storage` feature is enabled.
 
 #![cfg(any(feature = "sessions", feature = "storage"))]
 
 use crate::error::{CoreError, CoreResult};
-use rusqlite::{Connection, OpenFlags, OptionalExtension};
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous};
+use sqlx::SqlitePool;
 use std::path::Path;
-use std::sync::Mutex;
+use std::str::FromStr;
+use std::time::Duration;
 
-/// Shared database connection with configuration
+/// Shared async database backed by a SqlitePool
+#[derive(Clone)]
 pub struct Database {
-    conn: Mutex<Connection>,
+    pool: SqlitePool,
 }
 
 impl Database {
-    /// Open a database at the given path with WAL mode enabled
-    pub fn open<P: AsRef<Path>>(path: P) -> CoreResult<Self> {
-        let conn = Connection::open_with_flags(
-            path,
-            OpenFlags::SQLITE_OPEN_CREATE | OpenFlags::SQLITE_OPEN_READ_WRITE,
-        )
-        .map_err(|e| CoreError::DatabaseError(format!("Failed to open database: {}", e)))?;
+    /// Open a database at the given path with WAL mode and run migrations
+    pub async fn connect<P: AsRef<Path>>(path: P) -> CoreResult<Self> {
+        let path = path.as_ref();
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| {
+                CoreError::DatabaseError(format!("Failed to create database directory: {}", e))
+            })?;
+        }
 
-        Self::configure_connection(&conn)?;
+        let url = format!("sqlite:{}", path.display());
+        let options = SqliteConnectOptions::from_str(&url)
+            .map_err(|e| CoreError::DatabaseError(format!("Invalid database URL: {}", e)))?
+            .journal_mode(SqliteJournalMode::Wal)
+            .busy_timeout(Duration::from_secs(5))
+            .foreign_keys(true)
+            .synchronous(SqliteSynchronous::Normal)
+            .create_if_missing(true);
 
-        Ok(Self {
-            conn: Mutex::new(conn),
-        })
+        let pool = SqlitePoolOptions::new()
+            .max_connections(5)
+            .connect_with(options)
+            .await
+            .map_err(|e| CoreError::DatabaseError(format!("Failed to connect: {}", e)))?;
+
+        let db = Self { pool };
+        db.migrate().await?;
+        Ok(db)
     }
 
     /// Create an in-memory database (useful for testing)
-    pub fn open_in_memory() -> CoreResult<Self> {
-        let conn = Connection::open_in_memory().map_err(|e| {
-            CoreError::DatabaseError(format!("Failed to create in-memory database: {}", e))
-        })?;
+    pub async fn connect_in_memory() -> CoreResult<Self> {
+        let options = SqliteConnectOptions::from_str("sqlite::memory:")
+            .map_err(|e| CoreError::DatabaseError(format!("Invalid memory URL: {}", e)))?
+            .foreign_keys(true)
+            .busy_timeout(Duration::from_secs(5));
 
-        Self::configure_connection(&conn)?;
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect_with(options)
+            .await
+            .map_err(|e| {
+                CoreError::DatabaseError(format!("Failed to create in-memory database: {}", e))
+            })?;
 
-        Ok(Self {
-            conn: Mutex::new(conn),
-        })
+        let db = Self { pool };
+        db.migrate().await?;
+        Ok(db)
     }
 
-    /// Configure SQLite connection with optimal settings
-    fn configure_connection(conn: &Connection) -> CoreResult<()> {
-        // Enable WAL mode for better concurrency
-        conn.execute_batch(
-            "PRAGMA journal_mode=WAL;
-             PRAGMA busy_timeout=5000;
-             PRAGMA foreign_keys=ON;",
-        )
-        .map_err(|e| CoreError::DatabaseError(format!("Failed to configure database: {}", e)))?;
-
+    /// Run sqlx migrations
+    async fn migrate(&self) -> CoreResult<()> {
+        sqlx::migrate!("./migrations")
+            .run(&self.pool)
+            .await
+            .map_err(|e| CoreError::DatabaseError(format!("Migration failed: {}", e)))?;
         Ok(())
     }
 
-    /// Get a lock on the connection
-    pub fn connection(&self) -> CoreResult<std::sync::MutexGuard<'_, Connection>> {
-        self.conn
-            .lock()
-            .map_err(|_| CoreError::DatabaseError("Database lock poisoned".to_string()))
+    /// Get a reference to the connection pool
+    pub fn pool(&self) -> &SqlitePool {
+        &self.pool
     }
 
-    /// Execute a query that doesn't return rows
-    pub fn execute(&self, sql: &str, params: &[&dyn rusqlite::ToSql]) -> CoreResult<usize> {
-        let conn = self.connection()?;
-        conn.execute(sql, params)
-            .map_err(|e| CoreError::DatabaseError(format!("Execute failed: {}", e)))
-    }
-
-    /// Execute a batch of SQL statements
-    pub fn execute_batch(&self, sql: &str) -> CoreResult<()> {
-        let conn = self.connection()?;
-        conn.execute_batch(sql)
-            .map_err(|e| CoreError::DatabaseError(format!("Batch execute failed: {}", e)))
-    }
-
-    /// Query a single optional row
-    pub fn query_row<T, F>(
-        &self,
-        sql: &str,
-        params: &[&dyn rusqlite::ToSql],
-        f: F,
-    ) -> CoreResult<Option<T>>
-    where
-        F: FnOnce(&rusqlite::Row<'_>) -> rusqlite::Result<T>,
-    {
-        let conn = self.connection()?;
-        conn.query_row(sql, params, f)
-            .optional()
-            .map_err(|e| CoreError::DatabaseError(format!("Query failed: {}", e)))
-    }
-
-    /// Get the user_version pragma
-    pub fn user_version(&self) -> CoreResult<i64> {
-        self.query_row("PRAGMA user_version", &[], |row| row.get(0))?
-            .ok_or_else(|| CoreError::DatabaseError("Failed to get user_version".to_string()))
-    }
-
-    /// Set the user_version pragma
-    pub fn set_user_version(&self, version: i64) -> CoreResult<()> {
-        self.execute(&format!("PRAGMA user_version = {}", version), &[])?;
-        Ok(())
+    /// Quick connectivity check
+    pub async fn health_check(&self) -> bool {
+        sqlx::query("SELECT 1")
+            .execute(&self.pool)
+            .await
+            .is_ok()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::NamedTempFile;
 
-    #[test]
-    fn test_in_memory_database() {
-        let db = Database::open_in_memory().unwrap();
-        db.execute("CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)", &[])
-            .unwrap();
-        db.execute("INSERT INTO test (name) VALUES (?1)", &[&"hello"])
-            .unwrap();
-
-        let name: String = db
-            .query_row("SELECT name FROM test WHERE id = 1", &[], |row| row.get(0))
-            .unwrap()
-            .unwrap();
-
-        assert_eq!(name, "hello");
+    #[tokio::test]
+    async fn test_in_memory_database() {
+        let db = Database::connect_in_memory().await.unwrap();
+        let result = sqlx::query("SELECT 1 as val")
+            .fetch_one(db.pool())
+            .await;
+        assert!(result.is_ok());
     }
 
-    #[test]
-    fn test_wal_mode_enabled() {
-        // WAL mode only works with file-based databases, not in-memory
-        let temp_file = NamedTempFile::new().unwrap();
-        let db = Database::open(temp_file.path()).unwrap();
-        let journal_mode: String = db
-            .query_row("PRAGMA journal_mode", &[], |row| row.get(0))
-            .unwrap()
-            .unwrap();
-        assert_eq!(journal_mode, "wal");
+    #[tokio::test]
+    async fn test_file_database() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let db_path = temp_dir.path().join("test.db");
+        let db = Database::connect(&db_path).await.unwrap();
+        assert!(db.health_check().await);
+    }
+
+    #[tokio::test]
+    async fn test_migrations_create_tables() {
+        let db = Database::connect_in_memory().await.unwrap();
+        // Verify key tables exist after migration
+        let row: (i64,) = sqlx::query_as(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('conversations', 'messages', 'sessions', 'runners')"
+        )
+        .fetch_one(db.pool())
+        .await
+        .unwrap();
+        assert_eq!(row.0, 4);
     }
 }

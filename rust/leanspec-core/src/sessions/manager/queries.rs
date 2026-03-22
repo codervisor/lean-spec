@@ -14,12 +14,12 @@ use super::SessionManager;
 
 impl SessionManager {
     pub async fn get_session(&self, session_id: &str) -> CoreResult<Option<Session>> {
-        self.db.get_session(session_id)
+        self.db.get_session(session_id).await
     }
 
     /// Update a session record in the database
     pub async fn update_session(&self, session: &Session) -> CoreResult<()> {
-        self.db.update_session(session)
+        self.db.update_session(session).await
     }
 
     /// List sessions with optional filters
@@ -30,7 +30,7 @@ impl SessionManager {
         status: Option<SessionStatus>,
         runner: Option<&str>,
     ) -> CoreResult<Vec<Session>> {
-        self.db.list_sessions(project_path, spec_id, status, runner)
+        self.db.list_sessions(project_path, spec_id, status, runner).await
     }
 
     /// Get session logs
@@ -39,25 +39,25 @@ impl SessionManager {
         session_id: &str,
         limit: Option<usize>,
     ) -> CoreResult<Vec<SessionLog>> {
-        self.db.get_logs(session_id, limit)
+        self.db.get_logs(session_id, limit).await
     }
 
     /// Rotate logs to keep only the most recent entries
     pub async fn rotate_logs(&self, session_id: &str, keep: usize) -> CoreResult<usize> {
-        if self.db.get_session(session_id)?.is_none() {
+        if self.db.get_session(session_id).await?.is_none() {
             return Err(CoreError::NotFound(format!(
                 "Session not found: {}",
                 session_id
             )));
         }
 
-        let deleted = self.db.prune_logs(session_id, keep)?;
+        let deleted = self.db.prune_logs(session_id, keep).await?;
         if deleted > 0 {
             self.db.insert_event(
                 session_id,
                 EventType::Archived,
                 Some(format!("pruned_logs:{}", deleted)),
-            )?;
+            ).await?;
         }
 
         Ok(deleted)
@@ -65,19 +65,19 @@ impl SessionManager {
 
     /// Get session events
     pub async fn get_events(&self, session_id: &str) -> CoreResult<Vec<SessionEvent>> {
-        self.db.get_events(session_id)
+        self.db.get_events(session_id).await
     }
 
     /// Delete a session
     pub async fn delete_session(&self, session_id: &str) -> CoreResult<()> {
         // Stop if running
-        if let Some(session) = self.db.get_session(session_id)? {
+        if let Some(session) = self.db.get_session(session_id).await? {
             if session.is_running() {
                 self.stop_session(session_id).await?;
             }
         }
 
-        self.db.delete_session(session_id)
+        self.db.delete_session(session_id).await
     }
 
     /// Get logs in real-time (returns receiver)
@@ -86,7 +86,7 @@ impl SessionManager {
         session_id: &str,
     ) -> CoreResult<broadcast::Receiver<SessionLog>> {
         // Check session exists
-        if self.db.get_session(session_id)?.is_none() {
+        if self.db.get_session(session_id).await?.is_none() {
             return Err(CoreError::NotFound(format!(
                 "Session not found: {}",
                 session_id

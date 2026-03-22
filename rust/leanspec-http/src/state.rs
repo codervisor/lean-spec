@@ -10,6 +10,7 @@ use crate::project_registry::{Project, ProjectRegistry};
 use crate::sessions::{global_runners_path, SessionDatabase, SessionManager};
 use crate::sync_state::SyncState;
 use crate::watcher::{sse_connection_limit, watch_debounce, watch_enabled, FileWatcher};
+use leanspec_core::db::Database;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
@@ -41,6 +42,9 @@ pub struct AppState {
     /// Session manager for AI coding sessions
     pub session_manager: Arc<SessionManager>,
 
+    /// Shared database handle
+    pub database: Arc<Database>,
+
     /// File watcher for spec changes
     pub file_watcher: Option<Arc<FileWatcher>>,
 
@@ -52,8 +56,8 @@ pub struct AppState {
 }
 
 impl AppState {
-    /// Create new application state
-    pub fn new(config: ServerConfig) -> Result<Self, ServerError> {
+    /// Create new application state (async for database initialization)
+    pub async fn new(config: ServerConfig) -> Result<Self, ServerError> {
         let mut registry = ProjectRegistry::new()?;
 
         // Auto-register a project when none are configured
@@ -68,25 +72,38 @@ impl AppState {
         }
 
         let unified_db_path = resolve_database_path(config.database_url.as_deref())?;
-        let chat_store = ChatStore::new_with_db_path(&unified_db_path)?;
-        let chat_config = ChatConfigStore::load_default()?;
         let sessions_dir = config_dir();
         fs::create_dir_all(&sessions_dir).map_err(|e| {
             ServerError::ConfigError(format!("Failed to create sessions dir: {}", e))
         })?;
-        let session_db = SessionDatabase::new(&unified_db_path)?;
+
+        // Initialize the shared database (runs migrations)
+        let database = Database::connect(&unified_db_path).await.map_err(|e| {
+            ServerError::ConfigError(format!("Failed to initialize database: {}", e))
+        })?;
+        let database = Arc::new(database);
+
+        let chat_store = ChatStore::new(database.pool().clone(), unified_db_path.clone());
+        let chat_config = ChatConfigStore::load_default()?;
+        let session_db = SessionDatabase::new(database.pool().clone());
 
         let legacy_sessions_path = sessions_dir.join("sessions.db");
-        if session_db.migrate_from_legacy_db(&legacy_sessions_path)? {
+        if session_db
+            .migrate_from_legacy_db(&legacy_sessions_path)
+            .await?
+        {
             mark_legacy_db_migrated(&legacy_sessions_path);
         }
 
         let legacy_chat_path = sessions_dir.join("chat.db");
-        if chat_store.migrate_from_legacy_db(&legacy_chat_path)? {
+        if chat_store
+            .migrate_from_legacy_db(&legacy_chat_path)
+            .await?
+        {
             mark_legacy_db_migrated(&legacy_chat_path);
         }
         let legacy_runners_path = global_runners_path();
-        if session_db.migrate_from_legacy_runners_json()? {
+        if session_db.migrate_from_legacy_runners_json().await? {
             mark_legacy_json_migrated(&legacy_runners_path);
         }
 
@@ -118,6 +135,7 @@ impl AppState {
             chat_store: Arc::new(chat_store),
             chat_config: Arc::new(RwLock::new(chat_config)),
             session_manager,
+            database,
             file_watcher,
             sse_connections,
             runner_models_cache: Arc::new(RwLock::new(HashMap::new())),
@@ -125,11 +143,18 @@ impl AppState {
     }
 
     /// Create state with an existing registry (for testing)
-    pub fn with_registry(config: ServerConfig, registry: ProjectRegistry) -> Self {
-        let chat_store = ChatStore::new().expect("Failed to initialize chat store");
+    pub async fn with_registry(config: ServerConfig, registry: ProjectRegistry) -> Self {
+        let database = Database::connect_in_memory()
+            .await
+            .expect("Failed to initialize in-memory database");
+        let database = Arc::new(database);
+
+        let chat_store = ChatStore::new(
+            database.pool().clone(),
+            PathBuf::from(":memory:"),
+        );
         let chat_config = ChatConfigStore::load_default().expect("Failed to load chat config");
-        let session_db = SessionDatabase::new_in_memory()
-            .expect("Failed to initialize in-memory session database");
+        let session_db = SessionDatabase::new(database.pool().clone());
         let session_manager = Arc::new(SessionManager::new(session_db));
         let file_watcher = if watch_enabled() {
             let roots: Vec<_> = registry.all().iter().map(|p| p.specs_dir.clone()).collect();
@@ -145,6 +170,7 @@ impl AppState {
             chat_store: Arc::new(chat_store),
             chat_config: Arc::new(RwLock::new(chat_config)),
             session_manager,
+            database,
             file_watcher,
             sse_connections,
             runner_models_cache: Arc::new(RwLock::new(HashMap::new())),

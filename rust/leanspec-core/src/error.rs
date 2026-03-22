@@ -148,8 +148,8 @@ impl From<serde_yaml::Error> for CoreError {
 }
 
 #[cfg(any(feature = "sessions", feature = "storage"))]
-impl From<rusqlite::Error> for CoreError {
-    fn from(e: rusqlite::Error) -> Self {
+impl From<sqlx::Error> for CoreError {
+    fn from(e: sqlx::Error) -> Self {
         CoreError::DatabaseError(e.to_string())
     }
 }

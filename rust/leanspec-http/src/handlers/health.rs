@@ -47,7 +47,7 @@ pub async fn health_ready(
     }
 
     // Check chat store (DB connectivity)
-    let db_ok = state.chat_store.health_check();
+    let db_ok = state.database.health_check().await;
     checks.push(HealthCheck {
         name: "database".to_string(),
         status: if db_ok { "ok" } else { "error" }.to_string(),

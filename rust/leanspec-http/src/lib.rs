@@ -51,7 +51,7 @@ pub use state::AppState;
 /// Start the HTTP server on the given host and port
 pub async fn start_server(host: &str, port: u16) -> Result<(), ServerError> {
     let config = load_config()?;
-    let state = AppState::new(config)?;
+    let state = AppState::new(config).await?;
     let app = create_router(state);
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", host, port))
@@ -74,7 +74,7 @@ pub async fn start_server_with_config(
     port: u16,
     config: ServerConfig,
 ) -> Result<(), ServerError> {
-    let state = AppState::new(config)?;
+    let state = AppState::new(config).await?;
     let app = create_router(state);
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", host, port))
