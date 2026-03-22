@@ -481,6 +481,7 @@ fn test_session_view_nonexistent_fails() {
 }
 
 #[test]
+#[ignore = "Requires git commit signing which is unavailable in CI"]
 fn test_run_command_worktree_merges_and_cleans_up() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -532,6 +533,7 @@ fn test_run_command_worktree_merges_and_cleans_up() {
 }
 
 #[test]
+#[ignore = "Requires git commit signing which is unavailable in CI"]
 fn test_failed_worktree_session_can_be_cleaned_up() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -594,6 +596,7 @@ fn test_failed_worktree_session_can_be_cleaned_up() {
 }
 
 #[test]
+#[ignore = "Requires git commit signing which is unavailable in CI"]
 fn test_parallel_run_uses_multiple_worktrees() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
