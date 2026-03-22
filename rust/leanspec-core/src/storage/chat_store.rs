@@ -63,10 +63,7 @@ impl ChatStore {
 
     /// Quick connectivity check
     pub async fn health_check(&self) -> bool {
-        sqlx::query("SELECT 1")
-            .execute(&self.pool)
-            .await
-            .is_ok()
+        sqlx::query("SELECT 1").execute(&self.pool).await.is_ok()
     }
 
     pub fn storage_info(&self) -> Result<ChatStorageInfo, String> {
@@ -78,10 +75,7 @@ impl ChatStore {
     }
 
     /// Import chat data from a legacy chat.db file into the current database.
-    pub async fn migrate_from_legacy_db<P: AsRef<Path>>(
-        &self,
-        legacy_path: P,
-    ) -> CoreResult<bool> {
+    pub async fn migrate_from_legacy_db<P: AsRef<Path>>(&self, legacy_path: P) -> CoreResult<bool> {
         let legacy_path = legacy_path.as_ref();
         if !legacy_path.exists() || legacy_path == self.db_path.as_path() {
             return Ok(false);
@@ -286,13 +280,12 @@ impl ChatStore {
         let now = now_ms();
         let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
 
-        let project_id: Option<String> = sqlx::query_scalar(
-            "SELECT project_id FROM conversations WHERE id = ?",
-        )
-        .bind(session_id)
-        .fetch_optional(&mut *tx)
-        .await
-        .map_err(|e| e.to_string())?;
+        let project_id: Option<String> =
+            sqlx::query_scalar("SELECT project_id FROM conversations WHERE id = ?")
+                .bind(session_id)
+                .fetch_optional(&mut *tx)
+                .await
+                .map_err(|e| e.to_string())?;
 
         let Some(project_id) = project_id else {
             return Ok(None);
@@ -373,13 +366,12 @@ impl ChatStore {
         let now = now_ms();
         let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
 
-        let project_id: Option<String> = sqlx::query_scalar(
-            "SELECT project_id FROM conversations WHERE id = ?",
-        )
-        .bind(session_id)
-        .fetch_optional(&mut *tx)
-        .await
-        .map_err(|e| e.to_string())?;
+        let project_id: Option<String> =
+            sqlx::query_scalar("SELECT project_id FROM conversations WHERE id = ?")
+                .bind(session_id)
+                .fetch_optional(&mut *tx)
+                .await
+                .map_err(|e| e.to_string())?;
 
         let Some(project_id) = project_id else {
             return Ok(None);

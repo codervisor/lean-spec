@@ -285,7 +285,8 @@ impl SessionManager {
         // Load session
         let mut session = self
             .db
-            .get_session(session_id).await?
+            .get_session(session_id)
+            .await?
             .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         // Check if already running
@@ -531,7 +532,8 @@ impl SessionManager {
                                 notify.notify_one();
                             }
 
-                            if let Ok(Some(mut session)) = db_stdout.get_session(&session_id_stdout).await
+                            if let Ok(Some(mut session)) =
+                                db_stdout.get_session(&session_id_stdout).await
                             {
                                 session
                                     .metadata
@@ -745,26 +747,32 @@ impl SessionManager {
                     )
                     .await;
                 } else {
-                    let _ = self.db.log_message(
-                        session_id,
-                        LogLevel::Warning,
-                        "ACP session ID unavailable; skipped initial session/prompt",
-                    ).await;
+                    let _ = self
+                        .db
+                        .log_message(
+                            session_id,
+                            LogLevel::Warning,
+                            "ACP session ID unavailable; skipped initial session/prompt",
+                        )
+                        .await;
                 }
 
-                let _ = self.db.insert_log(&SessionLog {
-                    id: 0,
-                    session_id: session_id.to_string(),
-                    timestamp: chrono::Utc::now(),
-                    level: LogLevel::Info,
-                    message: json!({
-                        "type": "acp_message",
-                        "role": "user",
-                        "content": prompt_message,
-                        "done": true,
+                let _ = self
+                    .db
+                    .insert_log(&SessionLog {
+                        id: 0,
+                        session_id: session_id.to_string(),
+                        timestamp: chrono::Utc::now(),
+                        level: LogLevel::Info,
+                        message: json!({
+                            "type": "acp_message",
+                            "role": "user",
+                            "content": prompt_message,
+                            "done": true,
+                        })
+                        .to_string(),
                     })
-                    .to_string(),
-                }).await;
+                    .await;
             }
         }
 
@@ -778,7 +786,9 @@ impl SessionManager {
         }
         session.touch();
         self.db.update_session(&session).await?;
-        self.db.insert_event(session_id, EventType::Started, None).await?;
+        self.db
+            .insert_event(session_id, EventType::Started, None)
+            .await?;
         let started_message = match session_timeout {
             Some(timeout) => format!(
                 "Session started (runner: {}, timeout: {}s)",
@@ -788,7 +798,8 @@ impl SessionManager {
             None => format!("Session started (runner: {})", session.runner),
         };
         self.db
-            .log_message(session_id, LogLevel::Info, &started_message).await?;
+            .log_message(session_id, LogLevel::Info, &started_message)
+            .await?;
 
         // Spawn background task to wait for completion
         let session_id_owned = session_id.to_string();
@@ -837,15 +848,18 @@ impl SessionManager {
                         session.update_duration();
                         session.touch();
                         let _ = db_clone.update_session(&session).await;
-                        let _ =
-                            db_clone.insert_event(&session_id_owned, EventType::Completed, None).await;
+                        let _ = db_clone
+                            .insert_event(&session_id_owned, EventType::Completed, None)
+                            .await;
                     }
                     let _ = finalize_worktree_state(&db_clone, &session_id_owned, true).await;
-                    let _ = db_clone.log_message(
-                        &session_id_owned,
-                        LogLevel::Info,
-                        "ACP session completed (agent turn ended)",
-                    ).await;
+                    let _ = db_clone
+                        .log_message(
+                            &session_id_owned,
+                            LogLevel::Info,
+                            "ACP session completed (agent turn ended)",
+                        )
+                        .await;
 
                     cleanup_session(&session_id_owned, &active_sessions_clone, &broadcasts_clone)
                         .await;
@@ -864,24 +878,25 @@ impl SessionManager {
                             let _ = child.kill().await;
                         }
 
-                        if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned).await {
+                        if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned).await
+                        {
                             session.status = SessionStatus::Failed;
                             session.ended_at = Some(chrono::Utc::now());
                             session.update_duration();
                             session.touch();
                             let _ = db_clone.update_session(&session).await;
-                            let _ = db_clone.insert_event(
-                                &session_id_owned,
-                                EventType::Failed,
-                                Some(timeout_message.clone()),
-                            ).await;
+                            let _ = db_clone
+                                .insert_event(
+                                    &session_id_owned,
+                                    EventType::Failed,
+                                    Some(timeout_message.clone()),
+                                )
+                                .await;
                         }
                         let _ = finalize_worktree_state(&db_clone, &session_id_owned, false).await;
-                        let _ = db_clone.log_message(
-                            &session_id_owned,
-                            LogLevel::Error,
-                            &timeout_message,
-                        ).await;
+                        let _ = db_clone
+                            .log_message(&session_id_owned, LogLevel::Error, &timeout_message)
+                            .await;
 
                         cleanup_session(
                             &session_id_owned,
@@ -894,14 +909,16 @@ impl SessionManager {
                 }
 
                 if last_heartbeat_at.elapsed() >= Duration::from_secs(30) {
-                    let _ = db_clone.log_message(
-                        &session_id_owned,
-                        LogLevel::Info,
-                        &format!(
-                            "Session still running (elapsed: {}s)",
-                            started_at.elapsed().as_secs()
-                        ),
-                    ).await;
+                    let _ = db_clone
+                        .log_message(
+                            &session_id_owned,
+                            LogLevel::Info,
+                            &format!(
+                                "Session still running (elapsed: {}s)",
+                                started_at.elapsed().as_secs()
+                            ),
+                        )
+                        .await;
                     last_heartbeat_at = Instant::now();
                 }
 
@@ -921,22 +938,27 @@ impl SessionManager {
                 let status = match status_result {
                     Ok(status) => status,
                     Err(err) => {
-                        if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned).await {
+                        if let Ok(Some(mut session)) = db_clone.get_session(&session_id_owned).await
+                        {
                             session.status = SessionStatus::Failed;
                             session.ended_at = Some(chrono::Utc::now());
                             session.update_duration();
                             session.touch();
                             let _ = db_clone.update_session(&session).await;
-                            let _ = db_clone.insert_event(
-                                &session_id_owned,
-                                EventType::Failed,
-                                Some(format!("Process wait error: {}", err)),
-                            ).await;
-                            let _ = db_clone.log_message(
-                                &session_id_owned,
-                                LogLevel::Error,
-                                &format!("Process wait error: {}", err),
-                            ).await;
+                            let _ = db_clone
+                                .insert_event(
+                                    &session_id_owned,
+                                    EventType::Failed,
+                                    Some(format!("Process wait error: {}", err)),
+                                )
+                                .await;
+                            let _ = db_clone
+                                .log_message(
+                                    &session_id_owned,
+                                    LogLevel::Error,
+                                    &format!("Process wait error: {}", err),
+                                )
+                                .await;
                         }
                         let _ = finalize_worktree_state(&db_clone, &session_id_owned, false).await;
                         cleanup_session(
@@ -965,34 +987,41 @@ impl SessionManager {
                     } else {
                         EventType::Failed
                     };
-                    let _ = db_clone.insert_event(&session_id_owned, event_type, None).await;
+                    let _ = db_clone
+                        .insert_event(&session_id_owned, event_type, None)
+                        .await;
                     if status.success() {
-                        let _ = db_clone.log_message(
-                            &session_id_owned,
-                            LogLevel::Info,
-                            &format!(
-                                "Session completed successfully{}",
-                                status
-                                    .code()
-                                    .map(|code| format!(" (exit code: {})", code))
-                                    .unwrap_or_default()
-                            ),
-                        ).await;
+                        let _ = db_clone
+                            .log_message(
+                                &session_id_owned,
+                                LogLevel::Info,
+                                &format!(
+                                    "Session completed successfully{}",
+                                    status
+                                        .code()
+                                        .map(|code| format!(" (exit code: {})", code))
+                                        .unwrap_or_default()
+                                ),
+                            )
+                            .await;
                     } else {
-                        let _ = db_clone.log_message(
-                            &session_id_owned,
-                            LogLevel::Error,
-                            &format!(
-                                "Session failed{}",
-                                status
-                                    .code()
-                                    .map(|code| format!(" (exit code: {})", code))
-                                    .unwrap_or_default()
-                            ),
-                        ).await;
+                        let _ = db_clone
+                            .log_message(
+                                &session_id_owned,
+                                LogLevel::Error,
+                                &format!(
+                                    "Session failed{}",
+                                    status
+                                        .code()
+                                        .map(|code| format!(" (exit code: {})", code))
+                                        .unwrap_or_default()
+                                ),
+                            )
+                            .await;
                     }
                 }
-                let _ = finalize_worktree_state(&db_clone, &session_id_owned, status.success()).await;
+                let _ =
+                    finalize_worktree_state(&db_clone, &session_id_owned, status.success()).await;
 
                 cleanup_session(&session_id_owned, &active_sessions_clone, &broadcasts_clone).await;
                 break;
@@ -1007,7 +1036,8 @@ impl SessionManager {
         // Load session
         let mut session = self
             .db
-            .get_session(session_id).await?
+            .get_session(session_id)
+            .await?
             .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         if !session.status.can_stop() {
@@ -1053,9 +1083,11 @@ impl SessionManager {
         session.touch();
         self.db.update_session(&session).await?;
         self.db
-            .insert_event(session_id, EventType::Cancelled, None).await?;
+            .insert_event(session_id, EventType::Cancelled, None)
+            .await?;
         self.db
-            .log_message(session_id, LogLevel::Info, "Session stopped by user").await?;
+            .log_message(session_id, LogLevel::Info, "Session stopped by user")
+            .await?;
 
         // Clean up broadcast channel
         {
@@ -1211,7 +1243,8 @@ impl SessionManager {
     ) -> CoreResult<PathBuf> {
         let session = self
             .db
-            .get_session(session_id).await?
+            .get_session(session_id)
+            .await?
             .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         let base_dir = options.output_dir.unwrap_or_else(|| {
@@ -1267,11 +1300,13 @@ impl SessionManager {
             }
         }
 
-        self.db.insert_event(
-            session_id,
-            EventType::Archived,
-            Some(archive_path.to_string_lossy().to_string()),
-        ).await?;
+        self.db
+            .insert_event(
+                session_id,
+                EventType::Archived,
+                Some(archive_path.to_string_lossy().to_string()),
+            )
+            .await?;
 
         Ok(archive_path)
     }
@@ -1280,7 +1315,8 @@ impl SessionManager {
     pub async fn pause_session(&self, session_id: &str) -> CoreResult<()> {
         let mut session = self
             .db
-            .get_session(session_id).await?
+            .get_session(session_id)
+            .await?
             .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         if !session.status.can_pause() {
@@ -1302,9 +1338,12 @@ impl SessionManager {
         session.status = SessionStatus::Paused;
         session.touch();
         self.db.update_session(&session).await?;
-        self.db.insert_event(session_id, EventType::Paused, None).await?;
         self.db
-            .log_message(session_id, LogLevel::Info, "Session paused").await?;
+            .insert_event(session_id, EventType::Paused, None)
+            .await?;
+        self.db
+            .log_message(session_id, LogLevel::Info, "Session paused")
+            .await?;
 
         Ok(())
     }
@@ -1313,7 +1352,8 @@ impl SessionManager {
     pub async fn resume_session(&self, session_id: &str) -> CoreResult<()> {
         let mut session = self
             .db
-            .get_session(session_id).await?
+            .get_session(session_id)
+            .await?
             .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         if !session.status.can_resume() {
@@ -1335,9 +1375,12 @@ impl SessionManager {
         session.status = SessionStatus::Running;
         session.touch();
         self.db.update_session(&session).await?;
-        self.db.insert_event(session_id, EventType::Resumed, None).await?;
         self.db
-            .log_message(session_id, LogLevel::Info, "Session resumed").await?;
+            .insert_event(session_id, EventType::Resumed, None)
+            .await?;
+        self.db
+            .log_message(session_id, LogLevel::Info, "Session resumed")
+            .await?;
 
         Ok(())
     }
@@ -1363,11 +1406,13 @@ impl SessionManager {
                 session.update_duration();
                 session.touch();
                 self.db.update_session(&session).await?;
-                self.db.insert_event(
-                    &session.id,
-                    EventType::Failed,
-                    Some("Process disappeared".to_string()),
-                ).await?;
+                self.db
+                    .insert_event(
+                        &session.id,
+                        EventType::Failed,
+                        Some("Process disappeared".to_string()),
+                    )
+                    .await?;
                 cleaned += 1;
             }
         }
@@ -1683,7 +1728,8 @@ async fn finalize_worktree_state(
                     "Worktree merge conflict in: {}",
                     outcome.conflicted_files.join(", ")
                 ),
-            ).await?;
+            )
+            .await?;
         } else if outcome.merged {
             manager.cleanup_session(session_id, false)?;
             session.metadata.insert(
@@ -1698,7 +1744,8 @@ async fn finalize_worktree_state(
                 session_id,
                 LogLevel::Info,
                 "Worktree merged back into target branch and cleaned up",
-            ).await?;
+            )
+            .await?;
         }
     }
 

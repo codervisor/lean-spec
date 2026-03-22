@@ -96,10 +96,7 @@ impl AppState {
         }
 
         let legacy_chat_path = sessions_dir.join("chat.db");
-        if chat_store
-            .migrate_from_legacy_db(&legacy_chat_path)
-            .await?
-        {
+        if chat_store.migrate_from_legacy_db(&legacy_chat_path).await? {
             mark_legacy_db_migrated(&legacy_chat_path);
         }
         let legacy_runners_path = global_runners_path();
@@ -149,10 +146,7 @@ impl AppState {
             .expect("Failed to initialize in-memory database");
         let database = Arc::new(database);
 
-        let chat_store = ChatStore::new(
-            database.pool().clone(),
-            PathBuf::from(":memory:"),
-        );
+        let chat_store = ChatStore::new(database.pool().clone(), PathBuf::from(":memory:"));
         let chat_config = ChatConfigStore::load_default().expect("Failed to load chat config");
         let session_db = SessionDatabase::new(database.pool().clone());
         let session_manager = Arc::new(SessionManager::new(session_db));

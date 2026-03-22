@@ -58,12 +58,16 @@ pub async fn list_chat_sessions(
         }
     };
 
-    let sessions = state.chat_store.list_sessions(&project_id).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e)),
-        )
-    })?;
+    let sessions = state
+        .chat_store
+        .list_sessions(&project_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e)),
+            )
+        })?;
 
     Ok(Json(sessions))
 }
@@ -131,7 +135,12 @@ pub async fn update_chat_session(
 ) -> ApiResult<Json<ChatSession>> {
     let session = state
         .chat_store
-        .update_session(&session_id, payload.title, payload.provider_id, payload.model_id)
+        .update_session(
+            &session_id,
+            payload.title,
+            payload.provider_id,
+            payload.model_id,
+        )
         .await
         .map_err(|e| {
             (
@@ -176,7 +185,12 @@ pub async fn replace_chat_messages(
 ) -> ApiResult<Json<ChatSession>> {
     let session = state
         .chat_store
-        .replace_messages(&session_id, payload.provider_id, payload.model_id, payload.messages)
+        .replace_messages(
+            &session_id,
+            payload.provider_id,
+            payload.model_id,
+            payload.messages,
+        )
         .await
         .map_err(|e| {
             (

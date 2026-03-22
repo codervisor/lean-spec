@@ -30,7 +30,9 @@ impl SessionManager {
         status: Option<SessionStatus>,
         runner: Option<&str>,
     ) -> CoreResult<Vec<Session>> {
-        self.db.list_sessions(project_path, spec_id, status, runner).await
+        self.db
+            .list_sessions(project_path, spec_id, status, runner)
+            .await
     }
 
     /// Get session logs
@@ -53,11 +55,13 @@ impl SessionManager {
 
         let deleted = self.db.prune_logs(session_id, keep).await?;
         if deleted > 0 {
-            self.db.insert_event(
-                session_id,
-                EventType::Archived,
-                Some(format!("pruned_logs:{}", deleted)),
-            ).await?;
+            self.db
+                .insert_event(
+                    session_id,
+                    EventType::Archived,
+                    Some(format!("pruned_logs:{}", deleted)),
+                )
+                .await?;
         }
 
         Ok(deleted)

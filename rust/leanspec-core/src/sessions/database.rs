@@ -76,10 +76,7 @@ impl SessionDatabase {
     }
 
     /// Import session data from a legacy sessions.db file
-    pub async fn migrate_from_legacy_db<P: AsRef<Path>>(
-        &self,
-        legacy_path: P,
-    ) -> CoreResult<bool> {
+    pub async fn migrate_from_legacy_db<P: AsRef<Path>>(&self, legacy_path: P) -> CoreResult<bool> {
         let legacy_path = legacy_path.as_ref();
         if !legacy_path.exists() {
             return Ok(false);
@@ -392,8 +389,7 @@ impl SessionDatabase {
             .bind(&session.id)
             .execute(&self.pool)
             .await;
-        self.insert_spec_ids(&session.id, &session.spec_ids)
-            .await?;
+        self.insert_spec_ids(&session.id, &session.spec_ids).await?;
 
         // Update metadata
         let _ = sqlx::query("DELETE FROM session_metadata WHERE session_id = ?")
@@ -650,32 +646,24 @@ impl SessionDatabase {
         Ok(rows.into_iter().map(|r| r.0).collect())
     }
 
-    async fn insert_metadata(
-        &self,
-        session_id: &str,
-        key: &str,
-        value: &str,
-    ) -> CoreResult<()> {
-        sqlx::query(
-            "INSERT INTO session_metadata (session_id, key, value) VALUES (?, ?, ?)",
-        )
-        .bind(session_id)
-        .bind(key)
-        .bind(value)
-        .execute(&self.pool)
-        .await
-        .map_err(|e| CoreError::DatabaseError(format!("Failed to insert metadata: {}", e)))?;
+    async fn insert_metadata(&self, session_id: &str, key: &str, value: &str) -> CoreResult<()> {
+        sqlx::query("INSERT INTO session_metadata (session_id, key, value) VALUES (?, ?, ?)")
+            .bind(session_id)
+            .bind(key)
+            .bind(value)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| CoreError::DatabaseError(format!("Failed to insert metadata: {}", e)))?;
         Ok(())
     }
 
     async fn load_metadata(&self, session_id: &str) -> CoreResult<HashMap<String, String>> {
-        let rows: Vec<(String, String)> = sqlx::query_as(
-            "SELECT key, value FROM session_metadata WHERE session_id = ?",
-        )
-        .bind(session_id)
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| CoreError::DatabaseError(format!("Failed to load metadata: {}", e)))?;
+        let rows: Vec<(String, String)> =
+            sqlx::query_as("SELECT key, value FROM session_metadata WHERE session_id = ?")
+                .bind(session_id)
+                .fetch_all(&self.pool)
+                .await
+                .map_err(|e| CoreError::DatabaseError(format!("Failed to load metadata: {}", e)))?;
 
         Ok(rows.into_iter().collect())
     }

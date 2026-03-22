@@ -86,10 +86,7 @@ impl Database {
 
     /// Quick connectivity check
     pub async fn health_check(&self) -> bool {
-        sqlx::query("SELECT 1")
-            .execute(&self.pool)
-            .await
-            .is_ok()
+        sqlx::query("SELECT 1").execute(&self.pool).await.is_ok()
     }
 }
 
@@ -100,9 +97,7 @@ mod tests {
     #[tokio::test]
     async fn test_in_memory_database() {
         let db = Database::connect_in_memory().await.unwrap();
-        let result = sqlx::query("SELECT 1 as val")
-            .fetch_one(db.pool())
-            .await;
+        let result = sqlx::query("SELECT 1 as val").fetch_one(db.pool()).await;
         assert!(result.is_ok());
     }
 
