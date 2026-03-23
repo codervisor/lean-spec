@@ -54,6 +54,7 @@ fly deploy
 | `LEANSPEC_LOG_LEVEL` | `info` | Log verbosity |
 | `LEANSPEC_CORS_ORIGINS` | _(allow all)_ | Comma-separated allowed origins |
 | `LEANSPEC_UI_DIST` | _(auto)_ | Path to UI static files |
+| `LEANSPEC_PROJECT_SOURCES` | `local,github` | Enabled project sources (comma-separated: `local`, `github`) |
 
 ## Health Checks
 

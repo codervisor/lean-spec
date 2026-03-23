@@ -27,6 +27,7 @@ import { PageHeader } from '../components/shared/page-header';
 import { ProjectsSkeleton } from '../components/shared/skeletons';
 import { PageContainer } from '../components/shared/page-container';
 import { useProjects, useProjectMutations } from '../hooks/useProjectQuery';
+import { useCapabilities } from '../hooks/useCapabilities';
 import { useMachineStore } from '../stores/machine';
 import { api } from '../lib/api';
 
@@ -50,10 +51,11 @@ export function ProjectsPage() {
   const { projects, isLoading: loading } = useProjects();
   const { switchProject, toggleFavorite, removeProject, updateProject } = useProjectMutations();
   const { machineModeEnabled, currentMachine } = useMachineStore();
+  const { hasSource } = useCapabilities();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [createDialogTab, setCreateDialogTab] = useState<'local' | 'github'>('local');
+  const [createDialogTab, setCreateDialogTab] = useState<'local' | 'github'>(hasSource('local') ? 'local' : 'github');
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [validationStates, setValidationStates] = useState<Record<string, ProjectValidationState>>({});
@@ -237,14 +239,25 @@ export function ProjectsPage() {
               : (t('projectsPage.description') || t('projects.description'))}
             actions={!machineModeEnabled ? (
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => { setCreateDialogTab('github'); setIsCreateDialogOpen(true); }} size="lg" className="shadow-sm">
-                  <Github className="mr-2 h-4 w-4" />
-                  Import from GitHub
-                </Button>
-                <Button onClick={() => { setCreateDialogTab('local'); setIsCreateDialogOpen(true); }} size="lg" className="shadow-sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('projects.newProject')}
-                </Button>
+                {hasSource('github') && (
+                  <Button variant="outline" onClick={() => { setCreateDialogTab('github'); setIsCreateDialogOpen(true); }} size="lg" className="shadow-sm">
+                    <Github className="mr-2 h-4 w-4" />
+                    Import from GitHub
+                  </Button>
+                )}
+                {hasSource('local') && (
+                  <Button onClick={() => { setCreateDialogTab('local'); setIsCreateDialogOpen(true); }} size="lg" className="shadow-sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    {t('projects.newProject')}
+                  </Button>
+                )}
+                {/* Fallback: single button when only one source */}
+                {!hasSource('local') && !hasSource('github') && (
+                  <Button onClick={() => setIsCreateDialogOpen(true)} size="lg" className="shadow-sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    {t('projects.newProject')}
+                  </Button>
+                )}
               </div>
             ) : undefined}
           />
@@ -443,14 +456,18 @@ export function ProjectsPage() {
               </p>
               {!machineModeEnabled && (
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button variant="outline" onClick={() => { setCreateDialogTab('github'); setIsCreateDialogOpen(true); }} size="lg">
-                    <Github className="mr-2 h-4 w-4" />
-                    Import from GitHub
-                  </Button>
-                  <Button onClick={() => { setCreateDialogTab('local'); setIsCreateDialogOpen(true); }} size="lg">
-                    <Plus className="mr-2 h-4 w-4" />
-                    {t('projects.createProject')}
-                  </Button>
+                  {hasSource('github') && (
+                    <Button variant="outline" onClick={() => { setCreateDialogTab('github'); setIsCreateDialogOpen(true); }} size="lg">
+                      <Github className="mr-2 h-4 w-4" />
+                      Import from GitHub
+                    </Button>
+                  )}
+                  {hasSource('local') && (
+                    <Button onClick={() => { setCreateDialogTab('local'); setIsCreateDialogOpen(true); }} size="lg">
+                      <Plus className="mr-2 h-4 w-4" />
+                      {t('projects.createProject')}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

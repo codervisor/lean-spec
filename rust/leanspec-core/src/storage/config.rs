@@ -65,6 +65,12 @@ pub struct ServerSettings {
     /// CORS configuration
     #[serde(default)]
     pub cors: CorsSettings,
+
+    /// Enabled project sources for the UI (e.g. ["local", "github"]).
+    /// Override via `LEANSPEC_PROJECT_SOURCES` env var (comma-separated).
+    /// Default: all sources enabled.
+    #[serde(default = "default_project_sources")]
+    pub project_sources: Vec<String>,
 }
 
 impl Default for ServerSettings {
@@ -76,8 +82,30 @@ impl Default for ServerSettings {
             browser: None,
             ui_dist: None,
             cors: CorsSettings::default(),
+            project_sources: default_project_sources(),
         }
     }
+}
+
+/// Resolve project sources from env var or config.
+/// `LEANSPEC_PROJECT_SOURCES=github` → only GitHub import
+/// `LEANSPEC_PROJECT_SOURCES=local,github` → both
+pub fn resolve_project_sources(config_sources: &[String]) -> Vec<String> {
+    if let Ok(env_val) = std::env::var("LEANSPEC_PROJECT_SOURCES") {
+        let sources: Vec<String> = env_val
+            .split(',')
+            .map(|s| s.trim().to_lowercase())
+            .filter(|s| !s.is_empty())
+            .collect();
+        if !sources.is_empty() {
+            return sources;
+        }
+    }
+    config_sources.to_vec()
+}
+
+fn default_project_sources() -> Vec<String> {
+    vec!["local".to_string(), "github".to_string()]
 }
 
 fn default_host() -> String {

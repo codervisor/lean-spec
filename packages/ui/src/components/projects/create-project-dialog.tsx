@@ -11,6 +11,7 @@ import {
   Input,
 } from '@/library';
 import { useProjectMutations } from '../../hooks/useProjectQuery';
+import { useCapabilities } from '../../hooks/useCapabilities';
 import { DirectoryPicker } from './directory-picker';
 import { GitHubImportForm } from './github-import-form';
 import { useTranslation } from 'react-i18next';
@@ -25,9 +26,15 @@ interface CreateProjectDialogProps {
 export function CreateProjectDialog({ open, onOpenChange, initialTab }: CreateProjectDialogProps) {
   const { addProject } = useProjectMutations();
   const navigate = useNavigate();
+  const { hasSource } = useCapabilities();
+  const showLocal = hasSource('local');
+  const showGithub = hasSource('github');
+  const showTabs = showLocal && showGithub;
+  const defaultTab = initialTab ?? (showLocal ? 'local' : 'github');
+
   const [path, setPath] = useState('');
   const [mode, setMode] = useState<'picker' | 'manual'>('picker');
-  const [tab, setTab] = useState<'local' | 'github'>(initialTab ?? 'local');
+  const [tab, setTab] = useState<'local' | 'github'>(defaultTab);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation('common');
@@ -37,9 +44,9 @@ export function CreateProjectDialog({ open, onOpenChange, initialTab }: CreatePr
       setMode('picker');
       setPath('');
       setError(null);
-      setTab(initialTab ?? 'local');
+      setTab(initialTab ?? defaultTab);
     }
-  }, [open, initialTab]);
+  }, [open, initialTab, defaultTab]);
 
   const handleAddProject = async (projectPath: string) => {
     try {
@@ -91,7 +98,8 @@ export function CreateProjectDialog({ open, onOpenChange, initialTab }: CreatePr
           </DialogDescription>
         </DialogHeader>
 
-        {/* Tab switcher */}
+        {/* Tab switcher — only shown when both sources are enabled */}
+        {showTabs && (
         <div className="flex gap-1 p-1 bg-muted rounded-lg">
           <button
             type="button"
@@ -118,8 +126,9 @@ export function CreateProjectDialog({ open, onOpenChange, initialTab }: CreatePr
             GitHub
           </button>
         </div>
+        )}
 
-        {tab === 'github' ? (
+        {tab === 'github' && showGithub ? (
           <GitHubImportForm
             onSuccess={(projectId) => {
               onOpenChange(false);

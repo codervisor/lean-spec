@@ -2139,7 +2139,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-cli"
-version = "0.2.27"
+version = "0.2.28"
 dependencies = [
  "assert_cmd",
  "chrono",
@@ -2163,7 +2163,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-core"
-version = "0.2.27"
+version = "0.2.28"
 dependencies = [
  "agent-client-protocol",
  "anthropic",
@@ -2198,7 +2198,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-http"
-version = "0.2.27"
+version = "0.2.28"
 dependencies = [
  "async-stream",
  "axum",
@@ -2230,7 +2230,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-mcp"
-version = "0.2.27"
+version = "0.2.28"
 dependencies = [
  "assert-json-diff",
  "chrono",

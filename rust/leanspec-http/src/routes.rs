@@ -59,6 +59,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/health", get(handlers::health_check))
         .route("/health/live", get(handlers::health_live))
         .route("/health/ready", get(handlers::health_ready))
+        // Server capabilities
+        .route("/api/capabilities", get(handlers::get_capabilities))
         .route("/api/chat/config", get(handlers::get_chat_config))
         .route("/api/chat/config", put(handlers::update_chat_config))
         .route("/api/chat/sessions", get(handlers::list_chat_sessions))

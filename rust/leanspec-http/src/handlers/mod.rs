@@ -2,6 +2,7 @@
 //!
 //! Route handlers for the HTTP API.
 
+mod capabilities;
 mod chat_config;
 #[cfg(feature = "ai")]
 mod chat_handler;
@@ -18,6 +19,7 @@ mod sessions;
 mod specs;
 mod sync;
 
+pub use capabilities::*;
 pub use chat_config::*;
 #[cfg(feature = "ai")]
 pub use chat_handler::*;
