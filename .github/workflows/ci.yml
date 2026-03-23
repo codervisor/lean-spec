@@ -114,7 +114,7 @@ jobs:
       
       - name: Run tests
         working-directory: rust
-        run: cargo test -- --test-threads=1
+        run: cargo test
 
       - name: Export TypeScript bindings
         working-directory: rust
