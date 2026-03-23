@@ -234,6 +234,7 @@ fn test_init_creates_claude_symlink_when_detected() {
 }
 
 #[test]
+#[ignore = "MCP config is being deprecated"]
 fn test_init_writes_vscode_mcp_config_when_detected() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
