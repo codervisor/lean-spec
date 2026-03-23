@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 use crate::error::{ApiError, ApiResult};
-use crate::project_registry::{Project, ProjectUpdate};
+use crate::project_registry::{GitHubConfig, Project, ProjectSource, ProjectUpdate};
 use crate::state::AppState;
 use crate::sync_state::machine_id_from_headers;
 
@@ -36,6 +36,9 @@ pub struct ProjectResponse {
     pub color: Option<String>,
     pub last_accessed: String,
     pub added_at: String,
+    pub source: ProjectSource,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub github: Option<GitHubConfig>,
 }
 
 /// Project detail wrapper response
@@ -56,6 +59,8 @@ impl From<&Project> for ProjectResponse {
             color: p.color.clone(),
             last_accessed: p.last_accessed.to_rfc3339(),
             added_at: p.added_at.to_rfc3339(),
+            source: p.source.clone(),
+            github: p.github.clone(),
         }
     }
 }
@@ -70,6 +75,8 @@ fn project_response_from_record(record: &crate::sync_state::ProjectRecord) -> Pr
         color: record.color.clone(),
         last_accessed: chrono::Utc::now().to_rfc3339(),
         added_at: chrono::Utc::now().to_rfc3339(),
+        source: ProjectSource::Local,
+        github: None,
     }
 }
 

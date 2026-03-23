@@ -233,6 +233,13 @@ export interface Project {
   description?: string | null;
   isFeatured?: boolean;
   lastAccessed?: string | Date | null;
+  source?: 'local' | 'github';
+  github?: {
+    repo: string;
+    branch: string;
+    specsPath: string;
+    lastSynced?: string | null;
+  } | null;
   githubOwner?: string;
   githubRepo?: string;
 }

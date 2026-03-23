@@ -53,8 +53,8 @@ interface RawGitHubRepo {
 interface RawGitHubDetectResult {
   repo: string;
   branch: string;
-  specs_dir: string;
-  spec_count: number;
+  specsDir: string;
+  specCount: number;
   specs: GitHubDetectResult['specs'];
 }
 
@@ -743,8 +743,8 @@ export class HttpBackendAdapter implements BackendAdapter {
     return {
       repo: data.result.repo,
       branch: data.result.branch,
-      specsDir: data.result.specs_dir,
-      specCount: data.result.spec_count,
+      specsDir: data.result.specsDir,
+      specCount: data.result.specCount,
       specs: data.result.specs,
     };
   }

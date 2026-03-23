@@ -408,7 +408,14 @@ export function ProjectsPage() {
                 <div className="px-4 py-2 bg-muted/20 border-t flex items-center justify-between text-[10px] text-muted-foreground mt-auto">
                   <div className="flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: project.color || getColorForName(project.name || project.id) }} />
-                    <span>{t('projects.local')}</span>
+                    {project.source === 'github' ? (
+                      <span className="flex items-center gap-1">
+                        <Github className="h-3 w-3" />
+                        {project.github?.repo || 'GitHub'}
+                      </span>
+                    ) : (
+                      <span>{t('projects.local')}</span>
+                    )}
                   </div>
                   {project.lastAccessed && (
                     <span>{dayjs(project.lastAccessed).fromNow()}</span>
@@ -436,10 +443,16 @@ export function ProjectsPage() {
                 {searchQuery ? t('quickSearch.noResults') : t('projects.getStarted')}
               </p>
               {!machineModeEnabled && (
-                <Button onClick={() => setIsCreateDialogOpen(true)} size="lg">
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('projects.createProject')}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button variant="outline" onClick={() => setIsGithubImportOpen(true)} size="lg">
+                    <Github className="mr-2 h-4 w-4" />
+                    Import from GitHub
+                  </Button>
+                  <Button onClick={() => setIsCreateDialogOpen(true)} size="lg">
+                    <Plus className="mr-2 h-4 w-4" />
+                    {t('projects.createProject')}
+                  </Button>
+                </div>
               )}
             </div>
           )}
