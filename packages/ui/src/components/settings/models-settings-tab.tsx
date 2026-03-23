@@ -138,7 +138,7 @@ export function ModelsSettingsTab() {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)] overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-7rem)] overflow-hidden">
       <div className="flex-none space-y-4 pb-4">
         <div className="flex items-center justify-between">
           <div>

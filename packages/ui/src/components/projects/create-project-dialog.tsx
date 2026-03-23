@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FolderOpen } from 'lucide-react';
+import { FolderOpen, Github } from 'lucide-react';
 import {
   Button,
   Dialog,
@@ -12,19 +12,22 @@ import {
 } from '@/library';
 import { useProjectMutations } from '../../hooks/useProjectQuery';
 import { DirectoryPicker } from './directory-picker';
+import { GitHubImportForm } from './github-import-form';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 interface CreateProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialTab?: 'local' | 'github';
 }
 
-export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogProps) {
+export function CreateProjectDialog({ open, onOpenChange, initialTab }: CreateProjectDialogProps) {
   const { addProject } = useProjectMutations();
   const navigate = useNavigate();
   const [path, setPath] = useState('');
   const [mode, setMode] = useState<'picker' | 'manual'>('picker');
+  const [tab, setTab] = useState<'local' | 'github'>(initialTab ?? 'local');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation('common');
@@ -34,8 +37,9 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
       setMode('picker');
       setPath('');
       setError(null);
+      setTab(initialTab ?? 'local');
     }
-  }, [open]);
+  }, [open, initialTab]);
 
   const handleAddProject = async (projectPath: string) => {
     try {
@@ -79,13 +83,51 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
         <DialogHeader>
           <DialogTitle>{t('createProject.title')}</DialogTitle>
           <DialogDescription>
-            {mode === 'picker'
-              ? t('createProject.descriptionPicker')
-              : t('createProject.descriptionManual')}
+            {tab === 'github'
+              ? 'Connect a GitHub repository containing LeanSpec specs.'
+              : mode === 'picker'
+                ? t('createProject.descriptionPicker')
+                : t('createProject.descriptionManual')}
           </DialogDescription>
         </DialogHeader>
 
-        {mode === 'picker' ? (
+        {/* Tab switcher */}
+        <div className="flex gap-1 p-1 bg-muted rounded-lg">
+          <button
+            type="button"
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              tab === 'local'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => { setTab('local'); setError(null); }}
+          >
+            <FolderOpen className="h-4 w-4" />
+            Local
+          </button>
+          <button
+            type="button"
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              tab === 'github'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => { setTab('github'); setError(null); }}
+          >
+            <Github className="h-4 w-4" />
+            GitHub
+          </button>
+        </div>
+
+        {tab === 'github' ? (
+          <GitHubImportForm
+            onSuccess={(projectId) => {
+              onOpenChange(false);
+              navigate(`/projects/${projectId}/specs`);
+            }}
+            onCancel={() => onOpenChange(false)}
+          />
+        ) : mode === 'picker' ? (
           <div className="space-y-2 min-w-0 overflow-hidden">
             <DirectoryPicker
               onSelect={handleAddProject}
@@ -151,7 +193,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
           </form>
         )}
 
-        {error && (
+        {error && tab === 'local' && (
           <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
             {error}
           </div>

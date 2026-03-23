@@ -196,7 +196,7 @@ export function SessionsNavSidebar({ mobileOpen = false, onMobileOpenChange }: S
           'border-r bg-background flex flex-col overflow-hidden transition-all duration-300 flex-shrink-0',
           mobileOpen
             ? 'fixed inset-y-0 left-0 z-50 w-[280px] shadow-xl'
-            : 'hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)]',
+            : 'hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100dvh-3.5rem)]',
           collapsed && !mobileOpen ? 'lg:w-0 lg:border-r-0' : 'lg:w-[280px]'
         )}
       >

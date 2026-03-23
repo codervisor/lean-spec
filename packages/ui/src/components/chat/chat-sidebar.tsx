@@ -173,7 +173,7 @@ export function ChatSidebar() {
           !isResizing && "transition-all duration-300 ease-in-out",
           isMobile
             ? `fixed top-0 right-0 h-full z-50 ${isOpen ? "translate-x-0" : "translate-x-full"}`
-            : "sticky top-14 h-[calc(100vh-3.5rem)]"
+            : "sticky top-14 h-[calc(100dvh-3.5rem)]"
         )}
         style={{ width: isMobile ? '100%' : (isOpen ? `${sidebarWidth}px` : 0) }}
         onKeyDown={handleSidebarKeyDown}

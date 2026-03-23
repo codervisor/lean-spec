@@ -31,6 +31,9 @@ function faviconPlugin(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), faviconPlugin()],
+  build: {
+    target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

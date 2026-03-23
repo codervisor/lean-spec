@@ -25,7 +25,7 @@ export function SettingsPage() {
   ] as const;
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-background">
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col bg-background">
       <div className="border-b flex-none">
         <PageContainer contentClassName="flex items-center gap-3">
           <Settings className="h-8 w-8 text-primary" />

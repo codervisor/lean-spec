@@ -164,7 +164,7 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
         </div>
 
         {isMarkdown && (
-          <aside className="hidden xl:block sticky top-28 h-[calc(100vh-8rem)] overflow-y-auto">
+          <aside className="hidden xl:block sticky top-28 h-[calc(100dvh-8rem)] overflow-y-auto">
             <TableOfContentsSidebar content={headingContent} />
           </aside>
         )}

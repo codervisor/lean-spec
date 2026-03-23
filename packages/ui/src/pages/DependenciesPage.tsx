@@ -358,7 +358,7 @@ export function DependenciesPage() {
   if (error || !data) {
     return (
       <PageContainer>
-        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+        <div className="flex items-center justify-center h-[calc(100dvh-10rem)]">
           <div className="text-center">
             <p className="text-lg font-semibold text-destructive mb-2">{t('dependenciesPage.state.errorTitle')}</p>
             <p className="text-sm text-muted-foreground">{error || t('dependenciesPage.state.errorDescription')}</p>
@@ -380,7 +380,7 @@ export function DependenciesPage() {
   }
 
   return (
-    <PageContainer className="h-[calc(100vh-7rem)]" contentClassName="flex h-full flex-col gap-4">
+    <PageContainer className="h-[calc(100dvh-7rem)]" contentClassName="flex h-full flex-col gap-4">
       <div className="flex h-full flex-col gap-4">
         <PageHeader
           title={t('dependenciesPage.title')}

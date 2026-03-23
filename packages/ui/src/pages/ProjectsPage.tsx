@@ -21,7 +21,6 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
 import { CreateProjectDialog } from '../components/projects/create-project-dialog';
-import { GitHubImportDialog } from '../components/projects/github-import-dialog';
 import { ProjectAvatar, getColorForName } from '../components/shared/project-avatar';
 import { ColorPicker } from '../components/shared/color-picker';
 import { PageHeader } from '../components/shared/page-header';
@@ -54,7 +53,7 @@ export function ProjectsPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isGithubImportOpen, setIsGithubImportOpen] = useState(false);
+  const [createDialogTab, setCreateDialogTab] = useState<'local' | 'github'>('local');
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [validationStates, setValidationStates] = useState<Record<string, ProjectValidationState>>({});
@@ -238,11 +237,11 @@ export function ProjectsPage() {
               : (t('projectsPage.description') || t('projects.description'))}
             actions={!machineModeEnabled ? (
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setIsGithubImportOpen(true)} size="lg" className="shadow-sm">
+                <Button variant="outline" onClick={() => { setCreateDialogTab('github'); setIsCreateDialogOpen(true); }} size="lg" className="shadow-sm">
                   <Github className="mr-2 h-4 w-4" />
                   Import from GitHub
                 </Button>
-                <Button onClick={() => setIsCreateDialogOpen(true)} size="lg" className="shadow-sm">
+                <Button onClick={() => { setCreateDialogTab('local'); setIsCreateDialogOpen(true); }} size="lg" className="shadow-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   {t('projects.newProject')}
                 </Button>
@@ -444,11 +443,11 @@ export function ProjectsPage() {
               </p>
               {!machineModeEnabled && (
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button variant="outline" onClick={() => setIsGithubImportOpen(true)} size="lg">
+                  <Button variant="outline" onClick={() => { setCreateDialogTab('github'); setIsCreateDialogOpen(true); }} size="lg">
                     <Github className="mr-2 h-4 w-4" />
                     Import from GitHub
                   </Button>
-                  <Button onClick={() => setIsCreateDialogOpen(true)} size="lg">
+                  <Button onClick={() => { setCreateDialogTab('local'); setIsCreateDialogOpen(true); }} size="lg">
                     <Plus className="mr-2 h-4 w-4" />
                     {t('projects.createProject')}
                   </Button>
@@ -458,8 +457,7 @@ export function ProjectsPage() {
           )}
         </div>
 
-        <CreateProjectDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
-        <GitHubImportDialog open={isGithubImportOpen} onOpenChange={setIsGithubImportOpen} />
+        <CreateProjectDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} initialTab={createDialogTab} />
       </PageContainer>
     </div>
   );

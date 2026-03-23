@@ -473,7 +473,7 @@ export function SpecsPage() {
 
   return (
     <PageContainer
-      className="h-[calc(100vh-3.5rem)]"
+      className="h-[calc(100dvh-3.5rem)]"
       contentClassName="flex h-full flex-col gap-4"
     >
       <div className="flex flex-col gap-4 sticky top-0 bg-background mt-0 py-2 z-10">

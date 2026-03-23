@@ -61,7 +61,7 @@ function LayoutContent({
         rightSlot={resolvedRightSlot}
         onHeaderDoubleClick={onNavigationDoubleClick}
       />
-      <div className="flex w-full min-w-0 h-[calc(100vh-3.5rem)] overflow-hidden">
+      <div className="flex w-full min-w-0 h-[calc(100dvh-3.5rem)] overflow-hidden">
         <MainSidebar mobileOpen={isSidebarOpen} onMobileClose={toggleSidebar} />
         <div id="app-main-scroll" className="flex-1 min-w-0 overflow-y-auto overflow-x-auto">
           <main

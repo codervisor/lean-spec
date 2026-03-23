@@ -324,7 +324,7 @@ export function SessionDetailPage() {
 
   return (
     <PageTransition className="flex-1 min-w-0">
-      <div className="h-[calc(100vh-3.5rem)] flex flex-col">
+      <div className="h-[calc(100dvh-3.5rem)] flex flex-col">
         {/* Compact Header - sticky */}
         <header className="shrink-0 border-b bg-card">
           <div className="px-4 sm:px-6 py-2 sm:py-3">

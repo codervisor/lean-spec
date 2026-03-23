@@ -198,7 +198,7 @@ export function FilesPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden border-t">
+    <div className="flex h-[calc(100dvh-4rem)] overflow-hidden border-t">
       {/* File explorer panel */}
       <div className="w-64 flex-shrink-0 border-r overflow-hidden flex flex-col bg-background">
         <div className="px-3 py-2 border-b flex-shrink-0">

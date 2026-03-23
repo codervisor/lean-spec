@@ -61,7 +61,7 @@ export function SidebarFilters({
           </Button>
         )}
       </div>
-      <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
+      <div className="max-h-[calc(100dvh-200px)] overflow-y-auto">
         <Accordion type="multiple" className="w-full">
           {/* Status accordion */}
           <AccordionItem value="status" className="border-b-0">

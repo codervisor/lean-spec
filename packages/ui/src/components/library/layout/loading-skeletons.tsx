@@ -130,7 +130,7 @@ export function MachinesSkeleton() {
  */
 export function ChatSkeleton() {
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-[calc(100dvh-4rem)]">
       {/* Sidebar */}
       <div className="w-64 border-r bg-muted/10 flex-shrink-0 flex flex-col">
         <div className="p-3 border-b">
@@ -188,7 +188,7 @@ export function ChatSkeleton() {
  */
 export function DependenciesSkeleton() {
   return (
-    <div className="mx-auto w-full p-6 h-[calc(100vh-7rem)] max-w-7xl">
+    <div className="mx-auto w-full p-6 h-[calc(100dvh-7rem)] max-w-7xl">
       <div className="flex h-full flex-col gap-4">
         {/* Header */}
         <div className="space-y-2">
@@ -389,7 +389,7 @@ export function ContextPageSkeleton() {
  */
 export function SettingsSkeleton() {
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-background">
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col bg-background">
       {/* Header */}
       <div className="border-b p-6 flex-none">
         <div className="flex items-center gap-3">

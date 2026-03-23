@@ -32,7 +32,7 @@ export function SettingsLayout() {
   ];
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-background">
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col bg-background">
       <div className="flex flex-1 overflow-hidden relative">
         {/* Mobile overlay backdrop */}
         {mobileOpen && (
@@ -46,7 +46,7 @@ export function SettingsLayout() {
           className={cn(
             'border-r bg-background transition-all duration-300 flex-shrink-0',
             // Desktop behavior - icon-only when collapsed (like MainSidebar)
-            'hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)]',
+            'hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100dvh-3.5rem)]',
             collapsed ? 'lg:w-[60px]' : 'lg:w-[240px]',
             // Mobile behavior
             mobileOpen && 'fixed inset-y-0 left-0 z-50 flex w-[280px] shadow-xl'

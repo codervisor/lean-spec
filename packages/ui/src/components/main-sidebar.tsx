@@ -64,7 +64,7 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
         className={cn(
           'border-r bg-background transition-all duration-300 flex-shrink-0',
           // Desktop behavior
-          "hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)]",
+          "hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100dvh-3.5rem)]",
           collapsed ? "lg:w-[60px]" : "lg:w-[240px]",
           // Mobile behavior - show as overlay when open
           mobileOpen && "fixed inset-y-0 left-0 z-[60] flex w-[280px]"

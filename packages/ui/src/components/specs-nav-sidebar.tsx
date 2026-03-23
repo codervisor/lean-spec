@@ -259,7 +259,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
         <aside className={cn(
           'border-r bg-background flex flex-col overflow-hidden transition-all duration-300 flex-shrink-0',
-          mobileOpen ? 'fixed inset-y-0 left-0 z-50 w-[280px] shadow-xl' : 'hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)]',
+          mobileOpen ? 'fixed inset-y-0 left-0 z-50 w-[280px] shadow-xl' : 'hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100dvh-3.5rem)]',
           collapsed && !mobileOpen ? 'lg:w-0 lg:border-r-0' : 'lg:w-[280px]'
         )}>
           <div className="p-3 border-b space-y-3">

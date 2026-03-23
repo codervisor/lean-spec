@@ -76,8 +76,8 @@ export function SpecDetailContent({
               "w-72 shrink-0 px-6 py-6 sticky overflow-y-auto scrollbar-auto-hide",
               showSidebar ? "block" : "hidden",
               hasSubSpecs
-                ? "top-[calc(16.375rem-3.5rem)] h-[calc(100vh-16.375rem)]"
-                : "top-[calc(13.125rem-3.5rem)] h-[calc(100vh-13.125rem)]"
+                ? "top-[calc(16.375rem-3.5rem)] h-[calc(100dvh-16.375rem)]"
+                : "top-[calc(13.125rem-3.5rem)] h-[calc(100dvh-13.125rem)]"
             )}
           >
             <TableOfContentsSidebar content={displayContent} />

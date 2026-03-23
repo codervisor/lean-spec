@@ -11,8 +11,11 @@ export function RootRedirect() {
   const { projects, storageKey } = useProjects();
 
   if (loading) {
-    // Show nothing while loading to avoid flash of redirect
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-pulse text-muted-foreground text-sm">Loading…</div>
+      </div>
+    );
   }
 
   // If we have a current project, navigate to it

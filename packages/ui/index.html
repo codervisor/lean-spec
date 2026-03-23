@@ -6,8 +6,18 @@
   <link rel="icon" href="/favicon.ico" />
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="apple-touch-icon" href="/logo.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>LeanSpec</title>
+  <script>
+    // Apply theme before first paint to prevent FOUC
+    (function() {
+      var t = localStorage.getItem('leanspec-theme') || 'system';
+      var d = t === 'system'
+        ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : t;
+      document.documentElement.classList.add(d);
+    })();
+  </script>
 </head>
 
 <body>
