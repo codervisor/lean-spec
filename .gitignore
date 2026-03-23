@@ -50,7 +50,6 @@ packages/http-server/binaries/**/ui-dist
 package-lock.json
 
 # System prompts
-CLAUDE.md
 GEMINI.md
 
 # Local VSCode settings
