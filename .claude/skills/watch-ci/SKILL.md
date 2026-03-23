@@ -1,12 +1,12 @@
 ---
 name: watch-ci
-description: Watch GitHub Actions CI status for the current branch until completion. Use after pushing changes to monitor build results.
+description: Watch GitHub Actions CI status for the current commit until completion. Use after pushing changes to monitor build results.
 allowed-tools: Bash
 ---
 
 # Watch CI
 
-Poll the GitHub Actions CI pipeline for the current branch until all jobs finish.
+Poll the GitHub Actions CI pipeline for the **current HEAD commit** until all jobs finish.
 
 ## Environment
 
@@ -15,15 +15,17 @@ The repo is `codervisor/lean-spec`.
 
 ## Steps
 
-1. Get the current branch:
+1. Get the current commit SHA and branch:
    ```bash
+   SHA=$(git rev-parse HEAD)
    BRANCH=$(git branch --show-current)
+   echo "Watching CI for commit $SHA on branch $BRANCH"
    ```
 
-2. Find the latest workflow run:
+2. Find the workflow run **matching our exact commit**. The API returns runs newest-first; filter by `head_sha`. If the run hasn't appeared yet (GitHub can take a few seconds), retry up to 5 times with 10s waits:
    ```bash
    curl -sH "Accept: application/vnd.github+json" \
-     "https://api.github.com/repos/codervisor/lean-spec/actions/runs?branch=$BRANCH&per_page=1" \
+     "https://api.github.com/repos/codervisor/lean-spec/actions/runs?branch=$BRANCH&head_sha=$SHA&per_page=1" \
      | python3 -c "
    import json, sys
    data = json.load(sys.stdin)
@@ -32,7 +34,7 @@ The repo is `codervisor/lean-spec`.
        print('NO_RUNS'); sys.exit()
    r = runs[0]
    print(f'RUN_ID={r[\"id\"]}')
-   print(f'Status: {r[\"status\"]}  Conclusion: {r.get(\"conclusion\") or \"pending\"}  Name: {r[\"name\"]}')"
+   print(f'Status: {r[\"status\"]}  Conclusion: {r.get(\"conclusion\") or \"pending\"}  Commit: {r[\"head_sha\"][:8]}')"
    ```
 
 3. Poll jobs until all complete (every 60s for Rust builds which take ~8-10 min):
@@ -50,7 +52,6 @@ The repo is `codervisor/lean-spec`.
 
 4. On failure, fetch the failed job logs to diagnose:
    ```bash
-   # Get failed job IDs
    curl -sH "Accept: application/vnd.github+json" \
      "https://api.github.com/repos/codervisor/lean-spec/actions/runs/$RUN_ID/jobs" \
      | python3 -c "
