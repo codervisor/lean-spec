@@ -18,7 +18,7 @@ homepage = "https://lean-spec.dev"
 license = "MIT"
 repository = "https://github.com/codervisor/lean-spec"
 rust-version = "1.80"
-version = "0.2.27"
+version = "0.2.28"
 
 [workspace.dependencies]
 # Core dependencies

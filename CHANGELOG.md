@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.28] - 2026-03-23
+
+### Added
+- **Interactive TUI for Spec Management** ([spec 369](https://web.lean-spec.dev/specs/369)) - Terminal UI built with Ratatui for managing specs from the command line
+  - Sidebar navigation with keyboard shortcuts and markdown rendering
+  - Spec list, detail, and status management views
+- **GitHub Repo Import UI** - Import specs from GitHub repositories in the cloud deployment interface
+- **GitHub Integration** ([specs 361-366](https://web.lean-spec.dev/specs/361)) - Detect and manage specs from connected GitHub repos
+  - Cloud deployment readiness checks
+  - GitHub-sourced spec detection and synchronization
+- **Extended CLI Flags** - Richer spec creation and update options
+  - `--content`, `--file`, `--assignee` flags for `create` command
+  - `--description` for `create` and `--expected-hash` for `update`
+- **Docker Deployment** ([spec 317](https://web.lean-spec.dev/specs/317)) - Self-hosted leanspec UI via Docker
+  - Multi-arch builds (amd64 + ARM64) with native ARM64 runner
+  - Non-root container execution with documented project mounting and data persistence
+
+### Changed
+- **Artifacts Sub-Tree** - Deprecates flat subspec display in favor of an artifacts sub-tree concept
+- **Skill Architecture** - Removes lean-spec skill subcommand and project-scoped skill install; leanspec-sdd skill now uses CLI only (no MCP dependency)
+- **Skills Reorganization** - Consolidates and reorganizes agent skills layout
+
+### Fixed
+- **GitHub Project Import** - Corrects field naming mismatch and adds missing UI entry points
+- **Label Component** - Adds missing `Label` component to the UI library
+- **Session Completion** - Improves session completion handling and worktree management
+- **Railway Deployment** - Fixes healthcheck endpoint (`/health`), timeout (30s), build base image, and consolidates deploy configs to prevent auto-detection issues
+- **Docker** - Removes hardcoded `--project` flag; adds data persistence and non-root user support
+
+### Technical
+- **Database Migration** - Migrates database layer from `rusqlite` to `sqlx` (Phase 2)
+- **CI Improvements** - Decouples Docker workflow from npm publish, adds `NPM_TAG` support, chains Docker build after npm publish, shortens workflow names
+- Bumps Docker runtime base to Debian 13 (trixie)
+- Ignores worktree tests requiring git commit signing
+
 ## [0.2.27] - 2026-03-09
 
 ### Added
