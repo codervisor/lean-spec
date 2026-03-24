@@ -202,10 +202,123 @@ impl GitHubClient {
             .map_err(|e| CoreError::Other(format!("File content is not valid UTF-8: {}", e)))
     }
 
+    /// Fetch the full recursive tree for a branch in a single API call.
+    ///
+    /// This is much faster than calling `list_contents` + `get_file_content`
+    /// repeatedly, as it replaces N+1 API calls with just one.
+    pub fn get_tree_recursive(
+        &self,
+        repo_ref: &RepoRef,
+        branch: &str,
+    ) -> CoreResult<Vec<GitHubTreeItem>> {
+        let url = format!(
+            "{}/repos/{}/{}/git/trees/{}",
+            GITHUB_API_BASE, repo_ref.owner, repo_ref.repo, branch
+        );
+
+        let resp = self
+            .client
+            .get(&url)
+            .query(&[("recursive", "1")])
+            .send()
+            .map_err(|e| CoreError::Other(format!("GitHub API request failed: {}", e)))?;
+
+        if !resp.status().is_success() {
+            return Err(CoreError::Other(format!(
+                "GitHub API error {}: {}",
+                resp.status(),
+                resp.text().unwrap_or_default()
+            )));
+        }
+
+        let tree: GitHubTreeResponse = resp
+            .json()
+            .map_err(|e| CoreError::Other(format!("Failed to parse tree response: {}", e)))?;
+
+        Ok(tree.tree)
+    }
+
+    /// Fetch a blob's content by SHA.
+    pub fn get_blob_content(&self, repo_ref: &RepoRef, sha: &str) -> CoreResult<String> {
+        let url = format!(
+            "{}/repos/{}/{}/git/blobs/{}",
+            GITHUB_API_BASE, repo_ref.owner, repo_ref.repo, sha
+        );
+
+        let resp = self
+            .client
+            .get(&url)
+            .send()
+            .map_err(|e| CoreError::Other(format!("GitHub API request failed: {}", e)))?;
+
+        if !resp.status().is_success() {
+            return Err(CoreError::Other(format!(
+                "GitHub API error {} for blob {}: {}",
+                resp.status(),
+                sha,
+                resp.text().unwrap_or_default()
+            )));
+        }
+
+        let blob: GitHubBlobResponse = resp
+            .json()
+            .map_err(|e| CoreError::Other(format!("Failed to parse blob response: {}", e)))?;
+
+        let cleaned: String = blob
+            .content
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .collect();
+
+        use base64::Engine;
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(&cleaned)
+            .map_err(|e| CoreError::Other(format!("Failed to decode base64 blob: {}", e)))?;
+
+        String::from_utf8(bytes)
+            .map_err(|e| CoreError::Other(format!("Blob content is not valid UTF-8: {}", e)))
+    }
+
+    /// Fetch multiple blobs in parallel using thread scoping.
+    ///
+    /// Returns a Vec of (path, content) pairs for successfully fetched blobs.
+    /// Fetches up to `max_concurrent` blobs simultaneously.
+    pub fn get_blobs_parallel(
+        &self,
+        repo_ref: &RepoRef,
+        items: &[(String, String)], // (path, sha) pairs
+        max_concurrent: usize,
+    ) -> Vec<(String, CoreResult<String>)> {
+        let mut results = Vec::with_capacity(items.len());
+
+        for chunk in items.chunks(max_concurrent) {
+            let chunk_results: Vec<_> = std::thread::scope(|s| {
+                let handles: Vec<_> = chunk
+                    .iter()
+                    .map(|(path, sha)| {
+                        let path = path.clone();
+                        s.spawn(move || {
+                            let content = self.get_blob_content(repo_ref, sha);
+                            (path, content)
+                        })
+                    })
+                    .collect();
+
+                handles
+                    .into_iter()
+                    .map(|h| h.join().expect("blob fetch thread panicked"))
+                    .collect()
+            });
+            results.extend(chunk_results);
+        }
+
+        results
+    }
+
     /// Detect specs in a GitHub repository.
     ///
-    /// Scans candidate directories for spec-like content (directories with
-    /// README.md files containing YAML frontmatter).
+    /// Uses the Git Trees API to fetch the repo tree in a single call, then
+    /// identifies spec directories and fetches their README.md blobs in parallel.
     pub fn detect_specs(
         &self,
         repo_ref: &RepoRef,
@@ -214,50 +327,85 @@ impl GitHubClient {
         let repo = self.get_repo(repo_ref)?;
         let branch = branch.unwrap_or(&repo.default_branch);
 
+        // Fetch the full tree in one API call instead of N+1 calls
+        let tree_items = self.get_tree_recursive(repo_ref, branch)?;
+
         // Try each candidate directory
         for candidate in SPECS_DIR_CANDIDATES {
-            let items = self.list_contents(repo_ref, candidate, Some(branch))?;
-            if items.is_empty() {
+            let prefix = format!("{}/", candidate);
+
+            // Find numbered spec directories by looking for README.md files
+            // that match the pattern: {candidate}/{digit*}/README.md
+            let mut spec_readmes: Vec<(String, String)> = Vec::new(); // (dir_name, sha)
+            let mut spec_dir_names: std::collections::HashSet<String> =
+                std::collections::HashSet::new();
+
+            for item in &tree_items {
+                if item.item_type != "blob" {
+                    continue;
+                }
+                if let Some(rest) = item.path.strip_prefix(&prefix) {
+                    let parts: Vec<&str> = rest.splitn(2, '/').collect();
+                    if parts.len() == 2
+                        && parts[1] == "README.md"
+                        && parts[0].chars().next().is_some_and(|c| c.is_ascii_digit())
+                    {
+                        spec_readmes.push((parts[0].to_string(), item.sha.clone()));
+                        spec_dir_names.insert(parts[0].to_string());
+                    }
+                }
+            }
+
+            // Also count spec dirs that might not have a README.md
+            for item in &tree_items {
+                if item.item_type == "tree" {
+                    if let Some(rest) = item.path.strip_prefix(&prefix) {
+                        if !rest.contains('/')
+                            && rest.chars().next().is_some_and(|c| c.is_ascii_digit())
+                        {
+                            spec_dir_names.insert(rest.to_string());
+                        }
+                    }
+                }
+            }
+
+            if spec_dir_names.is_empty() {
                 continue;
             }
 
-            // Filter to directories that look like specs (start with digit or are named appropriately)
-            let spec_dirs: Vec<_> = items
-                .iter()
-                .filter(|item| {
-                    item.item_type == "dir"
-                        && item.name.chars().next().is_some_and(|c| c.is_ascii_digit())
-                })
+            // Fetch README.md blobs in parallel (up to 50, 10 concurrent)
+            let items_to_fetch: Vec<(String, String)> = spec_readmes.into_iter().take(50).collect();
+            let blob_results = self.get_blobs_parallel(repo_ref, &items_to_fetch, 10);
+
+            let parser = FrontmatterParser::new();
+            let mut specs = Vec::new();
+
+            // Build a map of fetched results
+            let fetched: std::collections::HashMap<String, String> = blob_results
+                .into_iter()
+                .filter_map(|(path, result)| result.ok().map(|content| (path, content)))
                 .collect();
 
-            if spec_dirs.is_empty() {
-                continue;
-            }
+            // Build specs list for all known directories
+            let mut sorted_dirs: Vec<_> = spec_dir_names.into_iter().collect();
+            sorted_dirs.sort();
 
-            // Load metadata for each detected spec (sample up to 50)
-            let mut specs = Vec::new();
-            let parser = FrontmatterParser::new();
-            for dir in spec_dirs.iter().take(50) {
-                let readme_path = format!("{}/{}/README.md", candidate, dir.name);
-                match self.get_file_content(repo_ref, &readme_path, Some(branch)) {
-                    Ok(content) => {
-                        let (title, status, priority) = extract_spec_metadata(&parser, &content);
-                        specs.push(DetectedSpec {
-                            path: dir.name.clone(),
-                            title,
-                            status,
-                            priority,
-                        });
-                    }
-                    Err(_) => {
-                        // Skip specs without README.md
-                        specs.push(DetectedSpec {
-                            path: dir.name.clone(),
-                            title: None,
-                            status: None,
-                            priority: None,
-                        });
-                    }
+            for dir_name in sorted_dirs.iter().take(50) {
+                if let Some(content) = fetched.get(dir_name) {
+                    let (title, status, priority) = extract_spec_metadata(&parser, content);
+                    specs.push(DetectedSpec {
+                        path: dir_name.clone(),
+                        title,
+                        status,
+                        priority,
+                    });
+                } else {
+                    specs.push(DetectedSpec {
+                        path: dir_name.clone(),
+                        title: None,
+                        status: None,
+                        priority: None,
+                    });
                 }
             }
 
@@ -265,7 +413,7 @@ impl GitHubClient {
                 repo: repo_ref.full_name(),
                 branch: branch.to_string(),
                 specs_dir: candidate.to_string(),
-                spec_count: spec_dirs.len(),
+                spec_count: sorted_dirs.len(),
                 specs,
             }));
         }

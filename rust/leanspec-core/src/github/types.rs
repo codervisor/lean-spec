@@ -88,6 +88,33 @@ pub struct GitHubFileContent {
     pub sha: String,
 }
 
+/// GitHub Git Tree API response
+#[derive(Debug, Clone, Deserialize)]
+pub struct GitHubTreeResponse {
+    pub sha: String,
+    pub tree: Vec<GitHubTreeItem>,
+    pub truncated: bool,
+}
+
+/// A single item in a Git tree
+#[derive(Debug, Clone, Deserialize)]
+pub struct GitHubTreeItem {
+    pub path: String,
+    #[serde(rename = "type")]
+    pub item_type: String,
+    pub sha: String,
+    pub size: Option<u64>,
+}
+
+/// GitHub Git Blob API response
+#[derive(Debug, Clone, Deserialize)]
+pub struct GitHubBlobResponse {
+    pub content: String,
+    pub encoding: String,
+    pub sha: String,
+    pub size: u64,
+}
+
 /// GitHub repository response (minimal fields we need)
 #[derive(Debug, Clone, Deserialize)]
 pub struct GitHubRepoResponse {

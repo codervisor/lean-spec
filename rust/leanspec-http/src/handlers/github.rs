@@ -176,6 +176,9 @@ pub async fn github_sync_project(
 }
 
 /// Sync specs from a GitHub repo into a local cache directory.
+///
+/// Uses the Git Trees API to discover all spec README.md files in a single
+/// API call, then fetches their contents in parallel via the Blobs API.
 fn sync_specs_to_cache(
     client: &GitHubClient,
     repo_ref: &RepoRef,
@@ -183,31 +186,45 @@ fn sync_specs_to_cache(
     specs_path: &str,
     local_specs_dir: &std::path::Path,
 ) -> Result<usize, leanspec_core::CoreError> {
-    let items = client.list_contents(repo_ref, specs_path, Some(branch))?;
-    let mut synced = 0;
+    // Fetch full tree in one API call
+    let tree_items = client.get_tree_recursive(repo_ref, branch)?;
 
-    for item in &items {
-        if item.item_type != "dir" {
-            continue;
-        }
-        // Only process numbered spec directories
-        if !item.name.chars().next().is_some_and(|c| c.is_ascii_digit()) {
-            continue;
-        }
+    let prefix = format!("{}/", specs_path);
 
-        let local_dir = local_specs_dir.join(&item.name);
-        std::fs::create_dir_all(&local_dir)
-            .map_err(|e| leanspec_core::CoreError::Other(format!("Failed to create dir: {}", e)))?;
-
-        let readme_path = format!("{}/{}/README.md", specs_path, item.name);
-        match client.get_file_content(repo_ref, &readme_path, Some(branch)) {
-            Ok(content) => {
-                std::fs::write(local_dir.join("README.md"), &content).map_err(|e| {
-                    leanspec_core::CoreError::Other(format!("Failed to write spec: {}", e))
-                })?;
-                synced += 1;
+    // Find all README.md files under numbered spec directories
+    let readme_items: Vec<(String, String)> = tree_items
+        .iter()
+        .filter_map(|item| {
+            if item.item_type != "blob" {
+                return None;
             }
-            Err(_) => continue,
+            let rest = item.path.strip_prefix(&prefix)?;
+            let parts: Vec<&str> = rest.splitn(2, '/').collect();
+            if parts.len() == 2
+                && parts[1] == "README.md"
+                && parts[0].chars().next().is_some_and(|c| c.is_ascii_digit())
+            {
+                Some((parts[0].to_string(), item.sha.clone()))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    // Fetch all blobs in parallel (10 concurrent)
+    let blob_results = client.get_blobs_parallel(repo_ref, &readme_items, 10);
+
+    let mut synced = 0;
+    for (dir_name, result) in blob_results {
+        if let Ok(content) = result {
+            let local_dir = local_specs_dir.join(&dir_name);
+            std::fs::create_dir_all(&local_dir).map_err(|e| {
+                leanspec_core::CoreError::Other(format!("Failed to create dir: {}", e))
+            })?;
+            std::fs::write(local_dir.join("README.md"), &content).map_err(|e| {
+                leanspec_core::CoreError::Other(format!("Failed to write spec: {}", e))
+            })?;
+            synced += 1;
         }
     }
 
