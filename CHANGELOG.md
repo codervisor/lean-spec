@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **OpenCode Support** - Adds first-class OpenCode runner and MCP onboarding support
+  - Runs OpenCode sessions via `opencode run` with `-m provider/model` model selection
+  - Detects OpenCode projects from `.opencode/` or `opencode.json` during `leanspec init`
+  - Creates or merges `opencode.json` with a `leanspec` MCP entry using `npx -y @leanspec/mcp`
+
 ## [0.2.28] - 2026-03-23
 
 ### Added

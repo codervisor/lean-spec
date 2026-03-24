@@ -13,9 +13,34 @@ pub struct SymlinkResult {
 
 pub fn detect_ai_tools(
     registry: &RunnerRegistry,
+    project_root: &Path,
     home_override: Option<&Path>,
 ) -> Vec<DetectionResult> {
-    registry.detect_available(home_override)
+    let mut detections = registry.detect_available(home_override);
+
+    for detection in &mut detections {
+        if detection.runner.id != "opencode" {
+            continue;
+        }
+
+        let mut reasons = Vec::new();
+        if project_root.join("opencode.json").exists() {
+            reasons.push("opencode.json found".to_string());
+        }
+        if project_root.join(".opencode").is_dir() {
+            reasons.push(".opencode/ directory found".to_string());
+        }
+
+        for reason in reasons {
+            if !detection.reasons.contains(&reason) {
+                detection.reasons.push(reason);
+            }
+        }
+
+        detection.detected = !detection.reasons.is_empty();
+    }
+
+    detections
 }
 
 pub fn symlink_capable_runners(registry: &RunnerRegistry) -> Vec<RunnerDefinition> {

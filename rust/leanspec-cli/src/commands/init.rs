@@ -9,12 +9,14 @@ use walkdir::WalkDir;
 use crate::commands::package_manager::detect_package_manager;
 
 mod ai_tools;
+mod opencode_config;
 use crate::commands::skill;
 use ai_tools::{
     create_symlinks, default_symlink_selection, detect_ai_tools, symlink_capable_runners,
     DetectionResult as AiDetection,
 };
 use leanspec_core::sessions::RunnerRegistry;
+use opencode_config::configure_opencode;
 
 // Embedded AGENTS.md templates
 const AGENTS_MD_TEMPLATE_DETAILED: &str = include_str!("../../templates/AGENTS.md");
@@ -96,7 +98,7 @@ fn run_standard_init(specs_dir: &str, options: InitOptions) -> Result<(), Box<dy
     // Detect AI tools first (needed for skills and symlinks)
     let registry =
         RunnerRegistry::load(&root).map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
-    let ai_detections = detect_ai_tools(&registry, None);
+    let ai_detections = detect_ai_tools(&registry, &root, None);
 
     let draft_status_enabled = if options.yes {
         false
@@ -119,6 +121,7 @@ fn run_standard_init(specs_dir: &str, options: InitOptions) -> Result<(), Box<dy
 
     // AI tool onboarding
     handle_ai_symlinks(&root, &registry, &ai_detections, &options)?;
+    handle_opencode_config(&root, &ai_detections, &options)?;
     handle_skills_install(will_install_skills, &ai_detections)?;
 
     println!();
@@ -557,6 +560,60 @@ fn handle_ai_symlinks(
         } else if let Some(err) = result.error {
             println!("{} Failed to create {}: {}", "✗".red(), result.file, err);
         }
+    }
+
+    Ok(())
+}
+
+fn handle_opencode_config(
+    root: &Path,
+    detections: &[AiDetection],
+    options: &InitOptions,
+) -> Result<(), Box<dyn Error>> {
+    if options.no_ai_tools {
+        return Ok(());
+    }
+
+    let opencode_detected = detections
+        .iter()
+        .find(|detection| detection.runner.id == "opencode")
+        .is_some_and(|detection| detection.detected);
+
+    if !opencode_detected {
+        return Ok(());
+    }
+
+    let should_configure = if options.yes {
+        true
+    } else {
+        Confirm::new()
+            .with_prompt("Create opencode.json for OpenCode MCP integration?")
+            .default(true)
+            .interact()?
+    };
+
+    if !should_configure {
+        return Ok(());
+    }
+
+    let result = configure_opencode(root);
+    if result.created {
+        println!("{} Created {}", "✓".green(), result.config_path.display());
+    } else if result.merged {
+        println!("{} Updated {}", "✓".green(), result.config_path.display());
+    } else if result.skipped {
+        println!(
+            "{} {} already has LeanSpec MCP configured",
+            "•".cyan(),
+            result.config_path.display()
+        );
+    } else if let Some(error) = result.error {
+        println!(
+            "{} Failed to configure {}: {}",
+            "✗".red(),
+            result.config_path.display(),
+            error
+        );
     }
 
     Ok(())

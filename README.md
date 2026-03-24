@@ -71,12 +71,26 @@ Works with any AI coding assistant via MCP or CLI:
 ```json
 {
   "mcpServers": {
-    "lean-spec": { "command": "npx", "args": ["@leanspec/mcp"] }
+    "lean-spec": { "command": "npx", "args": ["-y", "@leanspec/mcp"] }
   }
 }
 ```
 
-**Compatible with:** VS Code Copilot, Claude Code, Gemini CLI, Cursor, Windsurf, Kiro CLI, Kimi CLI, Qodo CLI, Amp, Trae Agent, Qwen Code, Droid, and more.
+**OpenCode config (`opencode.json`):**
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "leanspec": {
+      "type": "local",
+      "command": ["npx", "-y", "@leanspec/mcp"]
+    }
+  }
+}
+```
+
+**Compatible with:** VS Code Copilot, Claude Code, Gemini CLI, Cursor, Windsurf, OpenCode, Kiro CLI, Kimi CLI, Qodo CLI, Amp, Trae Agent, Qwen Code, Droid, and more.
 
 📖 [Full AI integration guide →](https://www.lean-spec.dev/docs/guide/usage/ai-coding-workflow)
 
@@ -100,7 +114,7 @@ This installs the **leanspec-sdd** skill which teaches AI agents:
 - Best practices for context economy and progressive disclosure
 - Complete SDD workflow (Discover → Design → Implement → Validate)
 
-**Compatible with:** Claude Code, Cursor, Windsurf, GitHub Copilot, and other [Agent Skills](https://skills.sh/) compatible tools.
+**Compatible with:** Claude Code, Cursor, Windsurf, GitHub Copilot, OpenCode, and other [Agent Skills](https://skills.sh/) compatible tools.
 
 📖 [View skill documentation →](skills/leanspec-sdd/SKILL.md)
 
