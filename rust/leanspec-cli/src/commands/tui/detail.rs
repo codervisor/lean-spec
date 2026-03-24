@@ -3,9 +3,12 @@
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Layout, Rect},
+    prelude::StatefulWidget,
     style::Style,
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Widget, Wrap},
+    widgets::{
+        Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Widget, Wrap,
+    },
 };
 
 use leanspec_core::SpecInfo;
@@ -17,9 +20,9 @@ use super::theme;
 pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     let is_focused = app.focus == FocusPane::Right;
     let border_style = if is_focused {
-        Style::default().fg(ratatui::style::Color::Cyan)
+        theme::border_focused_style()
     } else {
-        Style::default().fg(ratatui::style::Color::DarkGray)
+        theme::border_unfocused_style()
     };
 
     let title = match app.detail_mode {
@@ -52,7 +55,7 @@ fn render_spec_detail(area: Rect, buf: &mut Buffer, spec: &SpecInfo, app: &App) 
     render_metadata(chunks[0], buf, spec, app);
 
     // Content body (scrollable)
-    render_content(chunks[1], buf, spec, app.detail_scroll);
+    render_content(chunks[1], buf, spec, app);
 }
 
 fn render_metadata(area: Rect, buf: &mut Buffer, spec: &SpecInfo, app: &App) {
@@ -131,12 +134,26 @@ fn render_metadata(area: Rect, buf: &mut Buffer, spec: &SpecInfo, app: &App) {
     paragraph.render(area, buf);
 }
 
-fn render_content(area: Rect, buf: &mut Buffer, spec: &SpecInfo, scroll: u16) {
+fn render_content(area: Rect, buf: &mut Buffer, spec: &SpecInfo, app: &App) {
     let lines = markdown::render_markdown(&spec.content, area.width);
+    let total_lines = lines.len();
+    let viewport_height = area.height as usize;
+
     let paragraph = Paragraph::new(lines)
         .wrap(Wrap { trim: false })
-        .scroll((scroll, 0));
+        .scroll((app.detail_scroll, 0));
     paragraph.render(area, buf);
+
+    // Scrollbar — only render when content exceeds viewport
+    if total_lines > viewport_height {
+        let mut scrollbar_state = ScrollbarState::new(total_lines)
+            .position(app.detail_scroll as usize)
+            .viewport_content_length(viewport_height);
+        let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
+            .track_symbol(Some("▐"))
+            .thumb_symbol("█");
+        scrollbar.render(area, buf, &mut scrollbar_state);
+    }
 }
 
 #[cfg(test)]

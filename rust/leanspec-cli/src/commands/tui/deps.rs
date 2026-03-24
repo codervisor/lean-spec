@@ -3,7 +3,6 @@
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::Style,
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Widget},
 };
@@ -15,7 +14,7 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     let block = Block::default()
         .title(" Dependencies ")
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(ratatui::style::Color::DarkGray));
+        .border_style(theme::border_unfocused_style());
     let inner = block.inner(area);
     block.render(area, buf);
 
