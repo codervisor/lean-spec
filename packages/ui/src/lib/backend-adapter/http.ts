@@ -42,16 +42,9 @@ import type {
   GitHubImportResult,
 } from './core';
 
-interface RawGitHubRepo {
-  full_name: string;
-  description?: string | null;
-  default_branch: string;
-  private: boolean;
-  html_url: string;
-}
-
 interface RawGitHubDetectResult {
-  repo: string;
+  remoteUrl?: string;
+  repo?: string;
   branch: string;
   specsDir: string;
   specCount: number;
@@ -67,15 +60,6 @@ type RawGitHubImportResult = {
   syncedSpecs: number;
 };
 
-function normalizeGitHubRepo(r: RawGitHubRepo): GitHubRepo {
-  return {
-    fullName: r.full_name,
-    description: r.description,
-    defaultBranch: r.default_branch,
-    private: r.private,
-    htmlUrl: r.html_url,
-  };
-}
 
 type RawSession = Session & {
   project_path?: string;
@@ -730,18 +714,19 @@ export class HttpBackendAdapter implements BackendAdapter {
   }
 
   async listGithubRepos(): Promise<GitHubRepo[]> {
-    const data = await this.fetchAPI<{ repos: RawGitHubRepo[] }>('/api/github/repos');
-    return data.repos.map(normalizeGitHubRepo);
+    // No longer supported — git clone approach doesn't list remote repos.
+    return [];
   }
 
-  async detectGithubSpecs(repo: string, branch?: string, token?: string): Promise<GitHubDetectResult | null> {
-    const data = await this.fetchAPI<{ result: RawGitHubDetectResult | null }>('/api/github/detect', {
+  async detectGithubSpecs(repo: string, branch?: string, _token?: string): Promise<GitHubDetectResult | null> {
+    const data = await this.fetchAPI<{ result: RawGitHubDetectResult | null }>('/api/git/detect', {
       method: 'POST',
-      body: JSON.stringify({ repo, branch, token }),
+      body: JSON.stringify({ repo, branch }),
     });
     if (!data.result) return null;
     return {
-      repo: data.result.repo,
+      remoteUrl: data.result.remoteUrl,
+      repo: data.result.repo ?? data.result.remoteUrl,
       branch: data.result.branch,
       specsDir: data.result.specsDir,
       specCount: data.result.specCount,
@@ -750,9 +735,9 @@ export class HttpBackendAdapter implements BackendAdapter {
   }
 
   async importGithubRepo(repo: string, opts?: { branch?: string; specsPath?: string; name?: string; token?: string }): Promise<GitHubImportResult> {
-    const data = await this.fetchAPI<RawGitHubImportResult>('/api/github/import', {
+    const data = await this.fetchAPI<RawGitHubImportResult>('/api/git/import', {
       method: 'POST',
-      body: JSON.stringify({ repo, branch: opts?.branch, specs_path: opts?.specsPath, name: opts?.name, token: opts?.token }),
+      body: JSON.stringify({ repo, branch: opts?.branch, specs_path: opts?.specsPath, name: opts?.name }),
     });
     return {
       projectId: data.projectId,
@@ -766,7 +751,7 @@ export class HttpBackendAdapter implements BackendAdapter {
 
   async syncGithubProject(projectId: string): Promise<{ projectId: string; syncedSpecs: number }> {
     const data = await this.fetchAPI<{ projectId: string; syncedSpecs: number }>(
-      `/api/github/sync/${encodeURIComponent(projectId)}`,
+      `/api/git/sync/${encodeURIComponent(projectId)}`,
       { method: 'POST' }
     );
     return data;

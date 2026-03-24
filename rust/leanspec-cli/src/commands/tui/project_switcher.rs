@@ -88,7 +88,7 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
 
             let star = if p.favorite { "★ " } else { "  " };
             let source_icon = match p.source {
-                ProjectSource::GitHub => "◐ ",
+                ProjectSource::Git => "◐ ",
                 ProjectSource::Local => "  ",
             };
 

@@ -420,10 +420,10 @@ export function ProjectsPage() {
                 <div className="px-4 py-2 bg-muted/20 border-t flex items-center justify-between text-[10px] text-muted-foreground mt-auto">
                   <div className="flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: project.color || getColorForName(project.name || project.id) }} />
-                    {project.source === 'github' ? (
+                    {(project.source === 'git' || project.source === 'github') ? (
                       <span className="flex items-center gap-1">
                         <Github className="h-3 w-3" />
-                        {project.github?.repo || 'GitHub'}
+                        {project.git?.remoteUrl || project.github?.repo || 'Git'}
                       </span>
                     ) : (
                       <span>{t('projects.local')}</span>

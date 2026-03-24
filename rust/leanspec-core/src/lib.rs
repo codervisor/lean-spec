@@ -50,6 +50,9 @@ pub mod storage;
 #[cfg(feature = "github")]
 pub mod github;
 
+#[cfg(feature = "git")]
+pub mod git;
+
 #[cfg(feature = "ai")]
 pub mod ai;
 

@@ -105,7 +105,7 @@ pub fn resolve_project_sources(config_sources: &[String]) -> Vec<String> {
 }
 
 fn default_project_sources() -> Vec<String> {
-    vec!["local".to_string(), "github".to_string()]
+    vec!["local".to_string(), "git".to_string()]
 }
 
 fn default_host() -> String {

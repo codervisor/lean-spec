@@ -1,4 +1,10 @@
-//! GitHub integration API handlers
+//! Git repository integration API handlers
+//!
+//! Uses the system `git` binary for clone/pull/push — works with any
+//! Git host (GitHub, GitLab, Gitea, self-hosted, SSH).
+//!
+//! Endpoints kept under `/api/github/` for backward compatibility;
+//! new `/api/git/` aliases are also registered.
 
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -7,27 +13,46 @@ use serde::{Deserialize, Serialize};
 
 use crate::state::AppState;
 
-use leanspec_core::github::{GitHubClient, GitHubRepo, RepoRef, SpecDetectionResult};
+use leanspec_core::git::{CloneManager, RemoteRef, SpecDetectionResult};
 
-/// POST /api/github/detect - Detect specs in a GitHub repository
-pub async fn github_detect_specs(
+/// Compute a deterministic clone directory for a remote URL.
+fn clone_dir_for(remote_url: &str) -> std::path::PathBuf {
+    // Slug: replace non-alphanumeric with underscores
+    let slug: String = remote_url
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    leanspec_core::storage::config::config_dir()
+        .join("repos")
+        .join(slug)
+}
+
+/// POST /api/git/detect — Detect specs in a remote Git repository.
+///
+/// Clones into a temp directory, scans for specs, then cleans up.
+pub async fn git_detect_specs(
     State(_state): State<AppState>,
     Json(body): Json<DetectRequest>,
 ) -> Result<Json<DetectResponse>, (StatusCode, String)> {
-    let repo_ref = RepoRef::parse(&body.repo).ok_or_else(|| {
+    let remote_ref = RemoteRef::parse(&body.repo).ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
             format!(
-                "Invalid repository reference: '{}'. Use 'owner/repo' or a GitHub URL.",
+                "Invalid repository URL: '{}'. Use 'owner/repo', an HTTPS URL, or an SSH URL.",
                 body.repo
             ),
         )
     })?;
 
-    let token = body.token.clone();
+    let branch = body.branch.clone();
     let result = tokio::task::spawn_blocking(move || {
-        let client = make_client(token.as_deref());
-        client.detect_specs(&repo_ref, body.branch.as_deref())
+        CloneManager::detect_specs(&remote_ref.url, branch.as_deref())
     })
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
@@ -36,48 +61,30 @@ pub async fn github_detect_specs(
     Ok(Json(DetectResponse { result }))
 }
 
-/// GET /api/github/repos - List repos accessible to the authenticated user
-pub async fn github_list_repos(
-    State(_state): State<AppState>,
-    headers: axum::http::HeaderMap,
-) -> Result<Json<ListReposResponse>, (StatusCode, String)> {
-    let token = extract_token(&headers);
-
-    let repos = tokio::task::spawn_blocking(move || {
-        let client = make_client(token.as_deref());
-        client.list_user_repos(30)
-    })
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-    .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
-
-    Ok(Json(ListReposResponse { repos }))
-}
-
-/// POST /api/github/import - Import a GitHub repo as a LeanSpec project
-pub async fn github_import_repo(
+/// POST /api/git/import — Clone a Git repo and register it as a LeanSpec project.
+pub async fn git_import_repo(
     State(state): State<AppState>,
     Json(body): Json<ImportRequest>,
 ) -> Result<Json<ImportResponse>, (StatusCode, String)> {
-    let repo_ref = RepoRef::parse(&body.repo).ok_or_else(|| {
+    let remote_ref = RemoteRef::parse(&body.repo).ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
-            format!("Invalid repository reference: '{}'", body.repo),
+            format!("Invalid repository URL: '{}'", body.repo),
         )
     })?;
 
+    let remote_url = remote_ref.url.clone();
+    let display_name = remote_ref.display_name.clone();
+
     // Detect specs first if no specs_path provided
-    let token = body.token.clone();
     let (branch, specs_path) =
         if let (Some(branch), Some(path)) = (body.branch.as_deref(), body.specs_path.as_deref()) {
             (branch.to_string(), path.to_string())
         } else {
-            let repo_ref_clone = repo_ref.clone();
+            let url = remote_url.clone();
             let branch_clone = body.branch.clone();
-            let token_clone = token.clone();
             let detection = tokio::task::spawn_blocking(move || {
-                let client = make_client(token_clone.as_deref());
-                client.detect_specs(&repo_ref_clone, branch_clone.as_deref())
+                CloneManager::detect_specs(&url, branch_clone.as_deref())
             })
             .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
@@ -94,45 +101,69 @@ pub async fn github_import_repo(
             }
         };
 
+    // Clone the repository
+    let clone_dir = clone_dir_for(&remote_url);
+    let clone_url = remote_url.clone();
+    let clone_branch = branch.clone();
+    let clone_specs = specs_path.clone();
+    let clone_target = clone_dir.clone();
+
+    if !CloneManager::is_valid_clone(&clone_dir) {
+        tokio::task::spawn_blocking(move || {
+            let config = leanspec_core::git::CloneConfig {
+                remote_url: clone_url,
+                branch: Some(clone_branch),
+                specs_path: Some(clone_specs),
+                clone_dir: clone_target,
+            };
+            CloneManager::clone_repo(&config)
+        })
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+    }
+
+    // Count specs in the clone
+    let specs_dir_path = clone_dir.join(&specs_path);
+    let spec_count = std::fs::read_dir(&specs_dir_path)
+        .map(|entries| {
+            entries
+                .filter_map(|e| e.ok())
+                .filter(|e| {
+                    e.file_type().map(|ft| ft.is_dir()).unwrap_or(false)
+                        && e.file_name()
+                            .to_str()
+                            .is_some_and(|n| n.chars().next().is_some_and(|c| c.is_ascii_digit()))
+                })
+                .count()
+        })
+        .unwrap_or(0);
+
     // Register in project registry
     let mut registry = state.registry.write().await;
     let project = registry
-        .add_github(
-            &repo_ref.full_name(),
+        .add_git(
+            &remote_url,
             &branch,
             &specs_path,
-            body.name.as_deref(),
+            &clone_dir,
+            body.name.as_deref().or(Some(&display_name)),
         )
         .map_err(|e| (StatusCode::CONFLICT, e.to_string()))?;
-
-    // Sync specs from GitHub into the local cache
-    let repo_ref2 = repo_ref.clone();
-    let branch2 = branch.clone();
-    let specs_path2 = specs_path.clone();
-    let specs_dir = project.specs_dir.clone();
-
-    let synced = tokio::task::spawn_blocking(move || {
-        let client = make_client(token.as_deref());
-        sync_specs_to_cache(&client, &repo_ref2, &branch2, &specs_path2, &specs_dir)
-    })
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-    .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
 
     Ok(Json(ImportResponse {
         project_id: project.id,
         project_name: project.name,
-        repo: repo_ref.full_name(),
+        repo: display_name,
         branch,
         specs_path,
-        synced_specs: synced,
+        synced_specs: spec_count,
     }))
 }
 
-/// POST /api/github/sync/{id} - Sync specs from GitHub for a project
-pub async fn github_sync_project(
+/// POST /api/git/sync/{id} — Pull latest changes from remote.
+pub async fn git_sync_project(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
     axum::extract::Path(project_id): axum::extract::Path<String>,
 ) -> Result<Json<SyncResponse>, (StatusCode, String)> {
     let registry = state.registry.read().await;
@@ -140,126 +171,143 @@ pub async fn github_sync_project(
         .get(&project_id)
         .ok_or_else(|| (StatusCode::NOT_FOUND, "Project not found".to_string()))?;
 
-    let github_config = project.github.as_ref().ok_or_else(|| {
+    let git_config = project.git.as_ref().ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
-            "Project is not a GitHub project".to_string(),
+            "Project is not a git-sourced project".to_string(),
         )
     })?;
 
-    let repo_ref = RepoRef::parse(&github_config.repo).ok_or_else(|| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Invalid stored repo reference".to_string(),
-        )
-    })?;
-
-    let token = extract_token(&headers);
-    let branch = github_config.branch.clone();
-    let specs_path = github_config.specs_path.clone();
-    let specs_dir = project.specs_dir.clone();
+    let clone_dir = project.path.clone();
+    let specs_path = git_config.specs_path.clone();
 
     drop(registry);
 
-    let synced = tokio::task::spawn_blocking(move || {
-        let client = make_client(token.as_deref());
-        sync_specs_to_cache(&client, &repo_ref, &branch, &specs_path, &specs_dir)
-    })
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-    .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+    // Pull latest
+    let pull_result = tokio::task::spawn_blocking(move || CloneManager::pull(&clone_dir))
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+
+    // Count specs after pull
+    let specs_dir_path = {
+        let reg = state.registry.read().await;
+        let p = reg.get(&project_id).unwrap();
+        p.path.join(&specs_path)
+    };
+
+    let spec_count = std::fs::read_dir(&specs_dir_path)
+        .map(|entries| {
+            entries
+                .filter_map(|e| e.ok())
+                .filter(|e| {
+                    e.file_type().map(|ft| ft.is_dir()).unwrap_or(false)
+                        && e.file_name()
+                            .to_str()
+                            .is_some_and(|n| n.chars().next().is_some_and(|c| c.is_ascii_digit()))
+                })
+                .count()
+        })
+        .unwrap_or(0);
 
     Ok(Json(SyncResponse {
         project_id,
-        synced_specs: synced,
+        synced_specs: spec_count,
+        updated: pull_result.updated,
+        head_sha: pull_result.head_sha,
     }))
 }
 
-/// Sync specs from a GitHub repo into a local cache directory.
-///
-/// Uses the Git Trees API to discover all spec README.md files in a single
-/// API call, then fetches their contents in parallel via the Blobs API.
-fn sync_specs_to_cache(
-    client: &GitHubClient,
-    repo_ref: &RepoRef,
-    branch: &str,
-    specs_path: &str,
-    local_specs_dir: &std::path::Path,
-) -> Result<usize, leanspec_core::CoreError> {
-    // Fetch full tree in one API call
-    let tree_items = client.get_tree_recursive(repo_ref, branch)?;
+/// POST /api/git/push/{id} — Commit and push local spec changes.
+pub async fn git_push_project(
+    State(state): State<AppState>,
+    axum::extract::Path(project_id): axum::extract::Path<String>,
+    Json(body): Json<PushRequest>,
+) -> Result<Json<PushResponse>, (StatusCode, String)> {
+    let registry = state.registry.read().await;
+    let project = registry
+        .get(&project_id)
+        .ok_or_else(|| (StatusCode::NOT_FOUND, "Project not found".to_string()))?;
 
-    let prefix = format!("{}/", specs_path);
+    let git_config = project.git.as_ref().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            "Project is not a git-sourced project".to_string(),
+        )
+    })?;
 
-    // Find all README.md files under numbered spec directories
-    let readme_items: Vec<(String, String)> = tree_items
-        .iter()
-        .filter_map(|item| {
-            if item.item_type != "blob" {
-                return None;
-            }
-            let rest = item.path.strip_prefix(&prefix)?;
-            let parts: Vec<&str> = rest.splitn(2, '/').collect();
-            if parts.len() == 2
-                && parts[1] == "README.md"
-                && parts[0].chars().next().is_some_and(|c| c.is_ascii_digit())
-            {
-                Some((parts[0].to_string(), item.sha.clone()))
-            } else {
-                None
-            }
-        })
-        .collect();
+    let clone_dir = project.path.clone();
+    let specs_path = git_config.specs_path.clone();
 
-    // Fetch all blobs in parallel (10 concurrent)
-    let blob_results = client.get_blobs_parallel(repo_ref, &readme_items, 10);
+    drop(registry);
 
-    let mut synced = 0;
-    for (dir_name, result) in blob_results {
-        if let Ok(content) = result {
-            let local_dir = local_specs_dir.join(&dir_name);
-            std::fs::create_dir_all(&local_dir).map_err(|e| {
-                leanspec_core::CoreError::Other(format!("Failed to create dir: {}", e))
-            })?;
-            std::fs::write(local_dir.join("README.md"), &content).map_err(|e| {
-                leanspec_core::CoreError::Other(format!("Failed to write spec: {}", e))
-            })?;
-            synced += 1;
-        }
-    }
+    let message = body
+        .message
+        .unwrap_or_else(|| "Update specs via LeanSpec".to_string());
 
-    Ok(synced)
+    let result = tokio::task::spawn_blocking(move || {
+        CloneManager::commit_and_push(&clone_dir, &specs_path, &message)
+    })
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+    .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    Ok(Json(PushResponse {
+        project_id,
+        commit_sha: result.commit_sha,
+    }))
 }
 
-/// Extract a GitHub token from request headers (`X-GitHub-Token` or `Authorization: Bearer`).
-fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(val) = headers.get("X-GitHub-Token") {
-        return val.to_str().ok().map(|s| s.to_string());
-    }
-    if let Some(val) = headers.get(axum::http::header::AUTHORIZATION) {
-        if let Ok(s) = val.to_str() {
-            if let Some(token) = s.strip_prefix("Bearer ") {
-                return Some(token.to_string());
-            }
-        }
-    }
-    None
+/// GET /api/git/status/{id} — Check for uncommitted changes.
+pub async fn git_status_project(
+    State(state): State<AppState>,
+    axum::extract::Path(project_id): axum::extract::Path<String>,
+) -> Result<Json<leanspec_core::git::GitStatus>, (StatusCode, String)> {
+    let registry = state.registry.read().await;
+    let project = registry
+        .get(&project_id)
+        .ok_or_else(|| (StatusCode::NOT_FOUND, "Project not found".to_string()))?;
+
+    project.git.as_ref().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            "Project is not a git-sourced project".to_string(),
+        )
+    })?;
+
+    let clone_dir = project.path.clone();
+    drop(registry);
+
+    let status = tokio::task::spawn_blocking(move || CloneManager::status(&clone_dir))
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+
+    Ok(Json(status))
 }
 
-fn make_client(token: Option<&str>) -> GitHubClient {
-    match token {
-        Some(t) => GitHubClient::with_token(t),
-        None => GitHubClient::new(),
-    }
-}
+// ── Backward-compatible aliases ──────────────────────────────────────
+
+/// Alias: POST /api/github/detect → git_detect_specs
+pub use git_detect_specs as github_detect_specs;
+
+/// Alias: POST /api/github/import → git_import_repo
+pub use git_import_repo as github_import_repo;
+
+/// Alias: POST /api/github/sync/{id} → git_sync_project
+pub use git_sync_project as github_sync_project;
 
 // ── Request/Response types ───────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
 pub struct DetectRequest {
+    /// Repository URL or shorthand (owner/repo).
+    /// Accepts `repo` for backward compatibility.
+    #[serde(alias = "repo")]
     pub repo: String,
     #[serde(default)]
     pub branch: Option<String>,
+    /// Ignored — kept for backward compat. Auth uses system git credentials.
     #[serde(default)]
     pub token: Option<String>,
 }
@@ -269,20 +317,18 @@ pub struct DetectResponse {
     pub result: Option<SpecDetectionResult>,
 }
 
-#[derive(Debug, Serialize)]
-pub struct ListReposResponse {
-    pub repos: Vec<GitHubRepo>,
-}
-
 #[derive(Debug, Deserialize)]
 pub struct ImportRequest {
+    /// Repository URL or shorthand (owner/repo).
+    #[serde(alias = "repo")]
     pub repo: String,
     #[serde(default)]
     pub branch: Option<String>,
-    #[serde(default)]
+    #[serde(default, alias = "specsPath")]
     pub specs_path: Option<String>,
     #[serde(default)]
     pub name: Option<String>,
+    /// Ignored — kept for backward compat.
     #[serde(default)]
     pub token: Option<String>,
 }
@@ -303,4 +349,19 @@ pub struct ImportResponse {
 pub struct SyncResponse {
     pub project_id: String,
     pub synced_specs: usize,
+    pub updated: bool,
+    pub head_sha: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PushRequest {
+    #[serde(default)]
+    pub message: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PushResponse {
+    pub project_id: String,
+    pub commit_sha: String,
 }

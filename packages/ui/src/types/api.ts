@@ -233,7 +233,14 @@ export interface Project {
   description?: string | null;
   isFeatured?: boolean;
   lastAccessed?: string | Date | null;
-  source?: 'local' | 'github';
+  source?: 'local' | 'git' | 'github';
+  git?: {
+    remoteUrl: string;
+    branch: string;
+    specsPath: string;
+    lastSynced?: string | null;
+  } | null;
+  /** @deprecated Use `git` instead */
   github?: {
     repo: string;
     branch: string;
@@ -266,7 +273,10 @@ export interface DetectedSpec {
 }
 
 export interface GitHubDetectResult {
-  repo: string;
+  /** Remote URL (new field from git-based backend) */
+  remoteUrl?: string;
+  /** Legacy field — may be display name or owner/repo */
+  repo?: string;
   branch: string;
   specsDir: string;
   specCount: number;

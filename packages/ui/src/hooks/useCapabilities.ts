@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-export type ProjectSource = 'local' | 'github';
+export type ProjectSource = 'local' | 'git' | 'github';
 
 export interface Capabilities {
   projectSources: ProjectSource[];
@@ -12,7 +12,7 @@ const VITE_FALLBACK: ProjectSource[] = (() => {
   if (env) {
     return env.split(',').map(s => s.trim().toLowerCase()).filter(Boolean) as ProjectSource[];
   }
-  return ['local', 'github'];
+  return ['local', 'git'];
 })();
 
 async function fetchCapabilities(): Promise<Capabilities> {
@@ -43,6 +43,10 @@ export function useCapabilities() {
   return {
     ...query,
     capabilities,
-    hasSource: (source: ProjectSource) => capabilities.projectSources.includes(source),
+    hasSource: (source: ProjectSource) => {
+      if (source === 'github') return capabilities.projectSources.includes('git') || capabilities.projectSources.includes('github');
+      if (source === 'git') return capabilities.projectSources.includes('git') || capabilities.projectSources.includes('github');
+      return capabilities.projectSources.includes(source);
+    },
   };
 }

@@ -58,16 +58,21 @@ pub enum ProjectSource {
     /// Local filesystem project
     #[default]
     Local,
-    /// GitHub repository
-    GitHub,
+    /// GitHub repository (legacy alias for Git)
+    #[serde(alias = "github")]
+    Git,
 }
 
-/// GitHub configuration for a project
+/// Git repository configuration for a project.
+///
+/// Works with any Git remote (GitHub, GitLab, Gitea, self-hosted, SSH).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct GitHubConfig {
-    /// Repository reference (owner/repo)
-    pub repo: String,
+pub struct GitConfig {
+    /// Remote URL (HTTPS, SSH, or any git-compatible URL).
+    /// Legacy field `repo` (owner/repo) is accepted as an alias.
+    #[serde(alias = "repo")]
+    pub remote_url: String,
 
     /// Branch to track
     pub branch: String,
@@ -79,6 +84,9 @@ pub struct GitHubConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_synced: Option<DateTime<Utc>>,
 }
+
+/// Legacy alias — use [`GitConfig`] instead.
+pub type GitHubConfig = GitConfig;
 
 /// A registered LeanSpec project
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -112,13 +120,14 @@ pub struct Project {
     #[serde(default = "default_timestamp")]
     pub added_at: DateTime<Utc>,
 
-    /// Project source type (local or github)
+    /// Project source type (local or git)
     #[serde(default)]
     pub source: ProjectSource,
 
-    /// GitHub configuration (only for GitHub-sourced projects)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub github: Option<GitHubConfig>,
+    /// Git repository configuration (only for git-sourced projects).
+    /// Accepts legacy `github` key for backward compatibility.
+    #[serde(alias = "github", skip_serializing_if = "Option::is_none")]
+    pub git: Option<GitConfig>,
 }
 
 impl Project {
@@ -171,7 +180,7 @@ impl Project {
             last_accessed: now,
             added_at: now,
             source: ProjectSource::Local,
-            github: None,
+            git: None,
         })
     }
 
@@ -402,40 +411,40 @@ impl ProjectRegistry {
         Ok(Some(project))
     }
 
-    /// Add a GitHub repository as a project.
+    /// Add a git repository as a project.
     ///
-    /// Creates a local cache directory under `~/.lean-spec/github/<owner>/<repo>/`
-    /// where synced specs will be stored.
-    pub fn add_github(
+    /// The `clone_dir` should already contain a valid git clone.
+    /// The specs directory is at `<clone_dir>/<specs_path>`.
+    pub fn add_git(
         &mut self,
-        repo: &str,
+        remote_url: &str,
         branch: &str,
         specs_path: &str,
+        clone_dir: &Path,
         name: Option<&str>,
     ) -> CoreResult<Project> {
         // Check for duplicate
         for project in self.projects.values() {
-            if let Some(ref gh) = project.github {
-                if gh.repo == repo {
+            if let Some(ref gc) = project.git {
+                if gc.remote_url == remote_url {
                     return Err(CoreError::RegistryError(format!(
-                        "GitHub repo '{}' is already registered",
-                        repo
+                        "Repository '{}' is already registered",
+                        remote_url
                     )));
                 }
             }
         }
 
-        // Create local cache directory
-        let cache_dir = crate::storage::config::config_dir()
-            .join("github")
-            .join(repo.replace('/', "_"));
-        let specs_dir = cache_dir.join(specs_path);
-        fs::create_dir_all(&specs_dir)
-            .map_err(|e| CoreError::RegistryError(format!("Failed to create cache dir: {}", e)))?;
+        let specs_dir = clone_dir.join(specs_path);
+        if !specs_dir.exists() {
+            fs::create_dir_all(&specs_dir).map_err(|e| {
+                CoreError::RegistryError(format!("Failed to create specs dir: {}", e))
+            })?;
+        }
 
         let display_name = name
             .map(|s| s.to_string())
-            .unwrap_or_else(|| repo.to_string());
+            .unwrap_or_else(|| remote_url.to_string());
 
         let now = Utc::now();
         let preferred_id = slugify(&display_name);
@@ -443,15 +452,15 @@ impl ProjectRegistry {
         let project = Project {
             id: self.ensure_unique_id(&preferred_id),
             name: display_name,
-            path: cache_dir,
+            path: clone_dir.to_path_buf(),
             specs_dir,
             favorite: false,
             color: None,
             last_accessed: now,
             added_at: now,
-            source: ProjectSource::GitHub,
-            github: Some(GitHubConfig {
-                repo: repo.to_string(),
+            source: ProjectSource::Git,
+            git: Some(GitConfig {
+                remote_url: remote_url.to_string(),
                 branch: branch.to_string(),
                 specs_path: specs_path.to_string(),
                 last_synced: None,
