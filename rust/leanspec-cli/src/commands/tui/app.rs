@@ -7,6 +7,15 @@ use ratatui::layout::Rect;
 use std::collections::HashSet;
 use std::error::Error;
 
+/// Per-project UI preferences persisted across sessions.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
+pub struct TuiPrefs {
+    pub sort_option: Option<String>,
+    pub sidebar_width_pct: Option<u16>,
+    pub sidebar_collapsed: Option<bool>,
+    pub hide_archived: Option<bool>,
+}
+
 /// Which mode the app is in (affects keybinding dispatch).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppMode {
@@ -55,11 +64,23 @@ impl SortOption {
 }
 
 /// Active filter state for the spec list.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct FilterState {
     pub statuses: Vec<SpecStatus>,
     pub priorities: Vec<SpecPriority>,
     pub tags: Vec<String>,
+    pub hide_archived: bool,
+}
+
+impl Default for FilterState {
+    fn default() -> Self {
+        Self {
+            statuses: Vec::new(),
+            priorities: Vec::new(),
+            tags: Vec::new(),
+            hide_archived: true,
+        }
+    }
 }
 
 impl FilterState {
@@ -68,6 +89,9 @@ impl FilterState {
     }
 
     pub fn matches(&self, spec: &SpecInfo) -> bool {
+        if self.hide_archived && spec.frontmatter.status == SpecStatus::Archived {
+            return false;
+        }
         if !self.statuses.is_empty() && !self.statuses.contains(&spec.frontmatter.status) {
             return false;
         }
@@ -196,6 +220,20 @@ impl ProjectSwitcherState {
     }
 }
 
+/// Preset project colors: (name, hex_value).
+pub const PRESET_COLORS: &[(&str, &str)] = &[
+    ("none", ""),
+    ("blue", "#4080ff"),
+    ("green", "#40c060"),
+    ("yellow", "#e0b020"),
+    ("red", "#e04040"),
+    ("purple", "#9060e0"),
+    ("cyan", "#40c0c0"),
+    ("orange", "#e07020"),
+    ("pink", "#e060a0"),
+    ("gray", "#808090"),
+];
+
 /// Action requested from the project management view.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ProjectMgmtAction {
@@ -213,6 +251,11 @@ pub enum ProjectMgmtAction {
     AddingProject {
         buffer: String,
         message: Option<String>,
+    },
+    /// Color picker — holds project id and current color index.
+    ChangingColor {
+        id: String,
+        color_idx: usize,
     },
 }
 
@@ -244,6 +287,28 @@ impl ProjectMgmtState {
     }
 }
 
+/// Serializable snapshot of app state for headless mode output.
+#[derive(serde::Serialize)]
+pub struct AppDebugState {
+    pub view: String,
+    pub mode: String,
+    pub spec_count: usize,
+    pub filtered_count: usize,
+    pub sort: String,
+    pub search_query: String,
+    pub selected_path: Option<String>,
+    pub board_groups: Vec<BoardGroupDebug>,
+    pub tree_mode: bool,
+    pub sidebar_collapsed: bool,
+}
+
+#[derive(serde::Serialize)]
+pub struct BoardGroupDebug {
+    pub status: String,
+    pub count: usize,
+    pub collapsed: bool,
+}
+
 /// Core application state.
 pub struct App {
     // Data
@@ -270,6 +335,7 @@ pub struct App {
 
     // List navigation
     pub list_selected: usize,
+    pub list_scroll_offset: usize,
 
     // Detail scroll
     pub detail_scroll: u16,
@@ -287,6 +353,7 @@ pub struct App {
     pub layout_left: Rect,
     pub layout_right: Rect,
     pub last_frame_width: u16,
+    pub last_frame_height: u16,
 
     // Sort & filter
     pub sort_option: SortOption,
@@ -312,6 +379,12 @@ pub struct App {
     pub project_switcher: Option<ProjectSwitcherState>,
     /// Project management view state.
     pub project_mgmt: Option<ProjectMgmtState>,
+
+    // File watch / auto-reload
+    /// When the last auto-reload from file watch occurred (used for debounce).
+    pub last_reload: Option<std::time::Instant>,
+    /// If Some, display the [↺] indicator until this instant.
+    pub reload_flash_until: Option<std::time::Instant>,
 }
 
 /// Load projects from the registry sorted favorites-first, then by last_accessed desc.
@@ -367,6 +440,7 @@ impl App {
             board_group_idx: 0,
             board_item_idx: 0,
             list_selected: 0,
+            list_scroll_offset: 0,
             detail_scroll: 0,
             detail_content_lines: u16::MAX,
             search_query: String::new(),
@@ -377,6 +451,7 @@ impl App {
             layout_left: Rect::default(),
             layout_right: Rect::default(),
             last_frame_width: 0,
+            last_frame_height: 0,
             sort_option: SortOption::default(),
             filter: FilterState::default(),
             filter_cursor: 0,
@@ -388,7 +463,15 @@ impl App {
             current_project: initial_project,
             project_switcher: None,
             project_mgmt: None,
+            last_reload: None,
+            reload_flash_until: None,
         };
+
+        // Load per-project prefs if we have a project
+        if let Some(ref p) = app.current_project.clone() {
+            let prefs = Self::load_prefs(&p.id);
+            app.apply_prefs(&prefs);
+        }
 
         app.apply_filter_and_sort();
         app.load_selected_detail();
@@ -410,6 +493,93 @@ impl App {
         self.mode = AppMode::ProjectManagement;
     }
 
+    /// Open the project management view with the add-project prompt pre-filled.
+    /// Used on first launch when no projects are registered.
+    pub fn open_first_launch_prompt(&mut self) {
+        let projects = load_projects_sorted();
+        self.project_mgmt = Some(ProjectMgmtState {
+            projects,
+            selected: 0,
+            action: ProjectMgmtAction::AddingProject {
+                buffer: String::new(),
+                message: Some("No projects found. Add your first project:".to_string()),
+            },
+            message: None,
+        });
+        self.mode = AppMode::ProjectManagement;
+    }
+
+    /// Return the path to the per-project prefs file.
+    pub fn prefs_path(project_id: &str) -> Option<std::path::PathBuf> {
+        let home = std::env::var("HOME").ok()?;
+        let dir = std::path::PathBuf::from(home)
+            .join(".lean-spec")
+            .join("tui-prefs");
+        std::fs::create_dir_all(&dir).ok()?;
+        Some(dir.join(format!("{}.json", project_id)))
+    }
+
+    /// Load per-project prefs from disk, returning defaults if not found.
+    pub fn load_prefs(project_id: &str) -> TuiPrefs {
+        let Some(path) = Self::prefs_path(project_id) else {
+            return TuiPrefs::default();
+        };
+        std::fs::read_to_string(&path)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_default()
+    }
+
+    /// Save current UI prefs for the current project.
+    pub fn save_prefs(&self) {
+        let Some(ref project) = self.current_project else {
+            return;
+        };
+        let Some(path) = Self::prefs_path(&project.id) else {
+            return;
+        };
+        let prefs = TuiPrefs {
+            sort_option: Some(
+                match self.sort_option {
+                    SortOption::IdDesc => "id_desc",
+                    SortOption::IdAsc => "id_asc",
+                    SortOption::PriorityDesc => "priority_desc",
+                    SortOption::TitleAsc => "title_asc",
+                    SortOption::UpdatedDesc => "updated_desc",
+                }
+                .to_string(),
+            ),
+            sidebar_width_pct: Some(self.sidebar_width_pct),
+            sidebar_collapsed: Some(self.sidebar_collapsed),
+            hide_archived: Some(self.filter.hide_archived),
+        };
+        if let Ok(json) = serde_json::to_string_pretty(&prefs) {
+            let _ = std::fs::write(path, json);
+        }
+    }
+
+    /// Apply loaded prefs to this app state.
+    pub fn apply_prefs(&mut self, prefs: &TuiPrefs) {
+        if let Some(ref sort_str) = prefs.sort_option {
+            self.sort_option = match sort_str.as_str() {
+                "id_asc" => SortOption::IdAsc,
+                "priority_desc" => SortOption::PriorityDesc,
+                "title_asc" => SortOption::TitleAsc,
+                "updated_desc" => SortOption::UpdatedDesc,
+                _ => SortOption::IdDesc,
+            };
+        }
+        if let Some(w) = prefs.sidebar_width_pct {
+            self.sidebar_width_pct = w;
+        }
+        if let Some(c) = prefs.sidebar_collapsed {
+            self.sidebar_collapsed = c;
+        }
+        if let Some(ha) = prefs.hide_archived {
+            self.filter.hide_archived = ha;
+        }
+    }
+
     /// Close any overlay and return to Normal mode.
     pub fn close_overlay(&mut self) {
         self.mode = AppMode::Normal;
@@ -420,6 +590,9 @@ impl App {
 
     /// Switch to a project: reload specs from its specs_dir, update last_accessed.
     pub fn switch_project(&mut self, project: leanspec_core::storage::Project) {
+        // Save prefs for the current project before switching
+        self.save_prefs();
+
         // Update last_accessed in registry.
         if let Ok(mut registry) = leanspec_core::storage::ProjectRegistry::new() {
             let _ = registry.touch_last_accessed(&project.id);
@@ -427,6 +600,13 @@ impl App {
 
         let specs_dir = project.specs_dir.to_string_lossy().into_owned();
         self.current_project = Some(project);
+
+        // Load prefs for the new project
+        if let Some(ref p) = self.current_project.clone() {
+            let prefs = Self::load_prefs(&p.id);
+            self.apply_prefs(&prefs);
+        }
+
         self.reload_specs(&specs_dir);
         self.close_overlay();
     }
@@ -450,6 +630,107 @@ impl App {
         self.tree_rows = Vec::new();
         self.apply_filter_and_sort();
         self.load_selected_detail();
+    }
+
+    /// Reload specs from disk in response to a file-system change.
+    /// Preserves filter, sort, tree mode, board collapse state, and selection.
+    /// Debounces: no-ops if called within 300ms of the last reload.
+    pub fn reload_from_watch(&mut self) {
+        let now = std::time::Instant::now();
+        if let Some(last) = self.last_reload {
+            if now.duration_since(last).as_millis() < 300 {
+                return;
+            }
+        }
+        self.last_reload = Some(now);
+
+        // Save selection so we can restore it after the reload
+        let prev_path = self.selected_detail.as_ref().map(|s| s.path.clone());
+
+        // Reload spec metadata from disk (reuses existing loader / specs_dir)
+        self.specs = self.loader.load_all_metadata().unwrap_or_default();
+        self.dep_graph = DependencyGraph::new(&self.specs);
+        self.stats = SpecStats::compute(&self.specs);
+
+        // Rebuild filtered/sorted/board/tree views, preserving filter + sort + collapse state
+        self.apply_filter_and_sort();
+
+        // Restore selection by path (falls back to clamped index if spec was deleted)
+        if let Some(ref path) = prev_path {
+            self.restore_selection_by_path(path);
+        }
+
+        // Reload detail pane without resetting scroll (user may be mid-read)
+        self.reload_detail_preserve_scroll();
+
+        // Flash [↺] indicator for 1 second
+        self.reload_flash_until = Some(now + std::time::Duration::from_secs(1));
+    }
+
+    /// Find the spec at `path` in the current filtered views and update nav indices.
+    fn restore_selection_by_path(&mut self, path: &str) {
+        if self.tree_mode {
+            if let Some(pos) = self
+                .tree_rows
+                .iter()
+                .position(|r| self.specs[r.spec_idx].path == path)
+            {
+                self.list_selected = pos;
+            }
+        } else if let Some(pos) = self
+            .filtered_specs
+            .iter()
+            .position(|&i| self.specs[i].path == path)
+        {
+            self.list_selected = pos;
+        }
+        for (gi, group) in self.board_groups.iter().enumerate() {
+            if let Some(ii) = group
+                .indices
+                .iter()
+                .position(|&i| self.specs[i].path == path)
+            {
+                self.board_group_idx = gi;
+                self.board_item_idx = ii;
+                return;
+            }
+        }
+    }
+
+    /// Reload the detail pane content, clamping scroll to the new content length.
+    fn reload_detail_preserve_scroll(&mut self) {
+        let idx = match self.selected_spec_index() {
+            Some(i) => i,
+            None => {
+                self.selected_detail = None;
+                self.detail_content_lines = u16::MAX;
+                self.detail_toc = Vec::new();
+                self.detail_scroll = 0;
+                return;
+            }
+        };
+        let path = match self.specs.get(idx) {
+            Some(s) => s.path.clone(),
+            None => {
+                self.selected_detail = None;
+                self.detail_content_lines = u16::MAX;
+                self.detail_toc = Vec::new();
+                self.detail_scroll = 0;
+                return;
+            }
+        };
+        if let Ok(Some(full)) = self.loader.load(&path) {
+            let new_lines = full.content.lines().count() as u16;
+            self.detail_content_lines = new_lines;
+            self.detail_toc = Self::extract_headings_inner(&full.content);
+            self.detail_scroll = self.detail_scroll.min(new_lines.saturating_sub(1));
+            self.selected_detail = Some(full);
+        } else {
+            self.selected_detail = None;
+            self.detail_content_lines = u16::MAX;
+            self.detail_toc = Vec::new();
+            self.detail_scroll = 0;
+        }
     }
 
     /// Apply current filter + sort to rebuild `filtered_specs`, board groups, and tree rows.
@@ -495,6 +776,7 @@ impl App {
         }
         let max_list = self.visible_list_len().saturating_sub(1);
         self.list_selected = self.list_selected.min(max_list);
+        self.update_list_scroll();
     }
 
     fn rebuild_board_groups_from_filtered(&mut self) {
@@ -609,12 +891,37 @@ impl App {
     }
 
     /// Length of the visible list (flat or tree).
-    fn visible_list_len(&self) -> usize {
+    pub fn visible_list_len(&self) -> usize {
         if self.tree_mode {
             self.tree_rows.len()
         } else {
             self.filtered_specs.len()
         }
+    }
+
+    /// Update list_scroll_offset to keep list_selected within SCROLLOFF=3 rows of the viewport edges.
+    pub fn update_list_scroll(&mut self) {
+        const SCROLLOFF: usize = 3;
+        let total = self.visible_list_len();
+        if total == 0 {
+            self.list_scroll_offset = 0;
+            return;
+        }
+        // Estimate visible rows from frame height: frame - statusbar - borders - headers
+        let visible_rows = (self.last_frame_height as usize).saturating_sub(6).max(1);
+
+        // Cursor too close to top: scroll up
+        if self.list_selected < self.list_scroll_offset + SCROLLOFF {
+            self.list_scroll_offset = self.list_selected.saturating_sub(SCROLLOFF);
+        }
+        // Cursor too close to bottom: scroll down
+        if self.list_selected + SCROLLOFF + 1 > self.list_scroll_offset + visible_rows {
+            self.list_scroll_offset =
+                (self.list_selected + SCROLLOFF + 1).saturating_sub(visible_rows);
+        }
+        // Clamp offset to valid range
+        let max_offset = total.saturating_sub(visible_rows);
+        self.list_scroll_offset = self.list_scroll_offset.min(max_offset);
     }
 
     // -- Sort & filter --
@@ -838,6 +1145,7 @@ impl App {
                 }
             }
         }
+        self.update_list_scroll();
         self.load_selected_detail();
     }
 
@@ -861,6 +1169,7 @@ impl App {
                 self.list_selected = self.list_selected.saturating_sub(1);
             }
         }
+        self.update_list_scroll();
         self.load_selected_detail();
     }
 
@@ -874,6 +1183,7 @@ impl App {
                 self.list_selected = 0;
             }
         }
+        self.update_list_scroll();
         self.load_selected_detail();
     }
 
@@ -889,6 +1199,7 @@ impl App {
                 self.list_selected = self.visible_list_len().saturating_sub(1);
             }
         }
+        self.update_list_scroll();
         self.load_selected_detail();
     }
 
@@ -906,6 +1217,7 @@ impl App {
                 self.list_selected = (self.list_selected + page_size).min(max);
             }
         }
+        self.update_list_scroll();
         self.load_selected_detail();
     }
 
@@ -919,6 +1231,7 @@ impl App {
                 self.list_selected = self.list_selected.saturating_sub(page_size);
             }
         }
+        self.update_list_scroll();
         self.load_selected_detail();
     }
 
@@ -1120,6 +1433,34 @@ impl App {
         self.sidebar_collapsed = !self.sidebar_collapsed;
     }
 
+    /// Compute the board scroll offset needed to keep the current selection visible.
+    /// Mirrors the logic in board.rs render but as an App method so click_sidebar can use it.
+    pub fn board_scroll(&self, visible_height: usize) -> usize {
+        let mut selected_row: usize = 0;
+        let mut found = false;
+        'outer: for (gi, group) in self.board_groups.iter().enumerate() {
+            selected_row += 1; // group header
+            if gi == self.board_group_idx && group.collapsed {
+                found = true;
+                break 'outer;
+            }
+            if !group.collapsed {
+                for ii in 0..group.indices.len() {
+                    if gi == self.board_group_idx && ii == self.board_item_idx {
+                        found = true;
+                        break 'outer;
+                    }
+                    selected_row += 1;
+                }
+            }
+            selected_row += 1; // blank line
+        }
+        if !found || visible_height == 0 {
+            return 0;
+        }
+        selected_row.saturating_sub(visible_height.saturating_sub(1))
+    }
+
     /// Select a spec in the sidebar by clicking at a terminal row.
     pub fn click_sidebar(&mut self, row: u16) {
         self.focus = FocusPane::Left;
@@ -1127,36 +1468,48 @@ impl App {
             PrimaryView::List => {
                 let content_row = row.saturating_sub(self.layout_left.y).saturating_sub(1);
                 let item_row = content_row.saturating_sub(2) as usize;
-                let visible_rows = self.layout_left.height.saturating_sub(4) as usize;
-                let offset = if self.list_selected >= visible_rows {
-                    self.list_selected - visible_rows + 1
-                } else {
-                    0
-                };
+                let offset = self.list_scroll_offset;
                 let new_idx = offset + item_row;
                 if new_idx < self.filtered_specs.len() {
                     self.list_selected = new_idx;
+                    self.update_list_scroll();
                     self.load_selected_detail();
                 }
             }
             PrimaryView::Board => {
-                // Iterate groups counting rows to find which spec was clicked
-                let mut current_row = self.layout_left.y + 1; // inside border
-                'outer: for (gi, group) in self.board_groups.iter().enumerate() {
-                    // Group header row
-                    current_row += 1;
-                    // Item rows
-                    for (ii, _) in group.indices.iter().enumerate() {
-                        if row == current_row {
-                            self.board_group_idx = gi;
-                            self.board_item_idx = ii;
-                            self.load_selected_detail();
-                            break 'outer;
+                let inner_y = self.layout_left.y + 1; // first row inside border
+                if row < inner_y {
+                    return;
+                }
+                let visible_height = self.layout_left.height.saturating_sub(2) as usize;
+                let scroll = self.board_scroll(visible_height);
+                // Map clicked terminal row → virtual content line index
+                let content_line = (row - inner_y) as usize + scroll;
+
+                let mut line: usize = 0;
+                for (gi, group) in self.board_groups.iter().enumerate() {
+                    // Group header line
+                    if content_line == line {
+                        // Click on group header → toggle collapse
+                        self.board_group_idx = gi;
+                        self.toggle_current_board_group();
+                        return;
+                    }
+                    line += 1;
+
+                    if !group.collapsed {
+                        for (ii, _) in group.indices.iter().enumerate() {
+                            if content_line == line {
+                                self.board_group_idx = gi;
+                                self.board_item_idx = ii;
+                                self.load_selected_detail();
+                                return;
+                            }
+                            line += 1;
                         }
-                        current_row += 1;
                     }
                     // Blank line between groups
-                    current_row += 1;
+                    line += 1;
                 }
             }
         }
@@ -1183,6 +1536,37 @@ impl App {
             .collect();
     }
 
+    /// Produce a serializable snapshot of current app state for headless mode output.
+    pub fn debug_state(&self) -> AppDebugState {
+        AppDebugState {
+            view: match self.primary_view {
+                PrimaryView::Board => "Board".to_string(),
+                PrimaryView::List => "List".to_string(),
+            },
+            mode: format!("{:?}", self.mode),
+            spec_count: self.specs.len(),
+            filtered_count: if self.tree_mode {
+                self.tree_rows.len()
+            } else {
+                self.filtered_specs.len()
+            },
+            sort: self.sort_option.label().to_string(),
+            search_query: self.search_query.clone(),
+            selected_path: self.selected_detail.as_ref().map(|s| s.path.clone()),
+            board_groups: self
+                .board_groups
+                .iter()
+                .map(|g| BoardGroupDebug {
+                    status: format!("{:?}", g.status),
+                    count: g.indices.len(),
+                    collapsed: g.collapsed,
+                })
+                .collect(),
+            tree_mode: self.tree_mode,
+            sidebar_collapsed: self.sidebar_collapsed,
+        }
+    }
+
     /// Create an empty App for testing (no filesystem access needed).
     #[cfg(test)]
     pub fn empty_for_test() -> Self {
@@ -1202,6 +1586,7 @@ impl App {
             board_group_idx: 0,
             board_item_idx: 0,
             list_selected: 0,
+            list_scroll_offset: 0,
             detail_scroll: 0,
             detail_content_lines: u16::MAX,
             search_query: String::new(),
@@ -1212,6 +1597,7 @@ impl App {
             layout_left: Rect::default(),
             layout_right: Rect::default(),
             last_frame_width: 0,
+            last_frame_height: 0,
             sort_option: SortOption::default(),
             filter: FilterState::default(),
             filter_cursor: 0,
@@ -1223,6 +1609,8 @@ impl App {
             current_project: None,
             project_switcher: None,
             project_mgmt: None,
+            last_reload: None,
+            reload_flash_until: None,
         }
     }
 }

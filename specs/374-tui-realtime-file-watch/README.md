@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2026-03-24
 priority: high
 tags:
@@ -11,7 +11,13 @@ tags:
 depends_on:
 - 371-tui-sidebar-navigation
 created_at: 2026-03-24T03:01:26.076784699Z
-updated_at: 2026-03-24T03:01:30.214185389Z
+updated_at: 2026-03-24T10:08:18.591238522Z
+completed_at: 2026-03-24T10:08:18.591238522Z
+transitions:
+- status: in-progress
+  at: 2026-03-24T08:14:09.293627699Z
+- status: complete
+  at: 2026-03-24T10:08:18.591238522Z
 ---
 
 # TUI Realtime File Watch: Auto-reload on Spec Changes
@@ -101,17 +107,17 @@ Ignored events:
 
 ## Plan
 
-- [ ] Add `notify = "6"` to `leanspec-cli/Cargo.toml`
-- [ ] Replace blocking `event::read()` in `run_event_loop` with `event::poll(200ms)` + `event::read()`
-- [ ] Add `mpsc::Receiver<notify::Event>` field to `App` (or pass alongside)
-- [ ] Spawn `notify::recommended_watcher` in `run()`, watch `specs_dir` recursively
-- [ ] Implement `App::reload_specs()` — re-read from disk, rebuild `filtered_specs`, `board_groups`, `dep_graph`, `stats`
-- [ ] Implement debounce: track `last_reload: Instant`; skip if < 300ms since last
-- [ ] Implement selection preservation: store selected path before reload, restore by path after
-- [ ] Drain `rx.try_recv()` in event loop, call reload when `.md` change detected
-- [ ] Add `reload_flash_until: Option<Instant>` to App for the `[↺]` indicator
-- [ ] Render `[↺]` in status bar while `reload_flash_until` is Some and not elapsed
-- [ ] Update `App::empty_for_test()` to accept `None` for the receiver (test compatibility)
+- [x] Add `notify = "6"` to `leanspec-cli/Cargo.toml`
+- [x] Replace blocking `event::read()` in `run_event_loop` with `event::poll(200ms)` + `event::read()`
+- [x] Add `mpsc::Receiver<notify::Event>` field to `App` (or pass alongside) — passed alongside to `run_event_loop`
+- [x] Spawn `notify::recommended_watcher` in `run()`, watch `specs_dir` recursively
+- [x] Implement `App::reload_specs()` — re-read from disk, rebuild `filtered_specs`, `board_groups`, `dep_graph`, `stats`
+- [x] Implement debounce: track `last_reload: Instant`; skip if < 300ms since last
+- [x] Implement selection preservation: store selected path before reload, restore by path after
+- [x] Drain `rx.try_recv()` in event loop, call reload when `.md` change detected
+- [x] Add `reload_flash_until: Option<Instant>` to App for the `[↺]` indicator
+- [x] Render `[↺]` in status bar while `reload_flash_until` is Some and not elapsed
+- [x] Update `App::empty_for_test()` to accept `None` for the receiver (test compatibility)
 
 ## Non-Goals
 
@@ -132,3 +138,5 @@ Ignored events:
 - [ ] `[↺]` flashes in status bar after reload and clears after 1 second
 - [ ] No CPU spike during idle watching (verified with `top`)
 - [ ] Non-`.md` file change (e.g. `.gitignore`) does not trigger reload
+
+> Test items require manual verification with a running TUI instance.

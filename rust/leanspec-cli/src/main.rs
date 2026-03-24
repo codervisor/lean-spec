@@ -266,11 +266,16 @@ fn main() -> ExitCode {
         Commands::Tokens { path, verbose } => {
             commands::tokens::run(&specs_dir, path.as_deref(), verbose, &cli.output)
         }
-        Commands::Tui { view, project } => commands::tui::run(
+        Commands::Tui {
+            view,
+            project,
+            headless,
+        } => commands::tui::run(
             // Pass None when --specs-dir not provided so TUI can use the project registry.
             cli.specs_dir.as_deref(),
             &view,
             project.as_deref(),
+            headless.as_deref(),
         ),
         Commands::Ui {
             port,

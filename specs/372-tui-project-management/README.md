@@ -1,19 +1,26 @@
 ---
-status: planned
-created: '2026-03-20'
-tags:
-  - cli
-  - tui
-  - ux
-  - rust
-  - ratatui
+status: complete
+created: 2026-03-20
 priority: high
-created_at: '2026-03-20T10:30:00.000000+00:00'
+tags:
+- cli
+- tui
+- ux
+- rust
+- ratatui
+created_at: 2026-03-20T10:30:00Z
+updated_at: 2026-03-24T10:09:34.797226466Z
+completed_at: 2026-03-24T10:09:34.797226466Z
+transitions:
+- status: in-progress
+  at: 2026-03-24T07:41:23.075101261Z
+- status: complete
+  at: 2026-03-24T10:09:34.797226466Z
 ---
 
 # TUI Project Management
 
-> **Status**: planned · **Priority**: high · **Created**: 2026-03-20
+> **Status**: in-progress · **Priority**: high · **Created**: 2026-03-20
 
 ## Overview
 
@@ -133,27 +140,30 @@ Enhance TUI launch to be project-aware:
 
 | Scenario | Behavior |
 |----------|----------|
-| `lean-spec tui` (no args) | Load most recently accessed project from registry |
+| `lean-spec tui` (no args), CWD is a registered project | Open that project (**CWD takes priority**) |
+| `lean-spec tui` (no args), CWD not a registered project | Load most recently accessed project from registry |
 | `lean-spec tui --specs-dir ./specs` | Use specified directory (existing behavior) |
 | `lean-spec tui --project acme` | Load named project from registry |
 | No projects in registry | Show "Add Project" prompt on first launch |
 | Registry project path invalid | Show warning, offer to remove or re-point |
 
+> CWD match: a project is considered a "CWD match" if its `specs_dir` equals CWD, is a child of CWD, or CWD is inside the project root (parent of `specs_dir`). See spec #377 for implementation details.
+
 ## Plan
 
-- [ ] Import `ProjectRegistry` from `leanspec-core` into TUI module
-- [ ] Add `--project` CLI flag to `tui` subcommand
-- [ ] Update TUI startup to auto-load from registry when no `--specs-dir` given
-- [ ] Implement project switcher popup widget (`tui/project_switcher.rs`)
-- [ ] Add `p` keybinding to open project switcher from any view
-- [ ] Implement project reload — swap `specs_dir`, reload specs, reset selection state
-- [ ] Implement project management view (`tui/projects.rs`) with card layout
-- [ ] Add project actions: add, rename, color, favorite, delete, validate
-- [ ] Add path input widget with basic directory tab-completion
-- [ ] Add auto-detect specs directory logic (reuse from `leanspec-core`)
-- [ ] Show current project name in status bar with color
-- [ ] Update `last_accessed` timestamp on project switch
-- [ ] Handle edge cases: empty registry, invalid paths, first-launch flow
+- [x] Import `ProjectRegistry` from `leanspec-core` into TUI module
+- [x] Add `--project` CLI flag to `tui` subcommand
+- [x] Update TUI startup to auto-load from registry when no `--specs-dir` given
+- [x] Implement project switcher popup widget (`tui/project_switcher.rs`)
+- [x] Add `p` keybinding to open project switcher from any view
+- [x] Implement project reload — swap `specs_dir`, reload specs, reset selection state
+- [x] Implement project management view (`tui/projects.rs`) with card layout
+- [x] Add project actions: add, rename, color, favorite, delete, validate
+- [x] Add path input widget with basic directory tab-completion
+- [x] Add auto-detect specs directory logic (reuse from `leanspec-core`)
+- [x] Show current project name in status bar with color
+- [x] Update `last_accessed` timestamp on project switch
+- [x] Handle edge cases: empty registry, invalid paths, first-launch flow
 
 ## Non-Goals
 
@@ -164,19 +174,19 @@ Enhance TUI launch to be project-aware:
 
 ## Test
 
-- [ ] `lean-spec tui` with no args loads the most recently accessed project
-- [ ] `lean-spec tui --project acme` loads the named project
-- [ ] `p` key opens project switcher overlay with all registered projects
-- [ ] Switching projects reloads specs and updates the sidebar
-- [ ] Favorites sort to the top of the project list
-- [ ] Search in project switcher filters by project name
-- [ ] `P` key opens project management view
-- [ ] Add project with valid path succeeds and auto-detects specs directory
-- [ ] Add project with invalid path shows error
-- [ ] Rename project updates the registry
-- [ ] Delete project shows confirmation and removes from registry (files untouched)
-- [ ] Toggle favorite updates star indicator and re-sorts list
-- [ ] Status bar shows current project name
-- [ ] `last_accessed` updates when switching projects
-- [ ] Empty registry shows first-launch add-project prompt
-- [ ] Backward compatible: `--specs-dir` still works without registry
+- [x] `lean-spec tui` with no args loads the most recently accessed project
+- [x] `lean-spec tui --project acme` loads the named project
+- [x] `p` key opens project switcher overlay with all registered projects
+- [x] Switching projects reloads specs and updates the sidebar
+- [x] Favorites sort to the top of the project list
+- [x] Search in project switcher filters by project name
+- [x] `P` key opens project management view
+- [x] Add project with valid path succeeds and auto-detects specs directory
+- [x] Add project with invalid path shows error
+- [x] Rename project updates the registry
+- [x] Delete project shows confirmation and removes from registry (files untouched)
+- [x] Toggle favorite updates star indicator and re-sorts list
+- [x] Status bar shows current project name
+- [x] `last_accessed` updates when switching projects
+- [x] Empty registry shows first-launch add-project prompt
+- [x] Backward compatible: `--specs-dir` still works without registry

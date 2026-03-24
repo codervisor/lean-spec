@@ -90,6 +90,11 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     Paragraph::new(priority_lines).render(chunks[4], buf);
 
     // Hint line
+    let archived_hint = if app.filter.hide_archived {
+        "  [A]:show archived"
+    } else {
+        "  [A]:hide archived"
+    };
     let hint = Line::from(vec![
         Span::styled(" j/k", theme::dimmed_style()),
         Span::raw(":move  "),
@@ -99,6 +104,7 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
         Span::raw(":clear all  "),
         Span::styled("Esc", theme::dimmed_style()),
         Span::raw(":close"),
+        Span::styled(archived_hint, theme::dimmed_style()),
     ]);
     Paragraph::new(hint).render(chunks[5], buf);
 }

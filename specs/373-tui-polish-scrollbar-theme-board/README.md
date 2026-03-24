@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2026-03-24
 priority: high
 tags:
@@ -11,7 +11,13 @@ tags:
 depends_on:
 - 371-tui-sidebar-navigation
 created_at: 2026-03-24T02:59:02.524567521Z
-updated_at: 2026-03-24T02:59:06.522546753Z
+updated_at: 2026-03-24T10:09:34.827219694Z
+completed_at: 2026-03-24T10:09:34.827219694Z
+transitions:
+- status: in-progress
+  at: 2026-03-24T07:41:23.104405233Z
+- status: complete
+  at: 2026-03-24T10:09:34.827219694Z
 ---
 
 # TUI Polish: Scrollbars, Board UX, Theme Modernization
@@ -204,32 +210,32 @@ Note: Use 24-bit RGB only when terminal supports it. Fall back gracefully via ra
 
 ## Plan
 
-- [ ] Add `Scrollbar` widget from ratatui to `list.rs` (vertical, right gutter)
-- [ ] Add `Scrollbar` widget to `board.rs` (vertical, right gutter)
-- [ ] Add `Scrollbar` widget to `detail.rs` body section
-- [ ] Track scrollbar state (`ScrollbarState`) in `App` for list, board, and detail
-- [ ] Add `collapsed: bool` field to `BoardGroup` struct
-- [ ] Implement `c` keybinding to toggle current board group collapse
-- [ ] Implement `C`/`E` to collapse/expand all board groups
-- [ ] Update board render to skip items in collapsed groups
-- [ ] Make group header rows navigable (add to board nav state machine)
-- [ ] Add `Tab`/`Shift+Tab` keybindings for group-to-group jump in board
-- [ ] Update board pane title to show sort + filter indicator
-- [ ] Change `PrimaryView` default from `Board` to `List`
-- [ ] Update `theme.rs`: replace ASCII status symbols with Unicode circle set
-- [ ] Update `theme.rs`: replace priority symbols
-- [ ] Update `theme.rs`: replace `Color::X` constants with RGB palette
-- [ ] Add terminal color support check before applying RGB colors
-- [ ] Update help overlay with new keybindings (`c`/`C`/`E`, Tab/Shift+Tab)
-- [ ] Update status bar hints to reflect board group header context
-- [ ] Update `render_markdown` (or add `extract_headings`) to return heading positions alongside rendered lines
-- [ ] Store `Vec<(usize, u8, String)>` (line_idx, level, text) in `App` as `detail_toc`
-- [ ] Add `AppMode::Toc` variant and `toc_selected: usize` to `App`
-- [ ] Implement `tui/toc.rs` overlay widget (centered popup with heading list)
-- [ ] Mark currently visible section with `▶` based on `detail_scroll`
-- [ ] `T` keybinding opens TOC when detail pane is focused; `Enter` jumps, `Esc`/`T` closes
-- [ ] Fix `handle_mouse`: route `ScrollDown`/`ScrollUp` by `mouse.column` vs `layout_right.x`, not by `app.focus`
-- [ ] Handle collapsed sidebar edge case: all columns scroll detail when sidebar is hidden
+- [x] Add `Scrollbar` widget from ratatui to `list.rs` (vertical, right gutter)
+- [x] Add `Scrollbar` widget to `board.rs` (vertical, right gutter)
+- [x] Add `Scrollbar` widget to `detail.rs` body section
+- [x] Track scrollbar state (`ScrollbarState`) in `App` for list, board, and detail
+- [x] Add `collapsed: bool` field to `BoardGroup` struct
+- [x] Implement `c` keybinding to toggle current board group collapse
+- [x] Implement `C`/`E` to collapse/expand all board groups
+- [x] Update board render to skip items in collapsed groups
+- [x] Make group header rows navigable (add to board nav state machine)
+- [x] Add `Tab`/`Shift+Tab` keybindings for group-to-group jump in board
+- [x] Update board pane title to show sort + filter indicator
+- [x] Change `PrimaryView` default from `Board` to `List`
+- [x] Update `theme.rs`: replace ASCII status symbols with Unicode circle set
+- [x] Update `theme.rs`: replace priority symbols
+- [x] Update `theme.rs`: replace `Color::X` constants with RGB palette
+- [x] Add terminal color support check before applying RGB colors
+- [x] Update help overlay with new keybindings (`c`/`C`/`E`, Tab/Shift+Tab)
+- [x] Update status bar hints to reflect board group header context
+- [x] Update `render_markdown` (or add `extract_headings`) to return heading positions alongside rendered lines
+- [x] Store `Vec<(usize, u8, String)>` (line_idx, level, text) in `App` as `detail_toc`
+- [x] Add `AppMode::Toc` variant and `toc_selected: usize` to `App`
+- [x] Implement `tui/toc.rs` overlay widget (centered popup with heading list)
+- [x] Mark currently visible section with `▶` based on `detail_scroll`
+- [x] `T` keybinding opens TOC when detail pane is focused; `Enter` jumps, `Esc`/`T` closes
+- [x] Fix `handle_mouse`: route `ScrollDown`/`ScrollUp` by `mouse.column` vs `layout_right.x`, not by `app.focus`
+- [x] Handle collapsed sidebar edge case: all columns scroll detail when sidebar is hidden
 
 ## Non-Goals
 
@@ -240,25 +246,25 @@ Note: Use 24-bit RGB only when terminal supports it. Fall back gracefully via ra
 
 ## Test
 
-- [ ] Scrollbar appears in list pane when spec count exceeds viewport height
-- [ ] Scrollbar thumb moves proportionally as selection moves through the list
-- [ ] Scrollbar appears in board pane and detail body independently
-- [ ] No scrollbar rendered when all content fits in viewport
-- [ ] `c` collapses/expands current board group; collapsed group shows `▶`
-- [ ] `C` collapses all; `E` expands all
-- [ ] Navigation skips items in collapsed groups
-- [ ] Tab jumps to next group header; Shift+Tab to previous
-- [ ] Board pane title shows `[Sort: ID↓]` when sorted
-- [ ] Board pane title shows `[F]` when filter active
-- [ ] Default launch opens list view (not board)
-- [ ] `--view board` flag still opens board view
-- [ ] Status symbols show `○·◑●⊘` not `DPWCA`
-- [ ] Selection highlight is indigo-tinted, not plain DarkGray
-- [ ] RGB colors applied only when terminal supports color
-- [ ] `T` opens TOC overlay showing all `##`/`###` headings for current spec
-- [ ] Currently visible section is marked with `▶` in TOC
-- [ ] `Enter` on a TOC entry scrolls detail pane to that heading's exact line
-- [ ] TOC overlay closes on `Esc` or `T` without changing scroll position
-- [ ] Mouse scroll over sidebar scrolls sidebar list, regardless of keyboard focus
-- [ ] Mouse scroll over detail pane scrolls detail content, regardless of keyboard focus
-- [ ] Mouse scroll works correctly when sidebar is collapsed (all area routes to detail)
+- [x] Scrollbar appears in list pane when spec count exceeds viewport height
+- [x] Scrollbar thumb moves proportionally as selection moves through the list
+- [x] Scrollbar appears in board pane and detail body independently
+- [x] No scrollbar rendered when all content fits in viewport
+- [x] `c` collapses/expands current board group; collapsed group shows `▶`
+- [x] `C` collapses all; `E` expands all
+- [x] Navigation skips items in collapsed groups
+- [x] Tab jumps to next group header; Shift+Tab to previous
+- [x] Board pane title shows `[Sort: ID↓]` when sorted
+- [x] Board pane title shows `[F]` when filter active
+- [x] Default launch opens list view (not board)
+- [x] `--view board` flag still opens board view
+- [x] Status symbols show `○·◑●⊘` not `DPWCA`
+- [x] Selection highlight is indigo-tinted, not plain DarkGray
+- [x] RGB colors applied only when terminal supports color
+- [x] `T` opens TOC overlay showing all `##`/`###` headings for current spec
+- [x] Currently visible section is marked with `▶` in TOC
+- [x] `Enter` on a TOC entry scrolls detail pane to that heading's exact line
+- [x] TOC overlay closes on `Esc` or `T` without changing scroll position
+- [x] Mouse scroll over sidebar scrolls sidebar list, regardless of keyboard focus
+- [x] Mouse scroll over detail pane scrolls detail content, regardless of keyboard focus
+- [x] Mouse scroll works correctly when sidebar is collapsed (all area routes to detail)

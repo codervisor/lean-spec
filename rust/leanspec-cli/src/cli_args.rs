@@ -491,6 +491,10 @@ pub(crate) enum Commands {
         /// Load a named project from the registry
         #[arg(long)]
         project: Option<String>,
+
+        /// Run in headless mode, replay key sequence and print state as JSON
+        #[arg(long)]
+        headless: Option<String>,
     },
 
     /// Start local web UI for spec management

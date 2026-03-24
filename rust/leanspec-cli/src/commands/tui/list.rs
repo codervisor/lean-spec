@@ -21,7 +21,13 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     };
 
     let filter_indicator = if !app.filter.is_empty() { " [F]" } else { "" };
-    let title = format!(" List [{}]{} ", app.sort_option.label(), filter_indicator);
+    let tree_indicator = if app.tree_mode { " [Tree]" } else { "" };
+    let title = format!(
+        " List [{}]{}{} ",
+        app.sort_option.label(),
+        filter_indicator,
+        tree_indicator
+    );
 
     let block = Block::default()
         .title(title)
@@ -55,11 +61,7 @@ fn render_flat(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
     let visible_rows = area.height.saturating_sub(3) as usize;
     let total = app.filtered_specs.len();
 
-    let offset = if app.list_selected >= visible_rows {
-        app.list_selected - visible_rows + 1
-    } else {
-        0
-    };
+    let offset = app.list_scroll_offset;
 
     for (vi, &spec_idx) in app
         .filtered_specs
@@ -134,11 +136,7 @@ fn render_tree(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
     let visible_rows = area.height.saturating_sub(3) as usize;
     let total = app.tree_rows.len();
 
-    let offset = if app.list_selected >= visible_rows {
-        app.list_selected - visible_rows + 1
-    } else {
-        0
-    };
+    let offset = app.list_scroll_offset;
 
     for (vi, row) in app
         .tree_rows
