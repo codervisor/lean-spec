@@ -3,9 +3,10 @@
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
+    prelude::StatefulWidget,
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Widget},
+    widgets::{Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Widget},
 };
 
 use super::app::{App, FocusPane, PrimaryView};
@@ -14,9 +15,9 @@ use super::theme;
 pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     let is_focused = app.focus == FocusPane::Left && app.primary_view == PrimaryView::List;
     let border_style = if is_focused {
-        Style::default().fg(ratatui::style::Color::Cyan)
+        theme::border_focused_style()
     } else {
-        Style::default().fg(ratatui::style::Color::DarkGray)
+        theme::border_unfocused_style()
     };
 
     let filter_indicator = if !app.filter.is_empty() { " [F]" } else { "" };
@@ -42,7 +43,7 @@ fn render_flat(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
     // Header row
     lines.push(Line::from(vec![
         Span::styled(" S ", theme::header_style()),
-        Span::styled("P ", theme::header_style()),
+        Span::styled("P  ", theme::header_style()),
         Span::styled(format!("{:<30}", "Path"), theme::header_style()),
         Span::styled("Title", theme::header_style()),
     ]));
@@ -106,6 +107,17 @@ fn render_flat(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
     }
 
     Paragraph::new(lines).render(area, buf);
+
+    // Scrollbar — only render when content exceeds viewport
+    if total > visible_rows {
+        let mut scrollbar_state = ScrollbarState::new(total)
+            .position(app.list_selected)
+            .viewport_content_length(visible_rows);
+        let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
+            .track_symbol(Some("▐"))
+            .thumb_symbol("█");
+        scrollbar.render(area, buf, &mut scrollbar_state);
+    }
 }
 
 fn render_tree(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
@@ -181,6 +193,17 @@ fn render_tree(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
     }
 
     Paragraph::new(lines).render(area, buf);
+
+    // Scrollbar — only render when content exceeds viewport
+    if total > visible_rows {
+        let mut scrollbar_state = ScrollbarState::new(total)
+            .position(app.list_selected)
+            .viewport_content_length(visible_rows);
+        let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
+            .track_symbol(Some("▐"))
+            .thumb_symbol("█");
+        scrollbar.render(area, buf, &mut scrollbar_state);
+    }
 }
 
 fn truncate_path(s: &str, max: usize) -> String {
