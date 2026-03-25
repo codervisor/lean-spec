@@ -6,47 +6,25 @@ use colored::Colorize;
 use leanspec_core::git::{CloneManager, RemoteRef};
 use std::error::Error;
 
-#[allow(dead_code)] // token fields kept for CLI backward compat
-pub enum GitHubCommand {
+pub enum GitRepoCommand {
     /// Detect specs in a Git repository
     Detect {
         repo: String,
         branch: Option<String>,
-        token: Option<String>,
     },
     /// Import a Git repo as a LeanSpec project
     Import {
         repo: String,
         branch: Option<String>,
         name: Option<String>,
-        token: Option<String>,
     },
-    /// List user's GitHub repos (no longer supported — use the web UI)
-    Repos { token: Option<String> },
 }
 
-pub fn run(cmd: GitHubCommand, output_format: &str) -> Result<(), Box<dyn Error>> {
+pub fn run(cmd: GitRepoCommand, output_format: &str) -> Result<(), Box<dyn Error>> {
     match cmd {
-        GitHubCommand::Detect {
-            repo,
-            branch,
-            token: _,
-        } => detect(&repo, branch.as_deref(), output_format),
-        GitHubCommand::Import {
-            repo,
-            branch,
-            name,
-            token: _,
-        } => import(&repo, branch.as_deref(), name.as_deref(), output_format),
-        GitHubCommand::Repos { .. } => {
-            println!(
-                "{} The 'repos' subcommand has been removed.",
-                "!".yellow().bold()
-            );
-            println!("  Repository listing required a GitHub API token.");
-            println!("  You can now import any git repo directly:");
-            println!("  {}", "lean-spec github import <url-or-owner/repo>".cyan());
-            Ok(())
+        GitRepoCommand::Detect { repo, branch } => detect(&repo, branch.as_deref(), output_format),
+        GitRepoCommand::Import { repo, branch, name } => {
+            import(&repo, branch.as_deref(), name.as_deref(), output_format)
         }
     }
 }
@@ -90,7 +68,7 @@ fn detect(repo: &str, branch: Option<&str>, output_format: &str) -> Result<(), B
             println!();
             println!(
                 "To import: {}",
-                format!("lean-spec github import {}", repo).cyan()
+                format!("lean-spec git import {}", repo).cyan()
             );
         }
         None => {

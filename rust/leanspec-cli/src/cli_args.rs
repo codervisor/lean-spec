@@ -224,10 +224,10 @@ pub(crate) enum Commands {
         size: bool,
     },
 
-    /// Manage GitHub repository integration
-    GitHub {
+    /// Manage Git repository integration
+    Git {
         #[command(subcommand)]
-        action: GitHubSubcommand,
+        action: GitSubcommand,
     },
 
     /// Show timeline with dependencies
@@ -637,24 +637,20 @@ pub(crate) enum Commands {
 }
 
 #[derive(Subcommand)]
-pub(crate) enum GitHubSubcommand {
-    /// Detect specs in a GitHub repository
+pub(crate) enum GitSubcommand {
+    /// Detect specs in a Git repository
     Detect {
-        /// Repository (owner/repo or GitHub URL)
+        /// Repository (owner/repo or git URL)
         repo: String,
 
         /// Branch to check (default: repo's default branch)
         #[arg(short, long)]
         branch: Option<String>,
-
-        /// GitHub token (default: GITHUB_TOKEN env var)
-        #[arg(long)]
-        token: Option<String>,
     },
 
-    /// Import a GitHub repo as a LeanSpec project
+    /// Import a Git repo as a LeanSpec project
     Import {
-        /// Repository (owner/repo or GitHub URL)
+        /// Repository (owner/repo or git URL)
         repo: String,
 
         /// Branch to track (default: repo's default branch)
@@ -664,17 +660,6 @@ pub(crate) enum GitHubSubcommand {
         /// Display name for the project
         #[arg(short, long)]
         name: Option<String>,
-
-        /// GitHub token (default: GITHUB_TOKEN env var)
-        #[arg(long)]
-        token: Option<String>,
-    },
-
-    /// List your GitHub repositories
-    Repos {
-        /// GitHub token (default: GITHUB_TOKEN env var)
-        #[arg(long)]
-        token: Option<String>,
     },
 }
 

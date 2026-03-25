@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-export type ProjectSource = 'local' | 'git' | 'github';
+export type ProjectSource = 'local' | 'git';
 
 export interface Capabilities {
   projectSources: ProjectSource[];
@@ -43,10 +43,6 @@ export function useCapabilities() {
   return {
     ...query,
     capabilities,
-    hasSource: (source: ProjectSource) => {
-      if (source === 'github') return capabilities.projectSources.includes('git') || capabilities.projectSources.includes('github');
-      if (source === 'git') return capabilities.projectSources.includes('git') || capabilities.projectSources.includes('github');
-      return capabilities.projectSources.includes(source);
-    },
+    hasSource: (source: ProjectSource) => capabilities.projectSources.includes(source),
   };
 }

@@ -37,21 +37,20 @@ import type {
   RunnerVersionResponse,
   ChatConfig,
   ModelsRegistryResponse,
-  GitHubRepo,
-  GitHubDetectResult,
-  GitHubImportResult,
+  GitDetectResult,
+  GitImportResult,
 } from './core';
 
-interface RawGitHubDetectResult {
+interface RawGitDetectResult {
   remoteUrl?: string;
   repo?: string;
   branch: string;
   specsDir: string;
   specCount: number;
-  specs: GitHubDetectResult['specs'];
+  specs: GitDetectResult['specs'];
 }
 
-type RawGitHubImportResult = {
+type RawGitImportResult = {
   projectId: string;
   projectName: string;
   repo: string;
@@ -713,13 +712,8 @@ export class HttpBackendAdapter implements BackendAdapter {
     );
   }
 
-  async listGithubRepos(): Promise<GitHubRepo[]> {
-    // No longer supported — git clone approach doesn't list remote repos.
-    return [];
-  }
-
-  async detectGithubSpecs(repo: string, branch?: string, _token?: string): Promise<GitHubDetectResult | null> {
-    const data = await this.fetchAPI<{ result: RawGitHubDetectResult | null }>('/api/git/detect', {
+  async detectGitSpecs(repo: string, branch?: string): Promise<GitDetectResult | null> {
+    const data = await this.fetchAPI<{ result: RawGitDetectResult | null }>('/api/git/detect', {
       method: 'POST',
       body: JSON.stringify({ repo, branch }),
     });
@@ -734,8 +728,8 @@ export class HttpBackendAdapter implements BackendAdapter {
     };
   }
 
-  async importGithubRepo(repo: string, opts?: { branch?: string; specsPath?: string; name?: string; token?: string }): Promise<GitHubImportResult> {
-    const data = await this.fetchAPI<RawGitHubImportResult>('/api/git/import', {
+  async importGitRepo(repo: string, opts?: { branch?: string; specsPath?: string; name?: string }): Promise<GitImportResult> {
+    const data = await this.fetchAPI<RawGitImportResult>('/api/git/import', {
       method: 'POST',
       body: JSON.stringify({ repo, branch: opts?.branch, specs_path: opts?.specsPath, name: opts?.name }),
     });
@@ -749,7 +743,7 @@ export class HttpBackendAdapter implements BackendAdapter {
     };
   }
 
-  async syncGithubProject(projectId: string): Promise<{ projectId: string; syncedSpecs: number }> {
+  async syncGitProject(projectId: string): Promise<{ projectId: string; syncedSpecs: number }> {
     const data = await this.fetchAPI<{ projectId: string; syncedSpecs: number }>(
       `/api/git/sync/${encodeURIComponent(projectId)}`,
       { method: 'POST' }

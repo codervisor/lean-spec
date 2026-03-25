@@ -1,4 +1,4 @@
-import { Github } from 'lucide-react';
+import { GitBranch } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -7,14 +7,14 @@ import {
   DialogTitle,
 } from '@/library';
 import { useNavigate } from 'react-router-dom';
-import { GitHubImportForm } from './github-import-form';
+import { GitImportForm } from './git-import-form';
 
-interface GitHubImportDialogProps {
+interface GitImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function GitHubImportDialog({ open, onOpenChange }: GitHubImportDialogProps) {
+export function GitImportDialog({ open, onOpenChange }: GitImportDialogProps) {
   const navigate = useNavigate();
 
   return (
@@ -22,15 +22,15 @@ export function GitHubImportDialog({ open, onOpenChange }: GitHubImportDialogPro
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Github className="h-5 w-5" />
-            Import from GitHub
+            <GitBranch className="h-5 w-5" />
+            Import from Git
           </DialogTitle>
           <DialogDescription>
-            Connect a GitHub repository containing LeanSpec specs.
+            Connect a Git repository containing LeanSpec specs.
           </DialogDescription>
         </DialogHeader>
 
-        <GitHubImportForm
+        <GitImportForm
           onSuccess={(projectId) => {
             onOpenChange(false);
             navigate(`/projects/${projectId}/specs`);

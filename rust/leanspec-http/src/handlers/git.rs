@@ -2,9 +2,6 @@
 //!
 //! Uses the system `git` binary for clone/pull/push — works with any
 //! Git host (GitHub, GitLab, Gitea, self-hosted, SSH).
-//!
-//! Endpoints kept under `/api/github/` for backward compatibility;
-//! new `/api/git/` aliases are also registered.
 
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -286,30 +283,14 @@ pub async fn git_status_project(
     Ok(Json(status))
 }
 
-// ── Backward-compatible aliases ──────────────────────────────────────
-
-/// Alias: POST /api/github/detect → git_detect_specs
-pub use git_detect_specs as github_detect_specs;
-
-/// Alias: POST /api/github/import → git_import_repo
-pub use git_import_repo as github_import_repo;
-
-/// Alias: POST /api/github/sync/{id} → git_sync_project
-pub use git_sync_project as github_sync_project;
-
 // ── Request/Response types ───────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
 pub struct DetectRequest {
     /// Repository URL or shorthand (owner/repo).
-    /// Accepts `repo` for backward compatibility.
-    #[serde(alias = "repo")]
     pub repo: String,
     #[serde(default)]
     pub branch: Option<String>,
-    /// Ignored — kept for backward compat. Auth uses system git credentials.
-    #[serde(default)]
-    pub token: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -320,7 +301,6 @@ pub struct DetectResponse {
 #[derive(Debug, Deserialize)]
 pub struct ImportRequest {
     /// Repository URL or shorthand (owner/repo).
-    #[serde(alias = "repo")]
     pub repo: String,
     #[serde(default)]
     pub branch: Option<String>,
@@ -328,9 +308,6 @@ pub struct ImportRequest {
     pub specs_path: Option<String>,
     #[serde(default)]
     pub name: Option<String>,
-    /// Ignored — kept for backward compat.
-    #[serde(default)]
-    pub token: Option<String>,
 }
 
 #[derive(Debug, Serialize)]

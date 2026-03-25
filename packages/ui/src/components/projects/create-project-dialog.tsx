@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FolderOpen, Github } from 'lucide-react';
+import { FolderOpen, GitBranch } from 'lucide-react';
 import {
   Button,
   Dialog,
@@ -13,14 +13,14 @@ import {
 import { useProjectMutations } from '../../hooks/useProjectQuery';
 import { useCapabilities } from '../../hooks/useCapabilities';
 import { DirectoryPicker } from './directory-picker';
-import { GitHubImportForm } from './github-import-form';
+import { GitImportForm } from './git-import-form';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 interface CreateProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialTab?: 'local' | 'github';
+  initialTab?: 'local' | 'git';
 }
 
 export function CreateProjectDialog({ open, onOpenChange, initialTab }: CreateProjectDialogProps) {
@@ -28,13 +28,13 @@ export function CreateProjectDialog({ open, onOpenChange, initialTab }: CreatePr
   const navigate = useNavigate();
   const { hasSource } = useCapabilities();
   const showLocal = hasSource('local');
-  const showGithub = hasSource('github');
-  const showTabs = showLocal && showGithub;
-  const defaultTab = initialTab ?? (showLocal ? 'local' : 'github');
+  const showGit = hasSource('git');
+  const showTabs = showLocal && showGit;
+  const defaultTab = initialTab ?? (showLocal ? 'local' : 'git');
 
   const [path, setPath] = useState('');
   const [mode, setMode] = useState<'picker' | 'manual'>('picker');
-  const [tab, setTab] = useState<'local' | 'github'>(defaultTab);
+  const [tab, setTab] = useState<'local' | 'git'>(defaultTab);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation('common');
@@ -90,8 +90,8 @@ export function CreateProjectDialog({ open, onOpenChange, initialTab }: CreatePr
         <DialogHeader>
           <DialogTitle>{t('createProject.title')}</DialogTitle>
           <DialogDescription>
-            {tab === 'github'
-              ? 'Connect a GitHub repository containing LeanSpec specs.'
+            {tab === 'git'
+              ? 'Connect a Git repository containing LeanSpec specs.'
               : mode === 'picker'
                 ? t('createProject.descriptionPicker')
                 : t('createProject.descriptionManual')}
@@ -116,20 +116,20 @@ export function CreateProjectDialog({ open, onOpenChange, initialTab }: CreatePr
           <button
             type="button"
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-              tab === 'github'
+              tab === 'git'
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
-            onClick={() => { setTab('github'); setError(null); }}
+            onClick={() => { setTab('git'); setError(null); }}
           >
-            <Github className="h-4 w-4" />
-            GitHub
+            <GitBranch className="h-4 w-4" />
+            Git
           </button>
         </div>
         )}
 
-        {tab === 'github' && showGithub ? (
-          <GitHubImportForm
+        {tab === 'git' && showGit ? (
+          <GitImportForm
             onSuccess={(projectId) => {
               onOpenChange(false);
               navigate(`/projects/${projectId}/specs`);

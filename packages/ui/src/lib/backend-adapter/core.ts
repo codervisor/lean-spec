@@ -32,9 +32,8 @@ import type {
   RunnerScope,
   RunnerValidateResponse,
   RunnerVersionResponse,
-  GitHubRepo,
-  GitHubDetectResult,
-  GitHubImportResult,
+  GitDetectResult,
+  GitImportResult,
 } from '../../types/api';
 import type { ChatConfig } from '../../types/chat-config';
 import type { ModelsRegistryResponse } from '../../types/models-registry';
@@ -220,11 +219,10 @@ export interface BackendAdapter {
   getProjectFile(projectId: string, path: string): Promise<FileContentResponse>;
   searchProjectFiles(projectId: string, query: string, limit?: number): Promise<FileSearchResponse>;
 
-  // GitHub integration
-  listGithubRepos(): Promise<GitHubRepo[]>;
-  detectGithubSpecs(repo: string, branch?: string, token?: string): Promise<GitHubDetectResult | null>;
-  importGithubRepo(repo: string, opts?: { branch?: string; specsPath?: string; name?: string; token?: string }): Promise<GitHubImportResult>;
-  syncGithubProject(projectId: string): Promise<{ projectId: string; syncedSpecs: number }>;
+  // Git integration
+  detectGitSpecs(repo: string, branch?: string): Promise<GitDetectResult | null>;
+  importGitRepo(repo: string, opts?: { branch?: string; specsPath?: string; name?: string }): Promise<GitImportResult>;
+  syncGitProject(projectId: string): Promise<{ projectId: string; syncedSpecs: number }>;
 }
 
 export type {
@@ -263,7 +261,6 @@ export type {
   FileSearchResponse,
   SpecSearchFilters,
   SpecSearchResponse,
-  GitHubRepo,
-  GitHubDetectResult,
-  GitHubImportResult,
+  GitDetectResult,
+  GitImportResult,
 };

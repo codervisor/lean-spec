@@ -58,8 +58,7 @@ pub enum ProjectSource {
     /// Local filesystem project
     #[default]
     Local,
-    /// GitHub repository (legacy alias for Git)
-    #[serde(alias = "github")]
+    /// Git repository (any host)
     Git,
 }
 
@@ -85,9 +84,6 @@ pub struct GitConfig {
     pub last_synced: Option<DateTime<Utc>>,
 }
 
-/// Legacy alias — use [`GitConfig`] instead.
-pub type GitHubConfig = GitConfig;
-
 /// A registered LeanSpec project
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -98,7 +94,7 @@ pub struct Project {
     /// Display name
     pub name: String,
 
-    /// Root path of the project (local path or cache dir for GitHub projects)
+    /// Root path of the project (local path or cache dir for git projects)
     pub path: PathBuf,
 
     /// Specs directory within the project
@@ -125,8 +121,7 @@ pub struct Project {
     pub source: ProjectSource,
 
     /// Git repository configuration (only for git-sourced projects).
-    /// Accepts legacy `github` key for backward compatibility.
-    #[serde(alias = "github", skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub git: Option<GitConfig>,
 }
 

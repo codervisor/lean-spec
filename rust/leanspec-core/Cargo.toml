@@ -50,9 +50,8 @@ nix = {version = "0.28", default-features = false, features = ["signal"]}
 [features]
 ai = ["tokio", "async-trait", "uuid", "async-openai", "anthropic", "schemars", "reqwest", "urlencoding", "futures-util"]
 default = []
-full = ["sessions", "storage", "ai", "github", "git"]
+full = ["sessions", "storage", "ai", "git"]
 git = ["tempfile"]
-github = ["reqwest", "base64"]
 sessions = ["sqlx", "tokio", "uuid", "async-trait", "which", "flate2"]
 storage = ["sqlx", "tokio", "dirs", "uuid"]
 

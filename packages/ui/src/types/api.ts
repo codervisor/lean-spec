@@ -233,22 +233,13 @@ export interface Project {
   description?: string | null;
   isFeatured?: boolean;
   lastAccessed?: string | Date | null;
-  source?: 'local' | 'git' | 'github';
+  source?: 'local' | 'git';
   git?: {
     remoteUrl: string;
     branch: string;
     specsPath: string;
     lastSynced?: string | null;
   } | null;
-  /** @deprecated Use `git` instead */
-  github?: {
-    repo: string;
-    branch: string;
-    specsPath: string;
-    lastSynced?: string | null;
-  } | null;
-  githubOwner?: string;
-  githubRepo?: string;
 }
 
 export interface ProjectsResponse {
@@ -257,13 +248,6 @@ export interface ProjectsResponse {
   favoriteProjects?: string[];
 }
 
-export interface GitHubRepo {
-  fullName: string;
-  description?: string | null;
-  defaultBranch: string;
-  private: boolean;
-  htmlUrl: string;
-}
 
 export interface DetectedSpec {
   path: string;
@@ -272,10 +256,8 @@ export interface DetectedSpec {
   priority?: string | null;
 }
 
-export interface GitHubDetectResult {
-  /** Remote URL (new field from git-based backend) */
+export interface GitDetectResult {
   remoteUrl?: string;
-  /** Legacy field — may be display name or owner/repo */
   repo?: string;
   branch: string;
   specsDir: string;
@@ -283,7 +265,7 @@ export interface GitHubDetectResult {
   specs: DetectedSpec[];
 }
 
-export interface GitHubImportResult {
+export interface GitImportResult {
   projectId: string;
   projectName: string;
   repo: string;

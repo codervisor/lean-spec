@@ -7,7 +7,7 @@ use clap::Parser;
 use colored::Colorize;
 use std::process::ExitCode;
 
-use crate::cli_args::{Cli, Commands, GitHubSubcommand, RunnerSubcommand, SessionSubcommand};
+use crate::cli_args::{Cli, Commands, GitSubcommand, RunnerSubcommand, SessionSubcommand};
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
@@ -115,32 +115,13 @@ fn main() -> ExitCode {
         Commands::Files { spec, size } => {
             commands::files::run(&specs_dir, &spec, size, &cli.output)
         }
-        Commands::GitHub { action } => {
-            use commands::github::GitHubCommand as Cmd;
+        Commands::Git { action } => {
+            use commands::git_repo::GitRepoCommand as Cmd;
             let cmd = match action {
-                GitHubSubcommand::Detect {
-                    repo,
-                    branch,
-                    token,
-                } => Cmd::Detect {
-                    repo,
-                    branch,
-                    token,
-                },
-                GitHubSubcommand::Import {
-                    repo,
-                    branch,
-                    name,
-                    token,
-                } => Cmd::Import {
-                    repo,
-                    branch,
-                    name,
-                    token,
-                },
-                GitHubSubcommand::Repos { token } => Cmd::Repos { token },
+                GitSubcommand::Detect { repo, branch } => Cmd::Detect { repo, branch },
+                GitSubcommand::Import { repo, branch, name } => Cmd::Import { repo, branch, name },
             };
-            commands::github::run(cmd, &cli.output)
+            commands::git_repo::run(cmd, &cli.output)
         }
         Commands::Gantt { status } => commands::gantt::run(&specs_dir, status, &cli.output),
         Commands::Init {

@@ -4,7 +4,7 @@ import {
   Check,
   CheckCircle2,
   FolderOpen,
-  Github,
+  GitBranch,
   MoreVertical,
   Pencil,
   Plus,
@@ -55,7 +55,7 @@ export function ProjectsPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [createDialogTab, setCreateDialogTab] = useState<'local' | 'github'>(hasSource('local') ? 'local' : 'github');
+  const [createDialogTab, setCreateDialogTab] = useState<'local' | 'git'>(hasSource('local') ? 'local' : 'git');
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [validationStates, setValidationStates] = useState<Record<string, ProjectValidationState>>({});
@@ -239,10 +239,10 @@ export function ProjectsPage() {
               : (t('projectsPage.description') || t('projects.description'))}
             actions={!machineModeEnabled ? (
               <div className="flex gap-2">
-                {hasSource('github') && (
-                  <Button variant="outline" onClick={() => { setCreateDialogTab('github'); setIsCreateDialogOpen(true); }} size="lg" className="shadow-sm">
-                    <Github className="mr-2 h-4 w-4" />
-                    Import from GitHub
+                {hasSource('git') && (
+                  <Button variant="outline" onClick={() => { setCreateDialogTab('git'); setIsCreateDialogOpen(true); }} size="lg" className="shadow-sm">
+                    <GitBranch className="mr-2 h-4 w-4" />
+                    Import from Git
                   </Button>
                 )}
                 {hasSource('local') && (
@@ -252,7 +252,7 @@ export function ProjectsPage() {
                   </Button>
                 )}
                 {/* Fallback: single button when only one source */}
-                {!hasSource('local') && !hasSource('github') && (
+                {!hasSource('local') && !hasSource('git') && (
                   <Button onClick={() => setIsCreateDialogOpen(true)} size="lg" className="shadow-sm">
                     <Plus className="mr-2 h-4 w-4" />
                     {t('projects.newProject')}
@@ -420,10 +420,10 @@ export function ProjectsPage() {
                 <div className="px-4 py-2 bg-muted/20 border-t flex items-center justify-between text-[10px] text-muted-foreground mt-auto">
                   <div className="flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: project.color || getColorForName(project.name || project.id) }} />
-                    {(project.source === 'git' || project.source === 'github') ? (
+                    {project.source === 'git' ? (
                       <span className="flex items-center gap-1">
-                        <Github className="h-3 w-3" />
-                        {project.git?.remoteUrl || project.github?.repo || 'Git'}
+                        <GitBranch className="h-3 w-3" />
+                        {project.git?.remoteUrl || 'Git'}
                       </span>
                     ) : (
                       <span>{t('projects.local')}</span>
@@ -456,10 +456,10 @@ export function ProjectsPage() {
               </p>
               {!machineModeEnabled && (
                 <div className="flex flex-col sm:flex-row gap-2">
-                  {hasSource('github') && (
-                    <Button variant="outline" onClick={() => { setCreateDialogTab('github'); setIsCreateDialogOpen(true); }} size="lg">
-                      <Github className="mr-2 h-4 w-4" />
-                      Import from GitHub
+                  {hasSource('git') && (
+                    <Button variant="outline" onClick={() => { setCreateDialogTab('git'); setIsCreateDialogOpen(true); }} size="lg">
+                      <GitBranch className="mr-2 h-4 w-4" />
+                      Import from Git
                     </Button>
                   )}
                   {hasSource('local') && (

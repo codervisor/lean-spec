@@ -192,10 +192,6 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/git/sync/{id}", post(handlers::git_sync_project))
         .route("/api/git/push/{id}", post(handlers::git_push_project))
         .route("/api/git/status/{id}", get(handlers::git_status_project))
-        // Backward-compatible GitHub aliases
-        .route("/api/github/detect", post(handlers::github_detect_specs))
-        .route("/api/github/import", post(handlers::github_import_repo))
-        .route("/api/github/sync/{id}", post(handlers::github_sync_project))
         // Local project routes
         .route(
             "/api/local-projects/discover",

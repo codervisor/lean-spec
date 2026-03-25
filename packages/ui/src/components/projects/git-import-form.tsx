@@ -3,17 +3,17 @@ import { Search, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button, Input, Label } from '@/library';
 import { api } from '../../lib/api';
 import { useQueryClient } from '@tanstack/react-query';
-import type { GitHubDetectResult } from '../../lib/backend-adapter/core';
+import type { GitDetectResult } from '../../lib/backend-adapter/core';
 
-interface GitHubImportFormProps {
+interface GitImportFormProps {
   onSuccess: (projectId: string) => void;
   onCancel: () => void;
 }
 
-export function GitHubImportForm({ onSuccess, onCancel }: GitHubImportFormProps) {
+export function GitImportForm({ onSuccess, onCancel }: GitImportFormProps) {
   const queryClient = useQueryClient();
   const [repo, setRepo] = useState('');
-  const [detected, setDetected] = useState<GitHubDetectResult | null>(null);
+  const [detected, setDetected] = useState<GitDetectResult | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export function GitHubImportForm({ onSuccess, onCancel }: GitHubImportFormProps)
     setError(null);
     setDetected(null);
     try {
-      const result = await api.detectGithubSpecs(repo.trim());
+      const result = await api.detectGitSpecs(repo.trim());
       if (!result) {
         setError('No LeanSpec specs found in this repository. Make sure it has a `specs/` directory with numbered spec folders.');
       } else {
@@ -42,7 +42,7 @@ export function GitHubImportForm({ onSuccess, onCancel }: GitHubImportFormProps)
     setIsImporting(true);
     setError(null);
     try {
-      const result = await api.importGithubRepo(repo.trim(), {
+      const result = await api.importGitRepo(repo.trim(), {
         branch: detected.branch,
         specsPath: detected.specsDir,
       });
