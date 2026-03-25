@@ -3,8 +3,6 @@ status: planned
 created: 2026-03-25
 priority: high
 parent: 289-universal-skills-initiative
-supersedes:
-- 290-skills-repository-migration
 tags:
 - agent-skills
 - distribution

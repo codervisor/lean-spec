@@ -1,19 +1,20 @@
 ---
-status: superseded
+status: archived
 created: 2026-02-03
 priority: medium
 parent: 289-universal-skills-initiative
-superseded_by: 378-skills-repo-reorganization
 tags:
 - agent-skills
 - github
 - migration
 - repository
 created_at: 2026-02-03T07:54:58.397969506Z
-updated_at: 2026-02-03T07:54:58.397969506Z
+updated_at: 2026-03-25T00:00:00Z
 ---
 
 # Migrate Public Skills to Dedicated Repository
+
+> **Superseded by [378-skills-repo-reorganization](../378-skills-repo-reorganization/README.md)** — Uses `codervisor/skills` repo and renames `leanspec-sdd` → `leanspec`.
 
 ## Overview
 
