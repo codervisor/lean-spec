@@ -1,8 +1,9 @@
 ---
-status: planned
+status: superseded
 created: 2026-02-03
 priority: medium
 parent: 289-universal-skills-initiative
+superseded_by: 378-skills-repo-reorganization
 tags:
 - agent-skills
 - github
