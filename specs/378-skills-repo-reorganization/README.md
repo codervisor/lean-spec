@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 created: 2026-03-25
 priority: high
 parent: 289-universal-skills-initiative
@@ -13,6 +13,8 @@ updated_at: 2026-03-25T00:00:00Z
 ---
 
 # Reorganize LeanSpec Skills Distribution
+
+> **Absorbed into [379-leanspec-rename-and-skills-distribution](../379-leanspec-rename-and-skills-distribution/README.md)** — Expanded scope to include repo/CLI/npm rename alongside skills reorganization.
 
 ## Overview
 
