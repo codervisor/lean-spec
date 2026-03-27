@@ -156,14 +156,36 @@ Phase 3: Enforcement (continuous)
 ├── L2: LLM-as-judge for nuanced, context-dependent rules
 └── Feedback: developer confirm/reject -> rules evolve
 
-Phase 4: Export (portable)
-├── AGENTS.md (OpenAI Codex, Jules, Amp, Factory)
-├── CLAUDE.md (Claude Code)
-├── .cursor/rules/ (Cursor)
-└── Custom formats as needed
+Phase 4: Export (portable, hierarchical)
+├── Entry points (top-level rules and routing)
+│   ├── AGENTS.md (OpenAI Codex, Jules, Amp, Factory)
+│   ├── CLAUDE.md (Claude Code)
+│   ├── .cursor/rules/ (Cursor)
+│   └── Custom formats as needed
+│
+└── Skills (deep procedural knowledge packages)
+    ├── Methodology skills: when to spec, how to decompose, SDD workflow
+    ├── Domain skills: project-specific patterns, architecture decisions
+    ├── Convention skills: naming, error handling, testing patterns
+    └── Compliance skills: regulatory constraints, security requirements
 ```
 
-This is iterative and evolving -- rules are not one-shot extracted, they are continuously refined based on new code, new agent events, and developer feedback.
+The entry point files (AGENTS.md, CLAUDE.md) define **what** the rules are -- concise, declarative. Skills define **how** to apply them -- procedural knowledge with judgment and decision trees. This mirrors a module system:
+
+```
+AGENTS.md                          = package.json (declares dependencies, entry points)
+.claude/skills/architecture.md     = src/architecture.ts (deep procedural knowledge)
+.claude/skills/testing-patterns.md = src/testing.ts (domain-specific methodology)
+.claude/skills/compliance.md       = src/compliance.ts (regulatory decision trees)
+```
+
+Entry points reference skills: "For architectural decisions, follow the architecture skill." Skills contain the detailed methodology that would bloat a single rules file. This solves the scaling problem identified in the Codified Context paper (arXiv:2602.20478) -- single-file manifests don't scale, but a hierarchy of entry points + skill packages does.
+
+The crystallization process produces both layers:
+- **L1 rules** become entry point directives (AGENTS.md / CLAUDE.md)
+- **L2 procedural knowledge** becomes skills (methodology, judgment calls, decision trees)
+
+This is iterative and evolving -- rules and skills are not one-shot extracted, they are continuously refined based on new code, new agent events, and developer feedback.
 
 ### Scaling Dimensions
 
@@ -185,7 +207,7 @@ Each scope level is a separate validation milestone. Do not build Level N+1 unti
 - [ ] Build codebase convention extraction (sub-agent scanning)
 - [ ] Build rule crystallization (master agent synthesis)
 - [ ] Connect Synodic event tracking to crystallization pipeline
-- [ ] Export crystallized rules as AGENTS.md / CLAUDE.md / .cursorrules
+- [ ] Export crystallized rules as entry points (AGENTS.md / CLAUDE.md / .cursorrules) + skills packages
 - [ ] Run on 3-5 real codebases, measure: do developers find the extracted rules accurate and useful?
 
 ### Phase 2: Close the Feedback Loop
@@ -228,7 +250,7 @@ This vision aligns with the harness engineering discipline formalized by OpenAI 
 
 ### Protocol Strategy
 
-Codervisor builds on top of existing protocols (MCP, A2A, Agent Skills, AGENTS.md) rather than competing with them. The rule files (AGENTS.md, CLAUDE.md, .cursorrules) are portable output formats. The intelligence that produces them is the proprietary value.
+Codervisor builds on top of existing protocols (MCP, A2A, Agent Skills, AGENTS.md) rather than competing with them. The output is a two-layer hierarchy: entry point rule files (AGENTS.md, CLAUDE.md, .cursorrules) for declarative constraints, and Agent Skills packages for deep procedural knowledge. Both are portable, open-format outputs. The intelligence that produces and maintains them is the proprietary value.
 
 ### Risk: Cost-Benefit Justification
 
