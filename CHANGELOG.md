@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **OpenCode Support** - Adds first-class OpenCode runner and MCP onboarding support
+  - Runs OpenCode sessions via `opencode run` with `-m provider/model` model selection
+  - Detects OpenCode projects from `.opencode/` or `opencode.json` during `leanspec init`
+  - Creates or merges `opencode.json` with a `leanspec` MCP entry using `npx -y @leanspec/mcp`
 - **TUI Multi-Project Management** ([spec 372](https://web.lean-spec.dev/specs/372)) — Switch between and manage multiple projects from the TUI
 - **TUI Sidebar Navigation & Tree View** ([spec 371](https://web.lean-spec.dev/specs/371)) — Sidebar with sort/filter controls and hierarchical tree view for specs
 - **TUI Board View Enhancements** — Collapsible board groups with sort indicator, TOC overlay, and scrollbars

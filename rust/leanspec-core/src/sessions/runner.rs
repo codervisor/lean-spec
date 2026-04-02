@@ -234,7 +234,9 @@ impl RunnerDefinition {
             return Ok(Vec::new());
         }
 
-        if self.args.iter().any(|arg| arg == "-m") || self.id == "codex" {
+        if self.args.iter().any(|arg| arg == "-m")
+            || matches!(self.id.as_str(), "codex" | "opencode")
+        {
             return Ok(vec!["-m".to_string(), model.to_string()]);
         }
 
@@ -393,7 +395,7 @@ impl RunnerRegistry {
                 id: "opencode".to_string(),
                 name: Some("OpenCode".to_string()),
                 command: Some("opencode".to_string()),
-                args: Vec::new(),
+                args: vec!["run".to_string()],
                 env: HashMap::new(),
                 model: None,
                 model_providers: Some(vec![
@@ -403,7 +405,7 @@ impl RunnerRegistry {
                 ]),
                 detection: Some(DetectionConfig {
                     commands: vec!["opencode".to_string()],
-                    config_dirs: Vec::new(),
+                    config_dirs: vec![".opencode".to_string()],
                     env_vars: Vec::new(),
                     extensions: Vec::new(),
                 }),
@@ -1130,7 +1132,7 @@ pub fn resolve_runner_models(
                         continue;
                     }
                 }
-                models.push(model.id.clone());
+                models.push(format_model_for_runner(runner, provider_id, &model.id));
             }
         }
     }
@@ -1145,6 +1147,15 @@ pub fn resolve_runner_models(
 pub fn resolve_runner_models_bundled(runner: &RunnerDefinition) -> CoreResult<Vec<String>> {
     let registry = crate::models_registry::load_bundled_registry()?;
     Ok(resolve_runner_models(runner, &registry))
+}
+
+#[cfg(feature = "ai")]
+fn format_model_for_runner(runner: &RunnerDefinition, provider_id: &str, model_id: &str) -> String {
+    match runner.id.as_str() {
+        // OpenCode requires provider/model IDs for cross-provider selection.
+        "opencode" => format!("{provider_id}/{model_id}"),
+        _ => model_id.to_string(),
+    }
 }
 
 fn home_dir(override_path: Option<&Path>) -> Option<PathBuf> {
@@ -1405,6 +1416,32 @@ mod tests {
     }
 
     #[test]
+    fn test_build_model_args_uses_dash_m_for_opencode() {
+        let runner = RunnerDefinition {
+            id: "opencode".to_string(),
+            name: None,
+            command: Some("opencode".to_string()),
+            args: vec!["run".to_string()],
+            env: HashMap::new(),
+            model: None,
+            model_providers: Some(vec![
+                "openai".to_string(),
+                "anthropic".to_string(),
+                "google".to_string(),
+            ]),
+            detection: None,
+            symlink_file: None,
+            prompt_flag: None,
+            protocol: None,
+        };
+
+        assert_eq!(
+            runner.build_model_args("openai/gpt-5").expect("model args"),
+            vec!["-m".to_string(), "openai/gpt-5".to_string()]
+        );
+    }
+
+    #[test]
     fn test_builtin_runners_include_new_entries() {
         let registry = RunnerRegistry::builtins();
         assert!(registry.get("gemini").is_some());
@@ -1427,6 +1464,18 @@ mod tests {
         assert!(registry.get("codebuddy").is_some());
         assert!(registry.get("kilo").is_some());
         assert!(registry.get("augment").is_some());
+    }
+
+    #[test]
+    fn test_builtin_opencode_runner_uses_run_subcommand_and_detection_dir() {
+        let registry = RunnerRegistry::builtins();
+        let runner = registry.get("opencode").expect("opencode runner");
+
+        assert_eq!(runner.args, vec!["run"]);
+        assert_eq!(
+            runner.detection.as_ref().expect("detection").config_dirs,
+            vec![".opencode".to_string()]
+        );
     }
 
     #[test]
@@ -1555,6 +1604,35 @@ mod tests {
         sorted.sort();
         sorted.dedup();
         assert_eq!(models, sorted, "models should be sorted and deduplicated");
+    }
+
+    #[cfg(feature = "ai")]
+    #[test]
+    fn test_resolve_runner_models_formats_opencode_models_with_provider_prefix() {
+        let registry = crate::models_registry::load_bundled_registry().expect("bundled registry");
+
+        let runner = RunnerDefinition {
+            id: "opencode".to_string(),
+            name: None,
+            command: Some("opencode".to_string()),
+            args: vec!["run".to_string()],
+            env: HashMap::new(),
+            model: None,
+            model_providers: Some(vec!["openai".to_string()]),
+            detection: None,
+            symlink_file: None,
+            prompt_flag: None,
+            protocol: None,
+        };
+
+        let models = resolve_runner_models(&runner, &registry);
+        if registry.providers.contains_key("openai") {
+            assert!(
+                models.iter().all(|model| model.starts_with("openai/")),
+                "OpenCode models should include provider prefix: {:?}",
+                models
+            );
+        }
     }
 
     #[cfg(feature = "ai")]

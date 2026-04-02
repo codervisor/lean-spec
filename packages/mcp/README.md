@@ -40,6 +40,7 @@ Works with any tool supporting the Model Context Protocol, including:
 **Terminal & CLI:**
 - [Warp](https://www.warp.dev/)
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli)
+- [OpenCode](https://opencode.ai/)
 
 **Development Platforms:**
 - [Factory](https://factory.ai/)
@@ -60,6 +61,21 @@ Works with any tool supporting the Model Context Protocol, including:
 
 #### Other Tools
 Refer to your tool's documentation for the configuration file location. Most use the standard MCP config format above.
+
+#### OpenCode
+Use a project-level `opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "leanspec": {
+      "type": "local",
+      "command": ["npx", "-y", "@leanspec/mcp"]
+    }
+  }
+}
+```
 
 ## What is MCP?
 

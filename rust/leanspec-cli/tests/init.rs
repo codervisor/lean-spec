@@ -234,7 +234,70 @@ fn test_init_creates_claude_symlink_when_detected() {
 }
 
 #[test]
-#[ignore = "MCP integration removed in 7d280891"]
+fn test_init_creates_opencode_config_when_project_markers_exist() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    std::fs::create_dir_all(cwd.join(".opencode")).expect("create .opencode");
+
+    let result = init_project(cwd, true);
+    assert!(result.success, "init should succeed");
+
+    let opencode_config = cwd.join("opencode.json");
+    assert!(
+        file_exists(&opencode_config),
+        "opencode.json should be created when OpenCode is detected"
+    );
+
+    let content = read_file(&opencode_config);
+    assert!(
+        content.contains("\"leanspec\""),
+        "opencode.json should register LeanSpec MCP: {}",
+        content
+    );
+    assert!(
+        content.contains("\"@leanspec/mcp\""),
+        "opencode.json should point at the LeanSpec MCP package: {}",
+        content
+    );
+}
+
+#[test]
+fn test_init_merges_existing_opencode_config() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    write_file(
+        &cwd.join("opencode.json"),
+        r#"{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "custom": {
+      "type": "local",
+      "command": ["custom"]
+    }
+  }
+}
+"#,
+    );
+
+    let result = init_project(cwd, true);
+    assert!(result.success, "init should succeed");
+
+    let content = read_file(&cwd.join("opencode.json"));
+    let parsed: serde_json::Value = serde_json::from_str(&content).expect("valid json");
+    assert!(
+        parsed["mcp"]["custom"].is_object(),
+        "existing OpenCode entries should be preserved"
+    );
+    assert!(
+        parsed["mcp"]["leanspec"].is_object(),
+        "LeanSpec MCP entry should be merged into existing OpenCode config"
+    );
+}
+
+#[test]
+#[ignore = "MCP config is being deprecated"]
 fn test_init_writes_vscode_mcp_config_when_detected() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
