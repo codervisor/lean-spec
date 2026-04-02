@@ -10,8 +10,9 @@ This project uses the Agent Skills framework for domain-specific guidance. **Rea
 
 ### Core Skills
 
-1. **leanspec-sdd** - Spec-Driven Development methodology
-   - Location: [.agents/skills/leanspec-sdd/SKILL.md](.agents/skills/leanspec-sdd/SKILL.md)
+1. **leanspec** - Spec-Driven Development methodology
+   - Install: `npx skills add codervisor/skills@leanspec`
+   - Source: [codervisor/skills](https://github.com/codervisor/skills)
    - Use when: Working with specs, planning features, multi-step changes
    - Key: Run `board` or `search` before creating specs
 

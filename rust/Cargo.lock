@@ -2123,6 +2123,7 @@ dependencies = [
  "dialoguer",
  "indicatif",
  "leanspec-core",
+ "notify",
  "predicates",
  "pretty_assertions",
  "ratatui",

@@ -69,13 +69,12 @@ class ProjectAPI {
   validateProject = (projectId: string) => this.backend.validateProject(projectId);
   listDirectory = (path?: string) => this.backend.listDirectory(path);
 
-  // GitHub integration
-  listGithubRepos = () => this.backend.listGithubRepos();
-  detectGithubSpecs = (repo: string, branch?: string, token?: string) =>
-    this.backend.detectGithubSpecs(repo, branch, token);
-  importGithubRepo = (repo: string, opts?: { branch?: string; specsPath?: string; name?: string; token?: string }) =>
-    this.backend.importGithubRepo(repo, opts);
-  syncGithubProject = (projectId: string) => this.backend.syncGithubProject(projectId);
+  // Git integration
+  detectGitSpecs = (repo: string, branch?: string) =>
+    this.backend.detectGitSpecs(repo, branch);
+  importGitRepo = (repo: string, opts?: { branch?: string; specsPath?: string; name?: string }) =>
+    this.backend.importGitRepo(repo, opts);
+  syncGitProject = (projectId: string) => this.backend.syncGitProject(projectId);
   getContextFiles = () => this.backend.getContextFiles();
   getContextFile = (path: string) => this.backend.getContextFile(path);
 

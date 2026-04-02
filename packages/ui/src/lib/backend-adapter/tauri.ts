@@ -35,9 +35,8 @@ import type {
   RunnerScope,
   RunnerValidateResponse,
   RunnerVersionResponse,
-  GitHubRepo,
-  GitHubDetectResult,
-  GitHubImportResult,
+  GitDetectResult,
+  GitImportResult,
 } from './core';
 
 /**
@@ -466,19 +465,15 @@ export class TauriBackendAdapter implements BackendAdapter {
     return this.invoke<SpecSearchResponse>('desktop_search_specs', { projectId, query, filters });
   }
 
-  async listGithubRepos(): Promise<GitHubRepo[]> {
-    throw new Error('GitHub integration is not available in the desktop app');
+  async detectGitSpecs(_repo: string, _branch?: string): Promise<GitDetectResult | null> {
+    throw new Error('Git integration is not available in the desktop app');
   }
 
-  async detectGithubSpecs(_repo: string, _branch?: string, _token?: string): Promise<GitHubDetectResult | null> {
-    throw new Error('GitHub integration is not available in the desktop app');
+  async importGitRepo(_repo: string, _opts?: { branch?: string; specsPath?: string; name?: string }): Promise<GitImportResult> {
+    throw new Error('Git integration is not available in the desktop app');
   }
 
-  async importGithubRepo(_repo: string, _opts?: { branch?: string; specsPath?: string; name?: string; token?: string }): Promise<GitHubImportResult> {
-    throw new Error('GitHub integration is not available in the desktop app');
-  }
-
-  async syncGithubProject(_projectId: string): Promise<{ projectId: string; syncedSpecs: number }> {
-    throw new Error('GitHub integration is not available in the desktop app');
+  async syncGitProject(_projectId: string): Promise<{ projectId: string; syncedSpecs: number }> {
+    throw new Error('Git integration is not available in the desktop app');
   }
 }

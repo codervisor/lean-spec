@@ -15,7 +15,7 @@ pub mod update;
 pub mod validate;
 pub mod view;
 
-pub mod github;
+pub mod git_repo;
 
 // New commands
 pub mod analyze;

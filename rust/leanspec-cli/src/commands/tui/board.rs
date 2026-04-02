@@ -98,7 +98,7 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     let viewport_height = inner.height as usize;
 
     // Compute scroll offset to keep the selected item visible
-    let scroll = compute_scroll(app, viewport_height);
+    let scroll = app.board_scroll(viewport_height);
     let paragraph = Paragraph::new(lines).scroll((scroll as u16, 0));
     paragraph.render(inner, buf);
 
@@ -112,34 +112,6 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
             .thumb_symbol("█");
         scrollbar.render(inner, buf, &mut scrollbar_state);
     }
-}
-
-/// Return the scroll offset (in lines) needed to keep the selected board item visible.
-fn compute_scroll(app: &App, visible_height: usize) -> usize {
-    let mut selected_row: usize = 0;
-    let mut found = false;
-    'outer: for (gi, group) in app.board_groups.iter().enumerate() {
-        selected_row += 1; // group header
-        if gi == app.board_group_idx && group.collapsed {
-            // The group header itself is the "selected" row when collapsed
-            found = true;
-            break 'outer;
-        }
-        if !group.collapsed {
-            for ii in 0..group.indices.len() {
-                if gi == app.board_group_idx && ii == app.board_item_idx {
-                    found = true;
-                    break 'outer;
-                }
-                selected_row += 1;
-            }
-        }
-        selected_row += 1; // blank line
-    }
-    if !found || visible_height == 0 {
-        return 0;
-    }
-    selected_row.saturating_sub(visible_height.saturating_sub(1))
 }
 
 fn format_spec_line(priority: &str, spec: &SpecInfo, dep_count: usize) -> String {

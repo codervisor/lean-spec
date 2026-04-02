@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "github-integration": {
+      "source": "codervisor/forge",
+      "sourceType": "github",
+      "computedHash": "14357468e9d8ef12bb896d08228f938bcc0e85a7eff758baec01f9edd2547e95"
+    },
+    "parallel-worktrees": {
+      "source": "codervisor/forge",
+      "sourceType": "github",
+      "computedHash": "1848a67829d211a61b007f18d6f91690816c140b738b00265cd2f8fe46a556c6"
+    }
+  }
+}

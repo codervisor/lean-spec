@@ -22,7 +22,7 @@ pub async fn get_capabilities(State(state): State<AppState>) -> Json<Capabilitie
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CapabilitiesResponse {
-    /// Available project source modes: "local", "github"
+    /// Available project source modes: "local", "git"
     pub project_sources: Vec<String>,
     /// Whether the server is in read-only mode
     pub readonly: bool,

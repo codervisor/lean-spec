@@ -15,6 +15,87 @@ fn expand_tilde(path: &str) -> PathBuf {
     PathBuf::from(path)
 }
 
+/// Tab-complete the path buffer in the AddingProject action.
+/// On Tab: expand to the longest unique directory prefix matching the current input.
+fn tab_complete_path(app: &mut App) {
+    use super::app::ProjectMgmtAction;
+    let buffer = match app.project_mgmt.as_ref() {
+        Some(m) => match &m.action {
+            ProjectMgmtAction::AddingProject { buffer, .. } => buffer.clone(),
+            _ => return,
+        },
+        None => return,
+    };
+
+    let expanded = expand_tilde(buffer.trim());
+    // Determine parent dir and the prefix to match
+    let (parent, prefix) = if expanded.is_dir() {
+        // Buffer is already a complete dir; list its children
+        (expanded, String::new())
+    } else {
+        let parent = expanded
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| PathBuf::from("."));
+        let prefix = expanded
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_default();
+        (parent, prefix)
+    };
+
+    let Ok(entries) = std::fs::read_dir(&parent) else {
+        return;
+    };
+    let mut matches: Vec<String> = entries
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().map(|t| t.is_dir()).unwrap_or(false))
+        .map(|e| e.file_name().to_string_lossy().to_string())
+        .filter(|name| !name.starts_with('.') && name.starts_with(&prefix))
+        .collect();
+    matches.sort();
+
+    if matches.is_empty() {
+        return;
+    }
+
+    let completed = if matches.len() == 1 {
+        // Single match: complete fully with trailing slash
+        parent.join(&matches[0]).to_string_lossy().into_owned() + "/"
+    } else {
+        // Multiple matches: complete to the longest common prefix
+        let common = matches[1..].iter().fold(matches[0].clone(), |acc, s| {
+            acc.chars()
+                .zip(s.chars())
+                .take_while(|(a, b)| a == b)
+                .map(|(c, _)| c)
+                .collect()
+        });
+        if common.len() > prefix.len() {
+            parent.join(&common).to_string_lossy().into_owned()
+        } else {
+            return; // Nothing new to add
+        }
+    };
+
+    // Write completed path back to buffer, collapsing HOME back to ~
+    let display = if let Ok(home) = std::env::var("HOME") {
+        if completed.starts_with(&home) {
+            format!("~{}", &completed[home.len()..])
+        } else {
+            completed
+        }
+    } else {
+        completed
+    };
+
+    if let Some(ref mut mgmt) = app.project_mgmt {
+        if let ProjectMgmtAction::AddingProject { ref mut buffer, .. } = mgmt.action {
+            *buffer = display;
+        }
+    }
+}
+
 /// Handle a key event based on the current app mode.
 pub fn handle_key(app: &mut App, key: KeyEvent) {
     match app.mode {
@@ -167,9 +248,46 @@ pub fn handle_mouse(app: &mut App, mouse: MouseEvent) {
                 app.move_up();
             }
         }
-        MouseEventKind::Down(MouseButton::Left) => {
+        MouseEventKind::Down(MouseButton::Left) | MouseEventKind::Drag(MouseButton::Left) => {
             let col = mouse.column;
             let row = mouse.row;
+
+            // Handle drag resize separately when already in drag mode
+            if matches!(mouse.kind, MouseEventKind::Drag(_)) && app.drag_resize {
+                app.resize_drag_to(col);
+                return;
+            }
+
+            // Filter overlay: handle click on filter items when filter popup is open
+            if app.mode == super::app::AppMode::Filter {
+                handle_filter_click(app, col, row);
+                return;
+            }
+
+            // Check scrollbar gutter click/drag
+            let scrollbar_col = app.layout_left.x + app.layout_left.width.saturating_sub(1);
+            if !app.sidebar_collapsed
+                && app.layout_left.width > 0
+                && col == scrollbar_col
+                && row >= app.layout_left.y
+                && row < app.layout_left.y + app.layout_left.height
+            {
+                let track_top = app.layout_left.y;
+                let track_height = app.layout_left.height as usize;
+                let total = app.visible_list_len();
+                if track_height > 0 && total > 0 {
+                    let click_offset = (row - track_top) as usize;
+                    let new_selected =
+                        (click_offset * total / track_height).min(total.saturating_sub(1));
+                    if app.primary_view == super::app::PrimaryView::List {
+                        app.list_selected = new_selected;
+                        app.update_list_scroll();
+                        app.load_selected_detail();
+                    }
+                }
+                return;
+            }
+
             // Check if near split boundary (drag handle)
             let split_col = if app.last_frame_width > 0 {
                 (app.last_frame_width as u32 * app.sidebar_width_pct as u32 / 100) as u16
@@ -185,7 +303,12 @@ pub fn handle_mouse(app: &mut App, mouse: MouseEvent) {
                 && app.layout_left.width > 0
                 && col < app.layout_left.x + app.layout_left.width
             {
-                app.click_sidebar(row);
+                // Click on the sidebar title bar (top border row) → cycle sort
+                if row == app.layout_left.y {
+                    app.cycle_sort();
+                } else {
+                    app.click_sidebar(row);
+                }
             } else if col >= app.layout_right.x {
                 app.focus = FocusPane::Right;
             }
@@ -193,12 +316,44 @@ pub fn handle_mouse(app: &mut App, mouse: MouseEvent) {
         MouseEventKind::Up(MouseButton::Left) => {
             app.drag_resize = false;
         }
-        MouseEventKind::Drag(MouseButton::Left) => {
-            if app.drag_resize {
-                app.resize_drag_to(mouse.column);
-            }
-        }
         _ => {}
+    }
+}
+
+/// Handle a mouse click inside the filter overlay.
+/// The overlay geometry mirrors filter.rs render() so we can map (col, row) to an item.
+fn handle_filter_click(app: &mut App, _col: u16, row: u16) {
+    use super::app::{FILTER_PRIORITIES, FILTER_STATUSES};
+
+    let w = app.last_frame_width;
+    let h = app.last_frame_height;
+    if w == 0 || h == 0 {
+        return;
+    }
+    let _overlay_width = (w * 50 / 100).max(44).min(w);
+    let overlay_height = 16u16.min(h.saturating_sub(4));
+    let overlay_y = h.saturating_sub(overlay_height) / 2;
+    // Inner area starts one row below the border
+    let inner_y = overlay_y + 1;
+
+    // Layout within inner (mirrors filter.rs chunks):
+    // 0: STATUS header
+    // 1..n_statuses: status items
+    // n_statuses+1: blank
+    // n_statuses+2: PRIORITY header
+    // n_statuses+3..n_statuses+3+n_priorities: priority items
+    let n_statuses = FILTER_STATUSES.len() as u16;
+    let status_start = inner_y + 1; // skip STATUS header row
+    let priority_start = status_start + n_statuses + 2; // skip blank + PRIORITY header
+
+    if row >= status_start && row < status_start + n_statuses {
+        let idx = (row - status_start) as usize;
+        app.filter_cursor = idx;
+        app.filter_toggle_current();
+    } else if row >= priority_start && row < priority_start + FILTER_PRIORITIES.len() as u16 {
+        let idx = FILTER_STATUSES.len() + (row - priority_start) as usize;
+        app.filter_cursor = idx;
+        app.filter_toggle_current();
     }
 }
 
@@ -228,6 +383,10 @@ fn handle_filter(app: &mut App, key: KeyEvent) {
         KeyCode::Char('F') => {
             app.clear_filters();
             app.mode = super::app::AppMode::Filter; // stay in filter popup
+        }
+        KeyCode::Char('a') | KeyCode::Char('A') => {
+            app.filter.hide_archived = !app.filter.hide_archived;
+            app.apply_filter_and_sort();
         }
         _ => {}
     }
@@ -337,7 +496,7 @@ fn handle_project_management(app: &mut App, key: KeyEvent) {
     use leanspec_core::storage::{ProjectRegistry, ProjectUpdate};
 
     // Handle active sub-actions first
-    let action = app
+    let mut action = app
         .project_mgmt
         .as_ref()
         .map(|m| m.action.clone())
@@ -466,6 +625,9 @@ fn handle_project_management(app: &mut App, key: KeyEvent) {
                         }
                     }
                 }
+                KeyCode::Tab => {
+                    tab_complete_path(app);
+                }
                 KeyCode::Backspace => {
                     if let Some(ref mut mgmt) = app.project_mgmt {
                         if let ProjectMgmtAction::AddingProject { ref mut buffer, .. } = mgmt.action
@@ -479,6 +641,64 @@ fn handle_project_management(app: &mut App, key: KeyEvent) {
                         if let ProjectMgmtAction::AddingProject { ref mut buffer, .. } = mgmt.action
                         {
                             buffer.push(c);
+                        }
+                    }
+                }
+                _ => {}
+            }
+            return;
+        }
+        ProjectMgmtAction::ChangingColor {
+            id,
+            ref mut color_idx,
+        } => {
+            match key.code {
+                KeyCode::Esc => {
+                    if let Some(ref mut mgmt) = app.project_mgmt {
+                        mgmt.action = ProjectMgmtAction::None;
+                    }
+                }
+                KeyCode::Enter => {
+                    let (_, hex) = super::app::PRESET_COLORS[*color_idx];
+                    let color_value = if hex.is_empty() {
+                        None
+                    } else {
+                        Some(hex.to_string())
+                    };
+                    if let Ok(mut registry) = ProjectRegistry::new() {
+                        let _ = registry.update(
+                            &id,
+                            ProjectUpdate {
+                                name: None,
+                                favorite: None,
+                                color: color_value,
+                            },
+                        );
+                    }
+                    if let Some(ref mut mgmt) = app.project_mgmt {
+                        mgmt.action = ProjectMgmtAction::None;
+                        mgmt.projects = super::app::load_projects_sorted();
+                        mgmt.message = Some("Color updated.".to_string());
+                    }
+                }
+                KeyCode::Char('j') | KeyCode::Down => {
+                    if let Some(ref mut mgmt) = app.project_mgmt {
+                        if let ProjectMgmtAction::ChangingColor {
+                            ref mut color_idx, ..
+                        } = mgmt.action
+                        {
+                            *color_idx = (*color_idx + 1) % super::app::PRESET_COLORS.len();
+                        }
+                    }
+                }
+                KeyCode::Char('k') | KeyCode::Up => {
+                    if let Some(ref mut mgmt) = app.project_mgmt {
+                        if let ProjectMgmtAction::ChangingColor {
+                            ref mut color_idx, ..
+                        } = mgmt.action
+                        {
+                            let len = super::app::PRESET_COLORS.len();
+                            *color_idx = (*color_idx + len - 1) % len;
                         }
                     }
                 }
@@ -571,6 +791,25 @@ fn handle_project_management(app: &mut App, key: KeyEvent) {
             if let Some(id) = id {
                 if let Some(ref mut mgmt) = app.project_mgmt {
                     mgmt.action = ProjectMgmtAction::ConfirmDelete { id };
+                }
+            }
+        }
+        KeyCode::Char('c') => {
+            let info = app
+                .project_mgmt
+                .as_ref()
+                .and_then(|m| m.selected_project())
+                .map(|p| {
+                    let current_color = p.color.as_deref().unwrap_or("");
+                    let color_idx = super::app::PRESET_COLORS
+                        .iter()
+                        .position(|(_, hex)| *hex == current_color)
+                        .unwrap_or(0);
+                    (p.id.clone(), color_idx)
+                });
+            if let Some((id, color_idx)) = info {
+                if let Some(ref mut mgmt) = app.project_mgmt {
+                    mgmt.action = ProjectMgmtAction::ChangingColor { id, color_idx };
                 }
             }
         }

@@ -9,7 +9,7 @@ mod chat_handler;
 mod chat_sessions;
 mod events;
 mod files;
-mod github;
+mod git;
 mod health;
 mod local_projects;
 #[cfg(feature = "ai")]
@@ -26,7 +26,7 @@ pub use chat_handler::*;
 pub use chat_sessions::*;
 pub use events::*;
 pub use files::*;
-pub use github::*;
+pub use git::*;
 pub use health::{health_check, health_live, health_ready};
 pub use local_projects::*;
 #[cfg(feature = "ai")]

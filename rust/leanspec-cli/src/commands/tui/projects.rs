@@ -7,7 +7,7 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Paragraph, Widget},
 };
 
-use super::app::{App, ProjectMgmtAction};
+use super::app::{App, ProjectMgmtAction, PRESET_COLORS};
 use super::theme;
 use leanspec_core::storage::project_registry::ProjectSource;
 
@@ -50,6 +50,10 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
             render_rename(inner, buf, buffer);
             return;
         }
+        ProjectMgmtAction::ChangingColor { color_idx, .. } => {
+            render_changing_color(inner, buf, *color_idx);
+            return;
+        }
         ProjectMgmtAction::None => {}
     }
 
@@ -83,7 +87,7 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
             let is_selected = idx == mgmt.selected;
             let star = if p.favorite { "★" } else { " " };
             let source_icon = match p.source {
-                ProjectSource::GitHub => "◐",
+                ProjectSource::Git => "◐",
                 ProjectSource::Local => " ",
             };
             let valid_icon = if p.exists() { "✓" } else { "✗" };
@@ -130,6 +134,8 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
         Span::raw("dd  "),
         Span::styled("[r]", theme::dimmed_style()),
         Span::raw("ename  "),
+        Span::styled("[c]", theme::dimmed_style()),
+        Span::raw("olor  "),
         Span::styled("[f]", theme::dimmed_style()),
         Span::raw("avorite  "),
         Span::styled("[d]", theme::dimmed_style()),
@@ -239,4 +245,62 @@ fn render_rename(area: Rect, buf: &mut Buffer, buffer: &str) {
         Span::raw(":cancel"),
     ]);
     Paragraph::new(hint).render(chunks[1], buf);
+}
+
+fn render_changing_color(area: Rect, buf: &mut Buffer, color_idx: usize) {
+    let n = PRESET_COLORS.len() as u16;
+    let dialog_width = area.width.clamp(28, 36);
+    let dialog_height = (n + 4).min(area.height);
+    let dx = (area.width.saturating_sub(dialog_width)) / 2;
+    let dy = (area.height.saturating_sub(dialog_height)) / 2;
+    let dialog_area = Rect::new(area.x + dx, area.y + dy, dialog_width, dialog_height);
+
+    Clear.render(dialog_area, buf);
+    let block = Block::default()
+        .title(" Pick Color ")
+        .borders(Borders::ALL)
+        .border_style(theme::overlay_border_style());
+    let inner = block.inner(dialog_area);
+    block.render(dialog_area, buf);
+
+    if inner.height == 0 {
+        return;
+    }
+
+    let list_height = inner.height.saturating_sub(1) as usize;
+    let mut lines: Vec<Line> = Vec::new();
+    for (i, (name, hex)) in PRESET_COLORS.iter().enumerate().take(list_height) {
+        let is_selected = i == color_idx;
+        let indicator = if is_selected { ">" } else { " " };
+        let color_block = if hex.is_empty() { "  " } else { "██" };
+        let label = format!(" {} {} {}", indicator, color_block, name);
+        let style = if is_selected {
+            theme::overlay_selected_style()
+        } else {
+            ratatui::style::Style::default()
+        };
+        lines.push(Line::styled(label, style));
+    }
+
+    let hint_area = Rect::new(
+        inner.x,
+        inner.y + inner.height.saturating_sub(1),
+        inner.width,
+        1,
+    );
+    let list_area = Rect::new(
+        inner.x,
+        inner.y,
+        inner.width,
+        inner.height.saturating_sub(1),
+    );
+
+    Paragraph::new(lines).render(list_area, buf);
+    let hint = Line::from(vec![
+        Span::styled(" [Enter]", theme::dimmed_style()),
+        Span::raw(":set  "),
+        Span::styled("[Esc]", theme::dimmed_style()),
+        Span::raw(":cancel"),
+    ]);
+    Paragraph::new(hint).render(hint_area, buf);
 }

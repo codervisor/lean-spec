@@ -1,0 +1,53 @@
+# GitHub Integration — Copilot Setup Steps Template
+#
+# Enables GitHub CLI (`gh`) and project tools in Claude Code cloud
+# and GitHub Copilot coding agent sessions.
+#
+# INSTALL: Copy this file to .github/copilot-setup-steps.yml in your repo.
+#
+# CUSTOMIZE: Update the dependency installation and build steps
+# to match your project's stack. The gh auth step should stay first.
+
+name: "Copilot Setup Steps"
+
+on: repository_dispatch
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- gh CLI authentication ---
+      # The GITHUB_TOKEN is provided automatically by the cloud session.
+      # This step verifies gh can use it.
+      - name: Authenticate gh CLI
+        run: gh auth status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Node.js projects (uncomment if needed) ---
+      # - uses: pnpm/action-setup@v4
+      # - uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '22'
+      #     cache: 'pnpm'
+      # - name: Install dependencies
+      #   run: pnpm install --frozen-lockfile
+
+      # --- Rust projects (uncomment if needed) ---
+      # - uses: dtolnay/rust-toolchain@stable
+      # - uses: Swatinem/rust-cache@v2
+
+      # --- Python projects (uncomment if needed) ---
+      # - uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.12'
+      # - run: pip install -r requirements.txt
+
+      # --- Build (uncomment and customize) ---
+      # - name: Build project
+      #   run: npm run build
+
+      # --- Install CLI tools globally (uncomment and customize) ---
+      # - run: npm install -g ./packages/cli

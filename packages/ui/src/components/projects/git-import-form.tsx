@@ -3,18 +3,17 @@ import { Search, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button, Input, Label } from '@/library';
 import { api } from '../../lib/api';
 import { useQueryClient } from '@tanstack/react-query';
-import type { GitHubDetectResult } from '../../lib/backend-adapter/core';
+import type { GitDetectResult } from '../../lib/backend-adapter/core';
 
-interface GitHubImportFormProps {
+interface GitImportFormProps {
   onSuccess: (projectId: string) => void;
   onCancel: () => void;
 }
 
-export function GitHubImportForm({ onSuccess, onCancel }: GitHubImportFormProps) {
+export function GitImportForm({ onSuccess, onCancel }: GitImportFormProps) {
   const queryClient = useQueryClient();
   const [repo, setRepo] = useState('');
-  const [token, setToken] = useState('');
-  const [detected, setDetected] = useState<GitHubDetectResult | null>(null);
+  const [detected, setDetected] = useState<GitDetectResult | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +24,7 @@ export function GitHubImportForm({ onSuccess, onCancel }: GitHubImportFormProps)
     setError(null);
     setDetected(null);
     try {
-      const result = await api.detectGithubSpecs(repo.trim(), undefined, token || undefined);
+      const result = await api.detectGitSpecs(repo.trim());
       if (!result) {
         setError('No LeanSpec specs found in this repository. Make sure it has a `specs/` directory with numbered spec folders.');
       } else {
@@ -43,10 +42,9 @@ export function GitHubImportForm({ onSuccess, onCancel }: GitHubImportFormProps)
     setIsImporting(true);
     setError(null);
     try {
-      const result = await api.importGithubRepo(detected.repo, {
+      const result = await api.importGitRepo(repo.trim(), {
         branch: detected.branch,
         specsPath: detected.specsDir,
-        token: token || undefined,
       });
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
       onSuccess(result.projectId);
@@ -60,13 +58,13 @@ export function GitHubImportForm({ onSuccess, onCancel }: GitHubImportFormProps)
   return (
     <div className="space-y-4">
       <div className="grid gap-2">
-        <Label htmlFor="github-repo">Repository</Label>
+        <Label htmlFor="git-repo">Repository</Label>
         <div className="flex gap-2">
           <Input
-            id="github-repo"
+            id="git-repo"
             value={repo}
             onChange={(e) => { setRepo(e.target.value); setDetected(null); }}
-            placeholder="owner/repo or GitHub URL"
+            placeholder="owner/repo, HTTPS URL, or SSH URL"
             disabled={isDetecting || isImporting}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleDetect(); } }}
           />
@@ -84,25 +82,7 @@ export function GitHubImportForm({ onSuccess, onCancel }: GitHubImportFormProps)
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          e.g. <code>acme/my-project</code> or <code>https://github.com/acme/my-project</code>
-        </p>
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="github-token">
-          GitHub Token{' '}
-          <span className="text-muted-foreground font-normal">(optional for public repos)</span>
-        </Label>
-        <Input
-          id="github-token"
-          type="password"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          placeholder="ghp_..."
-          disabled={isDetecting || isImporting}
-        />
-        <p className="text-xs text-muted-foreground">
-          Required for private repos. Set <code>LEANSPEC_GITHUB_TOKEN</code> on the server to avoid entering it here.
+          Any Git repository — <code>acme/project</code>, <code>https://github.com/acme/project</code>, or <code>git@gitlab.com:team/repo.git</code>
         </p>
       </div>
 
