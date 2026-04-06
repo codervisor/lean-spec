@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Shared commit-msg hook — enforces conventional commit format.
+# Synced from codervisor/codervisor via `npm run sync:hooks`.
+
+set -euo pipefail
+
+MSG_FILE="$1"
+MSG=$(head -1 "$MSG_FILE")
+
+# Allow merge commits and revert commits
+if echo "$MSG" | grep -qE '^(Merge|Revert) '; then
+  exit 0
+fi
+
+# Enforce: <type>: <description>
+# Accepted types: feat, fix, refactor, test, docs, chore, ci, perf
+PATTERN='^(feat|fix|refactor|test|docs|chore|ci|perf)(\(.+\))?: .{1,72}$'
+
+if ! echo "$MSG" | grep -qE "$PATTERN"; then
+  echo "ERROR: Commit message does not follow conventional format."
+  echo ""
+  echo "  Expected: <type>: <short summary>"
+  echo "  Types:    feat | fix | refactor | test | docs | chore | ci | perf"
+  echo "  Example:  feat: add session pooling to orchestrator"
+  echo ""
+  echo "  Got: $MSG"
+  exit 1
+fi
