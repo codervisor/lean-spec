@@ -22,11 +22,7 @@ pub fn runner_to_skills_agent(runner_id: &str) -> Option<&'static str> {
 /// If agents is None or empty, installs to all agents (fallback).
 /// If skip_confirm is true, passes -y to skip interactive prompts.
 pub fn install(agents: Option<&[String]>, skip_confirm: bool) -> Result<(), Box<dyn Error>> {
-    let mut args = vec![
-        "skills",
-        "add",
-        "codervisor/skills@leanspec",
-    ];
+    let mut args = vec!["skills", "add", "codervisor/skills@leanspec"];
     if skip_confirm {
         args.push("-y");
     }
