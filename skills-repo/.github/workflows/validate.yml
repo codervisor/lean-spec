@@ -1,0 +1,51 @@
+name: Validate Skills
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate skill structure
+        run: |
+          errors=0
+
+          # Check each skill directory
+          for skill_dir in .agents/skills/*/; do
+            skill_name=$(basename "$skill_dir")
+            echo "Validating skill: $skill_name"
+
+            # Check SKILL.md exists
+            if [ ! -f "$skill_dir/SKILL.md" ]; then
+              echo "  ERROR: Missing SKILL.md"
+              errors=$((errors + 1))
+              continue
+            fi
+
+            # Check frontmatter has name field
+            if ! head -20 "$skill_dir/SKILL.md" | grep -q "^name:"; then
+              echo "  ERROR: SKILL.md missing 'name' in frontmatter"
+              errors=$((errors + 1))
+            fi
+
+            # Check frontmatter has description field
+            if ! head -20 "$skill_dir/SKILL.md" | grep -q "^description:"; then
+              echo "  ERROR: SKILL.md missing 'description' in frontmatter"
+              errors=$((errors + 1))
+            fi
+
+            echo "  OK"
+          done
+
+          if [ $errors -gt 0 ]; then
+            echo "Validation failed with $errors error(s)"
+            exit 1
+          fi
+
+          echo "All skills validated successfully"
