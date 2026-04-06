@@ -25,9 +25,7 @@ pub fn install(agents: Option<&[String]>, skip_confirm: bool) -> Result<(), Box<
     let mut args = vec![
         "skills",
         "add",
-        "codervisor/lean-spec",
-        "--skill",
-        "leanspec-sdd",
+        "codervisor/skills@leanspec",
     ];
     if skip_confirm {
         args.push("-y");

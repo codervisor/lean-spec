@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-03-25
 priority: high
 parent: 289-universal-skills-initiative
@@ -172,10 +172,10 @@ The MCP server name should also align:
 
 ### Phase 1: Create `codervisor/skills` repo
 - [ ] Create `codervisor/skills` GitHub repository (public, MIT)
-- [ ] Recover `leanspec-sdd` skill content from git history
-- [ ] Rename to `leanspec` (frontmatter + any internal references)
-- [ ] Set up CI for skill validation
-- [ ] Add README with catalog and install instructions
+- [x] Recover `leanspec-sdd` skill content from git history
+- [x] Rename to `leanspec` (frontmatter + any internal references)
+- [x] Set up CI for skill validation
+- [x] Add README with catalog and install instructions
 - [ ] Verify `npx skills add codervisor/skills@leanspec` works
 
 ### Phase 2: Rename CLI and npm package
@@ -194,9 +194,9 @@ The MCP server name should also align:
 - [ ] Verify GitHub redirect works for old URLs
 
 ### Phase 4: Update all references
-- [ ] Update AGENTS.md skill references
-- [ ] Update MCP config examples in docs
-- [ ] Update `leanspec init` templates to use new names
+- [x] Update AGENTS.md skill references
+- [x] Update MCP config examples in docs
+- [x] Update `leanspec init` templates to use new names
 - [ ] Update specs that reference old names
 - [ ] Update deploy configs (Railway, Fly.io, Render)
 - [ ] Update Docker configs
