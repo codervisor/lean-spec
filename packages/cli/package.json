@@ -1,9 +1,10 @@
 {
-  "name": "lean-spec",
+  "name": "leanspec",
   "version": "0.2.28",
   "description": "Specification-driven development made simple",
   "type": "module",
   "bin": {
+    "leanspec": "./bin/leanspec.js",
     "lean-spec": "./bin/lean-spec.js"
   },
   "scripts": {
@@ -21,11 +22,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codervisor/lean-spec.git"
+    "url": "https://github.com/codervisor/leanspec.git"
   },
-  "homepage": "https://lean-spec.dev",
+  "homepage": "https://leanspec.dev",
   "bugs": {
-    "url": "https://github.com/codervisor/lean-spec/issues"
+    "url": "https://github.com/codervisor/leanspec/issues"
   },
   "files": [
     "bin/",

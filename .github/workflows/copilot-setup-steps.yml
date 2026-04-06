@@ -58,13 +58,13 @@ jobs:
       - name: Copy binaries to packages
         run: node scripts/copy-rust-binaries.mjs
 
-      - name: Install lean-spec CLI globally
+      - name: Install leanspec CLI globally
         run: npm install -g .
         working-directory: packages/cli
 
-      - name: Verify lean-spec installation
+      - name: Verify leanspec installation
         run: |
-          echo "lean-spec version:"
-          lean-spec --version
+          echo "leanspec version:"
+          leanspec --version
           echo ""
-          echo "lean-spec is now available globally for Copilot coding agent to use"
+          echo "leanspec is now available globally for Copilot coding agent to use"

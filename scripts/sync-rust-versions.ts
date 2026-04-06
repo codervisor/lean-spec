@@ -23,7 +23,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const RUST_DIR = path.join(ROOT_DIR, 'rust');
 const RUST_CARGO_TOML = path.join(RUST_DIR, 'Cargo.toml');
 const PACKAGES_DIR = path.join(ROOT_DIR, 'packages');
-const REPOSITORY_URL = 'https://github.com/codervisor/lean-spec.git';
+const REPOSITORY_URL = 'https://github.com/codervisor/leanspec.git';
 
 interface PlatformInfo {
   os: string;
@@ -55,7 +55,7 @@ const PACKAGE_FAMILIES: PackageFamily[] = [
     label: 'CLI',
     packageDir: path.join(PACKAGES_DIR, 'cli', 'binaries'),
     packagePrefix: '@leanspec/cli',
-    binaryName: 'lean-spec',
+    binaryName: 'leanspec',
     description: 'LeanSpec CLI binary'
   },
   {

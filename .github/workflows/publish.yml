@@ -169,11 +169,11 @@ jobs:
           mkdir -p dist/${{ matrix.platform }}
 
           if [ "${{ runner.os }}" = "Windows" ]; then
-            cp rust/target/${{ matrix.target }}/release/lean-spec.exe dist/${{ matrix.platform }}/
+            cp rust/target/${{ matrix.target }}/release/leanspec.exe dist/${{ matrix.platform }}/
             cp rust/target/${{ matrix.target }}/release/leanspec-mcp.exe dist/${{ matrix.platform }}/
             cp rust/target/${{ matrix.target }}/release/leanspec-http.exe dist/${{ matrix.platform }}/
           else
-            cp rust/target/${{ matrix.target }}/release/lean-spec dist/${{ matrix.platform }}/
+            cp rust/target/${{ matrix.target }}/release/leanspec dist/${{ matrix.platform }}/
             cp rust/target/${{ matrix.target }}/release/leanspec-mcp dist/${{ matrix.platform }}/
             cp rust/target/${{ matrix.target }}/release/leanspec-http dist/${{ matrix.platform }}/
           fi
@@ -291,7 +291,7 @@ jobs:
 
       - name: Ensure CLI binaries are executable
         run: |
-          chmod +x packages/cli/binaries/linux-x64/lean-spec || true
+          chmod +x packages/cli/binaries/linux-x64/leanspec || true
 
       - name: Auto-bump dev version
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dev }}
@@ -368,7 +368,7 @@ jobs:
       
       - name: Validate specs
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
-        run: node bin/lean-spec.js validate --warnings-only
+        run: node bin/leanspec.js validate --warnings-only
       
       - name: Prepare packages for npm publish
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
@@ -406,15 +406,15 @@ jobs:
             echo "✅ Dev version published successfully"
             echo ""
             echo "Test installation:"
-            echo "  npm install -g lean-spec@dev"
+            echo "  npm install -g leanspec@dev"
             exit 0
           fi
 
           echo "✅ Published main packages successfully"
           echo ""
           echo "Verify installation:"
-          echo "  npm install -g lean-spec@latest"
-          echo "  lean-spec --version"
+          echo "  npm install -g leanspec@latest"
+          echo "  leanspec --version"
       
       - name: Verify publish success
         run: |
@@ -429,7 +429,7 @@ jobs:
           echo "  - UI"
           echo ""
           echo "Users can now install with:"
-          echo "  npm install -g lean-spec"
+          echo "  npm install -g leanspec"
 
   # Step 4: Build and publish Docker image (AFTER npm packages are live)
   docker:

@@ -30,7 +30,7 @@ interface BinaryConfig {
 }
 
 const BINARY_CONFIG: Record<string, BinaryConfig> = {
-  'lean-spec': {
+  'leanspec': {
     packagePrefix: '@leanspec/cli',
     description: 'LeanSpec CLI',
     packagePath: 'cli',
@@ -117,7 +117,7 @@ async function generateManifests(
     },
     repository: {
       type: 'git',
-      url: 'https://github.com/codervisor/lean-spec.git',
+      url: 'https://github.com/codervisor/leanspec.git',
     },
     license: 'MIT',
   };
@@ -163,7 +163,7 @@ async function main() {
   const version = await resolveTargetVersion();
   console.log(`Version: ${version}\n`);
 
-  const binaries = ['lean-spec', 'leanspec-mcp', 'leanspec-http'];
+  const binaries = ['leanspec', 'leanspec-mcp', 'leanspec-http'];
 
   for (const platformKey of PLATFORMS) {
     console.log(`Platform: ${platformKey}`);

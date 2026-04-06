@@ -16,7 +16,7 @@ description = "Lightweight spec methodology for AI-powered development"
 edition = "2021"
 homepage = "https://lean-spec.dev"
 license = "MIT"
-repository = "https://github.com/codervisor/lean-spec"
+repository = "https://github.com/codervisor/leanspec"
 rust-version = "1.80"
 version = "0.2.28"
 

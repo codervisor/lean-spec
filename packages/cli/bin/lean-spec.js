@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
- * LeanSpec CLI Entry Point
- * 
- * Thin wrapper that delegates to the Rust binary.
- * The TypeScript implementation has been deprecated in favor of Rust.
- * 
- * @see spec 181-typescript-deprecation-rust-migration
+ * LeanSpec CLI (deprecated entry point)
+ *
+ * The `lean-spec` command has been renamed to `leanspec`.
+ * This wrapper shows a deprecation notice and delegates to the new entry point.
  */
-import './lean-spec-rust.js';
+console.error('\x1b[33m⚠ "lean-spec" is deprecated. Use "leanspec" instead.\x1b[0m');
+import './leanspec-rust.js';

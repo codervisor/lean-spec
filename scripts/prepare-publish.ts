@@ -46,7 +46,7 @@ function resolveWorkspaceVersion(depName: string): string | null {
     '@leanspec/http-server': 'packages/http-server/package.json',
     '@leanspec/ui': 'packages/ui/package.json',
     '@leanspec/mcp': 'packages/mcp/package.json',
-    'lean-spec': 'packages/cli/package.json',
+    'leanspec': 'packages/cli/package.json',
     // CLI platform packages
     '@leanspec/cli-darwin-x64': 'packages/cli/binaries/darwin-x64/package.json',
     '@leanspec/cli-darwin-arm64': 'packages/cli/binaries/darwin-arm64/package.json',
