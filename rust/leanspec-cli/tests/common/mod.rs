@@ -55,7 +55,7 @@ pub fn exec_cli(args: &[&str], cwd: &Path) -> ExecResult {
 
 /// Execute a CLI command with extra environment variables
 pub fn exec_cli_env(args: &[&str], cwd: &Path, env: &[(&str, &str)]) -> ExecResult {
-    let mut cmd = cargo_bin_cmd!("lean-spec");
+    let mut cmd = cargo_bin_cmd!("leanspec");
     cmd.args(args).current_dir(cwd).env("NO_COLOR", "1");
     for (key, value) in env {
         cmd.env(key, value);

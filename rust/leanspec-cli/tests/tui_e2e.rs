@@ -10,11 +10,11 @@ fn fixtures_dir() -> String {
 }
 
 fn run_headless(script: &str) -> serde_json::Value {
-    let output = Command::cargo_bin("lean-spec")
+    let output = Command::cargo_bin("leanspec")
         .unwrap()
         .args(["tui", "--headless", script, "--specs-dir", &fixtures_dir()])
         .output()
-        .expect("failed to run lean-spec tui --headless");
+        .expect("failed to run leanspec tui --headless");
 
     assert!(
         output.status.success(),
