@@ -1,367 +1,87 @@
-# Contributing to LeanSpec
+# Contributing to codervisor
 
-Thanks for your interest in contributing! LeanSpec is about keeping things lean, so our contribution process is too.
+## Standard operating procedures
 
-## Quick Start
+### Getting started
 
-1. Fork the repo
-2. Create a branch: `git checkout -b my-feature`
-3. Make your changes
-4. Run tests: `pnpm test:run`
-5. Commit with clear message: `git commit -m "Add feature X"`
-6. Push and open a PR
+1. Clone the meta-repo and all children:
+   ```sh
+   git clone git@github.com:codervisor/codervisor.git && cd codervisor
+   npm i -g meta
+   npm run clone
+   ```
+2. Work inside the relevant child repo directory.
+3. Each child repo is an independent Git repository with its own branches and history.
 
-> Note: The documentation site lives in the `codervisor/lean-spec-docs` repository and is merged here as the `docs-site/` directory using git subtree. It's already included when you clone the repo - no additional steps needed.
+### Development workflow
 
-## Development Setup
+1. **Branch** from `main` using the naming convention: `<type>/<short-description>`.
+2. **Commit** using conventional commits (enforced by the shared `commit-msg` hook).
+3. **Push** your branch and open a PR against `main`.
+4. **CI must pass** before requesting review.
+5. **One approval required** before merge.
+6. **Squash-merge** is the default merge strategy. Use merge commits only for long-lived feature branches.
 
-```bash
-# Install dependencies
-pnpm install
+### Running CI locally
 
-# Build all packages (uses Turborepo with caching)
-pnpm build
-
-# Development
-pnpm dev          # Start web dev server
-pnpm dev:cli      # Start CLI in watch mode
-
-# Testing & Validation
-pnpm test         # Run tests (with caching)
-pnpm typecheck    # Type check all packages (with caching)
+**Rust repos:**
+```sh
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test --all-features
 ```
 
-## Running the Web UI
-
-LeanSpec uses a unified HTTP server architecture where the Rust server serves both the API and UI on a single port (3000).
-
-### Development Mode
-
-**Option 1: Separate Dev Servers (Recommended for UI development)**
-```bash
-# Terminal 1: Start Rust HTTP server (API on port 3000)
-cd rust/leanspec-http
-cargo run
-
-# Terminal 2: Start Vite dev server (UI on port 5173 with HMR)
-cd packages/ui
-pnpm dev
+**TypeScript repos:**
+```sh
+npm ci
+npm run lint
+npm run typecheck
+npm test
 ```
 
-Vite's proxy configuration automatically forwards `/api/*` requests to the Rust server on port 3000. This gives you fast Hot Module Replacement (HMR) for UI changes.
+### Shared governance sync
 
-**Option 2: Unified Dev Mode (Testing production-like setup)**
-```bash
-# Build UI once
-cd packages/ui
-pnpm build
+The meta-repo distributes shared configuration into child repos:
 
-# Run unified server (serves both UI and API on port 3000)
-cd rust/leanspec-http
-cargo run
-```
+| Command | What it syncs |
+|---------|--------------|
+| `npm run sync:ci` | `.github/workflows/` CI workflow files |
+| `npm run sync:hooks` | `hooks/` directory (git hooks, Claude Code settings) |
+| `npm run sync:claude` | `CLAUDE.md` project instructions |
 
-Visit `http://localhost:3000` to see the UI served directly by Rust.
+After syncing, review the diff in each child repo before committing.
 
-### Production Mode
+### Adding shared CI, hooks, or standards
 
-In production, `npx @leanspec/ui` starts a single Rust HTTP server that serves both the built UI (static files) and API endpoints on port 3000:
+1. Edit the relevant file in the meta-repo (e.g., `.github/workflows/ci-rust.yml`).
+2. Run the corresponding sync script to push changes to children.
+3. Open PRs in each affected child repo.
 
-```bash
-npx @leanspec/ui
-# or
-npx @leanspec/ui --port 3001 --no-open
-```
+### Code review checklist
 
-All CLI arguments are passed through to the Rust server. See `leanspec-http --help` for all options.
+- [ ] CI passes (lint, typecheck, tests)
+- [ ] Commit messages follow conventional format
+- [ ] No secrets or credentials in the diff
+- [ ] New dependencies are justified in the PR description
+- [ ] Breaking changes are called out in the PR title with `!` (e.g., `feat!: ...`)
+- [ ] Tests cover the new behavior
 
-## Version Management
+### Issue and PR triage
 
-All packages in the monorepo maintain synchronized versions automatically. The root `package.json` serves as the single source of truth.
+- Use labels consistently: `bug`, `enhancement`, `chore`, `documentation`, `question`.
+- Link related issues in PR descriptions.
+- Close stale issues after 30 days of inactivity with a comment.
 
-**Packages:**
-- `lean-spec` (CLI package - wrapper for Rust binary)
-- `@leanspec/ui` (web UI package)
-- `@leanspec/mcp` (MCP server wrapper)
-- Desktop app repository: https://github.com/codervisor/lean-spec-desktop
+### Release process
 
-### Automated Version Sync
+- Releases follow semver.
+- Tag releases on `main` with `vX.Y.Z`.
+- Rust crates: bump version in `Cargo.toml`, run `cargo publish`.
+- npm packages: bump version in `package.json`, run `npm publish`.
 
-The `pnpm sync-versions` script automatically synchronizes all package versions with the root:
+### Security policy
 
-```bash
-# Check current version alignment (dry run)
-pnpm sync-versions --dry-run
-
-# Sync all package versions to match root package.json
-pnpm sync-versions
-```
-
-The script:
-- Reads the version from root `package.json`
-- Updates all workspace packages to match
-- Reports what changed
-- Runs automatically as part of `pre-release`
-
-### Release Process
-
-**Before Publishing:**
-1. Update version in **root `package.json` only**
-2. Run `pnpm sync-versions` (or it runs automatically with `pre-release`)
-3. Update cross-package dependencies if needed (e.g., `@leanspec/mcp` → `lean-spec`)
-4. Run `pnpm build` to verify all packages build successfully
-5. Run `pnpm pre-release` to run full validation suite
-   - Includes: sync-versions, typecheck, tests, build, and validate with `--warnings-only`
-   - The validate step treats all issues as warnings (won't fail on complexity/token issues)
-   - For stricter validation before committing spec changes, run `node bin/lean-spec.js validate` without flags
-6. Test package installation locally using `npm pack`
-
-**Version Bump Example:**
-```bash
-# 1. Update root version
-npm version patch  # or minor/major
-
-# 2. Sync all packages (automatic in pre-release)
-pnpm sync-versions
-
-# 3. Verify
-pnpm build
-pnpm test:run
-
-# 4. Commit and publish
-git add .
-git commit -m "chore: release v0.2.6"
-git push
-```
-
-**Why root as source of truth?**
-- Single place to update version
-- Prevents version drift
-- Automated sync in CI/CD
-- Simpler release process
-
-### Docs Site Subtree
-
-The docs are maintained in [codervisor/lean-spec-docs](https://github.com/codervisor/lean-spec-docs) and merged into this repo at `docs-site/` using git subtree. The docs are already included when you clone.
-
-**Local development:**
-```bash
-cd docs-site
-pnpm install    # install docs dependencies
-pnpm start      # develop docs locally
-```
-
-**Pushing docs changes:**
-```bash
-# Make changes in docs-site/, then commit to this repo
-git add docs-site
-git commit -m "docs: your changes"
-git push
-
-# Push to the separate docs repo (maintainers only)
-git subtree push --prefix=docs-site https://github.com/codervisor/lean-spec-docs.git main
-```
-
-**Pulling docs changes from upstream:**
-```bash
-# Pull latest from the separate docs repo
-git subtree pull --prefix=docs-site https://github.com/codervisor/lean-spec-docs.git main --squash
-```
-
-### Monorepo with Turborepo
-
-This project uses [Turborepo](https://turbo.build/) to manage the monorepo with pnpm workspaces:
-
-- **Parallel execution** - Independent packages build simultaneously
-- **Smart caching** - Only rebuilds what changed (126ms vs 19s!)
-- **Task dependencies** - Dependencies built first automatically
-
-**Packages:**
-- `packages/cli` - CLI wrapper for Rust binary (published as `lean-spec`)
-- `packages/mcp` - MCP server wrapper (published as `@leanspec/mcp`)
-- `packages/ui` - Web UI bundle (published as `@leanspec/ui`)
-- Desktop app repository: https://github.com/codervisor/lean-spec-desktop
-- `docs-site/` - Git subtree merged from `codervisor/lean-spec-docs` (Docusaurus)
-
-**Key files:**
-- `turbo.json` - Task pipeline configuration
-- `pnpm-workspace.yaml` - Workspace definitions
-- `package.json` - Root scripts that invoke Turbo
-
-**Build specific package:**
-```bash
-turbo run build --filter=lean-spec
-turbo run build --filter=@leanspec/ui
-```
-
-**Rust Development:**
-```bash
-# Build Rust binaries
-pnpm rust:build
-
-# Run Rust tests
-pnpm rust:test
-
-# Copy binaries to packages
-pnpm rust:copy
-```
-
-**Important Build Order:**
-When building for production/publishing, the UI must be built **before** Rust binaries:
-
-```bash
-# 1. Build UI first
-pnpm --filter @leanspec/ui build
-
-# 2. Build Rust (HTTP server will include UI dist)
-cd rust && cargo build --release
-
-# 3. Copy binaries (includes UI dist for http-server)
-pnpm rust:copy
-```
-
-The `copy-rust-binaries.mjs` script automatically copies `packages/ui/dist` to the HTTP server's platform packages, enabling the unified server architecture.
-
-## Testing
-
-All code changes should include tests. We have a comprehensive testing strategy:
-
-### Test Pyramid
-
-```
-         /\
-        /E2E\        ← CLI scenarios, real filesystem
-       /──────\
-      /Integration\   ← Cross-package, MCP tools
-     /──────────────\
-    /    Unit Tests   \  ← Pure function logic
-   /────────────────────\
-```
-
-### When to Write Which Test Type
-
-| Test Type       | Use When                                    | Location                                          |
-| --------------- | ------------------------------------------- | ------------------------------------------------- |
-| **Unit**        | Testing pure functions, validators, parsers | `*.test.ts` alongside source                      |
-| **Integration** | Testing workflows with mocked deps          | `integration.test.ts`, `list-integration.test.ts` |
-| **E2E**         | Testing user-facing CLI workflows           | `__e2e__/*.e2e.test.ts`                           |
-| **Regression**  | Fixing a bug (must fail before, pass after) | Add to relevant `__e2e__` file                    |
-
-### E2E Tests
-
-End-to-end tests live in `packages/cli/src/__e2e__/` and test real CLI commands against actual filesystems:
-
-- `init.e2e.test.ts` - Initialization scenarios
-- `spec-lifecycle.e2e.test.ts` - Create → update → link → archive workflows
-- `mcp-tools.e2e.test.ts` - MCP server tool integration
-
-E2E tests use helpers from `e2e-helpers.ts` to:
-- Create isolated temp directories
-- Execute real CLI commands
-
-## Rust -> TypeScript Type Bindings
-
-LeanSpec exports selected Rust types into `packages/ui/src/types/generated/`.
-
-When you change exported Rust API structs, regenerate bindings:
-
-```bash
-cd rust
-cargo test export_bindings -p leanspec-http
-```
-
-Then verify generated files are committed:
-
-```bash
-git diff -- packages/ui/src/types/generated
-```
-
-CI enforces this with a stale-binding check.
-- Verify filesystem state
-
-### Regression Tests
-
-When fixing a bug, **always add a regression test**:
-
-1. Name it: `REGRESSION #ISSUE: brief description`
-2. The test must **fail without your fix**
-3. The test must **pass with your fix**
-4. Add to the relevant `__e2e__` test file
-
-See `__e2e__/regression-template.e2e.test.ts` for the full template.
-
-### Running Tests
-
-```bash
-# Run all tests in watch mode
-pnpm test
-
-# Run tests once (CI mode)
-pnpm test:run
-
-# Run only E2E tests
-pnpm test:run -- --testPathPattern="e2e"
-
-# Run with coverage
-pnpm test:coverage
-
-# Run with UI
-pnpm test:ui
-```
-
-### Test Helpers
-
-- `packages/cli/src/test-helpers.ts` - Unit/integration test setup
-- `packages/cli/src/__e2e__/e2e-helpers.ts` - E2E test utilities
-
-## Code Style
-
-We use:
-- TypeScript for type safety
-- Prettier for formatting
-
-Run `pnpm format` before committing.
-
-## Philosophy
-
-Keep changes aligned with LeanSpec first principles (see [specs/049-leanspec-first-principles](specs/049-leanspec-first-principles)):
-
-1. **Context Economy** - Specs must fit in working memory (<400 lines)
-2. **Signal-to-Noise Maximization** - Every word informs decisions
-3. **Intent Over Implementation** - Capture why, not just how
-4. **Bridge the Gap** - Both human and AI must understand
-5. **Progressive Disclosure** - Add complexity when pain is felt
-
-When in doubt: **Clarity over documentation, Essential over exhaustive, Speed over perfection**
-
-## Areas for Contribution
-
-### High Priority (v0.3.0)
-- Programmatic spec management tools (spec 059)
-- VS Code extension (spec 017)
-- GitHub Action for CI integration (spec 016)
-- Copilot Chat integration (spec 034)
-- Live specs showcase on docs site (spec 035)
-
-### Currently Implemented ✅
-- Core CLI commands (create, list, update, archive, search, deps)
-- YAML frontmatter with validation and custom fields
-- Template system with minimal/standard/enterprise presets
-- Visualization tools (board, stats, timeline, gantt)
-- Spec validation with complexity analysis
-- MCP server for AI agent integration
-- Git-based timestamp backfilling
-- Comprehensive test suite with high coverage
-- First principles documentation
-- Relationship tracking (depends_on, related)
-
-### Future Ideas (v0.4.0+)
-- PM system integrations (GitHub Issues, Jira, Azure DevOps) - spec 036
-- Spec coverage reports
-- Additional language-specific templates
-- Export to other formats (PDF, HTML dashboards)
-- Automated spec compaction and transformation
-
-## Questions?
-
-Open an issue or discussion. We're here to help!
+- Report vulnerabilities privately via GitHub Security Advisories.
+- Never commit secrets. Use `.env` files (gitignored) for local config.
+- Pin all GitHub Actions to full commit SHAs.
+- Review Dependabot / Renovate PRs promptly.
