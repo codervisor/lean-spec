@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '--- codervisor hooks: no setup needed ---'"
+          }
+        ]
+      }
+    ]
+  }
+}
