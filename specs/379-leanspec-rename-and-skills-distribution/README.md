@@ -179,9 +179,9 @@ The MCP server name should also align:
 - [ ] Verify `npx skills add codervisor/skills@leanspec` works
 
 ### Phase 2: Rename CLI and npm package
-- [ ] Rename binary entry point `lean-spec` → `leanspec`
-- [ ] Add `lean-spec` backwards-compat alias with deprecation warning
-- [ ] Update all internal references (scripts, docs, CI)
+- [x] Rename binary entry point `lean-spec` → `leanspec`
+- [x] Add `lean-spec` backwards-compat alias with deprecation warning
+- [x] Update all internal references (scripts, docs, CI)
 - [ ] Publish `leanspec` npm package
 - [ ] Publish deprecation version of `lean-spec` package
 

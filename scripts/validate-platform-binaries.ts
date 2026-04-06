@@ -112,7 +112,7 @@ async function validatePlatformBinaries(): Promise<boolean> {
       'cli',
       'binaries',
       platform,
-      `lean-spec${cliExt}`
+      `leanspec${cliExt}`
     );
     const cliCheck = await checkBinary(cliBinaryPath, platform);
     checks.push(cliCheck);

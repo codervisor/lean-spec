@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
-const REPOSITORY_URL = 'https://github.com/codervisor/lean-spec.git';
+const REPOSITORY_URL = 'https://github.com/codervisor/leanspec.git';
 
 // Platform mapping
 const PLATFORM_MAP = {
@@ -37,7 +37,7 @@ const PLATFORM_INFO = {
 const ALL_PLATFORMS = Object.keys(PLATFORM_INFO);
 
 const BINARY_CONFIG = {
-  'lean-spec': {
+  'leanspec': {
     packagePath: 'cli',
     packagePrefix: '@leanspec/cli',
     description: 'LeanSpec CLI binary'
@@ -320,7 +320,7 @@ async function main() {
 
   console.log(`🔧 Copying Rust binaries (${useDebug ? 'debug' : 'release'})...\n`);
 
-  const binaries = ['lean-spec', 'leanspec-mcp', 'leanspec-http'];
+  const binaries = ['leanspec', 'leanspec-mcp', 'leanspec-http'];
 
   if (copyAll) {
     console.log('📦 Copying all platforms (requires cross-compiled binaries)\n');

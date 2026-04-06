@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Publish main packages (lean-spec and @leanspec/mcp)
+ * Publish main packages (leanspec and @leanspec/mcp)
  * 
  * This script publishes the main CLI and MCP packages that have 
  * optional dependencies on the platform-specific binary packages.
@@ -199,7 +199,7 @@ async function publishMainPackages(dryRun: boolean, tag?: string): Promise<void>
   if (!dryRun && successful.length > 0) {
     console.log('\n✅ Main packages published successfully!');
     console.log('\n🎉 Release complete! Users can now install with:');
-    console.log('   npm install -g lean-spec');
+    console.log('   npm install -g leanspec');
     console.log('   npm install -g @leanspec/mcp');
   }
 }

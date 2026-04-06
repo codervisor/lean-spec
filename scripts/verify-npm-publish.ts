@@ -100,7 +100,7 @@ async function verifyPlatformPackages(version: string): Promise<boolean> {
 async function verifyMainPackages(version: string): Promise<boolean> {
   console.log(`\n🔍 Verifying main packages for version: ${version}\n`);
   
-  const mainPackages = ['lean-spec', '@leanspec/mcp'];
+  const mainPackages = ['leanspec', '@leanspec/mcp'];
   const checks = mainPackages.map(pkg => checkPackageExists(pkg, version));
   const results = await Promise.all(checks);
   
@@ -143,8 +143,8 @@ async function checkOptionalDependencies(packageName: string, version: string): 
     }
     
     // Check if all platforms are included
-    const expectedPrefixes = packageName === 'lean-spec' ? 
-      PLATFORMS.map(p => `lean-spec-${p}`) :
+    const expectedPrefixes = packageName === 'leanspec' ? 
+      PLATFORMS.map(p => `leanspec-${p}`) :
       PLATFORMS.map(p => `@leanspec/mcp-${p}`);
     
     const missing = expectedPrefixes.filter(prefix => 
@@ -178,7 +178,7 @@ async function main() {
     const mainOk = await verifyMainPackages(version);
     
     // Check optionalDependencies configuration
-    await checkOptionalDependencies('lean-spec', version);
+    await checkOptionalDependencies('leanspec', version);
     await checkOptionalDependencies('@leanspec/mcp', version);
     
     console.log('\n' + '═'.repeat(60));
@@ -188,10 +188,10 @@ async function main() {
       console.log('');
       console.log('Users can install with:');
       if (version === 'latest') {
-        console.log('  npm install -g lean-spec');
+        console.log('  npm install -g leanspec');
         console.log('  npm install -g @leanspec/mcp');
       } else {
-        console.log(`  npm install -g lean-spec@${version}`);
+        console.log(`  npm install -g leanspec@${version}`);
         console.log(`  npm install -g @leanspec/mcp@${version}`);
       }
       console.log('═'.repeat(60));

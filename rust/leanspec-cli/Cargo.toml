@@ -10,7 +10,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [[bin]]
-name = "lean-spec"
+name = "leanspec"
 path = "src/main.rs"
 
 [dependencies]

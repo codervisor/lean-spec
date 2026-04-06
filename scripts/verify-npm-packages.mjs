@@ -29,10 +29,10 @@ const PLATFORMS = [
 ];
 
 const PACKAGES = {
-  'lean-spec': {
-    main: 'lean-spec',
+  'leanspec': {
+    main: 'leanspec',
     platformPrefix: '@leanspec/cli',
-    binary: 'lean-spec'
+    binary: 'leanspec'
   },
   '@leanspec/mcp': {
     main: '@leanspec/mcp',

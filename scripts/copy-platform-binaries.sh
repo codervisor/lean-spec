@@ -27,7 +27,7 @@ for platform in $PLATFORMS; do
   # CLI binaries
   if [ -d "$ARTIFACTS_DIR/binaries-$platform" ]; then
     mkdir -p "packages/cli/binaries/$platform"
-    cp "$ARTIFACTS_DIR/binaries-$platform/lean-spec"* "packages/cli/binaries/$platform/" || true
+    cp "$ARTIFACTS_DIR/binaries-$platform/leanspec"* "packages/cli/binaries/$platform/" || true
     echo "  ✓ Copied CLI binaries"
   else
     echo "  ⚠ WARNING: Missing artifacts/binaries-$platform"
@@ -56,4 +56,4 @@ echo ""
 echo "✅ Binary copying complete"
 echo ""
 echo "Copied binaries:"
-find packages/cli/binaries packages/mcp/binaries packages/http-server/binaries -type f \( -name "lean-spec*" -o -name "leanspec-mcp*" -o -name "leanspec-http*" \) | sort
+find packages/cli/binaries packages/mcp/binaries packages/http-server/binaries -type f \( -name "leanspec*" -o -name "leanspec-mcp*" -o -name "leanspec-http*" \) | sort

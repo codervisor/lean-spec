@@ -46,6 +46,6 @@
     "validate-binaries": "tsx scripts/validate-platform-binaries.ts",
     "publish:platforms": "tsx scripts/publish-platform-packages.ts",
     "publish:main": "tsx scripts/publish-main-packages.ts",
-    "cli": "node bin/lean-spec.js"
+    "cli": "node bin/leanspec.js"
   }
 }
