@@ -309,6 +309,7 @@ pub fn session_create(
 }
 
 /// Run a session (create + start) via the CLI; returns the ExecResult
+#[allow(clippy::too_many_arguments)]
 pub fn session_run(
     cwd: &Path,
     home: &Path,
@@ -339,6 +340,7 @@ pub fn session_run(
 }
 
 /// Run a runner directly via the top-level `lean-spec run` command.
+#[allow(clippy::too_many_arguments)]
 pub fn run_direct(
     cwd: &Path,
     home: &Path,
