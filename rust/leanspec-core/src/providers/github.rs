@@ -75,17 +75,17 @@ impl SpecProvider for GitHubProvider {
     }
 
     fn capabilities(&self) -> ProviderCapabilities {
-        // When fully implemented, GitHub will support most operations
-        // except dependency graphs (which would need issue body parsing).
+        // All capabilities are false until the GitHub API integration is
+        // implemented. See spec 381 phase 2 for the roadmap.
         ProviderCapabilities {
-            create: true,
-            update: true,
-            delete: false, // GitHub issues can't be deleted, only closed
-            search: true,
-            dependencies: false, // Would require parsing issue body references
+            create: false,
+            update: false,
+            delete: false,
+            search: false,
+            dependencies: false,
             custom_fields: false,
-            webhooks: true, // GitHub supports webhooks natively
-            bidirectional_sync: true,
+            webhooks: false,
+            bidirectional_sync: false,
         }
     }
 
@@ -113,6 +113,10 @@ impl SpecProvider for GitHubProvider {
         Err(self.not_implemented("search"))
     }
 
+    fn delete(&self, _id: &str) -> Result<(), ProviderError> {
+        Err(self.not_implemented("delete"))
+    }
+
     fn dependencies(&self, _id: &str) -> Result<DependencyGraph, ProviderError> {
         Err(ProviderError::NotSupported {
             provider: self.name().to_string(),
@@ -133,15 +137,15 @@ mod tests {
     }
 
     #[test]
-    fn test_github_provider_capabilities() {
+    fn test_github_provider_capabilities_all_false_until_implemented() {
         let provider = GitHubProvider::new("myuser", "myrepo", "spec:");
         let caps = provider.capabilities();
-        assert!(caps.create);
-        assert!(caps.update);
-        assert!(!caps.delete); // Can't delete GitHub issues
-        assert!(caps.search);
+        assert!(!caps.create);
+        assert!(!caps.update);
+        assert!(!caps.delete);
+        assert!(!caps.search);
         assert!(!caps.dependencies);
-        assert!(caps.webhooks);
+        assert!(!caps.webhooks);
     }
 
     #[test]

@@ -5,7 +5,7 @@
 //! existing projects with `specs/` directories work exactly as before.
 
 use crate::search::{search_specs_with_options, SearchOptions, SearchResult};
-use crate::spec_ops::{DependencyGraph, SpecLoader};
+use crate::spec_ops::{DependencyGraph, MetadataUpdate, SpecArchiver, SpecLoader, SpecWriter};
 use crate::types::{SpecFilterOptions, SpecInfo};
 use std::path::{Path, PathBuf};
 
@@ -130,54 +130,68 @@ impl SpecProvider for MarkdownProvider {
     }
 
     fn update(&self, id: &str, request: &UpdateSpecRequest) -> Result<SpecInfo, ProviderError> {
-        let loader = SpecLoader::new(&self.specs_dir);
-        let spec = loader
-            .load(id)
-            .map_err(|e| ProviderError::ParseError {
-                path: id.to_string(),
-                reason: e.to_string(),
-            })?
-            .ok_or_else(|| ProviderError::NotFound(id.to_string()))?;
+        // Use SpecWriter::update_metadata for atomic writes, updated_at timestamps,
+        // and status transition tracking.
+        let writer = SpecWriter::new(&self.specs_dir);
 
-        // Build the updated frontmatter
-        let mut fm = spec.frontmatter.clone();
+        let mut metadata = MetadataUpdate::new();
 
-        if let Some(status) = &request.status {
-            fm.status = *status;
+        if let Some(status) = request.status {
+            metadata = metadata.with_status(status);
         }
-        if let Some(priority) = &request.priority {
-            fm.priority = Some(*priority);
+        if let Some(priority) = request.priority {
+            metadata = metadata.with_priority(priority);
         }
-        if let Some(tags) = &request.tags {
-            fm.tags = tags.clone();
+        if let Some(ref tags) = request.tags {
+            metadata = metadata.with_tags(tags.clone());
         }
-        if let Some(assignee) = &request.assignee {
-            fm.assignee = Some(assignee.clone());
+        if let Some(ref assignee) = request.assignee {
+            metadata = metadata.with_assignee(assignee.clone());
         }
-        if let Some(parent) = &request.parent {
-            fm.parent = Some(parent.clone());
+        if let Some(ref parent) = request.parent {
+            metadata = metadata.with_parent(Some(parent.clone()));
         }
-        if let Some(depends_on) = &request.depends_on {
-            fm.depends_on = depends_on.clone();
+        if let Some(ref depends_on) = request.depends_on {
+            metadata = metadata.with_depends_on(depends_on.clone());
         }
 
-        // Serialize frontmatter and rebuild content
-        let frontmatter_yaml =
-            serde_yaml::to_string(&fm).map_err(|e| ProviderError::ParseError {
-                path: id.to_string(),
-                reason: e.to_string(),
+        writer
+            .update_metadata(id, metadata)
+            .map_err(|e| ProviderError::IoError(std::io::Error::other(e.to_string())))?;
+
+        // If body content was also updated, write that separately
+        if let Some(ref content) = request.content {
+            let loader = SpecLoader::new(&self.specs_dir);
+            let spec = loader
+                .load(id)
+                .map_err(|e| ProviderError::ParseError {
+                    path: id.to_string(),
+                    reason: e.to_string(),
+                })?
+                .ok_or_else(|| ProviderError::NotFound(id.to_string()))?;
+
+            let frontmatter_yaml = serde_yaml::to_string(&spec.frontmatter).map_err(|e| {
+                ProviderError::ParseError {
+                    path: id.to_string(),
+                    reason: e.to_string(),
+                }
             })?;
 
-        let body = request.content.as_deref().unwrap_or(&spec.content);
-
-        let new_content = format!("---\n{}---\n\n{}", frontmatter_yaml, body);
-
-        loader
-            .update_spec(&spec.path, &new_content)
-            .map_err(|e| ProviderError::IoError(std::io::Error::other(e.to_string())))?;
+            let new_full = format!("---\n{}---\n\n{}", frontmatter_yaml, content);
+            loader
+                .update_spec(&spec.path, &new_full)
+                .map_err(|e| ProviderError::IoError(std::io::Error::other(e.to_string())))?;
+        }
 
         // Reload and return the updated spec
         self.get(id)
+    }
+
+    fn delete(&self, id: &str) -> Result<(), ProviderError> {
+        let archiver = SpecArchiver::new(&self.specs_dir);
+        archiver
+            .archive(id)
+            .map_err(|e| ProviderError::IoError(std::io::Error::other(e.to_string())))
     }
 
     fn search(

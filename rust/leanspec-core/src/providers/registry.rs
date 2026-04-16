@@ -47,8 +47,9 @@ impl ProviderRegistry {
 
     /// Load provider configuration from a YAML file.
     ///
-    /// Looks for `provider` key in the config. If not found, returns
-    /// the default markdown provider config.
+    /// Missing files fall back to the default markdown provider config.
+    /// Invalid YAML or invalid provider configuration returns a `ConfigError`
+    /// so misconfigurations are surfaced rather than silently ignored.
     pub fn load_config(path: &Path) -> Result<ProviderConfig, ProviderError> {
         if !path.exists() {
             return Ok(ProviderConfig::default());
@@ -56,15 +57,33 @@ impl ProviderRegistry {
 
         let content = std::fs::read_to_string(path)?;
 
-        // Try to parse as provider config first
-        match serde_yaml::from_str::<ProviderConfig>(&content) {
-            Ok(config) => Ok(config),
-            Err(_) => {
-                // If the config file exists but doesn't have provider config,
-                // fall back to default (markdown).
-                Ok(ProviderConfig::default())
-            }
+        // First validate it's valid YAML at all
+        let value: serde_yaml::Value = serde_yaml::from_str(&content).map_err(|err| {
+            ProviderError::ConfigError(format!(
+                "Failed to parse YAML in {}: {}",
+                path.display(),
+                err
+            ))
+        })?;
+
+        // If the file has no `provider` key, it's not a provider config — fall back
+        let has_provider_key = value
+            .as_mapping()
+            .and_then(|m| m.get(serde_yaml::Value::String("provider".to_string())))
+            .is_some();
+
+        if !has_provider_key {
+            return Ok(ProviderConfig::default());
         }
+
+        // Parse as provider config, surfacing errors for typos / invalid values
+        serde_yaml::from_str::<ProviderConfig>(&content).map_err(|err| {
+            ProviderError::ConfigError(format!(
+                "Failed to parse provider configuration in {}: {}",
+                path.display(),
+                err
+            ))
+        })
     }
 
     /// Load provider from the project's default config location.
@@ -170,5 +189,30 @@ mod tests {
         // When run from a directory without provider config, should return markdown
         let provider = ProviderRegistry::from_project().unwrap();
         assert_eq!(provider.name(), "markdown");
+    }
+
+    #[test]
+    fn test_load_config_invalid_yaml_returns_error() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("provider.yaml");
+        std::fs::write(&config_path, "provider: github\n  bad indent").unwrap();
+
+        let result = ProviderRegistry::load_config(&config_path);
+        assert!(matches!(result, Err(ProviderError::ConfigError(_))));
+    }
+
+    #[test]
+    fn test_load_config_no_provider_key_returns_default() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.yaml");
+        std::fs::write(&config_path, "specs_dir: my-specs\nmax_tokens: 4000\n").unwrap();
+
+        let config = ProviderRegistry::load_config(&config_path).unwrap();
+        match config {
+            ProviderConfig::Markdown { directory } => {
+                assert_eq!(directory, "specs");
+            }
+            _ => panic!("Expected default Markdown config when no provider key"),
+        }
     }
 }

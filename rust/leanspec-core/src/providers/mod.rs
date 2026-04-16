@@ -107,7 +107,7 @@ pub struct ProviderCapabilities {
 }
 
 impl ProviderCapabilities {
-    /// Full capabilities — all operations supported (e.g., markdown provider).
+    /// Full capabilities — all core operations supported (e.g., markdown provider).
     pub fn full() -> Self {
         Self {
             create: true,
@@ -115,7 +115,7 @@ impl ProviderCapabilities {
             delete: true,
             search: true,
             dependencies: true,
-            custom_fields: true,
+            custom_fields: false, // Not yet wired through CreateSpecRequest/UpdateSpecRequest
             webhooks: false,
             bidirectional_sync: true,
         }
@@ -223,6 +223,16 @@ pub trait SpecProvider: Send + Sync {
         query: &str,
         options: &SearchOptions,
     ) -> Result<Vec<SearchResult>, ProviderError>;
+
+    /// Archive/delete a spec.
+    ///
+    /// The semantics are provider-specific:
+    /// - Markdown: sets status to `archived`
+    /// - GitHub: closes the issue
+    /// - ADO: transitions work item to Closed
+    ///
+    /// Returns `ProviderError::NotSupported` if the backend doesn't support deletion.
+    fn delete(&self, id: &str) -> Result<(), ProviderError>;
 
     /// Get the dependency graph for a spec.
     ///
