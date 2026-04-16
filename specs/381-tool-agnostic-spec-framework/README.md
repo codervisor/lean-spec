@@ -55,31 +55,30 @@ Users keep their preferred spec workflow. LeanSpec provides the intelligence lay
 A `SpecProvider` trait defines the contract for any spec backend:
 
 ```rust
-#[async_trait]
 pub trait SpecProvider: Send + Sync {
     /// Provider identity
     fn name(&self) -> &str;
 
+    /// What this provider can and cannot do
+    fn capabilities(&self) -> ProviderCapabilities;
+
     /// List all specs matching optional filters
-    async fn list(&self, filters: &SpecFilterOptions) -> Result<Vec<SpecInfo>>;
+    fn list(&self, filters: &SpecFilterOptions) -> Result<Vec<SpecInfo>, ProviderError>;
 
     /// Get a single spec by ID
-    async fn get(&self, id: &str) -> Result<SpecInfo>;
+    fn get(&self, id: &str) -> Result<SpecInfo, ProviderError>;
 
     /// Create a new spec
-    async fn create(&self, spec: &CreateSpecRequest) -> Result<SpecInfo>;
+    fn create(&self, request: &CreateSpecRequest) -> Result<SpecInfo, ProviderError>;
 
     /// Update an existing spec
-    async fn update(&self, id: &str, update: &UpdateSpecRequest) -> Result<SpecInfo>;
+    fn update(&self, id: &str, request: &UpdateSpecRequest) -> Result<SpecInfo, ProviderError>;
 
     /// Search specs by content
-    async fn search(&self, query: &str, options: &SearchOptions) -> Result<Vec<SearchResult>>;
+    fn search(&self, query: &str, options: &SearchOptions) -> Result<Vec<SearchResult>, ProviderError>;
 
     /// Get dependency graph
-    async fn dependencies(&self, id: &str) -> Result<DependencyGraph>;
-
-    /// Provider capabilities (not all backends support everything)
-    fn capabilities(&self) -> ProviderCapabilities;
+    fn dependencies(&self, id: &str) -> Result<DependencyGraph, ProviderError>;
 }
 ```
 
@@ -113,38 +112,36 @@ pub struct ProviderCapabilities {
 
 ### Configuration
 
-Users configure providers in `.lean-spec/config.yaml` or `leanspec.config.yaml`:
+Users configure providers in `leanspec.provider.yaml` or `.lean-spec/provider.yaml`:
 
 ```yaml
+# Save as `leanspec.provider.yaml` or `.lean-spec/provider.yaml`
+
 # Personal project — specs live in GitHub Issues
 provider: github
-github:
-  owner: myuser
-  repo: myproject
-  label_prefix: "spec:"
+owner: myuser
+repo: myproject
+label_prefix: "spec:"
 
 # Work project — specs live in ADO
 provider: ado
-ado:
-  organization: mycompany
-  project: myproject
-  work_item_type: "User Story"
+organization: mycompany
+project: myproject
+work_item_type: "User Story"
 
 # OSS project — specs stay as markdown (current behavior)
 provider: markdown
-markdown:
-  directory: specs
+directory: specs
 
-# Power user — combine sources
+# Power user — combine sources (future)
 provider: composite
-composite:
-  providers:
-    - type: markdown
-      directory: specs
-    - type: github
-      owner: myorg
-      repo: myproject
-      read_only: true
+providers:
+  - provider: markdown
+    directory: specs
+  - provider: github
+    owner: myorg
+    repo: myproject
+    read_only: true
 ```
 
 ### Mapping Spec Concepts to Backends

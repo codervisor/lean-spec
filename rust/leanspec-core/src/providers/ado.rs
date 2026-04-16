@@ -75,17 +75,17 @@ impl SpecProvider for AdoProvider {
     }
 
     fn capabilities(&self) -> ProviderCapabilities {
-        // When fully implemented, ADO will support most operations
-        // including dependency tracking via work item links.
+        // All capabilities are false until the ADO API integration is
+        // implemented. See spec 381 phase 3 for the roadmap.
         ProviderCapabilities {
-            create: true,
-            update: true,
-            delete: false, // ADO work items are typically not deleted
-            search: true,
-            dependencies: true, // ADO natively supports predecessor/successor links
-            custom_fields: true, // ADO supports custom fields
-            webhooks: true,     // ADO supports service hooks
-            bidirectional_sync: true,
+            create: false,
+            update: false,
+            delete: false,
+            search: false,
+            dependencies: false,
+            custom_fields: false,
+            webhooks: false,
+            bidirectional_sync: false,
         }
     }
 
@@ -113,6 +113,10 @@ impl SpecProvider for AdoProvider {
         Err(self.not_implemented("search"))
     }
 
+    fn delete(&self, _id: &str) -> Result<(), ProviderError> {
+        Err(self.not_implemented("delete"))
+    }
+
     fn dependencies(&self, _id: &str) -> Result<DependencyGraph, ProviderError> {
         Err(self.not_implemented("dependencies"))
     }
@@ -129,15 +133,15 @@ mod tests {
     }
 
     #[test]
-    fn test_ado_provider_capabilities() {
+    fn test_ado_provider_capabilities_all_false_until_implemented() {
         let provider = AdoProvider::new("myorg", "myproject", "User Story");
         let caps = provider.capabilities();
-        assert!(caps.create);
-        assert!(caps.update);
+        assert!(!caps.create);
+        assert!(!caps.update);
         assert!(!caps.delete);
-        assert!(caps.search);
-        assert!(caps.dependencies); // ADO supports work item links
-        assert!(caps.custom_fields); // ADO supports custom fields
+        assert!(!caps.search);
+        assert!(!caps.dependencies);
+        assert!(!caps.custom_fields);
     }
 
     #[test]
