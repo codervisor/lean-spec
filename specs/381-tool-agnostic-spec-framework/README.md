@@ -15,211 +15,56 @@ updated_at: 2026-04-16T00:00:00Z
 
 # Tool-Agnostic Spec Framework
 
+> Tracked in GitHub: https://github.com/codervisor/lean-spec/issues/168
+
 ## Overview
 
-### Context
+LeanSpec pivots from "a spec tool" to "a spec coding framework" — a platform-adapter
+architecture with a distributable skill that teaches AI agents spec coding methodology.
 
-LeanSpec currently positions as a markdown-based SDD (Spec-Driven Development) tool that competes directly with SpecKit, OpenSpec, Kiro, and others on spec authoring and management. Every team and individual already has their own spec workflow — GitHub Issues/Projects for open-source, Azure DevOps Work Items for enterprise, Jira/Linear for startups, Notion for design-heavy teams, or plain markdown in a repo.
+**Spec coding** means treating specs as durable development artifacts that persist beyond
+sessions, drive development, are verifiable against actual code, and compose into a
+project graph. This is fundamentally different from ephemeral planning.
 
-Forcing users to adopt yet another spec format and tool is a losing proposition. The real value isn't in *where* specs live — it's in how specs connect to code, AI agents, and development workflows.
+The framework comprises three layers:
 
-### Problem
+1. **Platform adapters** — thin wrappers that speak each backend's native language
+2. **CLI** — the backbone that works with any adapter
+3. **Skill** — the distributable product that teaches AI agents the methodology
 
-1. **Tool lock-in**: Current LeanSpec requires specs in `specs/NNN-name/README.md` with specific YAML frontmatter. Users must migrate their existing workflow.
-2. **Competing on storage**: We compete with GitHub (infinite distribution), AWS Kiro (IDE integration), and Tessl ($125M funding) on spec authoring — a fight we cannot win.
-3. **Ignoring existing workflows**: Developers already track specs/requirements somewhere. They won't maintain two systems.
+### What LeanSpec no longer prescribes
 
-### Vision
+- No required template or file format
+- No YAML frontmatter schema
+- No fixed status lifecycle or priority levels
+- No specific section structure
 
-LeanSpec pivots from "a spec tool" to "a spec coding framework" — a provider-based abstraction that works with *any* spec backend. Think of it like how an ORM works with any database, or how MCP works with any tool.
+### What LeanSpec provides
 
-```
-Your existing specs          LeanSpec Framework           AI Agents & Workflows
-─────────────────           ──────────────────           ─────────────────────
-GitHub Issues      ─┐                                    Claude Code
-ADO Work Items     ─┤       ┌──────────────┐             Cursor
-Jira Tickets       ─┼──────→│ SpecProvider │──────────→  Windsurf
-Linear Issues      ─┤       │  Abstraction │             GitHub Copilot
-Notion Pages       ─┤       └──────────────┘             MCP Clients
-Markdown Files     ─┘       Unified lifecycle,           CI/CD Pipelines
-                            validation, search,
-                            dependency tracking
-```
-
-Users keep their preferred spec workflow. LeanSpec provides the intelligence layer on top.
+- A methodology for spec coding (specs as artifacts)
+- Adapters to connect to existing workflows (GitHub, ADO, Jira, markdown)
+- A CLI that works through any adapter
+- A distributable skill for AI agent consumption
+- Intelligence features (search, deps, validation) across platforms
 
 ## Design
 
-### Provider Architecture
+See the full design in [GitHub Issue #168](https://github.com/codervisor/lean-spec/issues/168).
 
-A `SpecProvider` trait defines the contract for any spec backend:
-
-```rust
-pub trait SpecProvider: Send + Sync {
-    /// Provider identity
-    fn name(&self) -> &str;
-
-    /// What this provider can and cannot do
-    fn capabilities(&self) -> ProviderCapabilities;
-
-    /// List all specs matching optional filters
-    fn list(&self, filters: &SpecFilterOptions) -> Result<Vec<SpecInfo>, ProviderError>;
-
-    /// Get a single spec by ID
-    fn get(&self, id: &str) -> Result<SpecInfo, ProviderError>;
-
-    /// Create a new spec
-    fn create(&self, request: &CreateSpecRequest) -> Result<SpecInfo, ProviderError>;
-
-    /// Update an existing spec
-    fn update(&self, id: &str, request: &UpdateSpecRequest) -> Result<SpecInfo, ProviderError>;
-
-    /// Search specs by content
-    fn search(&self, query: &str, options: &SearchOptions) -> Result<Vec<SearchResult>, ProviderError>;
-
-    /// Get dependency graph
-    fn dependencies(&self, id: &str) -> Result<DependencyGraph, ProviderError>;
-}
-```
-
-### Built-in Providers
-
-| Provider | Backend | Status |
-|----------|---------|--------|
-| `MarkdownProvider` | Local `specs/` directory (current format) | Built-in, default |
-| `GitHubProvider` | GitHub Issues + Projects | Planned |
-| `AdoProvider` | Azure DevOps Work Items | Planned |
-| `JiraProvider` | Jira tickets via REST API | Future |
-| `LinearProvider` | Linear issues via GraphQL | Future |
-| `CompositeProvider` | Combines multiple providers | Planned |
-
-### Provider Capabilities
-
-Not every backend supports every feature. The framework gracefully degrades:
-
-```rust
-pub struct ProviderCapabilities {
-    pub create: bool,
-    pub update: bool,
-    pub delete: bool,
-    pub search: bool,
-    pub dependencies: bool,
-    pub custom_fields: bool,
-    pub webhooks: bool,
-    pub bidirectional_sync: bool,
-}
-```
-
-### Configuration
-
-Users configure providers in `leanspec.provider.yaml` or `.lean-spec/provider.yaml`:
-
-```yaml
-# Save as `leanspec.provider.yaml` or `.lean-spec/provider.yaml`
-
-# Personal project — specs live in GitHub Issues
-provider: github
-owner: myuser
-repo: myproject
-label_prefix: "spec:"
-
-# Work project — specs live in ADO
-provider: ado
-organization: mycompany
-project: myproject
-work_item_type: "User Story"
-
-# OSS project — specs stay as markdown (current behavior)
-provider: markdown
-directory: specs
-
-# Power user — combine sources (future)
-provider: composite
-providers:
-  - provider: markdown
-    directory: specs
-  - provider: github
-    owner: myorg
-    repo: myproject
-    read_only: true
-```
-
-### Mapping Spec Concepts to Backends
-
-Core LeanSpec concepts map naturally to existing tools:
-
-| LeanSpec Concept | GitHub Issues | ADO Work Items | Jira | Markdown |
-|-----------------|--------------|----------------|------|----------|
-| Spec ID | Issue number | Work Item ID | Issue key | Directory name |
-| Status | Open/Closed + Labels | State field | Status | Frontmatter `status` |
-| Priority | Labels | Priority field | Priority | Frontmatter `priority` |
-| Tags | Labels | Tags | Labels | Frontmatter `tags` |
-| Dependencies | Issue references | Links | Issue links | Frontmatter `depends_on` |
-| Assignee | Assignees | Assigned To | Assignee | Frontmatter `assignee` |
-| Parent/Epic | Milestone or Project | Parent link | Epic link | Frontmatter `parent` |
-| Content | Issue body | Description | Description | Markdown body |
-
-### What LeanSpec Adds on Top
-
-Even when specs live in GitHub Issues or ADO, LeanSpec provides:
-
-1. **Unified CLI/MCP interface** — same commands regardless of backend
-2. **AI-native access** — structured spec data for AI agents via MCP
-3. **Cross-provider views** — kanban board, stats, dependency graphs work everywhere
-4. **Validation** — spec quality checks adapted per provider
-5. **Token economy** — context-aware spec summarization for AI consumption
-6. **Lifecycle intelligence** — drift detection, bottleneck analysis, velocity tracking
+Key architectural decision: **adapters do NOT normalize into a universal schema**.
+Each adapter preserves the platform's native data model. The CLI and skill handle
+presentation — there is no `SpecInfo` or `SpecFrontmatter` intermediary.
 
 ## Plan
 
-### Phase 1: Provider Abstraction (This PR)
-
-- [x] Define `SpecProvider` trait and core types
-- [x] Define `ProviderCapabilities` for graceful degradation
-- [x] Refactor existing `SpecLoader` into `MarkdownProvider`
-- [x] Add `GitHubProvider` and `AdoProvider` stub implementations
-- [x] Add provider registry and factory
-- [x] Update configuration to support provider selection
-
-### Phase 2: GitHub Provider
-
-- [ ] Implement `GitHubProvider` using GitHub REST/GraphQL API
-- [ ] Map GitHub labels to LeanSpec status/priority/tags
-- [ ] Support GitHub Projects for kanban-style views
-- [ ] Bidirectional sync (optional): LeanSpec changes reflect in GitHub
-
-### Phase 3: ADO Provider
-
-- [ ] Implement `AdoProvider` using ADO REST API
-- [ ] Map work item types, states, and fields
-- [ ] Support ADO Boards integration
-
-### Phase 4: Composite Provider & CLI Updates
-
-- [ ] Implement `CompositeProvider` for multi-source setups
-- [ ] Update CLI commands to work through provider abstraction
-- [ ] Update MCP server to use provider abstraction
-- [ ] Update Web UI to be provider-aware
-
-## Test
-
-- [ ] `MarkdownProvider` passes all existing spec tests (backwards compatible)
-- [ ] Provider trait is object-safe and works with dynamic dispatch
-- [ ] `GitHubProvider` stub compiles and returns appropriate "not implemented" errors
-- [ ] `AdoProvider` stub compiles and returns appropriate "not implemented" errors
-- [ ] Provider registry correctly resolves providers from config
-- [ ] Capabilities system correctly reports what each provider supports
+1. Adapter architecture (trait design, markdown adapter as reference)
+2. Skill redesign (methodology-first, SOP-agnostic)
+3. GitHub adapter (first external platform)
+4. CLI adaptation (remove hardcoded markdown assumptions)
+5. ADO + Jira adapters
 
 ## Notes
 
-### Backwards Compatibility
-
-The `MarkdownProvider` is the default. Existing projects with `specs/` directories work exactly as before with zero configuration changes. The pivot is additive — we're expanding what LeanSpec can work with, not breaking what already works.
-
-### Why Not Just Build Integrations?
-
-The difference between "integrations" and a "provider framework" is architectural:
-- **Integrations**: LeanSpec is the source of truth, syncs to/from other tools
-- **Provider framework**: The user's preferred tool IS the source of truth, LeanSpec is the intelligence layer on top
-
-The provider approach respects existing workflows instead of fighting them.
+This spec supersedes the original provider-based approach that normalized all backends
+into `SpecProvider` → `SpecInfo`. That approach was rejected because it still imposed
+LeanSpec's schema (frontmatter fields, status lifecycle) on every backend.
