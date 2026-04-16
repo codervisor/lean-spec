@@ -12,7 +12,7 @@ resolver = "2"
 
 [workspace.package]
 authors = ["LeanSpec Contributors"]
-description = "Lightweight spec methodology for AI-powered development"
+description = "Tool-agnostic spec framework for AI-powered development"
 edition = "2021"
 homepage = "https://lean-spec.dev"
 license = "MIT"
