@@ -275,7 +275,7 @@ fn print_by_tag(specs: &[leanspec_core::SpecInfo]) {
 
     // Sort by count descending
     let mut pairs: Vec<_> = groups.iter().collect();
-    pairs.sort_by(|a, b| b.1.len().cmp(&a.1.len()));
+    pairs.sort_by_key(|p| std::cmp::Reverse(p.1.len()));
 
     for (tag, group) in pairs {
         println!();

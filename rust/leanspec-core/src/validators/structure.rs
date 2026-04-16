@@ -192,18 +192,16 @@ impl StructureValidator {
             match heading.level {
                 1 => in_h2 = false,
                 2 => in_h2 = true,
-                3 => {
-                    if !in_h2 {
-                        result.errors.push(ValidationError {
-                            severity: ErrorSeverity::Warning,
-                            message: format!("h3 '{}' not under an h2 section", heading.text),
-                            line: Some(heading.line),
-                            category: "structure".to_string(),
-                            suggestion: Some(
-                                "Consider restructuring headings or adding a parent h2".to_string(),
-                            ),
-                        });
-                    }
+                3 if !in_h2 => {
+                    result.errors.push(ValidationError {
+                        severity: ErrorSeverity::Warning,
+                        message: format!("h3 '{}' not under an h2 section", heading.text),
+                        line: Some(heading.line),
+                        category: "structure".to_string(),
+                        suggestion: Some(
+                            "Consider restructuring headings or adding a parent h2".to_string(),
+                        ),
+                    });
                 }
                 _ => {}
             }
