@@ -3,7 +3,7 @@
 #![allow(clippy::result_large_err)]
 
 use axum::extract::{Path, State};
-use axum::http::{HeaderMap, StatusCode};
+use axum::http::StatusCode;
 use axum::Json;
 use std::collections::HashMap;
 use std::fs;
@@ -15,32 +15,19 @@ use leanspec_core::{
 
 use crate::error::{ApiError, ApiResult};
 use crate::state::AppState;
-use crate::sync_state::machine_id_from_headers;
 
 use crate::types::{
     DetailedBreakdown, SectionTokenCount, SpecTokenResponse, SpecValidationError,
     SpecValidationResponse, StatsResponse, TokenBreakdown,
 };
 
-use super::helpers::{
-    get_spec_loader, spec_number_from_name, token_status_label, validation_status_label,
-};
+use super::helpers::{get_spec_loader, token_status_label, validation_status_label};
 
 /// GET /api/projects/:projectId/specs/:spec/tokens - Get token counts for a spec
 pub async fn get_project_spec_tokens(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
-    headers: HeaderMap,
 ) -> ApiResult<Json<SpecTokenResponse>> {
-    if machine_id_from_headers(&headers).is_some() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ApiError::invalid_request(
-                "Token counting not supported for synced machines",
-            )),
-        ));
-    }
-
     let (loader, _project) = get_spec_loader(&state, &project_id).await?;
     let spec = loader.load(&spec_id).map_err(|e| {
         (
@@ -95,17 +82,7 @@ pub async fn get_project_spec_tokens(
 pub async fn get_project_spec_validation(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
-    headers: HeaderMap,
 ) -> ApiResult<Json<SpecValidationResponse>> {
-    if machine_id_from_headers(&headers).is_some() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ApiError::invalid_request(
-                "Spec validation not supported for synced machines",
-            )),
-        ));
-    }
-
     let (loader, _project) = get_spec_loader(&state, &project_id).await?;
     let spec = loader.load(&spec_id).map_err(|e| {
         (
@@ -152,65 +129,7 @@ pub async fn get_project_spec_validation(
 pub async fn get_project_stats(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
-    headers: HeaderMap,
 ) -> ApiResult<Json<StatsResponse>> {
-    if let Some(machine_id) = machine_id_from_headers(&headers) {
-        let sync_state = state.sync_state.read().await;
-        let machine = sync_state
-            .persistent
-            .machines
-            .get(&machine_id)
-            .ok_or_else(|| {
-                (
-                    StatusCode::NOT_FOUND,
-                    Json(ApiError::invalid_request("Machine not found")),
-                )
-            })?;
-
-        let project = machine.projects.get(&project_id).ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ApiError::project_not_found(&project_id)),
-            )
-        })?;
-
-        let mut by_status: HashMap<String, usize> = HashMap::new();
-        let mut by_priority: HashMap<String, usize> = HashMap::new();
-        let mut completed = 0usize;
-
-        for spec in project.specs.values() {
-            *by_status.entry(spec.status.clone()).or_insert(0) += 1;
-            if let Some(priority) = &spec.priority {
-                *by_priority.entry(priority.clone()).or_insert(0) += 1;
-            }
-            if spec.status == "complete" {
-                completed += 1;
-            }
-        }
-
-        let total_specs = project.specs.len();
-        let completion_rate = if total_specs == 0 {
-            0.0
-        } else {
-            (completed as f64 / total_specs as f64) * 100.0
-        };
-
-        return Ok(Json(StatsResponse {
-            total_projects: 1,
-            total_specs,
-            specs_by_status: by_status
-                .into_iter()
-                .map(|(status, count)| crate::types::StatusCountItem { status, count })
-                .collect(),
-            specs_by_priority: by_priority
-                .into_iter()
-                .map(|(priority, count)| crate::types::PriorityCountItem { priority, count })
-                .collect(),
-            completion_rate,
-            project_id: Some(project.id.clone()),
-        }));
-    }
-
     let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {
@@ -229,71 +148,7 @@ pub async fn get_project_stats(
 pub async fn get_project_dependencies(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
-    headers: HeaderMap,
 ) -> ApiResult<Json<crate::types::DependencyGraphResponse>> {
-    if let Some(machine_id) = machine_id_from_headers(&headers) {
-        let sync_state = state.sync_state.read().await;
-        let machine = sync_state
-            .persistent
-            .machines
-            .get(&machine_id)
-            .ok_or_else(|| {
-                (
-                    StatusCode::NOT_FOUND,
-                    Json(ApiError::invalid_request("Machine not found")),
-                )
-            })?;
-
-        let project = machine.projects.get(&project_id).ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ApiError::project_not_found(&project_id)),
-            )
-        })?;
-
-        let mut nodes = Vec::new();
-        let mut edges = Vec::new();
-        let spec_map: HashMap<String, _> = project
-            .specs
-            .values()
-            .map(|spec| (spec.spec_name.clone(), spec))
-            .collect();
-
-        for spec in project.specs.values() {
-            nodes.push(crate::types::DependencyNode {
-                id: spec.spec_name.clone(),
-                name: spec
-                    .title
-                    .clone()
-                    .filter(|t| !t.is_empty())
-                    .unwrap_or_else(|| spec.spec_name.clone()),
-                number: spec_number_from_name(&spec.spec_name).unwrap_or(0),
-                status: spec.status.clone(),
-                priority: spec
-                    .priority
-                    .clone()
-                    .unwrap_or_else(|| "medium".to_string()),
-                tags: spec.tags.clone(),
-            });
-
-            for dep in &spec.depends_on {
-                if spec_map.contains_key(dep) {
-                    edges.push(crate::types::DependencyEdge {
-                        source: dep.clone(),
-                        target: spec.spec_name.clone(),
-                        r#type: Some("dependsOn".to_string()),
-                    });
-                }
-            }
-        }
-
-        return Ok(Json(crate::types::DependencyGraphResponse {
-            project_id: Some(project.id.clone()),
-            nodes,
-            edges,
-        }));
-    }
-
     let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {

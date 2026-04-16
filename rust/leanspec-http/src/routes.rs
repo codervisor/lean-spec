@@ -11,7 +11,7 @@ use axum::{
 };
 use axum::{
     middleware as axum_mw,
-    routing::{delete, get, patch, post, put},
+    routing::{delete, get, patch, post},
     Router,
 };
 use std::path::PathBuf;
@@ -53,32 +53,13 @@ pub fn create_router(state: AppState) -> Router {
         CorsLayer::new()
     };
 
-    #[allow(unused_mut)]
-    let mut router = Router::new()
+    let router = Router::new()
         // Health endpoints
         .route("/health", get(handlers::health_check))
         .route("/health/live", get(handlers::health_live))
         .route("/health/ready", get(handlers::health_ready))
         // Server capabilities
         .route("/api/capabilities", get(handlers::get_capabilities))
-        .route("/api/chat/config", get(handlers::get_chat_config))
-        .route("/api/chat/config", put(handlers::update_chat_config))
-        .route("/api/chat/sessions", get(handlers::list_chat_sessions))
-        .route("/api/chat/sessions", post(handlers::create_chat_session))
-        .route("/api/chat/sessions/{id}", get(handlers::get_chat_session))
-        .route(
-            "/api/chat/sessions/{id}",
-            patch(handlers::update_chat_session),
-        )
-        .route(
-            "/api/chat/sessions/{id}",
-            delete(handlers::delete_chat_session),
-        )
-        .route(
-            "/api/chat/sessions/{id}/messages",
-            put(handlers::replace_chat_messages),
-        )
-        .route("/api/chat/storage", get(handlers::get_chat_storage_info))
         // Project routes
         .route("/api/projects", get(handlers::list_projects))
         .route("/api/projects", post(handlers::add_project))
@@ -167,25 +148,6 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/projects/{id}/file", get(handlers::read_project_file))
         // Spec events (SSE)
         .route("/api/events/specs", get(handlers::spec_events))
-        // Cloud sync routes
-        .route("/api/sync/machines", get(handlers::list_machines))
-        .route("/api/sync/machines/{id}", patch(handlers::rename_machine))
-        .route("/api/sync/machines/{id}", delete(handlers::revoke_machine))
-        .route(
-            "/api/sync/machines/{id}/execution",
-            post(handlers::trigger_execution_request),
-        )
-        .route("/api/sync/device/code", post(handlers::create_device_code))
-        .route(
-            "/api/sync/device/activate",
-            post(handlers::activate_device_code),
-        )
-        .route(
-            "/api/sync/oauth/token",
-            post(handlers::exchange_device_code),
-        )
-        .route("/api/sync/events", post(handlers::ingest_sync_events))
-        .route("/api/sync/bridge/ws", get(handlers::bridge_ws))
         // Git integration routes (clone-based, works with any git host)
         .route("/api/git/detect", post(handlers::git_detect_specs))
         .route("/api/git/import", post(handlers::git_import_repo))
@@ -200,82 +162,7 @@ pub fn create_router(state: AppState) -> Router {
         .route(
             "/api/local-projects/list-directory",
             post(handlers::list_directory),
-        )
-        // Session routes
-        .route("/api/sessions", get(handlers::list_sessions))
-        .route("/api/sessions", post(handlers::create_session))
-        .route("/api/sessions/{id}", get(handlers::get_session))
-        .route("/api/sessions/{id}", delete(handlers::delete_session))
-        .route("/api/sessions/{id}/start", post(handlers::start_session))
-        .route("/api/sessions/{id}/pause", post(handlers::pause_session))
-        .route("/api/sessions/{id}/resume", post(handlers::resume_session))
-        .route("/api/sessions/{id}/stop", post(handlers::stop_session))
-        .route("/api/sessions/{id}/prompt", post(handlers::prompt_session))
-        .route(
-            "/api/sessions/{id}/cancel",
-            post(handlers::cancel_session_turn),
-        )
-        .route(
-            "/api/sessions/{id}/permissions/respond",
-            post(handlers::respond_session_permission),
-        )
-        .route(
-            "/api/sessions/{id}/archive",
-            post(handlers::archive_session),
-        )
-        .route("/api/sessions/{id}/logs", get(handlers::get_session_logs))
-        .route(
-            "/api/sessions/{id}/logs/rotate",
-            post(handlers::rotate_session_logs),
-        )
-        .route(
-            "/api/sessions/{id}/events",
-            get(handlers::get_session_events),
-        )
-        .route("/api/sessions/{id}/stream", get(handlers::ws_session_logs))
-        .route("/api/runners", get(handlers::list_runners))
-        .route("/api/runners", post(handlers::create_runner))
-        .route(
-            "/api/runners/available",
-            get(handlers::list_available_runners),
-        )
-        .route("/api/runners/default", put(handlers::set_default_runner))
-        .route("/api/runners/{id}", get(handlers::get_runner))
-        .route("/api/runners/{id}", put(handlers::update_runner))
-        .route("/api/runners/{id}", patch(handlers::patch_runner))
-        .route("/api/runners/{id}", delete(handlers::delete_runner))
-        .route(
-            "/api/runners/{id}/validate",
-            post(handlers::validate_runner),
-        )
-        .route(
-            "/api/runners/{id}/version",
-            get(handlers::get_runner_version),
-        )
-        .route("/api/runners/{id}/models", get(handlers::get_runner_models));
-
-    // AI chat route (only when ai feature is enabled)
-    #[cfg(feature = "ai")]
-    {
-        router = router
-            .route("/api/chat", post(handlers::chat_stream))
-            .route("/api/chat/generate-title", post(handlers::generate_title))
-            .route(
-                "/api/chat/config/validate",
-                post(handlers::validate_provider_api_key),
-            )
-            // Models registry routes
-            .route("/api/models/providers", get(handlers::list_providers))
-            .route(
-                "/api/models/providers/{provider_id}",
-                get(handlers::get_provider_models),
-            )
-            .route(
-                "/api/models/providers/{provider_id}/key",
-                put(handlers::set_provider_api_key),
-            )
-            .route("/api/models/refresh", post(handlers::refresh_registry));
-    }
+        );
 
     let mut router = router.with_state(state.clone());
 
@@ -374,9 +261,6 @@ fn resolve_ui_dist_path(config: &ServerConfig) -> Option<PathBuf> {
 }
 
 /// Middleware that logs the response body for error responses (4xx/5xx).
-///
-/// This ensures error details are always visible in traces regardless of which
-/// `IntoResponse` path is taken (direct `ApiError`, tuple, etc.).
 async fn log_error_body(req: Request<Body>, next: Next) -> Response {
     let method = req.method().clone();
     let uri = req.uri().clone();
@@ -443,7 +327,6 @@ mod tests {
     #[tokio::test]
     async fn test_router_creation() {
         let config = ServerConfig::default();
-        // This will fail without a valid filesystem, but tests router building
         let _state =
             AppState::with_registry(config, crate::project_registry::ProjectRegistry::default())
                 .await;

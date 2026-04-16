@@ -6,9 +6,7 @@ pub mod create;
 pub mod deps;
 pub mod list;
 pub mod rel;
-pub mod runner;
 pub mod search;
-pub mod session;
 pub mod stats;
 pub mod tokens;
 pub mod update;
@@ -27,11 +25,9 @@ pub mod gantt;
 pub mod init;
 pub mod open;
 pub mod package_manager;
-pub mod skill;
 pub mod timeline;
 
 // Additional commands (spec 170)
-pub mod agent;
 pub mod backfill;
 pub mod compact;
 pub mod migrate;

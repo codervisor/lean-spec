@@ -61,12 +61,6 @@ fn test_init_creates_agents_md_with_substitution() {
         agents_content.contains("# "),
         "should contain a markdown heading"
     );
-
-    // Should contain project-specific rules section
-    assert!(
-        agents_content.contains("Project-Specific Rules"),
-        "should contain Project-Specific Rules section"
-    );
 }
 
 #[test]
@@ -205,6 +199,7 @@ impl Drop for EnvGuard {
 }
 
 #[test]
+#[ignore = "Skills installation removed in cleanup"]
 fn test_init_installs_skills_by_default() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -219,6 +214,7 @@ fn test_init_installs_skills_by_default() {
 }
 
 #[test]
+#[ignore = "AI tool detection removed in cleanup"]
 fn test_init_creates_claude_symlink_when_detected() {
     let _guard = EnvGuard::set("ANTHROPIC_API_KEY", "test-key");
     let ctx = TestContext::new();
