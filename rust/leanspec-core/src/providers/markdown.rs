@@ -84,10 +84,7 @@ impl SpecProvider for MarkdownProvider {
         let mut frontmatter_lines = vec![
             "---".to_string(),
             format!("status: {}", request.status),
-            format!(
-                "created: '{}'",
-                chrono::Utc::now().format("%Y-%m-%d")
-            ),
+            format!("created: '{}'", chrono::Utc::now().format("%Y-%m-%d")),
         ];
 
         if let Some(priority) = &request.priority {
@@ -95,10 +92,7 @@ impl SpecProvider for MarkdownProvider {
         }
 
         if !request.tags.is_empty() {
-            frontmatter_lines.push(format!(
-                "tags: [{}]",
-                request.tags.join(", ")
-            ));
+            frontmatter_lines.push(format!("tags: [{}]", request.tags.join(", ")));
         }
 
         if !request.depends_on.is_empty() {

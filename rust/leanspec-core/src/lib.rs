@@ -101,8 +101,8 @@ pub use search::{
 };
 
 // Re-export provider types
+pub use providers::registry::ProviderRegistry;
 pub use providers::{
     CreateSpecRequest, ProviderCapabilities, ProviderConfig, ProviderError, SpecProvider,
     UpdateSpecRequest,
 };
-pub use providers::registry::ProviderRegistry;

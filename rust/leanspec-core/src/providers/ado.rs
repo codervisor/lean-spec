@@ -84,7 +84,7 @@ impl SpecProvider for AdoProvider {
             search: true,
             dependencies: true, // ADO natively supports predecessor/successor links
             custom_fields: true, // ADO supports custom fields
-            webhooks: true, // ADO supports service hooks
+            webhooks: true,     // ADO supports service hooks
             bidirectional_sync: true,
         }
     }
