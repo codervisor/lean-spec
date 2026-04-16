@@ -75,10 +75,7 @@ impl ProviderRegistry {
     ///
     /// Falls back to the default markdown provider if no config is found.
     pub fn from_project() -> Result<Box<dyn SpecProvider>, ProviderError> {
-        let config_paths = [
-            "leanspec.provider.yaml",
-            ".lean-spec/provider.yaml",
-        ];
+        let config_paths = ["leanspec.provider.yaml", ".lean-spec/provider.yaml"];
 
         for path in &config_paths {
             let path = Path::new(path);

@@ -58,24 +58,15 @@ pub enum ProviderError {
 
     /// The operation is not supported by this provider.
     #[error("Operation not supported by {provider}: {operation}")]
-    NotSupported {
-        provider: String,
-        operation: String,
-    },
+    NotSupported { provider: String, operation: String },
 
     /// Authentication failed for the external service.
     #[error("Authentication failed for {provider}: {reason}")]
-    AuthError {
-        provider: String,
-        reason: String,
-    },
+    AuthError { provider: String, reason: String },
 
     /// Network or API error communicating with the backend.
     #[error("Backend error for {provider}: {reason}")]
-    BackendError {
-        provider: String,
-        reason: String,
-    },
+    BackendError { provider: String, reason: String },
 
     /// Configuration is invalid or missing.
     #[error("Configuration error: {0}")]
@@ -87,10 +78,7 @@ pub enum ProviderError {
 
     /// Parse error (for file-based providers).
     #[error("Parse error at {path}: {reason}")]
-    ParseError {
-        path: String,
-        reason: String,
-    },
+    ParseError { path: String, reason: String },
 }
 
 /// What a provider can and cannot do.
