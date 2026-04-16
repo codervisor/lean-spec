@@ -6,8 +6,6 @@
 
 use std::path::Path;
 
-use super::ado::AdoProvider;
-use super::github::GitHubProvider;
 use super::markdown::MarkdownProvider;
 use super::{ProviderConfig, ProviderError, SpecProvider};
 
@@ -21,22 +19,6 @@ impl ProviderRegistry {
             ProviderConfig::Markdown { directory } => {
                 Ok(Box::new(MarkdownProvider::new(directory)))
             }
-            ProviderConfig::GitHub {
-                owner,
-                repo,
-                label_prefix,
-                ..
-            } => Ok(Box::new(GitHubProvider::new(owner, repo, label_prefix))),
-            ProviderConfig::Ado {
-                organization,
-                project,
-                work_item_type,
-                ..
-            } => Ok(Box::new(AdoProvider::new(
-                organization,
-                project,
-                work_item_type,
-            ))),
         }
     }
 
@@ -124,30 +106,6 @@ mod tests {
     }
 
     #[test]
-    fn test_create_github_provider() {
-        let config = ProviderConfig::GitHub {
-            owner: "myuser".to_string(),
-            repo: "myrepo".to_string(),
-            label_prefix: "spec:".to_string(),
-            token: None,
-        };
-        let provider = ProviderRegistry::create(&config).unwrap();
-        assert_eq!(provider.name(), "github");
-    }
-
-    #[test]
-    fn test_create_ado_provider() {
-        let config = ProviderConfig::Ado {
-            organization: "myorg".to_string(),
-            project: "myproject".to_string(),
-            work_item_type: "User Story".to_string(),
-            token: None,
-        };
-        let provider = ProviderRegistry::create(&config).unwrap();
-        assert_eq!(provider.name(), "ado");
-    }
-
-    #[test]
     fn test_default_provider_is_markdown() {
         let provider = ProviderRegistry::default_provider();
         assert_eq!(provider.name(), "markdown");
@@ -160,7 +118,6 @@ mod tests {
             ProviderConfig::Markdown { directory } => {
                 assert_eq!(directory, "specs");
             }
-            _ => panic!("Expected default Markdown config"),
         }
     }
 
@@ -168,19 +125,13 @@ mod tests {
     fn test_load_config_from_yaml() {
         let tmp = TempDir::new().unwrap();
         let config_path = tmp.path().join("provider.yaml");
-        std::fs::write(
-            &config_path,
-            "provider: github\nowner: testuser\nrepo: testrepo\nlabel_prefix: \"spec:\"\n",
-        )
-        .unwrap();
+        std::fs::write(&config_path, "provider: markdown\ndirectory: my-specs\n").unwrap();
 
         let config = ProviderRegistry::load_config(&config_path).unwrap();
         match config {
-            ProviderConfig::GitHub { owner, repo, .. } => {
-                assert_eq!(owner, "testuser");
-                assert_eq!(repo, "testrepo");
+            ProviderConfig::Markdown { directory } => {
+                assert_eq!(directory, "my-specs");
             }
-            _ => panic!("Expected GitHub config"),
         }
     }
 
@@ -212,7 +163,6 @@ mod tests {
             ProviderConfig::Markdown { directory } => {
                 assert_eq!(directory, "specs");
             }
-            _ => panic!("Expected default Markdown config when no provider key"),
         }
     }
 }

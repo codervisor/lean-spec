@@ -402,13 +402,6 @@ pub(crate) enum Commands {
         backfill: bool,
     },
 
-    /// Migrate specs from archived/ folder to status-based archiving
-    MigrateArchived {
-        /// Preview without making changes
-        #[arg(long)]
-        dry_run: bool,
-    },
-
     /// Open spec in editor
     Open {
         /// Spec path or number
