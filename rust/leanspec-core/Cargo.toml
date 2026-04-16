@@ -1,6 +1,6 @@
 [package]
 authors.workspace = true
-description = "Core library for LeanSpec - spec parsing, validation, sessions, storage, and AI worker management"
+description = "Core library for LeanSpec - tool-agnostic spec framework with provider-based backends"
 edition.workspace = true
 homepage.workspace = true
 license.workspace = true

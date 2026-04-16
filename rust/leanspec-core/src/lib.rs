@@ -1,8 +1,11 @@
 //! # LeanSpec Core
 //!
-//! Core library for LeanSpec - a lightweight spec methodology for AI-powered development.
+//! Core library for LeanSpec - a tool-agnostic spec framework for AI-powered development.
 //!
-//! This crate provides platform-agnostic functionality for:
+//! This crate provides the provider-based architecture that lets LeanSpec work
+//! with any spec backend (markdown files, GitHub Issues, ADO Work Items, etc.):
+//!
+//! - **Provider abstraction** (`SpecProvider` trait) for pluggable spec backends
 //! - Parsing and manipulating spec frontmatter
 //! - Validating spec structure and content
 //! - Computing dependency graphs between specs
@@ -32,6 +35,7 @@ pub mod compute;
 pub mod error;
 pub mod io;
 pub mod parsers;
+pub mod providers;
 pub mod relationships;
 pub mod search;
 pub mod spec_ops;
@@ -95,3 +99,10 @@ pub use search::{
     find_content_snippet, parse_query, parse_query_terms, search_specs, search_specs_with_options,
     validate_search_query, SearchOptions, SearchQueryError, SearchResult,
 };
+
+// Re-export provider types
+pub use providers::{
+    CreateSpecRequest, ProviderCapabilities, ProviderConfig, ProviderError, SpecProvider,
+    UpdateSpecRequest,
+};
+pub use providers::registry::ProviderRegistry;

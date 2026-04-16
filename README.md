@@ -23,24 +23,44 @@
 
 ---
 
-**Ship faster with higher quality. Lean specs that both humans and AI understand.**
+**The tool-agnostic spec framework. Use any spec backend — your workflow, your rules.**
 
-LeanSpec brings agile principles to SDD (Spec-Driven Development)—small, focused documents (<2,000 tokens) that keep you and your AI aligned.
+LeanSpec is a spec coding framework that works with whatever spec workflow you already use. GitHub Issues for personal projects, ADO Work Items for enterprise, Jira, Linear, or plain markdown — LeanSpec provides the unified interface, AI integration, and intelligence layer on top.
 
 ---
 
 ## Quick Start
 
 ```bash
-# Try with a tutorial project
+# Markdown specs (default — works out of the box)
+npm install -g lean-spec && lean-spec init
+
+# Or try with a tutorial project
 npx lean-spec init --example dark-theme
 cd dark-theme && npm install && npm start
-
-# Or add to your existing project
-npm install -g lean-spec && lean-spec init
 ```
 
-**Visualize your project:**
+**Configure your spec backend:**
+
+```yaml
+# leanspec.provider.yaml
+
+# Option 1: Markdown files (default, zero config)
+provider: markdown
+directory: specs
+
+# Option 2: GitHub Issues as specs
+# provider: github
+# owner: myuser
+# repo: myproject
+
+# Option 3: Azure DevOps Work Items as specs
+# provider: ado
+# organization: mycompany
+# project: myproject
+```
+
+**Visualize your project (works with any backend):**
 
 ```bash
 lean-spec board    # Kanban view
@@ -54,11 +74,13 @@ lean-spec ui       # Web UI at localhost:3000
 
 ## Why LeanSpec?
 
-**High velocity + High quality.** Other SDD frameworks add process overhead (multi-step workflows, rigid templates). Vibe coding is fast but chaotic (no shared understanding). LeanSpec hits the sweet spot:
+**Your workflow, not ours.** Other SDD frameworks force you to adopt their spec format and tooling. LeanSpec adapts to whatever you already use:
 
+- **Tool-agnostic** - GitHub Issues, ADO, Jira, Linear, Notion, or plain markdown
+- **One interface** - Same CLI, MCP, and UI regardless of backend
+- **AI-native** - Structured spec data for any AI coding assistant
 - **Fast iteration** - Living documents that grow with your code
-- **AI performance** - Small specs = better AI output (context rot is real)
-- **Always current** - Lightweight enough that you actually update them
+- **Context economy** - Small specs (<2K tokens) = better AI output
 
 📖 [Compare with Spec Kit, OpenSpec, Kiro →](https://www.lean-spec.dev/docs/guide/why-leanspec)
 
@@ -79,6 +101,33 @@ Works with any AI coding assistant via MCP or CLI:
 **Compatible with:** VS Code Copilot, Claude Code, Gemini CLI, Cursor, Windsurf, Kiro CLI, Kimi CLI, Qodo CLI, Amp, Trae Agent, Qwen Code, Droid, and more.
 
 📖 [Full AI integration guide →](https://www.lean-spec.dev/docs/guide/usage/ai-coding-workflow)
+
+---
+
+## Spec Providers
+
+LeanSpec connects to your existing spec workflow through a provider architecture:
+
+| Provider | Backend | Status |
+|----------|---------|--------|
+| `markdown` | Local `specs/` directory (default) | **Available** |
+| `github` | GitHub Issues + Projects | Planned |
+| `ado` | Azure DevOps Work Items | Planned |
+| `jira` | Jira tickets | Future |
+| `linear` | Linear issues | Future |
+
+Core LeanSpec concepts map naturally to each backend:
+
+| Concept | GitHub Issues | ADO Work Items | Markdown |
+|---------|--------------|----------------|----------|
+| Spec ID | Issue number | Work Item ID | Directory name |
+| Status | Labels | State field | Frontmatter |
+| Priority | Labels | Priority field | Frontmatter |
+| Tags | Labels | Tags | Frontmatter |
+| Assignee | Assignees | Assigned To | Frontmatter |
+| Content | Issue body | Description | Markdown body |
+
+📖 [Provider architecture →](https://www.lean-spec.dev/docs/guide/providers)
 
 ---
 
