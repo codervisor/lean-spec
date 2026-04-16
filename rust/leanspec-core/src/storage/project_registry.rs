@@ -341,7 +341,7 @@ impl ProjectRegistry {
     /// Get all projects
     pub fn all(&self) -> Vec<&Project> {
         let mut projects: Vec<_> = self.projects.values().collect();
-        projects.sort_by(|a, b| b.last_accessed.cmp(&a.last_accessed));
+        projects.sort_by_key(|p| std::cmp::Reverse(p.last_accessed));
         projects
     }
 
@@ -550,7 +550,7 @@ impl ProjectRegistry {
     /// Get recent projects (not favorites, sorted by last_accessed)
     pub fn recent(&self, limit: usize) -> Vec<&Project> {
         let mut projects: Vec<_> = self.projects.values().filter(|p| !p.favorite).collect();
-        projects.sort_by(|a, b| b.last_accessed.cmp(&a.last_accessed));
+        projects.sort_by_key(|p| std::cmp::Reverse(p.last_accessed));
         projects.into_iter().take(limit).collect()
     }
 

@@ -175,10 +175,8 @@ fn handle_normal(app: &mut App, key: KeyEvent) {
             }
             app.focus_right();
         }
-        KeyCode::Char(' ') => {
-            if app.tree_mode && app.focus == FocusPane::Left {
-                app.toggle_current_tree_node();
-            }
+        KeyCode::Char(' ') if app.tree_mode && app.focus == FocusPane::Left => {
+            app.toggle_current_tree_node();
         }
         KeyCode::Tab => {
             if key.modifiers.contains(KeyModifiers::SHIFT) {
@@ -202,25 +200,17 @@ fn handle_normal(app: &mut App, key: KeyEvent) {
         KeyCode::Char('t') => app.toggle_tree(),
         KeyCode::Char('z') => app.collapse_all(),
         KeyCode::Char('Z') => app.expand_all(),
-        KeyCode::Char('c') => {
-            if app.primary_view == super::app::PrimaryView::Board {
-                app.toggle_current_board_group();
-            }
+        KeyCode::Char('c') if app.primary_view == super::app::PrimaryView::Board => {
+            app.toggle_current_board_group();
         }
-        KeyCode::Char('C') => {
-            if app.primary_view == super::app::PrimaryView::Board {
-                app.collapse_all_board_groups();
-            }
+        KeyCode::Char('C') if app.primary_view == super::app::PrimaryView::Board => {
+            app.collapse_all_board_groups();
         }
-        KeyCode::Char('E') => {
-            if app.primary_view == super::app::PrimaryView::Board {
-                app.expand_all_board_groups();
-            }
+        KeyCode::Char('E') if app.primary_view == super::app::PrimaryView::Board => {
+            app.expand_all_board_groups();
         }
-        KeyCode::Char('T') => {
-            if app.focus == FocusPane::Right {
-                app.open_toc();
-            }
+        KeyCode::Char('T') if app.focus == FocusPane::Right => {
+            app.open_toc();
         }
         KeyCode::Char('p') => app.open_project_switcher(),
         KeyCode::Char('P') => app.open_project_management(),

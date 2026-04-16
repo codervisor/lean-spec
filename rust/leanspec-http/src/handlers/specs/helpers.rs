@@ -142,7 +142,7 @@ pub(super) fn detect_sub_specs(readme_path: &str) -> Vec<SubSpec> {
         });
     }
 
-    sub_specs.sort_by(|a, b| a.file.to_lowercase().cmp(&b.file.to_lowercase()));
+    sub_specs.sort_by_key(|s| s.file.to_lowercase());
     sub_specs
 }
 
