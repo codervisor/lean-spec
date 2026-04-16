@@ -1,9 +1,6 @@
 //! # LeanSpec Core
 //!
-//! Core library for LeanSpec - a tool-agnostic spec framework for AI-powered development.
-//!
-//! This crate provides the provider-based architecture that lets LeanSpec work
-//! with any spec backend (markdown files, GitHub Issues, ADO Work Items, etc.):
+//! Core library for LeanSpec — a spec coding framework for AI-powered development.
 //!
 //! - **Provider abstraction** (`SpecProvider` trait) for pluggable spec backends
 //! - Parsing and manipulating spec frontmatter
@@ -12,16 +9,18 @@
 //! - Token counting for context economy
 //! - File system operations for spec management
 //!
+//! Currently supports markdown files as the default backend. Platform adapters
+//! (GitHub, ADO, Jira) are planned — see:
+//! <https://github.com/codervisor/lean-spec/issues/168>
+//!
 //! ## Example
 //!
 //! ```rust,no_run
 //! use leanspec_core::{SpecLoader, FrontmatterValidator};
 //!
-//! // Load all specs from a directory
 //! let loader = SpecLoader::new("./specs");
 //! let specs = loader.load_all().expect("Failed to load specs");
 //!
-//! // Validate specs
 //! let validator = FrontmatterValidator::new();
 //! for spec in &specs {
 //!     let result = validator.validate(spec);

@@ -35,7 +35,6 @@ pub mod agent;
 pub mod backfill;
 pub mod compact;
 pub mod migrate;
-pub mod migrate_archived;
 pub mod split;
 pub mod templates;
 pub mod tui;

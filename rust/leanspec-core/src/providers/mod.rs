@@ -1,28 +1,11 @@
-//! # Spec Providers — Tool-Agnostic Spec Framework
+//! # Spec Providers
 //!
-//! This module defines the `SpecProvider` trait, the core abstraction that makes
-//! LeanSpec a tool-agnostic spec framework. Instead of requiring specs to live in
-//! a specific markdown format, providers allow specs to be sourced from any backend:
+//! This module defines the `SpecProvider` trait, the core abstraction for spec
+//! backends. Currently supports markdown files as the default provider.
 //!
-//! - **Markdown files** (default, current behavior)
-//! - **GitHub Issues/Projects**
-//! - **Azure DevOps Work Items**
-//! - **Jira, Linear, Notion** (future)
-//! - **Composite** (combine multiple sources)
-//!
-//! ## Architecture
-//!
-//! ```text
-//! User's spec backend     SpecProvider trait     LeanSpec CLI / MCP / UI
-//! ───────────────────     ─────────────────     ──────────────────────
-//! GitHub Issues    ─┐     ┌───────────────┐
-//! ADO Work Items   ─┼────→│  list()       │
-//! Jira Tickets     ─┤     │  get()        │────→  Unified interface
-//! Markdown Files   ─┘     │  create()     │       regardless of backend
-//!                         │  update()     │
-//!                         │  search()     │
-//!                         └───────────────┘
-//! ```
+//! Platform adapters (GitHub Issues, ADO Work Items, Jira, etc.) will be added
+//! as part of the adapter framework pivot — see:
+//! <https://github.com/codervisor/lean-spec/issues/168>
 //!
 //! ## Usage
 //!
@@ -32,12 +15,9 @@
 //! let config = ProviderConfig::Markdown { directory: "specs".into() };
 //! let provider = ProviderRegistry::create(&config).unwrap();
 //!
-//! // Same interface regardless of backend
 //! let specs = provider.list(&Default::default()).unwrap();
 //! ```
 
-pub mod ado;
-pub mod github;
 pub mod markdown;
 pub mod registry;
 
@@ -247,6 +227,10 @@ impl fmt::Debug for dyn SpecProvider {
 }
 
 /// Configuration for selecting and configuring a provider.
+///
+/// Currently only supports the Markdown provider. Platform adapters (GitHub,
+/// ADO, Jira, etc.) will be added as part of the adapter framework pivot.
+/// See: https://github.com/codervisor/lean-spec/issues/168
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "provider", rename_all = "lowercase")]
 pub enum ProviderConfig {
@@ -256,48 +240,10 @@ pub enum ProviderConfig {
         #[serde(default = "default_specs_directory")]
         directory: String,
     },
-
-    /// GitHub Issues as spec backend.
-    #[serde(rename = "github")]
-    GitHub {
-        /// Repository owner.
-        owner: String,
-        /// Repository name.
-        repo: String,
-        /// Label prefix for filtering spec issues (default: "spec:").
-        #[serde(default = "default_label_prefix")]
-        label_prefix: String,
-        /// GitHub API token (read from env if not set).
-        #[serde(skip_serializing_if = "Option::is_none")]
-        token: Option<String>,
-    },
-
-    /// Azure DevOps Work Items as spec backend.
-    #[serde(rename = "ado")]
-    Ado {
-        /// ADO organization name.
-        organization: String,
-        /// ADO project name.
-        project: String,
-        /// Work item type to use (default: "User Story").
-        #[serde(default = "default_work_item_type")]
-        work_item_type: String,
-        /// ADO personal access token (read from env if not set).
-        #[serde(skip_serializing_if = "Option::is_none")]
-        token: Option<String>,
-    },
 }
 
 fn default_specs_directory() -> String {
     "specs".to_string()
-}
-
-fn default_label_prefix() -> String {
-    "spec:".to_string()
-}
-
-fn default_work_item_type() -> String {
-    "User Story".to_string()
 }
 
 impl Default for ProviderConfig {
@@ -319,39 +265,6 @@ mod tests {
             ProviderConfig::Markdown { directory } => {
                 assert_eq!(directory, "specs");
             }
-            _ => panic!("Default config should be Markdown"),
-        }
-    }
-
-    #[test]
-    fn test_provider_config_serialization() {
-        let config = ProviderConfig::GitHub {
-            owner: "myuser".to_string(),
-            repo: "myproject".to_string(),
-            label_prefix: "spec:".to_string(),
-            token: None,
-        };
-
-        let yaml = serde_yaml::to_string(&config).unwrap();
-        assert!(yaml.contains("github"));
-        assert!(yaml.contains("myuser"));
-    }
-
-    #[test]
-    fn test_provider_config_deserialization() {
-        let yaml = r#"
-provider: github
-owner: myuser
-repo: myproject
-label_prefix: "spec:"
-"#;
-        let config: ProviderConfig = serde_yaml::from_str(yaml).unwrap();
-        match config {
-            ProviderConfig::GitHub { owner, repo, .. } => {
-                assert_eq!(owner, "myuser");
-                assert_eq!(repo, "myproject");
-            }
-            _ => panic!("Expected GitHub config"),
         }
     }
 

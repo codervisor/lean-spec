@@ -1,7 +1,7 @@
 //! Spec file loading and management
 
 use crate::parsers::FrontmatterParser;
-use crate::types::{LeanSpecConfig, SpecInfo, SpecStatus};
+use crate::types::{LeanSpecConfig, SpecInfo};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::{OnceLock, RwLock};
@@ -215,7 +215,6 @@ impl SpecLoader {
                             &specs_dir,
                             config.clone(),
                             &path,
-                            false,
                             include_content,
                         );
                         out.push((path, loaded));
@@ -279,7 +278,7 @@ impl SpecLoader {
                 let loaded = if let Some(preloaded) = cold_preloaded.remove(&readme_path) {
                     preloaded?
                 } else {
-                    self.load_spec_from_path(&readme_path, false, include_content)?
+                    self.load_spec_from_path(&readme_path, include_content)?
                 };
                 cache_entry.modified_at = modified_at;
 
@@ -377,11 +376,10 @@ impl SpecLoader {
 
     /// Load a single spec by path/name
     pub fn load(&self, spec_path: &str) -> Result<Option<SpecInfo>, LoadError> {
-        let allow_archived = spec_path.starts_with("archived/");
         // Try direct path first
         let readme_path = self.specs_dir.join(spec_path).join("README.md");
         if readme_path.exists() {
-            return self.load_spec_from_path(&readme_path, allow_archived, true);
+            return self.load_spec_from_path(&readme_path, true);
         }
 
         // Try fuzzy matching
@@ -395,7 +393,7 @@ impl SpecLoader {
                 if dir_name.contains(spec_path) || spec_path.contains(&*dir_name) {
                     let readme_path = entry.path().join("README.md");
                     if readme_path.exists() {
-                        return self.load_spec_from_path(&readme_path, allow_archived, true);
+                        return self.load_spec_from_path(&readme_path, true);
                     }
                 }
             }
@@ -407,12 +405,10 @@ impl SpecLoader {
     /// Load a spec by exact path/name only (no fuzzy matching)
     /// This is safer for destructive operations like archiving
     pub fn load_exact(&self, spec_path: &str) -> Result<Option<SpecInfo>, LoadError> {
-        let allow_archived = spec_path.starts_with("archived/");
-
         // Try direct path first
         let readme_path = self.specs_dir.join(spec_path).join("README.md");
         if readme_path.exists() {
-            return self.load_spec_from_path(&readme_path, allow_archived, true);
+            return self.load_spec_from_path(&readme_path, true);
         }
 
         // Try with just the number prefix - but only if it's a number
@@ -443,7 +439,7 @@ impl SpecLoader {
                 if Some(current_num) == target_num {
                     let readme = entry.path().join("README.md");
                     if readme.exists() {
-                        return self.load_spec_from_path(&readme, allow_archived, true);
+                        return self.load_spec_from_path(&readme, true);
                     }
                 }
             }
@@ -456,14 +452,12 @@ impl SpecLoader {
     fn load_spec_from_path(
         &self,
         path: &Path,
-        allow_archived: bool,
         include_content: bool,
     ) -> Result<Option<SpecInfo>, LoadError> {
         Self::load_spec_from_path_with_config(
             &self.specs_dir,
             self.config.clone(),
             path,
-            allow_archived,
             include_content,
         )
     }
@@ -472,7 +466,6 @@ impl SpecLoader {
         specs_dir: &Path,
         config: Option<LeanSpecConfig>,
         path: &Path,
-        allow_archived: bool,
         include_content: bool,
     ) -> Result<Option<SpecInfo>, LoadError> {
         let content = std::fs::read_to_string(path)?;
@@ -487,31 +480,6 @@ impl SpecLoader {
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_default();
-
-        // Skip archived specs directory itself
-        if spec_path == "archived" {
-            return Ok(None);
-        }
-
-        // Check if this spec is inside the archived directory (legacy behavior)
-        let is_in_archived_folder = spec_dir
-            .parent()
-            .and_then(|p| p.file_name())
-            .map(|n| n == "archived")
-            .unwrap_or(false);
-
-        if is_in_archived_folder && !allow_archived {
-            return Ok(None);
-        }
-
-        // Log deprecation warning for archived folder usage
-        if is_in_archived_folder {
-            eprintln!(
-                "⚠️  DEPRECATED: Spec '{}' is in archived/ folder. \
-                 Run 'lean-spec migrate-archived' to migrate to status-based archiving.",
-                spec_path
-            );
-        }
 
         // Skip top-level README.md (specs/README.md) - not a spec
         if spec_dir == specs_dir {
@@ -535,7 +503,7 @@ impl SpecLoader {
             FrontmatterParser::new()
         };
 
-        let (mut frontmatter, body) = match parser.parse(&content) {
+        let (frontmatter, body) = match parser.parse(&content) {
             Ok(result) => result,
             Err(e) => {
                 return Err(LoadError::ParseError {
@@ -544,11 +512,6 @@ impl SpecLoader {
                 });
             }
         };
-
-        // Override status to archived if spec is in archived/ folder (legacy compat)
-        if is_in_archived_folder {
-            frontmatter.status = SpecStatus::Archived;
-        }
 
         // Extract title from content
         let title = body
@@ -593,7 +556,7 @@ impl SpecLoader {
         let readme_path = spec_dir.join("README.md");
         std::fs::write(&readme_path, template_content)?;
 
-        self.load_spec_from_path(&readme_path, false, true)?
+        self.load_spec_from_path(&readme_path, true)?
             .ok_or_else(|| LoadError::ParseError {
                 path: readme_path.display().to_string(),
                 reason: "Failed to load created spec".to_string(),

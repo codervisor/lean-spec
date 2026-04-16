@@ -219,9 +219,6 @@ fn main() -> ExitCode {
             backfill,
             &cli.output,
         ),
-        Commands::MigrateArchived { dry_run } => {
-            commands::migrate_archived::run(&specs_dir, dry_run)
-        }
         Commands::Open { spec, editor } => commands::open::run(&specs_dir, &spec, editor),
         Commands::Search { query, limit } => {
             commands::search::run(&specs_dir, &query, limit, &cli.output)
