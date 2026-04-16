@@ -1,321 +1,167 @@
 ---
 name: leanspec
-description: Spec-Driven Development methodology for AI-assisted development. Use when working with specs, planning features, creating/implementing/refining/organizing specs, checking progress, updating specs, task breakdowns, design decisions, or any task involving a specs/ folder or .lean-spec/config.json.
+description: The spec-coding methodology for AI-assisted development. Use when planning features, creating/refining/implementing/verifying specs, or organising a project. Works with whatever spec backend your team already uses — local markdown, GitHub Issues, Azure DevOps, Jira — by delegating platform-specific details to a LeanSpec adapter.
 ---
 
-# LeanSpec SDD Skill
+# LeanSpec — Spec Coding Skill
 
-Teach agents how to run Spec-Driven Development (SDD) in LeanSpec projects using the `leanspec` CLI.
+Teach agents **spec coding**: the practice of treating specs as durable
+artifacts that drive development, not ephemeral planning notes. LeanSpec
+provides the methodology and the `leanspec` CLI; each **adapter** (markdown,
+GitHub Issues, ADO, Jira, …) speaks its backend's native language. The skill
+is deliberately adapter-agnostic — never hard-code a status value, priority
+name, or field key here.
 
-## Core Principles
+## Start every session with capability discovery
 
-1. **Context Economy**: Keep specs under 2000 tokens when possible. Split large specs.
-2. **Discovery First**: Always run board/search before creating new specs.
-3. **Intent Over Implementation**: Capture why first, then how.
-4. **No Manual Frontmatter**: Use tools to update status, tags, dependencies.
-5. **Verify Against Reality**: Check actual codebase, commits, and changes—not just spec status.
+Before reading, writing, or linking any specs, run:
 
----
+```bash
+leanspec capabilities -o json
+```
 
-## SDD Lifecycle
+The output is your source of truth. It tells you:
+
+- The active adapter's name (`markdown`, `github`, `ado`, …).
+- Which metadata fields exist and their types/enum values.
+- Which field plays each **semantic role** (`status`, `priority`, `tags`,
+  `assignee`, `due_date`) on this adapter.
+- Which link types the backend understands (`parent`, `depends_on`, …).
+
+Use the returned enum values as the only valid vocabulary. If you want to move
+a spec into the "working" state, look up the semantic `status` field, pick the
+value the adapter calls "work is underway," and send that — don't assume it's
+called `in-progress`.
+
+## Core principles
+
+1. **Specs are durable artifacts.** They persist beyond the session, they are
+   reviewable, and they link to code. They are not plan-mode scratch pads.
+2. **Methodology, not mechanics.** The five phases below apply whether your
+   backend is a markdown folder, a GitHub repo, or a Jira project.
+3. **Discovery first.** Always read what exists before writing anything new.
+4. **Intent before implementation.** Capture *why* first, *how* second.
+5. **Verify against reality.** Never trust a status field alone — check code,
+   commits, tests, CI.
+6. **Use the adapter's vocabulary.** No hard-coded field names or values.
+
+## The five phases
 
 ### 1. Discover
 
-Before creating or modifying anything:
+Understand the current state of the project before touching anything.
+
+1. Run `leanspec capabilities -o json` (session start).
+2. Run `leanspec board` to see the current shape of the project.
+3. Run `leanspec search "<keywords>"` to find related items.
+4. If a close match exists, consider extending or linking to it rather than
+   creating a new item.
 
-- Run `board` to see current project state and identify gaps
-- Run `search "relevant keywords"` to find related specs
-- If similar spec exists, consider extending it or linking as dependency
-
-### 2. Create Spec
-
-Use `leanspec create "spec-name"`.
-
-**Always pass all known fields in the `create` call** — `title`, `content`, `priority`, `tags`, etc. Never create empty specs then populate with follow-up `update`.
-
-**Gather requirements first:**
-
-- **Problem/Goal**: What needs to be solved?
-- **Scope**: What's in and out?
-- **Success Criteria**: How do we know it's done?
-- **Dependencies**: What needs to exist first?
-
-**Naming conventions:** kebab-case, descriptive — `user-auth-oauth-integration`, not `bug-fix`.
-
-**Quality content sections:**
-
-1. **Overview** (1-3 sentences) — problem and importance
-2. **Requirements** — `- [ ]` checklist, independently verifiable items
-3. **Non-Goals** — prevents scope creep
-4. **Technical Notes** (optional) — architecture, APIs
-5. **Acceptance Criteria** — measurable success conditions
-
-**After creation:**
-
-- Link relationships (parent, depends_on) — see "Choosing Relationship Type"
-- Run `validate` to check quality; check `tokens` — keep under 2000
-
-### 3. Refine Spec
-
-Pre-implementation research to ensure the spec is implementation-ready. Use when spec is drafted and approaching `in-progress`.
-
-**Research the codebase:**
-
-- Search for files/modules mentioned in the spec
-- Find existing patterns to follow
-- Locate integration points; review test patterns
-
-**Validate technical approach:**
-
-- Do referenced files/APIs exist?
-- Are proposed interfaces compatible?
-- Does architecture match current patterns?
-- Are there existing solutions to leverage?
-
-**Update spec with findings:**
-
-- Specific file paths to modify
-- Exact function/class names and API signatures
-- Existing code to reuse; edge cases and blockers
-
-**Readiness checklist:**
-
-- [ ] All referenced code paths verified
-- [ ] Technical approach validated against codebase
-- [ ] Dependencies confirmed available
-- [ ] No blocking unknowns remain
-- [ ] Checklist items are specific and actionable
-
-### 4. Implement Spec
-
-**Before starting:**
-
-- Run `leanspec view <spec>` — includes parent, children, depends_on, required_by
-- Set status to `in-progress`: `leanspec update <spec> --status in-progress`
-- If `draft` is enabled, move `draft` → `planned` first (skipping requires `--force`)
-
-**For umbrella specs:** Implement children first; parent completes when all children complete.
-
-**For child specs:** Complete independently once requirements are met.
-
-**During implementation:**
-
-- Follow spec's checklist items in order
-- Stay within defined scope boundaries
-- Run tests frequently
-- Document discoveries in the spec
-
-**Verification (MANDATORY — do NOT skip):**
-
-```bash
-pnpm typecheck    # Zero type errors
-pnpm test         # All tests pass
-pnpm lint         # No lint errors
-leanspec validate
-```
-
-All must pass before marking complete. If any fail, fix and re-run.
-
-**Completing:**
-
-1. Mark all checklist items as done
-2. Add implementation notes if needed
-3. Set status to `complete`: `update <spec> --status complete`
-
-### 5. Check Progress
-
-Verify spec completion against actual implementation.
-
-**Extract from spec:** checklist items, acceptance criteria, scope boundaries, technical requirements.
-
-**Verify against codebase:**
-
-```bash
-git log --oneline --since="<spec-created-date>" -- <relevant-paths>
-```
-
-- Verify new files/modules exist
-- Read actual code to verify it matches spec design
-- Check test coverage for spec requirements
-- Run `pnpm test`
-
-**For each checklist item:**
-
-1. Determine if verifiable via code, tests, or manual check
-2. Search codebase for evidence of completion
-3. Mark complete only if implementation is verified
-
-**Update status** based on findings. Never trust status alone — always verify against actual code.
-
----
-
-## Managing Specs
-
-### Updating Specs
-
-Use during draft/revision phase when requirements are evolving.
-
-**Content updates** (edit spec file):
-
-- Add/remove requirements (`- [ ]` items)
-- Clarify scope and non-goals
-- Update technical approach
-- Document decisions with rationale
-
-**Metadata updates** (use tools):
-
-- Status: `leanspec update <spec> --status <status>`
-- Dependencies: `leanspec rel add <spec> --depends-on <other>`
-- Parent: `leanspec rel add <child> --parent <parent>`
-
-**Handling scope creep:**
-
-1. Evaluate fit — does it belong in this spec?
-2. Split if needed — create new spec for out-of-scope work
-3. Link appropriately (parent or depends_on)
-4. Update original non-goals to reference new spec
-
-### Organizing Specs
-
-Use when specs need structure, relationships are unclear, or project board is cluttered.
-
-**Survey first:**
-
-- `board` — specs by status
-- `board --group-by priority` — priority imbalances
-- `board --group-by parent` — hierarchy
-- `stats` — overall health
-
-**Patterns to look for:**
-
-| Pattern | Action |
-|---------|--------|
-| 3+ related specs, no parent | Create umbrella and group |
-| Spec can't start without another | Add `depends_on` |
-| Completed spec still `in-progress` | Update status |
-| Low-value spec, no activity | Archive |
-| Large spec (>2000 tokens) | Split into parent + children |
-| Duplicate/overlapping specs | Merge or archive redundant one |
-
-**Status definitions:**
-
-| Status | Meaning |
-|--------|---------|
-| `planned` | Defined, work not started |
-| `in-progress` | Active development |
-| `complete` | All requirements verified |
-| `archived` | No longer relevant |
-
-**Priority levels:**
-
-| Priority | When to Use |
-|----------|-------------|
-| `critical` | Blocking release or breaking production |
-| `high` | Important for current milestone |
-| `medium` | Standard priority (default) |
-| `low` | Nice-to-have, backlog |
-
-**Bulk organization checklist:**
-
-- Review `board` for misplaced/stale specs
-- Group related specs under umbrellas
-- Add missing `depends_on` links
-- Correct stale statuses
-- Adjust priorities to match current goals
-- Archive obsolete specs
-- Run `validate` and `stats` after changes
-
----
-
-## Tool Reference
-
-All operations use the `leanspec` CLI. Run commands via shell/Bash.
-
-| Action | Command |
-| --- | --- |
-| Project status | `leanspec board` |
-| List specs | `leanspec list` |
-| Search specs | `leanspec search "query"` |
-| View spec | `leanspec view <spec>` |
-| Create spec | `leanspec create <name>` |
-| Update status | `leanspec update <spec> --status <status>` |
-| View relationships | `leanspec rel <spec>` |
-| Set parent | `leanspec rel add <child> --parent <parent>` |
-| Add child | `leanspec rel add <parent> --child <child>` |
-| Add dependency | `leanspec rel add <spec> --depends-on <other>` |
-| Remove dependency | `leanspec rel rm <spec> --depends-on <other>` |
-| Dependency graph | `leanspec deps <spec>` |
-| List children | `leanspec children <parent>` |
-| Token count | `leanspec tokens <spec>` |
-| Validate | `leanspec validate` |
-| Stats | `leanspec stats` |
-
-## Choosing Relationship Type
-
-**IMPORTANT**: Critical decision. Read carefully before linking specs.
-
-### Parent/Child (Umbrella Decomposition)
-
-Use when a large initiative is **broken into child specs** that together form the whole.
-
-- "This spec is a piece of that umbrella's scope"
-- Child spec doesn't make sense without parent context
-- Parent completes when **all children** complete
-
-**Command**: `leanspec rel add <child> --parent <parent>`
-
-**Example**: "CLI UX Overhaul" umbrella → children: "Help System", "Error Messages", "Progress Indicators"
-
-### Depends On (Technical Blocker)
-
-Use when a spec **cannot start** until another independent spec is done first.
-
-- "This spec needs that spec done first"
-- Both specs are **independent work items** with separate goals
-- Removal of the dependency doesn't change the spec's scope
-
-**Command**: `leanspec rel add <spec> --depends-on <other>`
-**Remove**: `leanspec rel rm <spec> --depends-on <other>`
-
-**Example**: "Search API" depends on "Database Schema Migration"
-
-### Decision Flowchart
-
-1. **Is spec B part of spec A's scope?** → Parent/child (`type=parent`)
-2. **Does spec B just need spec A finished first?** → Depends on (`type=depends_on`)
-3. **Never use both** parent AND depends_on for the same spec pair.
-
-**Litmus test**: If spec A didn't exist, would spec B still make sense?
-- **NO** → B is a child of A
-- **YES** → B depends on A
-
-### Umbrella Workflow
-
-1. Create the umbrella spec: `leanspec create <name>`
-2. Create each child spec: `leanspec create <name>`
-3. Assign children: `leanspec rel add <child> --parent <parent>` for each child
-4. Verify structure: `leanspec children <parent>`
-5. Add cross-cutting deps if needed: `leanspec rel add <spec> --depends-on <other>`
-
----
-
-## Best Practices
-
-- Never create spec files manually; use `leanspec create`.
-- **Always pass all known fields in the `create` call** — never create empty then edit.
-- Keep specs short and focused; split when >2000 tokens.
-- **Search first** — never create duplicates; link related specs instead.
-- **Checkboxes only for actions** — use plain lists for non-actionable items.
-- **Use parent/child for decomposition**, depends_on for blockers.
-- **Archive, don't delete** — preserve history.
-- **Survey before organizing** — use `board` and `stats` first.
-- **Research before implementing** — refine specs to avoid surprises.
-- **Verify before completing** — `pnpm typecheck`, `pnpm test`, `pnpm lint` must ALL pass.
-- Document trade-offs and decisions as they happen.
-- Out-of-scope discoveries become new specs, not scope creep.
-
-See detailed guidance in:
-- [references/workflow.md](./references/workflow.md)
-- [references/best-practices.md](./references/best-practices.md)
-- [references/examples.md](./references/examples.md)
-- [references/commands.md](./references/commands.md)
+### 2. Create
+
+Capture intent as a new, durable artifact.
+
+1. Run `leanspec create <short-name>` with every known field in a single call
+   (title, body, semantic fields like status/priority, tags, parent,
+   dependencies). Never create an empty item and then patch it.
+2. Write the body with:
+   - **Overview** — what problem this solves and why it matters.
+   - **Requirements** — a checklist of independently verifiable items.
+   - **Non-goals** — what's explicitly out of scope.
+   - **Acceptance criteria** — measurable definition of done.
+3. Link relationships as they emerge. Use the adapter's declared link types
+   (typically `parent` for hierarchy and `depends_on` for blockers — confirm
+   via `capabilities`).
+
+### 3. Refine
+
+Make the spec implementation-ready before coding starts.
+
+1. Locate files, modules, and APIs referenced in the spec; verify they exist.
+2. Find existing patterns to reuse; note concrete paths and function signatures
+   in the spec.
+3. Validate dependencies are available.
+4. Gate: no blocking unknowns; every checklist item is specific and actionable.
+
+### 4. Implement
+
+Execute against the refined spec.
+
+1. Read the spec (`leanspec view <id>`), including parent, children, and
+   dependencies.
+2. Transition the spec into its "work underway" state via
+   `leanspec update <id>` using the adapter's declared status value.
+3. Work the checklist in order; stay inside the scope boundaries; document
+   decisions and discoveries inside the spec as they happen.
+4. If you find out-of-scope work, create a **new** spec and link it rather
+   than expanding the current one.
+
+### 5. Verify
+
+Close the loop against reality, not status.
+
+1. Run the project's quality gates (tests, typecheck, lint, build).
+2. Re-read the spec's acceptance criteria and tick each one only if you can
+   point to the commit, test, or file that proves it.
+3. Transition the spec to its adapter-declared "done" state, and append a
+   short implementation note.
+4. If anything failed, stay in-progress, fix the cause, and re-run.
+
+## Relationship types
+
+Relationships are adapter-declared. Check `capabilities.link_types`. The two
+most common shapes:
+
+- **Parent / child** — an umbrella decomposed into child items. A child
+  doesn't make sense without its parent; the parent completes when all its
+  children do.
+- **Depends on** — a blocker. Both items are independent work; one just has
+  to ship first.
+
+**Decision flowchart:**
+
+1. Is item B part of item A's scope? → parent/child.
+2. Does item B just need item A finished first? → depends-on.
+3. Never use both for the same pair.
+
+**Litmus test:** "If item A didn't exist, would item B still make sense?"
+**No** → B is A's child. **Yes** → B depends on A.
+
+## Managing evolving work
+
+- **Content changes** — use `leanspec update --content` or edit the item body.
+- **Metadata changes** — use `leanspec update --set <key>=<value>` for
+  adapter-declared fields; the skill never writes raw frontmatter or YAML.
+- **Scope creep** — split. Create a sibling spec and link it; update the
+  original's non-goals to reference the split.
+- **Obsolete work** — transition to the adapter's "closed/archived" state
+  rather than deleting; history matters.
+
+## Context economy
+
+- Keep each item under ~2000 tokens. Split if larger.
+- Favour bullet lists over prose.
+- Use references to external docs rather than copying them.
+- Checklists are for actionable items only — plain lists for everything else.
+
+## Best practices — at a glance
+
+- **Never create items manually.** Always use `leanspec create`.
+- **Never edit raw metadata.** Use `leanspec update`.
+- **Always discover first.** Run `board` / `search` before `create`.
+- **Always pass every known field to `create`.** No empty-then-patch.
+- **Always verify before closing.** Tests, typecheck, lint, build.
+- **Trust the adapter's vocabulary.** Re-run `capabilities` if anything feels
+  ambiguous.
+
+## References
+
+- [references/adapters.md](./references/adapters.md) — how adapters work and
+  how to write your SOP on top of them.
+- [references/workflow.md](./references/workflow.md) — the five-phase workflow
+  with examples.
+- [references/commands.md](./references/commands.md) — CLI reference.
+- [references/best-practices.md](./references/best-practices.md) — detailed
+  patterns and anti-patterns.
+- [references/examples.md](./references/examples.md) — end-to-end scenarios
+  on markdown, GitHub Issues, and Azure DevOps backends.

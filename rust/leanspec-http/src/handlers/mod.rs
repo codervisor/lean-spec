@@ -2,6 +2,7 @@
 //!
 //! Route handlers for the HTTP API.
 
+mod adapter;
 mod capabilities;
 mod events;
 mod files;
@@ -11,6 +12,7 @@ mod local_projects;
 mod projects;
 mod specs;
 
+pub use adapter::*;
 pub use capabilities::*;
 pub use events::*;
 pub use files::*;

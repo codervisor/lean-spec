@@ -60,6 +60,11 @@ pub fn create_router(state: AppState) -> Router {
         .route("/health/ready", get(handlers::health_ready))
         // Server capabilities
         .route("/api/capabilities", get(handlers::get_capabilities))
+        // Adapter capabilities (per-project)
+        .route(
+            "/api/projects/{id}/adapter",
+            get(handlers::get_project_adapter_capabilities),
+        )
         // Project routes
         .route("/api/projects", get(handlers::list_projects))
         .route("/api/projects", post(handlers::add_project))

@@ -1,40 +1,35 @@
 //! # LeanSpec Core
 //!
-//! Core library for LeanSpec — a spec coding framework for AI-powered development.
+//! Core library for the LeanSpec spec-coding framework.
 //!
-//! - **Provider abstraction** (`SpecProvider` trait) for pluggable spec backends
-//! - Parsing and manipulating spec frontmatter
-//! - Validating spec structure and content
-//! - Computing dependency graphs between specs
-//! - Token counting for context economy
-//! - File system operations for spec management
+//! The public API is the [`adapters`] module: each adapter speaks its
+//! backend's native language (markdown files today; GitHub Issues, Azure
+//! DevOps, Jira, Linear in follow-ups) and exposes a uniform [`Adapter`]
+//! trait returning [`SpecItem`]s with dynamic, adapter-declared metadata.
 //!
-//! Currently supports markdown files as the default backend. Platform adapters
-//! (GitHub, ADO, Jira) are planned — see:
-//! <https://github.com/codervisor/lean-spec/issues/168>
+//! The other modules ([`parsers`], [`spec_ops`], [`validators`], [`compute`],
+//! [`search`], [`relationships`]) are the markdown adapter's internal
+//! machinery. They remain addressable for markdown-specific CLI commands
+//! (`backfill`, `compact`, `tokens`, …), but the public abstraction that
+//! consumers should build against is [`Adapter`].
 //!
 //! ## Example
 //!
 //! ```rust,no_run
-//! use leanspec_core::{SpecLoader, FrontmatterValidator};
+//! use leanspec_core::adapters::{AdapterRegistry, ListFilter};
 //!
-//! let loader = SpecLoader::new("./specs");
-//! let specs = loader.load_all().expect("Failed to load specs");
-//!
-//! let validator = FrontmatterValidator::new();
-//! for spec in &specs {
-//!     let result = validator.validate(spec);
-//!     if !result.is_valid() {
-//!         println!("Errors in {}: {:?}", spec.path, result.errors);
-//!     }
+//! let adapter = AdapterRegistry::default_adapter();
+//! let items = adapter.list(&ListFilter::default()).unwrap();
+//! for item in items {
+//!     println!("{}: {}", item.id, item.title);
 //! }
 //! ```
 
+pub mod adapters;
 pub mod compute;
 pub mod error;
 pub mod io;
 pub mod parsers;
-pub mod providers;
 pub mod relationships;
 pub mod search;
 pub mod spec_ops;
@@ -84,9 +79,15 @@ pub use search::{
     validate_search_query, SearchOptions, SearchQueryError, SearchResult,
 };
 
-// Re-export provider types
-pub use providers::registry::ProviderRegistry;
-pub use providers::{
-    CreateSpecRequest, ProviderCapabilities, ProviderConfig, ProviderError, SpecProvider,
-    UpdateSpecRequest,
+// Re-export adapter types — the new public abstraction after the pivot
+// described in https://github.com/codervisor/lean-spec/issues/168.
+//
+// Note: `SearchOptions` is exposed twice in the codebase — a legacy
+// markdown-specific one in `search::SearchOptions` and the adapter-level one.
+// The adapter version is re-exported under `AdapterSearchOptions` to keep the
+// two disambiguated while both exist during the pivot.
+pub use adapters::{
+    Adapter, AdapterCapabilities, AdapterConfig, AdapterError, AdapterRegistry, CreateRequest,
+    ItemLink, ListFilter, MetadataFieldSpec, MetadataKind, MetadataValue, SearchHit,
+    SearchOptions as AdapterSearchOptions, SemanticHint, SpecItem, UpdateRequest,
 };
