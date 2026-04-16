@@ -329,8 +329,7 @@ mod tests {
     #[test]
     fn test_query_error_type_is_publicly_usable() {
         let err: SearchQueryError = parse_query("AND")
-            .err()
-            .expect("Expected parse error for operator-only query");
+            .expect_err("Expected parse error for operator-only query");
         assert!(err.to_string().contains("Unexpected operator"));
     }
 }
