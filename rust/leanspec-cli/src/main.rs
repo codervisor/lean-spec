@@ -40,7 +40,10 @@ fn main() -> ExitCode {
         Commands::Board { group_by } => commands::board::run(&specs_dir, &group_by, &cli.output),
         Commands::Capabilities => {
             commands::capabilities::run(commands::capabilities::CapabilitiesParams {
-                specs_dir: specs_dir.clone(),
+                // Pass through only when the user explicitly overrode specs
+                // dir; otherwise the command resolves the adapter from the
+                // project's own configuration.
+                specs_dir: cli.specs_dir.clone(),
                 output_format: cli.output.clone(),
             })
         }

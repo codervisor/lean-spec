@@ -1,10 +1,18 @@
 # Command Reference
 
-The `leanspec` CLI is adapter-agnostic. For every command the agent should
-call, the **adapter's capabilities** (see
-[adapters.md](./adapters.md)) tell you which fields and values are legal. The
-CLI does not invent or require any field that the active adapter does not
-declare.
+The `leanspec` CLI is in the middle of a pivot (see
+[adapters.md](./adapters.md)): the **adapter abstraction** and the new
+`leanspec capabilities` command are in place, but most existing commands
+(`list`, `board`, `view`, `create`, `update`, `stats`, `gantt`, etc.) are
+still markdown-specific and use frontmatter-level vocabulary. Generalising
+them to go through the `Adapter` trait is a follow-up. In the meantime:
+
+- **Always call `leanspec capabilities` first.** It is fully adapter-aware
+  and returns the active adapter's fields, enum values, and link types.
+- When passing values to markdown-backed commands, use the values the
+  adapter's capabilities advertise.
+- A few commands (`backfill`, `compact`, `analyze`, `split`, `migrate`,
+  `tokens`) are inherently markdown-only and are noted as such below.
 
 Run `leanspec --help` or `leanspec <command> --help` for authoritative flag
 documentation.

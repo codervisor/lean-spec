@@ -3,8 +3,9 @@
 /**
  * A value carried in a [`SpecItem`]'s `metadata` map.
  *
- * This is deliberately small. The goal is to express arbitrary platform-native
- * fields without invoking JSON's full generality — adapters can stuff anything
- * exotic into [`SpecItem::raw`].
+ * Adjacently tagged (`{"kind": "...", "value": ...}`) so the JSON wire
+ * format round-trips unambiguously — otherwise a `Timestamp` (serialized
+ * as an ISO-8601 string) would be indistinguishable from a plain `String`
+ * on deserialize.
  */
-export type MetadataValue = null | string | boolean | number | Array<string> | string;
+export type MetadataValue = { "kind": "null" } | { "kind": "string", "value": string } | { "kind": "bool", "value": boolean } | { "kind": "number", "value": number } | { "kind": "string_list", "value": Array<string> } | { "kind": "timestamp", "value": string };
