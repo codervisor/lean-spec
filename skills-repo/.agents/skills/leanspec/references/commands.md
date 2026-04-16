@@ -1,6 +1,20 @@
 # Command Reference
 
-Accurate reference for LeanSpec CLI commands. For details, run `leanspec --help` or `leanspec <command> --help`.
+The `leanspec` CLI is adapter-agnostic. For every command the agent should
+call, the **adapter's capabilities** (see
+[adapters.md](./adapters.md)) tell you which fields and values are legal. The
+CLI does not invent or require any field that the active adapter does not
+declare.
+
+Run `leanspec --help` or `leanspec <command> --help` for authoritative flag
+documentation.
+
+## Session start — always
+
+```bash
+leanspec capabilities -o json   # discover the adapter's vocabulary
+leanspec board                  # see the current project state
+```
 
 ## Discovery
 
@@ -10,147 +24,136 @@ leanspec list
 leanspec list --hierarchy
 leanspec search "query"
 leanspec view <spec>
-leanspec files <spec>
 ```
 
-## Spec Lifecycle
+## Create
 
-### Create
 ```bash
-leanspec create <name>
-leanspec create <name> --title "Human Title"
-leanspec create <name> --template default
-leanspec create <name> --status planned
-leanspec create <name> --priority high
-leanspec create <name> --tags api,backend
-leanspec create <name> --parent 250
-leanspec create <name> --depends-on 210 211
+leanspec create <slug>
+leanspec create <slug> --title "Human readable title"
+leanspec create <slug> --content "<full markdown body>"
 ```
 
-### Update Metadata
+Pass every known field in the same call. Field keys and allowed values come
+from `leanspec capabilities` — never hard-code them. When the adapter is
+markdown, the following flags are the common shorthand:
+
 ```bash
-leanspec update <spec> --status in-progress
-leanspec update <spec> --priority high
-leanspec update <spec> --assignee "Name"
-leanspec update <spec> --add-tags api,backend
-leanspec update <spec> --remove-tags old-tag
-leanspec update <spec> --status complete --force
+leanspec create <slug> --status <adapter-status-value>
+leanspec create <slug> --priority <adapter-priority-value>
+leanspec create <slug> --tags api,backend
+leanspec create <slug> --parent <parent-id>
+leanspec create <slug> --depends-on <id-a> <id-b>
+leanspec create <slug> --assignee "Name"
 ```
 
-### Archive
+## Update
+
 ```bash
-leanspec archive <spec>
-leanspec archive 001-feature-a 002-feature-b
-leanspec archive <spec> --dry-run
+leanspec update <id> --status <adapter-status-value>
+leanspec update <id> --priority <adapter-priority-value>
+leanspec update <id> --assignee "Name"
+leanspec update <id> --add-tags api,backend
+leanspec update <id> --remove-tags legacy
 ```
+
+## Close / archive
+
+```bash
+leanspec archive <id>
+leanspec archive <id-a> <id-b>
+leanspec archive <id> --dry-run
+```
+
+Adapters differ: markdown transitions the item to its archived state;
+future GitHub/ADO/Jira adapters will close the issue/work item.
 
 ## Relationships
 
-Use `rel` as the primary relationship command.
-
 ```bash
-# View relationships for one spec
-leanspec rel <spec>
-
-# Parent/child relationships
+leanspec rel <id>
 leanspec rel add <child> --parent <parent>
 leanspec rel add <parent> --child <child-a> <child-b>
 leanspec rel rm <child> --parent
+leanspec rel add <id> --depends-on <other>
+leanspec rel rm <id> --depends-on <other>
+
 leanspec children <parent>
-
-# Dependencies
-leanspec rel add <spec> --depends-on <other-spec>
-leanspec rel rm <spec> --depends-on <other-spec>
-
-# Dependency graph traversal
-leanspec deps <spec>
-leanspec deps <spec> --upstream
-leanspec deps <spec> --downstream
-leanspec deps <spec> --depth 5
+leanspec deps <id>
+leanspec deps <id> --upstream
+leanspec deps <id> --downstream
+leanspec deps <id> --depth 5
 ```
 
-## Validation & Analysis
+The legal link-type names come from `capabilities.link_types` — if the
+adapter doesn't declare `depends_on`, for instance, that command will error.
+
+## Validation & project overview
 
 ```bash
 leanspec validate
-leanspec validate <spec>
-leanspec validate --check-deps
+leanspec validate <id>
 leanspec validate --strict
 leanspec validate --warnings-only
 
-leanspec tokens
-leanspec tokens <spec>
-leanspec tokens <file-path>
-leanspec tokens <spec> --verbose
-
-leanspec analyze <spec>
-```
-
-## Spec File Management
-
-```bash
-leanspec split <spec> --output "DESIGN.md:100-250"
-leanspec split <spec> --output "API.md:251-400" --update-refs
-leanspec split <spec> --output "TESTING.md:401-520" --dry-run
-
-leanspec compact <spec> --remove "100-250"
-leanspec compact <spec> --remove "100-250" --remove "300-400"
-leanspec compact <spec> --remove "100-250" --dry-run
-```
-
-## Project Overview
-
-```bash
-leanspec board --group-by status
-leanspec board --group-by parent
 leanspec stats
 leanspec stats --detailed
 leanspec timeline --months 6
 leanspec gantt
+leanspec board --group-by status
+leanspec board --group-by parent
 ```
 
 ## Utilities
 
 ```bash
-leanspec check
+leanspec check            # detect id/sequence conflicts
 leanspec check --fix
-leanspec open <spec>
-leanspec templates --action list
-leanspec backfill --dry-run
-leanspec backfill --force --assignee --transitions
-leanspec backfill 042 043
+leanspec open <id>        # open in editor (markdown adapter)
 ```
 
-## Tooling & Environment
+## Markdown-only commands
+
+These operate on local files and only run against the markdown adapter.
+They error cleanly on any other adapter.
+
+```bash
+leanspec tokens
+leanspec tokens <id>
+leanspec tokens <id> --verbose
+
+leanspec analyze <id>
+
+leanspec split <id> --output "DESIGN.md:100-250"
+leanspec compact <id> --remove "100-250"
+
+leanspec backfill --dry-run
+leanspec backfill --force --assignee --transitions
+
+leanspec migrate <input-path>
+```
+
+## Tooling & environment
 
 ```bash
 leanspec init
 leanspec init --yes
-leanspec init --skill
 
-leanspec mcp
 leanspec ui --port 3000
 leanspec ui --no-open
-
-leanspec migrate <input-path>
-leanspec migrate <input-path> --dry-run
-leanspec migrate-archived --dry-run
-
-leanspec examples
-leanspec agent run <spec>
-leanspec session list
 ```
 
-## Output Format
+## Output
 
-Most commands support:
+Every command supports text and JSON:
+
 ```bash
-leanspec <command> ... -o text
-leanspec <command> ... -o json
+leanspec <command> -o text     # default
+leanspec <command> -o json     # parseable
 ```
 
 ## Notes
 
-- CLI uses kebab-case flags (`--check-deps`, `--group-by`).
-- Prefer `rel` for relationship updates; use `children` and `deps` for focused read views.
-- `files` supports `--size` (there is no `--type` flag).
+- Flags are kebab-case (`--check-deps`, `--group-by`).
+- Use `rel` to mutate relationships; `children` and `deps` are read-only views.
+- `files` supports `--size`; there is no `--type` flag.

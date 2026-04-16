@@ -38,6 +38,12 @@ fn main() -> ExitCode {
             &cli.output,
         ),
         Commands::Board { group_by } => commands::board::run(&specs_dir, &group_by, &cli.output),
+        Commands::Capabilities => {
+            commands::capabilities::run(commands::capabilities::CapabilitiesParams {
+                specs_dir: specs_dir.clone(),
+                output_format: cli.output.clone(),
+            })
+        }
         Commands::Check { fix } => commands::check::run(&specs_dir, fix, &cli.output),
         Commands::Children { spec } => commands::children::run(&specs_dir, &spec, &cli.output),
         Commands::Compact {

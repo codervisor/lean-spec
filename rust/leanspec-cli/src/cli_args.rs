@@ -81,6 +81,13 @@ pub(crate) enum Commands {
         group_by: String,
     },
 
+    /// Print the active adapter's capabilities and metadata vocabulary.
+    ///
+    /// Agents should call this at session start to discover which fields and
+    /// values the backend supports instead of assuming markdown-specific
+    /// conventions.
+    Capabilities,
+
     /// Check for sequence conflicts
     Check {
         /// Attempt to fix conflicts
