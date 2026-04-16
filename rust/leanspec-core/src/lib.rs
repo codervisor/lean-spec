@@ -41,26 +41,11 @@ pub mod spec_ops;
 pub mod types;
 pub mod validators;
 
-#[cfg(any(feature = "sessions", feature = "storage"))]
-pub mod db;
-
-#[cfg(feature = "sessions")]
-pub mod sessions;
-
 #[cfg(feature = "storage")]
 pub mod storage;
 
 #[cfg(feature = "git")]
 pub mod git;
-
-#[cfg(feature = "ai")]
-pub mod ai;
-
-#[cfg(feature = "ai")]
-pub mod ai_native;
-
-#[cfg(feature = "ai")]
-pub mod models_registry;
 
 // Re-exports for convenience
 pub use compute::{

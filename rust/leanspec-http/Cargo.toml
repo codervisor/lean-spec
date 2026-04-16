@@ -27,13 +27,12 @@ tower = "0.5.2"
 tower-http = {version = "0.6.8", features = ["cors", "trace", "fs"]}
 
 # Async runtime
+async-stream = "0.3"
 tokio.workspace = true
 
 # Serialization
-async-stream = "0.3"
 bytes = "1.7"
 futures-util = "0.3"
-reqwest = {version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"]}
 serde.workspace = true
 serde_json.workspace = true
 ts-rs = {version = "10.1", features = ["chrono-impl", "no-serde-warnings"]}
@@ -66,11 +65,6 @@ webbrowser = "1.0"
 
 # YAML parsing for config migration
 serde_yaml.workspace = true
-
-[features]
-default = ["ai"]
-# AI feature enables chat streaming and model registry routes
-ai = ["leanspec-core/ai"]
 
 [dev-dependencies]
 reqwest = {version = "0.12", features = ["json"]}

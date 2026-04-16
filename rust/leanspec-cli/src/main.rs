@@ -7,7 +7,7 @@ use clap::Parser;
 use colored::Colorize;
 use std::process::ExitCode;
 
-use crate::cli_args::{Cli, Commands, GitSubcommand, RunnerSubcommand, SessionSubcommand};
+use crate::cli_args::{Cli, Commands, GitSubcommand};
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
@@ -17,23 +17,6 @@ fn main() -> ExitCode {
     let specs_dir = cli.specs_dir.clone().unwrap_or_else(|| "specs".to_string());
 
     let result = match cli.command {
-        Commands::Agent {
-            action,
-            specs,
-            agent,
-            parallel,
-            no_status_update,
-            dry_run,
-        } => commands::agent::run(
-            &specs_dir,
-            &action,
-            specs,
-            agent,
-            parallel,
-            no_status_update,
-            dry_run,
-            &cli.output,
-        ),
         Commands::Analyze { spec } => commands::analyze::run(&specs_dir, &spec, &cli.output),
         Commands::Archive { specs, dry_run } => commands::archive::run(&specs_dir, &specs, dry_run),
         Commands::Backfill {
@@ -124,64 +107,8 @@ fn main() -> ExitCode {
             commands::git_repo::run(cmd, &cli.output)
         }
         Commands::Gantt { status } => commands::gantt::run(&specs_dir, status, &cli.output),
-        Commands::Init {
-            yes,
-            example,
-            no_ai_tools,
-            skill,
-            skill_github,
-            skill_claude,
-            skill_cursor,
-            skill_codex,
-            skill_gemini,
-            skill_vscode,
-            skill_user,
-            no_skill,
-        } => commands::init::run(
-            &specs_dir,
-            commands::init::InitOptions {
-                yes,
-                example,
-                no_ai_tools,
-                skill,
-                skill_github,
-                skill_claude,
-                skill_cursor,
-                skill_codex,
-                skill_gemini,
-                skill_vscode,
-                skill_user,
-                no_skill,
-            },
-        ),
-        Commands::Run {
-            prompt,
-            spec,
-            runner,
-            model,
-            dry_run,
-            acp,
-            worktree,
-            parallel,
-            merge_strategy,
-        } => {
-            let project_path = std::env::current_dir()
-                .map_err(|e| Box::<dyn std::error::Error>::from(e.to_string()))
-                .and_then(|path| {
-                    commands::session::run_direct(commands::session::RunDirectRequest {
-                        project_path: path.to_string_lossy().into_owned(),
-                        specs: spec,
-                        prompt,
-                        runner,
-                        model,
-                        dry_run,
-                        acp,
-                        worktree,
-                        parallel,
-                        merge_strategy,
-                    })
-                });
-            project_path
+        Commands::Init { yes, example } => {
+            commands::init::run(&specs_dir, commands::init::InitOptions { yes, example })
         }
         Commands::List {
             status,
@@ -315,130 +242,6 @@ fn main() -> ExitCode {
             warnings_only,
             &cli.output,
         ),
-        Commands::Session { action } => {
-            use commands::session::SessionCommand as Cmd;
-            let cmd = match action {
-                SessionSubcommand::Create {
-                    project_path,
-                    spec,
-                    prompt,
-                    runner,
-                    model,
-                    acp,
-                    worktree,
-                    merge_strategy,
-                    mode,
-                } => Cmd::Create {
-                    project_path,
-                    specs: spec,
-                    prompt,
-                    runner,
-                    model,
-                    acp,
-                    worktree,
-                    merge_strategy,
-                    mode,
-                },
-                SessionSubcommand::Run {
-                    project_path,
-                    spec,
-                    prompt,
-                    runner,
-                    model,
-                    acp,
-                    worktree,
-                    parallel,
-                    merge_strategy,
-                    mode,
-                } => Cmd::Run {
-                    project_path,
-                    specs: spec,
-                    prompt,
-                    runner,
-                    model,
-                    acp,
-                    worktree,
-                    parallel,
-                    merge_strategy,
-                    mode,
-                },
-                SessionSubcommand::Start { session_id } => Cmd::Start { session_id },
-                SessionSubcommand::Pause { session_id } => Cmd::Pause { session_id },
-                SessionSubcommand::Resume { session_id } => Cmd::Resume { session_id },
-                SessionSubcommand::Stop { session_id } => Cmd::Stop { session_id },
-                SessionSubcommand::Archive {
-                    session_id,
-                    output_dir,
-                    compress,
-                } => Cmd::Archive {
-                    session_id,
-                    output_dir,
-                    compress,
-                },
-                SessionSubcommand::RotateLogs { session_id, keep } => {
-                    Cmd::RotateLogs { session_id, keep }
-                }
-                SessionSubcommand::Delete { session_id } => Cmd::Delete { session_id },
-                SessionSubcommand::View { session_id } => Cmd::View { session_id },
-                SessionSubcommand::List {
-                    spec,
-                    status,
-                    runner,
-                } => Cmd::List {
-                    spec,
-                    status,
-                    runner,
-                },
-                SessionSubcommand::Logs { session_id } => Cmd::Logs { session_id },
-                SessionSubcommand::Worktrees { all } => Cmd::Worktrees { all },
-                SessionSubcommand::Merge {
-                    session_id,
-                    strategy,
-                    resolve,
-                } => Cmd::Merge {
-                    session_id,
-                    strategy,
-                    resolve,
-                },
-                SessionSubcommand::Cleanup {
-                    session_id,
-                    keep_branch,
-                } => Cmd::Cleanup {
-                    session_id,
-                    keep_branch,
-                },
-                SessionSubcommand::Gc => Cmd::Gc,
-            };
-            commands::session::run(cmd)
-        }
-        Commands::Runner { action } => {
-            use commands::runner::RunnerCommand as Cmd;
-            let cmd = match action {
-                RunnerSubcommand::List { project_path } => Cmd::List { project_path },
-                RunnerSubcommand::Show {
-                    runner_id,
-                    project_path,
-                } => Cmd::Show {
-                    runner_id,
-                    project_path,
-                },
-                RunnerSubcommand::Validate {
-                    runner_id,
-                    project_path,
-                } => Cmd::Validate {
-                    runner_id,
-                    project_path,
-                },
-                RunnerSubcommand::Config {
-                    global,
-                    project_path,
-                } => Cmd::Config {
-                    global,
-                    project_path,
-                },
-            };
-            commands::runner::run(cmd)
-        }
         Commands::View { spec, raw } => commands::view::run(&specs_dir, &spec, raw, &cli.output),
     };
 

@@ -147,13 +147,6 @@ impl From<serde_yaml::Error> for CoreError {
     }
 }
 
-#[cfg(any(feature = "sessions", feature = "storage"))]
-impl From<sqlx::Error> for CoreError {
-    fn from(e: sqlx::Error) -> Self {
-        CoreError::DatabaseError(e.to_string())
-    }
-}
-
 /// Result type alias for core operations
 pub type CoreResult<T> = Result<T, CoreError>;
 

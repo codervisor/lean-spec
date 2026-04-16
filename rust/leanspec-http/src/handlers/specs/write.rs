@@ -3,7 +3,7 @@
 #![allow(clippy::result_large_err)]
 
 use axum::extract::{Path, State};
-use axum::http::{HeaderMap, StatusCode};
+use axum::http::StatusCode;
 use axum::Json;
 use std::collections::HashMap;
 use std::fs;
@@ -23,7 +23,6 @@ use leanspec_core::{
 
 use crate::error::{ApiError, ApiResult};
 use crate::state::AppState;
-use crate::sync_state::{machine_id_from_headers, PendingCommand, SyncCommand};
 
 use crate::types::{
     BatchMetadataRequest, BatchMetadataResponse, ChecklistToggleRequest, ChecklistToggleResponse,
@@ -90,18 +89,8 @@ fn rebuild_with_frontmatter(
 pub async fn create_project_spec(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
-    headers: HeaderMap,
     Json(request): Json<CreateSpecRequest>,
 ) -> ApiResult<Json<SpecDetail>> {
-    if machine_id_from_headers(&headers).is_some() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ApiError::invalid_request(
-                "Spec creation not supported for synced machines",
-            )),
-        ));
-    }
-
     let (loader, project) = get_spec_loader(&state, &project_id).await?;
     let spec_name = request.name.trim();
     if spec_name.is_empty() {
@@ -201,18 +190,8 @@ pub async fn create_project_spec(
 pub async fn update_project_spec_raw(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
-    headers: HeaderMap,
     Json(request): Json<SpecRawUpdateRequest>,
 ) -> ApiResult<Json<SpecRawResponse>> {
-    if machine_id_from_headers(&headers).is_some() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ApiError::invalid_request(
-                "Raw spec updates not supported for synced machines",
-            )),
-        ));
-    }
-
     let (loader, _project) = get_spec_loader(&state, &project_id).await?;
     let spec = loader.load(&spec_id).map_err(|e| {
         (
@@ -266,18 +245,8 @@ pub async fn update_project_spec_raw(
 pub async fn toggle_project_spec_checklist(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
-    headers: HeaderMap,
     Json(request): Json<ChecklistToggleRequest>,
 ) -> ApiResult<Json<ChecklistToggleResponse>> {
-    if machine_id_from_headers(&headers).is_some() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ApiError::invalid_request(
-                "Checklist toggle not supported for synced machines",
-            )),
-        ));
-    }
-
     let (loader, _project) = get_spec_loader(&state, &project_id).await?;
     let spec = loader.load(&spec_id).map_err(|e| {
         (
@@ -385,18 +354,8 @@ pub async fn toggle_project_spec_checklist(
 pub async fn update_project_subspec_raw(
     State(state): State<AppState>,
     Path((project_id, spec_id, file)): Path<(String, String, String)>,
-    headers: HeaderMap,
     Json(request): Json<SpecRawUpdateRequest>,
 ) -> ApiResult<Json<SpecRawResponse>> {
-    if machine_id_from_headers(&headers).is_some() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ApiError::invalid_request(
-                "Raw sub-spec updates not supported for synced machines",
-            )),
-        ));
-    }
-
     if file.contains('/') || file.contains('\\') {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -470,139 +429,8 @@ pub async fn update_project_subspec_raw(
 pub async fn update_project_metadata(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
-    headers: HeaderMap,
     Json(updates): Json<MetadataUpdate>,
 ) -> ApiResult<Json<crate::types::UpdateMetadataResponse>> {
-    if let Some(machine_id) = machine_id_from_headers(&headers) {
-        let mut sync_state = state.sync_state.write().await;
-        let is_online = sync_state.is_machine_online(&machine_id);
-        let sender = sync_state.connections.get(&machine_id).cloned();
-
-        let (command, frontmatter) = {
-            let machine = sync_state
-                .persistent
-                .machines
-                .get_mut(&machine_id)
-                .ok_or_else(|| {
-                    (
-                        StatusCode::NOT_FOUND,
-                        Json(ApiError::invalid_request("Machine not found")),
-                    )
-                })?;
-
-            let project = machine.projects.get_mut(&project_id).ok_or_else(|| {
-                (
-                    StatusCode::NOT_FOUND,
-                    Json(ApiError::project_not_found(&project_id)),
-                )
-            })?;
-
-            let spec = project.specs.get(&spec_id).ok_or_else(|| {
-                (
-                    StatusCode::NOT_FOUND,
-                    Json(ApiError::spec_not_found(&spec_id)),
-                )
-            })?;
-
-            if !is_online {
-                return Err((
-                    StatusCode::SERVICE_UNAVAILABLE,
-                    Json(ApiError::invalid_request("Machine unavailable")),
-                ));
-            }
-
-            if let Some(expected_hash) = &updates.expected_content_hash {
-                if expected_hash != &spec.content_hash {
-                    return Err((
-                        StatusCode::CONFLICT,
-                        Json(
-                            ApiError::invalid_request("Content hash mismatch")
-                                .with_details(spec.content_hash.clone()),
-                        ),
-                    ));
-                }
-            }
-
-            if spec.status == "draft"
-                && matches!(
-                    updates.status.as_deref(),
-                    Some("in-progress") | Some("complete")
-                )
-                && !updates.force.unwrap_or(false)
-            {
-                return Err((
-                    StatusCode::BAD_REQUEST,
-                    Json(ApiError::invalid_request(
-                        "Cannot skip 'planned' stage. Use force to override.",
-                    )),
-                ));
-            }
-
-            let command = PendingCommand {
-                id: uuid::Uuid::new_v4().to_string(),
-                command: SyncCommand::ApplyMetadata {
-                    project_id: project_id.clone(),
-                    spec_name: spec_id.clone(),
-                    status: updates.status.clone(),
-                    priority: updates.priority.clone(),
-                    tags: updates.tags.clone(),
-                    add_depends_on: updates.add_depends_on.clone(),
-                    remove_depends_on: updates.remove_depends_on.clone(),
-                    parent: updates.parent.clone(),
-                    expected_content_hash: updates.expected_content_hash.clone(),
-                },
-                created_at: chrono::Utc::now(),
-            };
-
-            machine.pending_commands.push(command.clone());
-
-            let frontmatter = crate::types::FrontmatterResponse {
-                status: spec.status.clone(),
-                created: spec
-                    .created_at
-                    .map(|ts| ts.date_naive().to_string())
-                    .unwrap_or_default(),
-                priority: spec.priority.clone(),
-                tags: spec.tags.clone(),
-                depends_on: spec.depends_on.clone(),
-                parent: spec.parent.clone(),
-                assignee: spec.assignee.clone(),
-                created_at: spec.created_at,
-                updated_at: spec.updated_at,
-                completed_at: spec.completed_at,
-            };
-
-            (command, frontmatter)
-        };
-
-        if let Some(sender) = sender {
-            let _ = sender.send(axum::extract::ws::Message::Text(
-                serde_json::to_string(&command).unwrap_or_default().into(),
-            ));
-        }
-
-        sync_state
-            .persistent
-            .audit_log
-            .push(crate::sync_state::AuditLogEntry {
-                id: uuid::Uuid::new_v4().to_string(),
-                machine_id: machine_id.clone(),
-                project_id: Some(project_id.clone()),
-                spec_name: Some(spec_id.clone()),
-                action: "apply_metadata".to_string(),
-                status: "queued".to_string(),
-                message: None,
-                created_at: chrono::Utc::now(),
-            });
-        sync_state.save();
-
-        return Ok(Json(crate::types::UpdateMetadataResponse {
-            success: true,
-            spec_id: spec_id.clone(),
-            frontmatter,
-        }));
-    }
-
     let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     // Verify spec exists
@@ -809,18 +637,8 @@ pub async fn update_project_metadata(
 pub async fn batch_spec_metadata(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
-    headers: HeaderMap,
     Json(request): Json<BatchMetadataRequest>,
 ) -> ApiResult<Json<BatchMetadataResponse>> {
-    if machine_id_from_headers(&headers).is_some() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ApiError::invalid_request(
-                "Batch metadata not supported for synced machines",
-            )),
-        ));
-    }
-
     let (loader, _project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {

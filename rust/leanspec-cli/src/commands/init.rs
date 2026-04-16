@@ -1,5 +1,5 @@
 use colored::Colorize;
-use dialoguer::{Confirm, Input, MultiSelect};
+use dialoguer::{Confirm, Input};
 use serde_json::Value;
 use std::error::Error;
 use std::fs;
@@ -8,17 +8,8 @@ use walkdir::WalkDir;
 
 use crate::commands::package_manager::detect_package_manager;
 
-mod ai_tools;
-use crate::commands::skill;
-use ai_tools::{
-    create_symlinks, default_symlink_selection, detect_ai_tools, symlink_capable_runners,
-    DetectionResult as AiDetection,
-};
-use leanspec_core::sessions::RunnerRegistry;
-
 // Embedded AGENTS.md templates
 const AGENTS_MD_TEMPLATE_DETAILED: &str = include_str!("../../templates/AGENTS.md");
-const AGENTS_MD_TEMPLATE_WITH_SKILL: &str = include_str!("../../templates/AGENTS-with-skill.md");
 
 // Embedded spec template
 const SPEC_TEMPLATE: &str = include_str!("../../templates/spec-template.md");
@@ -26,16 +17,6 @@ const SPEC_TEMPLATE: &str = include_str!("../../templates/spec-template.md");
 pub struct InitOptions {
     pub yes: bool,
     pub example: Option<String>,
-    pub no_ai_tools: bool,
-    pub skill: bool,
-    pub skill_github: bool,
-    pub skill_claude: bool,
-    pub skill_cursor: bool,
-    pub skill_codex: bool,
-    pub skill_gemini: bool,
-    pub skill_vscode: bool,
-    pub skill_user: bool,
-    pub no_skill: bool,
 }
 
 pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> {
@@ -93,11 +74,6 @@ fn run_standard_init(specs_dir: &str, options: InitOptions) -> Result<(), Box<dy
         }
     }
 
-    // Detect AI tools first (needed for skills and symlinks)
-    let registry =
-        RunnerRegistry::load(&root).map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
-    let ai_detections = detect_ai_tools(&registry, None);
-
     let draft_status_enabled = if options.yes {
         false
     } else {
@@ -107,29 +83,22 @@ fn run_standard_init(specs_dir: &str, options: InitOptions) -> Result<(), Box<dy
             .interact()?
     };
 
-    // Determine if skills will be installed (before actual installation)
-    let will_install_skills = decide_skill_install(&options)?;
-
     // Core filesystem scaffolding
     scaffold_specs(&root, &specs_path)?;
     let config_dir = root.join(".lean-spec");
     scaffold_config(&config_dir, draft_status_enabled)?;
     scaffold_templates(&config_dir)?;
-    scaffold_agents(&root, &project_name, will_install_skills)?;
-
-    // AI tool onboarding
-    handle_ai_symlinks(&root, &registry, &ai_detections, &options)?;
-    handle_skills_install(will_install_skills, &ai_detections)?;
+    scaffold_agents(&root, &project_name)?;
 
     println!();
-    println!("{}", "LeanSpec initialized successfully! 🎉".green().bold());
+    println!("{}", "LeanSpec initialized successfully!".green().bold());
     println!();
     println!("Next steps:");
     println!(
         "  1. Create your first spec: {}",
-        "lean-spec create my-feature".cyan()
+        "leanspec create my-feature".cyan()
     );
-    println!("  2. View the board: {}", "lean-spec board".cyan());
+    println!("  2. View the board: {}", "leanspec board".cyan());
     println!("  3. Read the docs: {}", "https://leanspec.dev".cyan());
 
     Ok(())
@@ -137,7 +106,7 @@ fn run_standard_init(specs_dir: &str, options: InitOptions) -> Result<(), Box<dy
 
 fn scaffold_example(
     specs_dir: &str,
-    options: &InitOptions,
+    _options: &InitOptions,
     example_name: &str,
 ) -> Result<(), Box<dyn Error>> {
     let root = std::env::current_dir()?;
@@ -168,16 +137,6 @@ fn scaffold_example(
         InitOptions {
             yes: true,
             example: None,
-            no_ai_tools: options.no_ai_tools,
-            skill: options.skill,
-            skill_github: options.skill_github,
-            skill_claude: options.skill_claude,
-            skill_cursor: options.skill_cursor,
-            skill_codex: options.skill_codex,
-            skill_gemini: options.skill_gemini,
-            skill_vscode: options.skill_vscode,
-            skill_user: options.skill_user,
-            no_skill: options.no_skill,
         },
     );
     std::env::set_current_dir(&initial_dir)?;
@@ -218,7 +177,6 @@ fn resolve_example_run_command(target_dir: &Path) -> Option<String> {
     let json: Value = serde_json::from_str(&content).ok()?;
     let scripts = json.get("scripts")?.as_object()?;
 
-    // prefer start scripts since they map to production-like entry points.
     if scripts.contains_key("start") {
         return Some("start".to_string());
     }
@@ -283,16 +241,16 @@ This directory contains LeanSpec specifications for this project.
 
 ```bash
 # Create a new spec
-lean-spec create my-feature
+leanspec create my-feature
 
 # List all specs
-lean-spec list
+leanspec list
 
 # View the board
-lean-spec board
+leanspec board
 
 # Validate specs
-lean-spec validate
+leanspec validate
 ```
 
 ## Structure
@@ -310,7 +268,7 @@ Each spec lives in a numbered directory with a `README.md` file:
 
 - `draft` - Being authored or refined
 - `planned` - Not yet started
-- `in-progress` - Currently being worked on  
+- `in-progress` - Currently being worked on
 - `complete` - Finished
 - `archived` - No longer relevant
 
@@ -369,7 +327,6 @@ fn ensure_empty_directory(target_dir: &Path) -> Result<(), Box<dyn Error>> {
                     .file_name()
                     .to_str()
                     .map(|name| name != ".git")
-                    // Treat non-UTF-8 names as real entries that prevent an empty directory.
                     .unwrap_or(true)
             })
             .peekable();
@@ -454,214 +411,14 @@ fn scaffold_templates(config_dir: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn scaffold_agents(
-    root: &Path,
-    project_name: &str,
-    skills_installed: bool,
-) -> Result<(), Box<dyn Error>> {
+fn scaffold_agents(root: &Path, project_name: &str) -> Result<(), Box<dyn Error>> {
     let agents_path = root.join("AGENTS.md");
     if !agents_path.exists() {
-        // Use with-skill template when skills are installed (SKILL.md provides SDD workflow)
-        let template = if skills_installed {
-            AGENTS_MD_TEMPLATE_WITH_SKILL
-        } else {
-            AGENTS_MD_TEMPLATE_DETAILED
-        };
-        let agents_content = template.replace("{project_name}", project_name);
+        let agents_content = AGENTS_MD_TEMPLATE_DETAILED.replace("{project_name}", project_name);
         fs::write(&agents_path, agents_content)?;
-        let msg = if skills_installed {
-            "Created AGENTS.md (SKILL.md provides SDD workflow)"
-        } else {
-            "Created AGENTS.md"
-        };
-        println!("{} {}", "✓".green(), msg);
+        println!("{} Created AGENTS.md", "✓".green());
     } else {
         println!("{} AGENTS.md already exists (preserved)", "✓".cyan());
     }
     Ok(())
-}
-
-fn handle_ai_symlinks(
-    root: &Path,
-    registry: &RunnerRegistry,
-    detections: &[AiDetection],
-    options: &InitOptions,
-) -> Result<(), Box<dyn Error>> {
-    if options.no_ai_tools {
-        return Ok(());
-    }
-
-    let defaults = default_symlink_selection(detections);
-    let symlink_candidates = symlink_capable_runners(registry);
-    let default_ids: std::collections::HashSet<String> = defaults.into_iter().collect();
-
-    let selected_symlinks = if options.yes {
-        symlink_candidates
-            .iter()
-            .filter(|runner| default_ids.contains(&runner.id))
-            .cloned()
-            .collect()
-    } else {
-        print_ai_detection(detections);
-
-        if symlink_candidates.is_empty() {
-            // No symlink-capable tools available, skip prompt
-            vec![]
-        } else {
-            let labels: Vec<String> = symlink_candidates
-                .iter()
-                .map(|runner| {
-                    let file = runner.symlink_file.as_deref().unwrap_or("AGENTS.md");
-                    format!("{} ({})", file, runner.display_name())
-                })
-                .collect();
-
-            let defaults_mask: Vec<bool> = symlink_candidates
-                .iter()
-                .map(|runner| default_ids.contains(&runner.id))
-                .collect();
-
-            let selected_indexes = MultiSelect::new()
-                .with_prompt("Create symlinks for AI tools?")
-                .items(&labels)
-                .defaults(&defaults_mask)
-                .interact()?;
-
-            selected_indexes
-                .into_iter()
-                .map(|i| symlink_candidates[i].clone())
-                .collect()
-        }
-    };
-
-    if selected_symlinks.is_empty() {
-        return Ok(());
-    }
-
-    let results = create_symlinks(root, &selected_symlinks);
-    for result in results {
-        if result.created {
-            if let Some(err) = result.error {
-                println!(
-                    "{} {} ({}): {}",
-                    "✓".green(),
-                    result.file,
-                    "copy".yellow(),
-                    err
-                );
-            } else {
-                println!("{} Created {} → AGENTS.md", "✓".green(), result.file);
-            }
-        } else if result.skipped {
-            println!("{} {} already exists (skipped)", "•".cyan(), result.file);
-        } else if let Some(err) = result.error {
-            println!("{} Failed to create {}: {}", "✗".red(), result.file, err);
-        }
-    }
-
-    Ok(())
-}
-
-/// Determines if skills will be installed based on options and detections
-fn decide_skill_install(options: &InitOptions) -> Result<bool, Box<dyn Error>> {
-    if options.no_skill {
-        return Ok(false);
-    }
-
-    let location_flags = options.skill_github
-        || options.skill_claude
-        || options.skill_cursor
-        || options.skill_codex
-        || options.skill_gemini
-        || options.skill_vscode
-        || options.skill_user;
-
-    if location_flags {
-        println!(
-            "{} Skill location flags are ignored when using skills.sh.",
-            "⚠".yellow()
-        );
-    }
-
-    if options.skill || location_flags {
-        return Ok(true);
-    }
-
-    if options.yes {
-        return Ok(true);
-    }
-
-    let confirm = Confirm::new()
-        .with_prompt("Install LeanSpec agent skills? (recommended)")
-        .default(true)
-        .interact()?;
-
-    Ok(confirm)
-}
-
-// Use the shared mapping from skill module
-use crate::commands::skill::runner_to_skills_agent;
-
-fn handle_skills_install(
-    install_skills: bool,
-    detections: &[AiDetection],
-) -> Result<(), Box<dyn Error>> {
-    if !install_skills {
-        return Ok(());
-    }
-
-    // Convert detected AI tools to skills.sh agent names
-    let agents: Vec<String> = detections
-        .iter()
-        .filter(|d| d.detected)
-        .filter_map(|d| runner_to_skills_agent(&d.runner.id))
-        .map(|s| s.to_string())
-        .collect();
-
-    println!("\n{}", "Installing agent skills...".cyan());
-    if !agents.is_empty() {
-        println!(
-            "{} Installing to detected tools: {}",
-            "•".cyan(),
-            agents.join(", ")
-        );
-    }
-
-    // Pass None if no agents detected (will install to all), otherwise pass the list
-    let agents_opt = if agents.is_empty() {
-        None
-    } else {
-        Some(agents.as_slice())
-    };
-
-    if let Err(err) = skill::install(agents_opt, true) {
-        println!("{} Failed to install agent skills: {}", "⚠".yellow(), err);
-        println!(
-            "{} You can retry with: npx skills add codervisor/skills@leanspec",
-            "•".cyan()
-        );
-    }
-
-    Ok(())
-}
-
-fn print_ai_detection(detections: &[AiDetection]) {
-    let detected_tools: Vec<_> = detections.iter().filter(|d| d.detected).collect();
-
-    if detected_tools.is_empty() {
-        println!("\n{}", "No AI tools detected".yellow());
-        return;
-    }
-
-    println!("\n{}", "Detected AI tools:".cyan());
-    for detection in detected_tools {
-        if let Some(file) = &detection.runner.symlink_file {
-            println!("  • {} ({})", detection.runner.display_name(), file);
-        } else {
-            println!("  • {}", detection.runner.display_name());
-        }
-        for reason in &detection.reasons {
-            println!("    └─ {}", reason);
-        }
-    }
 }

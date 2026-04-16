@@ -1,7 +1,7 @@
 //! LeanSpec HTTP Server
 //!
 //! A lightweight Rust HTTP server using Axum for serving the LeanSpec web UI.
-//! Provides RESTful JSON API endpoints matching the existing Next.js API routes.
+//! Provides RESTful JSON API endpoints for spec management.
 //!
 //! ## Features
 //!
@@ -22,19 +22,13 @@
 //! }
 //! ```
 
-#[cfg(feature = "ai")]
-pub mod ai;
-pub mod chat_config;
-pub mod chat_store;
 pub mod config;
 pub mod error;
 pub mod handlers;
 pub mod middleware;
 pub mod project_registry;
 pub mod routes;
-pub mod sessions;
 pub mod state;
-pub mod sync_state;
 pub mod types;
 pub mod utils;
 pub mod watcher;
@@ -43,9 +37,6 @@ pub use config::{load_config, load_config_from_path, ServerConfig};
 pub use error::ServerError;
 pub use project_registry::ProjectRegistry;
 pub use routes::create_router;
-pub use sessions::{
-    Session, SessionConfig, SessionEvent, SessionLog, SessionManager, SessionMode, SessionStatus,
-};
 pub use state::AppState;
 
 /// Start the HTTP server on the given host and port

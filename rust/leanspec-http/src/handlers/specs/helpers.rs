@@ -7,17 +7,13 @@ use axum::Json;
 use sha2::{Digest, Sha256};
 use std::path::Path as FsPath;
 
-use leanspec_core::{
-    global_token_counter, LeanSpecConfig, SpecLoader, TokenStatus, ValidationResult,
-};
+use leanspec_core::{LeanSpecConfig, SpecLoader, TokenStatus, ValidationResult};
 
 use crate::error::ApiError;
 use crate::project_registry::Project;
 use crate::state::AppState;
 use crate::utils::resolve_project;
 
-use crate::types::SpecDetail;
-use crate::types::SpecSummary;
 use crate::types::SubSpec;
 
 /// Helper to get the spec loader for a project (required project_id)
@@ -52,98 +48,6 @@ pub(super) fn validation_status_label(result: &ValidationResult) -> &'static str
         "warn"
     } else {
         "pass"
-    }
-}
-
-pub(super) fn spec_number_from_name(name: &str) -> Option<u32> {
-    name.split('-').next()?.parse().ok()
-}
-
-pub(super) fn summary_from_record(
-    project_id: &str,
-    record: &crate::sync_state::SpecRecord,
-) -> SpecSummary {
-    let counter = global_token_counter();
-    let token_result = counter.count_spec(&record.content_md);
-    let token_status_str = token_status_label(token_result.status);
-
-    let validation_status_str = if record.content_md.trim().is_empty() {
-        "warn"
-    } else {
-        "pass"
-    };
-
-    SpecSummary {
-        project_id: Some(project_id.to_string()),
-        id: record.spec_name.clone(),
-        spec_number: spec_number_from_name(&record.spec_name),
-        spec_name: record.spec_name.clone(),
-        title: record.title.clone(),
-        status: record.status.clone(),
-        priority: record.priority.clone(),
-        tags: record.tags.clone(),
-        assignee: record.assignee.clone(),
-        created_at: record.created_at,
-        updated_at: record.updated_at,
-        completed_at: record.completed_at,
-        file_path: record
-            .file_path
-            .clone()
-            .unwrap_or_else(|| record.spec_name.clone()),
-        depends_on: record.depends_on.clone(),
-        parent: record.parent.clone(),
-        children: Vec::new(),
-        required_by: Vec::new(),
-        content_hash: Some(record.content_hash.clone()),
-        token_count: Some(token_result.total),
-        token_status: Some(token_status_str.to_string()),
-        validation_status: Some(validation_status_str.to_string()),
-        relationships: None,
-    }
-}
-
-pub(super) fn detail_from_record(
-    project_id: &str,
-    record: &crate::sync_state::SpecRecord,
-) -> SpecDetail {
-    let counter = global_token_counter();
-    let token_result = counter.count_spec(&record.content_md);
-    let token_status_str = token_status_label(token_result.status);
-
-    let validation_status_str = if record.content_md.trim().is_empty() {
-        "warn"
-    } else {
-        "pass"
-    };
-
-    SpecDetail {
-        project_id: Some(project_id.to_string()),
-        id: record.spec_name.clone(),
-        spec_number: spec_number_from_name(&record.spec_name),
-        spec_name: record.spec_name.clone(),
-        title: record.title.clone(),
-        status: record.status.clone(),
-        priority: record.priority.clone(),
-        tags: record.tags.clone(),
-        assignee: record.assignee.clone(),
-        content_md: record.content_md.clone(),
-        created_at: record.created_at,
-        updated_at: record.updated_at,
-        completed_at: record.completed_at,
-        file_path: record
-            .file_path
-            .clone()
-            .unwrap_or_else(|| record.spec_name.clone()),
-        depends_on: record.depends_on.clone(),
-        parent: record.parent.clone(),
-        children: Vec::new(),
-        required_by: Vec::new(),
-        content_hash: Some(record.content_hash.clone()),
-        token_count: Some(token_result.total),
-        token_status: Some(token_status_str.to_string()),
-        validation_status: Some(validation_status_str.to_string()),
-        relationships: None,
-        sub_specs: None,
     }
 }
 

@@ -1,7 +1,3 @@
-use leanspec_core::sessions::{
-    DetectionConfig, DetectionResult, RunnerDefinition, Session, SessionConfig, SessionMode,
-    SessionStatus,
-};
 use leanspec_core::{SpecPriority, SpecStatus, StatusTransition};
 use leanspec_http::types::{
     BatchMetadataRequest, BatchMetadataResponse, ChecklistToggleItem, ChecklistToggleRequest,
@@ -118,13 +114,4 @@ fn export_bindings() {
     write_binding::<SpecStatus>();
     write_binding::<SpecPriority>();
     write_binding::<StatusTransition>();
-
-    // Core session/runner types
-    write_binding::<Session>();
-    write_binding::<SessionConfig>();
-    write_binding::<SessionMode>();
-    write_binding::<SessionStatus>();
-    write_binding::<RunnerDefinition>();
-    write_binding::<DetectionConfig>();
-    write_binding::<DetectionResult>();
 }
