@@ -130,8 +130,10 @@ most common shapes:
 ## Managing evolving work
 
 - **Content changes** — use `leanspec update --content` or edit the item body.
-- **Metadata changes** — use `leanspec update --set <key>=<value>` for
-  adapter-declared fields; the skill never writes raw frontmatter or YAML.
+- **Metadata changes** — use the supported `leanspec update` flags
+  (`--status`, `--priority`, `--assignee`, `--add-tags`, `--remove-tags`,
+  etc.) for adapter-declared fields. Each flag accepts values from the
+  adapter's capabilities. The skill never writes raw frontmatter or YAML.
 - **Scope creep** — split. Create a sibling spec and link it; update the
   original's non-goals to reference the split.
 - **Obsolete work** — transition to the adapter's "closed/archived" state

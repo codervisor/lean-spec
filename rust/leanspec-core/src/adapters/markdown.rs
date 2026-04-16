@@ -478,28 +478,83 @@ impl Adapter for MarkdownAdapter {
     }
 
     fn update(&self, id: &str, req: &UpdateRequest) -> Result<SpecItem, AdapterError> {
+        reject_unknown_metadata_keys(&req.metadata, &self.capabilities)?;
+
         let writer = SpecWriter::new(&self.specs_dir);
         let update = update_request_to_metadata_update(req)?;
 
+        // First pass: status/priority/tags/assignee/depends_on/parent go
+        // through SpecWriter so we pick up status-transition tracking and
+        // atomic writes.
         writer
             .update_metadata(id, update)
             .map_err(|e| AdapterError::IoError(std::io::Error::other(e.to_string())))?;
 
-        if let Some(ref body) = req.body {
-            let loader = SpecLoader::new(&self.specs_dir);
-            let spec = loader
-                .load(id)
-                .map_err(|e| AdapterError::ParseError {
-                    path: id.to_string(),
-                    reason: e.to_string(),
-                })?
-                .ok_or_else(|| AdapterError::NotFound(id.to_string()))?;
+        // Second pass: apply title, body, and the remaining declared
+        // frontmatter fields (reviewer, issue, pr, epic, breaking, due). We
+        // re-read the spec after the writer pass so we see its latest
+        // frontmatter, then serialise the full thing back out.
+        let loader = SpecLoader::new(&self.specs_dir);
+        let spec = loader
+            .load(id)
+            .map_err(|e| AdapterError::ParseError {
+                path: id.to_string(),
+                reason: e.to_string(),
+            })?
+            .ok_or_else(|| AdapterError::NotFound(id.to_string()))?;
+
+        let mut frontmatter = spec.frontmatter.clone();
+        let mut mutated = false;
+
+        if let Some(v) = req.metadata.get(field::REVIEWER).and_then(|v| v.as_str()) {
+            frontmatter.reviewer = optional_string(v);
+            mutated = true;
+        }
+        if let Some(v) = req.metadata.get(field::ISSUE).and_then(|v| v.as_str()) {
+            frontmatter.issue = optional_string(v);
+            mutated = true;
+        }
+        if let Some(v) = req.metadata.get(field::PR).and_then(|v| v.as_str()) {
+            frontmatter.pr = optional_string(v);
+            mutated = true;
+        }
+        if let Some(v) = req.metadata.get(field::EPIC).and_then(|v| v.as_str()) {
+            frontmatter.epic = optional_string(v);
+            mutated = true;
+        }
+        if let Some(b) = req.metadata.get(field::BREAKING).and_then(|v| v.as_bool()) {
+            frontmatter.breaking = Some(b);
+            mutated = true;
+        }
+        if let Some(v) = req.metadata.get(field::DUE).and_then(|v| v.as_str()) {
+            frontmatter.due = optional_string(v);
+            mutated = true;
+        }
+
+        // Only rewrite the file if title, body, or extra frontmatter fields
+        // actually changed. The writer pass above already persisted the
+        // supported fields.
+        let title_requested = req.title.is_some();
+        let body_requested = req.body.is_some();
+        if mutated || title_requested || body_requested {
+            let effective_title = req.title.clone().unwrap_or_else(|| spec.title.clone());
+            let effective_body = match req.body.as_deref() {
+                Some(b) => strip_leading_title(b, &effective_title),
+                None => spec.content.trim_start_matches('\n').to_string(),
+            };
+
             let fm_yaml =
-                serde_yaml::to_string(&spec.frontmatter).map_err(|e| AdapterError::ParseError {
+                serde_yaml::to_string(&frontmatter).map_err(|e| AdapterError::ParseError {
                     path: id.to_string(),
                     reason: e.to_string(),
                 })?;
-            let new_content = format!("---\n{}---\n\n{}", fm_yaml, body);
+            let new_content = format!(
+                "---\n{}---\n\n# {}\n\n{}",
+                fm_yaml,
+                effective_title,
+                effective_body.trim_start_matches('\n'),
+            );
+
             loader
                 .update_spec(&spec.path, &new_content)
                 .map_err(|e| AdapterError::IoError(std::io::Error::other(e.to_string())))?;
@@ -575,6 +630,52 @@ fn apply_list_filter(items: Vec<SpecItem>, filter: &ListFilter) -> Vec<SpecItem>
             true
         })
         .collect()
+}
+
+/// Reject metadata keys the adapter has not declared. Keeps the adapter
+/// honest: if a caller sets a field the adapter doesn't actually persist,
+/// they see an error instead of a silent no-op.
+fn reject_unknown_metadata_keys(
+    metadata: &HashMap<String, MetadataValue>,
+    caps: &AdapterCapabilities,
+) -> Result<(), AdapterError> {
+    for key in metadata.keys() {
+        let declared = caps.metadata_fields.iter().any(|f| &f.key == key);
+        if !declared {
+            return Err(AdapterError::InvalidMetadata {
+                adapter: "markdown".into(),
+                reason: format!(
+                    "unknown metadata key '{}' — call `leanspec capabilities` to see supported keys",
+                    key
+                ),
+            });
+        }
+    }
+    Ok(())
+}
+
+/// Treat empty strings as "clear this field" when mutating Option<String>
+/// frontmatter fields.
+fn optional_string(s: &str) -> Option<String> {
+    if s.trim().is_empty() {
+        None
+    } else {
+        Some(s.to_string())
+    }
+}
+
+/// If the caller provided a body that already begins with an H1 heading,
+/// drop that heading so we can re-inject the (possibly-updated) title from
+/// `UpdateRequest` without duplication.
+fn strip_leading_title(body: &str, _fallback_title: &str) -> String {
+    let trimmed = body.trim_start_matches('\n');
+    if let Some(rest) = trimmed.strip_prefix("# ") {
+        // Drop the line containing the `# Title`.
+        let remainder = rest.split_once('\n').map(|x| x.1).unwrap_or("");
+        remainder.trim_start_matches('\n').to_string()
+    } else {
+        trimmed.to_string()
+    }
 }
 
 fn slug_sanitize(s: &str) -> String {
@@ -755,6 +856,120 @@ mod tests {
                 .and_then(|v| v.as_string_list()),
             Some(&["alpha".to_string()][..])
         );
+    }
+
+    #[test]
+    fn update_rejects_unknown_metadata_key() {
+        let tmp = TempDir::new().unwrap();
+        let specs = tmp.path().join("specs");
+        std::fs::create_dir_all(&specs).unwrap();
+        write_spec(&specs, "001-test", "planned", None);
+
+        let adapter = MarkdownAdapter::new(&specs);
+        let mut md = HashMap::new();
+        md.insert("totally-fake-key".into(), MetadataValue::from("yes"));
+
+        let err = adapter
+            .update(
+                "001-test",
+                &UpdateRequest {
+                    metadata: md,
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert!(matches!(err, AdapterError::InvalidMetadata { .. }));
+    }
+
+    #[test]
+    fn update_writes_extended_frontmatter_fields() {
+        let tmp = TempDir::new().unwrap();
+        let specs = tmp.path().join("specs");
+        std::fs::create_dir_all(&specs).unwrap();
+        write_spec(&specs, "001-test", "planned", None);
+
+        let adapter = MarkdownAdapter::new(&specs);
+        let mut md = HashMap::new();
+        md.insert(field::REVIEWER.into(), MetadataValue::from("alice"));
+        md.insert(field::ISSUE.into(), MetadataValue::from("#42"));
+        md.insert(field::BREAKING.into(), MetadataValue::from(true));
+        md.insert(field::DUE.into(), MetadataValue::from("2026-06-01"));
+
+        let updated = adapter
+            .update(
+                "001-test",
+                &UpdateRequest {
+                    metadata: md,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            updated
+                .metadata
+                .get(field::REVIEWER)
+                .and_then(|v| v.as_str()),
+            Some("alice")
+        );
+        assert_eq!(
+            updated.metadata.get(field::ISSUE).and_then(|v| v.as_str()),
+            Some("#42")
+        );
+        assert_eq!(
+            updated
+                .metadata
+                .get(field::BREAKING)
+                .and_then(|v| v.as_bool()),
+            Some(true)
+        );
+        assert_eq!(
+            updated.metadata.get(field::DUE).and_then(|v| v.as_str()),
+            Some("2026-06-01")
+        );
+    }
+
+    #[test]
+    fn update_preserves_title_when_body_lacks_heading() {
+        let tmp = TempDir::new().unwrap();
+        let specs = tmp.path().join("specs");
+        std::fs::create_dir_all(&specs).unwrap();
+        write_spec(&specs, "001-test", "planned", None);
+
+        let adapter = MarkdownAdapter::new(&specs);
+        let updated = adapter
+            .update(
+                "001-test",
+                &UpdateRequest {
+                    body: Some("## Overview\n\nNew body without H1.".into()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Title is preserved from the original spec's H1.
+        assert_eq!(updated.title, "Test 001-test");
+        assert!(updated.body.contains("## Overview"));
+    }
+
+    #[test]
+    fn update_renames_via_title() {
+        let tmp = TempDir::new().unwrap();
+        let specs = tmp.path().join("specs");
+        std::fs::create_dir_all(&specs).unwrap();
+        write_spec(&specs, "001-test", "planned", None);
+
+        let adapter = MarkdownAdapter::new(&specs);
+        let updated = adapter
+            .update(
+                "001-test",
+                &UpdateRequest {
+                    title: Some("Renamed Title".into()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(updated.title, "Renamed Title");
     }
 
     #[test]

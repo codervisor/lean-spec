@@ -77,12 +77,13 @@ pub enum AdapterError {
 
 /// A value carried in a [`SpecItem`]'s `metadata` map.
 ///
-/// This is deliberately small. The goal is to express arbitrary platform-native
-/// fields without invoking JSON's full generality — adapters can stuff anything
-/// exotic into [`SpecItem::raw`].
+/// Adjacently tagged (`{"kind": "...", "value": ...}`) so the JSON wire
+/// format round-trips unambiguously — otherwise a `Timestamp` (serialized
+/// as an ISO-8601 string) would be indistinguishable from a plain `String`
+/// on deserialize.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../packages/ui/src/types/generated/")]
-#[serde(untagged)]
+#[serde(tag = "kind", content = "value", rename_all = "snake_case")]
 pub enum MetadataValue {
     Null,
     String(String),

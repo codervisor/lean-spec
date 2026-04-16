@@ -11,18 +11,28 @@ use leanspec_core::adapters::{AdapterConfig, AdapterRegistry, MetadataKind, Sema
 use std::error::Error;
 
 pub struct CapabilitiesParams {
-    pub specs_dir: String,
+    /// Specs directory override from `--specs-dir`. If the user didn't pass one
+    /// we let the project's adapter configuration decide — that way the active
+    /// adapter (markdown / github / ado / …) is whatever the project declared.
+    pub specs_dir: Option<String>,
     pub output_format: String,
 }
 
 pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
-    // For now only the markdown adapter exists; config can override the
-    // directory. When additional adapters land they'll come in via
-    // `AdapterRegistry::from_project()`.
-    let config = AdapterConfig::Markdown {
-        directory: params.specs_dir.clone(),
+    // Resolve the adapter. An explicit `--specs-dir` overrides project config
+    // and forces a markdown adapter pointed at that directory; otherwise we
+    // consult `AdapterRegistry::from_project()` which reads
+    // `leanspec.adapter.yaml` / `.lean-spec/adapter.yaml` (with legacy
+    // `provider:` fallbacks) and defaults to markdown at `specs/`.
+    let adapter = match params.specs_dir.as_deref() {
+        Some(dir) => {
+            let config = AdapterConfig::Markdown {
+                directory: dir.to_string(),
+            };
+            AdapterRegistry::create(&config)?
+        }
+        None => AdapterRegistry::from_project()?,
     };
-    let adapter = AdapterRegistry::create(&config)?;
     let caps = adapter.capabilities();
 
     if params.output_format == "json" {
