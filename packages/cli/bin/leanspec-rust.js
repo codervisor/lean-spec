@@ -16,7 +16,7 @@ import { spawn } from 'child_process';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { accessSync, openSync, readSync, closeSync } from 'fs';
+import { accessSync, chmodSync, openSync, readSync, closeSync, statSync } from 'fs';
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
@@ -171,6 +171,19 @@ function getBinaryPath() {
 
 // Execute binary
 const binaryPath = getBinaryPath();
+
+// Ensure the binary is executable (npm may unpack files without execute bits)
+const EXEC_BITS = 0o111; // owner + group + other execute
+try {
+  const mode = statSync(binaryPath).mode;
+  if (!(mode & EXEC_BITS)) {
+    chmodSync(binaryPath, mode | EXEC_BITS);
+    debug('Added execute permission to binary:', binaryPath);
+  }
+} catch (e) {
+  debug('Could not ensure execute permission:', e.message);
+}
+
 const args = process.argv.slice(2);
 
 debug('Spawning binary:', binaryPath);
