@@ -535,10 +535,7 @@ fn reject_unknown_fields(
         if schema.field(key).is_none() {
             return Err(AdapterError::InvalidField {
                 adapter: "markdown".into(),
-                reason: format!(
-                    "unknown field '{}' — check the schema for supported fields",
-                    key
-                ),
+                reason: format!("unknown field '{}' — check the schema for supported fields", key),
             });
         }
     }
@@ -581,7 +578,8 @@ impl Adapter for MarkdownAdapter {
             if id != SCHEMA_ID {
                 return Err(AdapterError::ConfigError(format!(
                     "markdown adapter only supports schema '{}', got '{}'",
-                    SCHEMA_ID, id
+                    SCHEMA_ID,
+                    id,
                 )));
             }
         }
@@ -909,10 +907,7 @@ mod tests {
         let specs = tmp.path().join("specs");
         std::fs::create_dir_all(&specs).unwrap();
         let adapter = MarkdownAdapter::new(&specs);
-        assert!(matches!(
-            adapter.get("nope").unwrap_err(),
-            AdapterError::NotFound(_)
-        ));
+        assert!(matches!(adapter.get("nope").unwrap_err(), AdapterError::NotFound(_)));
     }
 
     #[test]
@@ -996,7 +991,7 @@ mod tests {
         assert_eq!(doc.field_str(field::STATUS), Some("in-progress"));
         assert_eq!(
             doc.field(field::TAGS).and_then(|v| v.as_strings()),
-            Some(&["alpha".to_string()][..])
+            Some(&["alpha".to_string()][..]),
         );
     }
 
