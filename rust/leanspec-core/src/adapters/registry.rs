@@ -164,10 +164,7 @@ mod tests {
         std::fs::write(&p, "adapter: markdown\ndirectory: foo\n").unwrap();
         let cfg = AdapterRegistry::load_config(&p).unwrap();
         assert_eq!(cfg.adapter, "markdown");
-        assert_eq!(
-            cfg.settings.get("directory").and_then(|v| v.as_str()),
-            Some("foo")
-        );
+        assert_eq!(cfg.settings.get("directory").and_then(|v| v.as_str()), Some("foo"));
     }
 
     #[test]
@@ -177,10 +174,7 @@ mod tests {
         std::fs::write(&p, "provider: markdown\ndirectory: bar\n").unwrap();
         let cfg = AdapterRegistry::load_config(&p).unwrap();
         assert_eq!(cfg.adapter, "markdown");
-        assert_eq!(
-            cfg.settings.get("directory").and_then(|v| v.as_str()),
-            Some("bar")
-        );
+        assert_eq!(cfg.settings.get("directory").and_then(|v| v.as_str()), Some("bar"));
     }
 
     #[test]

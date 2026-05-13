@@ -182,10 +182,7 @@ mod tests {
     fn adapter_config_default_is_markdown() {
         let cfg = AdapterConfig::default();
         assert_eq!(cfg.adapter, "markdown");
-        assert_eq!(
-            cfg.settings.get("directory").and_then(|v| v.as_str()),
-            Some("specs")
-        );
+        assert_eq!(cfg.settings.get("directory").and_then(|v| v.as_str()), Some("specs"));
     }
 
     #[test]

@@ -57,8 +57,8 @@ pub use io::{
 };
 pub use parsers::FrontmatterParser;
 pub use relationships::{
-    validate_dependency_addition, validate_parent_assignment,
-    validate_parent_assignment_with_index, RelationshipError,
+    validate_dependency_addition, validate_parent_assignment, validate_parent_assignment_with_index,
+    RelationshipError,
 };
 pub use spec_ops::{
     apply_checklist_toggles, apply_replacements, apply_section_updates, preserve_title_heading,

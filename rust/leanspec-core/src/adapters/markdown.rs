@@ -740,11 +740,7 @@ impl Adapter for MarkdownAdapter {
             .map_err(|e| AdapterError::IoError(std::io::Error::other(e.to_string())))
     }
 
-    fn search(
-        &self,
-        query: &str,
-        opts: &SearchOptions,
-    ) -> Result<Vec<SearchHit>, AdapterError> {
+    fn search(&self, query: &str, opts: &SearchOptions) -> Result<Vec<SearchHit>, AdapterError> {
         let loader = SpecLoader::new(&self.specs_dir);
         let specs = loader.load_all().map_err(|e| AdapterError::ParseError {
             path: self.specs_dir.display().to_string(),
