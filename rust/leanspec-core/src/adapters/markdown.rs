@@ -859,18 +859,9 @@ mod tests {
         let adapter = MarkdownAdapter::new(tmp.path());
         let schema = adapter.schema();
         assert_eq!(schema.id, SCHEMA_ID);
-        assert_eq!(
-            schema.key_for_semantic(semantic::STATUS),
-            Some(field::STATUS)
-        );
-        assert_eq!(
-            schema.key_for_semantic(semantic::PRIORITY),
-            Some(field::PRIORITY)
-        );
-        assert_eq!(
-            schema.key_for_semantic(semantic::ASSIGNEE),
-            Some(field::ASSIGNEE)
-        );
+        assert_eq!(schema.key_for_semantic(semantic::STATUS), Some(field::STATUS));
+        assert_eq!(schema.key_for_semantic(semantic::PRIORITY), Some(field::PRIORITY));
+        assert_eq!(schema.key_for_semantic(semantic::ASSIGNEE), Some(field::ASSIGNEE));
         assert_eq!(schema.key_for_semantic(semantic::DUE_DATE), Some(field::DUE));
     }
 
@@ -1056,10 +1047,7 @@ mod tests {
             .unwrap();
         assert_eq!(doc.field_str(field::REVIEWER), Some("alice"));
         assert_eq!(doc.field_str(field::ISSUE), Some("#42"));
-        assert_eq!(
-            doc.field(field::BREAKING).and_then(|v| v.as_bool()),
-            Some(true)
-        );
+        assert_eq!(doc.field(field::BREAKING).and_then(|v| v.as_bool()), Some(true));
         assert_eq!(doc.field_str(field::DUE), Some("2026-06-01"));
     }
 
