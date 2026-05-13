@@ -1,0 +1,65 @@
+id: "leanspec:feature"
+name: "Feature"
+extends: "leanspec:base"
+fields:
+  - key: reviewer
+    label: Reviewer
+    kind:
+      kind: enum
+      options: []
+      multi: false
+      allow_custom: true
+      dynamic: true
+    display: inline
+    required: false
+    semantic: reviewer
+    placeholder: "@username"
+
+  - key: breaking
+    label: Breaking Change
+    kind:
+      kind: bool
+    display: inline
+    required: false
+
+  - key: due
+    label: Due Date
+    kind:
+      kind: text
+    display: inline
+    required: false
+    semantic: due_date
+    placeholder: "YYYY-MM-DD"
+
+  - key: issue
+    label: Linked Issue
+    kind:
+      kind: text
+    display: inline
+    required: false
+    placeholder: "#123"
+
+  - key: pr
+    label: Linked PR
+    kind:
+      kind: text
+    display: inline
+    required: false
+    placeholder: "#456"
+
+  - key: epic
+    label: Epic
+    kind:
+      kind: text
+    display: inline
+    required: false
+
+  - key: acceptance
+    label: Acceptance Criteria
+    kind:
+      kind: checklist
+      traced: false
+    display: section
+    required: false
+    semantic: acceptance
+    ai_hint: "Testable acceptance criteria — each item should be independently verifiable"
