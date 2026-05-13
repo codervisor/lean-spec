@@ -10,8 +10,8 @@ use std::str::FromStr;
 
 use super::{Adapter, AdapterCapabilities, AdapterError, ListFilter, SearchHit, SearchOptions};
 use crate::model::{
-    CreateRequest, EnumOption, FieldDef, FieldDisplay, FieldKind, FieldValue, ItemLink,
-    LinkTypeDef, SpecDoc, SpecSchema, UpdateRequest, semantic,
+    CreateRequest, EnumOption, FieldDef, FieldDisplay, FieldKind, FieldValue, ItemLink, LinkTypeDef,
+    SpecDoc, SpecSchema, UpdateRequest, semantic,
 };
 use crate::search::{search_specs_with_options, SearchOptions as LegacySearchOptions};
 use crate::spec_ops::{MetadataUpdate, SpecArchiver, SpecLoader, SpecWriter};
