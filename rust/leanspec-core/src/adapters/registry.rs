@@ -139,10 +139,7 @@ mod tests {
             adapter: "nonexistent".into(),
             settings: serde_json::Value::Null,
         };
-        assert!(matches!(
-            AdapterRegistry::create(&cfg).unwrap_err(),
-            AdapterError::ConfigError(_)
-        ));
+        assert!(matches!(AdapterRegistry::create(&cfg).unwrap_err(), AdapterError::ConfigError(_)));
     }
 
     #[test]
