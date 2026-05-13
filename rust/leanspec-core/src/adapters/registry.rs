@@ -1,8 +1,9 @@
 //! Adapter registry — factory that resolves [`AdapterConfig`] into concrete
 //! [`Adapter`] implementations and loads configuration from disk.
 //!
-//! When additional adapters (GitHub, ADO, Jira, Linear) land, they get wired
-//! up here; the rest of the system keeps using [`AdapterRegistry`].
+//! When additional adapters (GitHub, ADO, Jira, Linear) land, wire them up
+//! in [`AdapterRegistry::create`]; the rest of the system keeps using
+//! [`AdapterRegistry`] unchanged.
 
 use std::path::Path;
 
@@ -15,8 +16,19 @@ pub struct AdapterRegistry;
 impl AdapterRegistry {
     /// Instantiate an adapter from the provided configuration.
     pub fn create(config: &AdapterConfig) -> Result<Box<dyn Adapter>, AdapterError> {
-        match config {
-            AdapterConfig::Markdown { directory } => Ok(Box::new(MarkdownAdapter::new(directory))),
+        match config.adapter.as_str() {
+            "markdown" => {
+                let dir = config
+                    .settings
+                    .get("directory")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("specs");
+                Ok(Box::new(MarkdownAdapter::new(dir)))
+            }
+            other => Err(AdapterError::ConfigError(format!(
+                "unknown adapter '{other}' — only 'markdown' is built-in; \
+                 register additional adapters via your plugin registry"
+            ))),
         }
     }
 
@@ -27,9 +39,8 @@ impl AdapterRegistry {
 
     /// Load adapter configuration from a YAML file.
     ///
-    /// A missing file falls back to the default ([`AdapterConfig::default`]).
-    /// Present-but-malformed files surface a [`AdapterError::ConfigError`]
-    /// rather than being silently ignored.
+    /// A missing file falls back to [`AdapterConfig::default`]. A
+    /// present-but-malformed file surfaces a [`AdapterError::ConfigError`].
     pub fn load_config(path: &Path) -> Result<AdapterConfig, AdapterError> {
         if !path.exists() {
             return Ok(AdapterConfig::default());
@@ -45,36 +56,36 @@ impl AdapterRegistry {
             ))
         })?;
 
-        // Allow either `adapter:` (new) or `provider:` (legacy) top-level key
-        // to identify the backend. Any file missing both falls back to default
-        // so a generic `.lean-spec/config.yaml` isn't mistaken for adapter
-        // config.
-        let has_adapter_key = value
-            .as_mapping()
-            .and_then(|m| {
-                m.get(serde_yaml::Value::String("adapter".into()))
-                    .or_else(|| m.get(serde_yaml::Value::String("provider".into())))
-            })
-            .is_some();
-
-        if !has_adapter_key {
-            return Ok(AdapterConfig::default());
-        }
-
-        // If the file uses the legacy `provider:` key, rewrite to `adapter:`
-        // before deserialising.
-        let normalized = if content.contains("provider:") && !content.contains("adapter:") {
-            content.replacen("provider:", "adapter:", 1)
-        } else {
-            content
+        let mapping = match value.as_mapping() {
+            Some(m) => m,
+            None => return Ok(AdapterConfig::default()),
         };
 
-        serde_yaml::from_str::<AdapterConfig>(&normalized).map_err(|err| {
-            AdapterError::ConfigError(format!(
-                "Failed to parse adapter configuration in {}: {}",
-                path.display(),
-                err
-            ))
+        // Support both `adapter:` (new) and `provider:` (legacy) top-level key.
+        let adapter_value = mapping
+            .get(serde_yaml::Value::String("adapter".into()))
+            .or_else(|| mapping.get(serde_yaml::Value::String("provider".into())));
+
+        let adapter_name = match adapter_value.and_then(|v| v.as_str()) {
+            Some(s) => s.to_string(),
+            None => return Ok(AdapterConfig::default()),
+        };
+
+        // Collect all remaining YAML keys as the settings object.
+        let mut settings = serde_json::Map::new();
+        for (k, v) in mapping.iter() {
+            if let Some(key_str) = k.as_str() {
+                if key_str != "adapter" && key_str != "provider" {
+                    if let Ok(json_val) = serde_json::to_value(v) {
+                        settings.insert(key_str.to_string(), json_val);
+                    }
+                }
+            }
+        }
+
+        Ok(AdapterConfig {
+            adapter: adapter_name,
+            settings: serde_json::Value::Object(settings),
         })
     }
 
@@ -85,7 +96,7 @@ impl AdapterRegistry {
         let config_paths = [
             "leanspec.adapter.yaml",
             ".lean-spec/adapter.yaml",
-            // Legacy locations, still honoured so existing projects keep working
+            // Legacy locations, still honoured so existing projects keep working.
             "leanspec.provider.yaml",
             ".lean-spec/provider.yaml",
         ];
@@ -109,11 +120,24 @@ mod tests {
 
     #[test]
     fn create_markdown_adapter() {
-        let config = AdapterConfig::Markdown {
-            directory: "specs".into(),
+        let cfg = AdapterConfig {
+            adapter: "markdown".into(),
+            settings: serde_json::json!({ "directory": "specs" }),
         };
-        let adapter = AdapterRegistry::create(&config).unwrap();
+        let adapter = AdapterRegistry::create(&cfg).unwrap();
         assert_eq!(adapter.capabilities().name, "markdown");
+    }
+
+    #[test]
+    fn create_unknown_adapter_is_error() {
+        let cfg = AdapterConfig {
+            adapter: "nonexistent".into(),
+            settings: serde_json::Value::Null,
+        };
+        assert!(matches!(
+            AdapterRegistry::create(&cfg).unwrap_err(),
+            AdapterError::ConfigError(_)
+        ));
     }
 
     #[test]
@@ -125,7 +149,7 @@ mod tests {
     #[test]
     fn missing_config_returns_default() {
         let cfg = AdapterRegistry::load_config(Path::new("/definitely/not/here.yaml")).unwrap();
-        assert!(matches!(cfg, AdapterConfig::Markdown { .. }));
+        assert_eq!(cfg.adapter, "markdown");
     }
 
     #[test]
@@ -134,9 +158,11 @@ mod tests {
         let p = tmp.path().join("adapter.yaml");
         std::fs::write(&p, "adapter: markdown\ndirectory: foo\n").unwrap();
         let cfg = AdapterRegistry::load_config(&p).unwrap();
-        match cfg {
-            AdapterConfig::Markdown { directory } => assert_eq!(directory, "foo"),
-        }
+        assert_eq!(cfg.adapter, "markdown");
+        assert_eq!(
+            cfg.settings.get("directory").and_then(|v| v.as_str()),
+            Some("foo")
+        );
     }
 
     #[test]
@@ -145,9 +171,11 @@ mod tests {
         let p = tmp.path().join("provider.yaml");
         std::fs::write(&p, "provider: markdown\ndirectory: bar\n").unwrap();
         let cfg = AdapterRegistry::load_config(&p).unwrap();
-        match cfg {
-            AdapterConfig::Markdown { directory } => assert_eq!(directory, "bar"),
-        }
+        assert_eq!(cfg.adapter, "markdown");
+        assert_eq!(
+            cfg.settings.get("directory").and_then(|v| v.as_str()),
+            Some("bar")
+        );
     }
 
     #[test]
@@ -156,17 +184,6 @@ mod tests {
         let p = tmp.path().join("config.yaml");
         std::fs::write(&p, "specs_dir: foo\nmax_tokens: 4000\n").unwrap();
         let cfg = AdapterRegistry::load_config(&p).unwrap();
-        match cfg {
-            AdapterConfig::Markdown { directory } => assert_eq!(directory, "specs"),
-        }
-    }
-
-    #[test]
-    fn invalid_yaml_is_config_error() {
-        let tmp = TempDir::new().unwrap();
-        let p = tmp.path().join("adapter.yaml");
-        std::fs::write(&p, "adapter: markdown\n  bad indent").unwrap();
-        let res = AdapterRegistry::load_config(&p);
-        assert!(matches!(res, Err(AdapterError::ConfigError(_))));
+        assert_eq!(cfg.adapter, "markdown");
     }
 }

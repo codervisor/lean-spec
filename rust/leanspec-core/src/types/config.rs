@@ -1,39 +1,28 @@
 //! Configuration types for LeanSpec
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::PathBuf;
 
-/// Custom field type for frontmatter configuration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum CustomFieldType {
-    String,
-    Number,
-    Boolean,
-    Array,
-}
-
-/// LeanSpec configuration
+/// LeanSpec project configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LeanSpecConfig {
-    /// Specs directory (default: "specs")
+    /// Specs directory (default: "specs").
     #[serde(default = "default_specs_dir")]
     pub specs_dir: PathBuf,
 
-    /// Default template name
+    /// Default template name.
     #[serde(default)]
     pub default_template: Option<String>,
 
-    /// Pattern for spec directories (e.g., "NNN-name")
+    /// Pattern for spec directories (e.g., "NNN-name").
     #[serde(default)]
     pub pattern: Option<String>,
 
-    /// Frontmatter configuration
+    /// Schema bundle configuration.
     #[serde(default)]
-    pub frontmatter: FrontmatterConfig,
+    pub schema: SchemaConfig,
 
-    /// Validation configuration
+    /// Validation configuration.
     #[serde(default)]
     pub validation: ValidationConfig,
 
@@ -49,7 +38,7 @@ impl Default for LeanSpecConfig {
             specs_dir: default_specs_dir(),
             default_template: None,
             pattern: None,
-            frontmatter: FrontmatterConfig::default(),
+            schema: SchemaConfig::default(),
             validation: ValidationConfig::default(),
             session_prompt_template: None,
         }
@@ -60,61 +49,54 @@ fn default_specs_dir() -> PathBuf {
     PathBuf::from("specs")
 }
 
-/// Frontmatter configuration
+/// Schema bundle configuration.
+///
+/// Replaces the old `frontmatter.custom` escape hatch: instead of declaring
+/// individual field types here, teams add YAML schema bundles under
+/// `.leanspec/schemas/` and list their ids in `bundles`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct FrontmatterConfig {
-    /// Custom fields and their types
+pub struct SchemaConfig {
+    /// Override the adapter's default schema for this project.
     #[serde(default)]
-    pub custom: HashMap<String, CustomFieldType>,
+    pub default_schema: Option<String>,
+    /// Additional schema bundle ids to load from `.leanspec/schemas/`.
+    #[serde(default)]
+    pub bundles: Vec<String>,
 }
 
-/// Validation configuration
+/// Validation configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationConfig {
-    /// Maximum number of lines (default: 400)
+    /// Maximum number of lines (default: 400).
     #[serde(default = "default_max_lines")]
     pub max_lines: usize,
 
-    /// Maximum token count (default: 3500)
+    /// Maximum token count (default: 3500).
     #[serde(default = "default_max_tokens")]
     pub max_tokens: usize,
 
-    /// Warning token threshold (default: 2000)
+    /// Warning token threshold (default: 2000).
     #[serde(default = "default_warn_tokens")]
     pub warn_tokens: usize,
 
-    /// Required sections in spec content
+    /// Required sections in spec content.
     #[serde(default)]
     pub required_sections: Vec<String>,
 
-    /// Whether to enforce checklist verification when marking complete (default: true)
+    /// Whether to enforce checklist verification when marking complete (default: true).
     #[serde(default = "default_enforce_completion_checklist")]
     pub enforce_completion_checklist: bool,
 
-    /// Whether to allow completion override with --force (default: true)
+    /// Whether to allow completion override with --force (default: true).
     #[serde(default = "default_allow_completion_override")]
     pub allow_completion_override: bool,
 }
 
-fn default_enforce_completion_checklist() -> bool {
-    true
-}
-
-fn default_allow_completion_override() -> bool {
-    true
-}
-
-fn default_max_lines() -> usize {
-    400
-}
-
-fn default_max_tokens() -> usize {
-    3500
-}
-
-fn default_warn_tokens() -> usize {
-    2000
-}
+fn default_enforce_completion_checklist() -> bool { true }
+fn default_allow_completion_override() -> bool { true }
+fn default_max_lines() -> usize { 400 }
+fn default_max_tokens() -> usize { 3500 }
+fn default_warn_tokens() -> usize { 2000 }
 
 impl Default for ValidationConfig {
     fn default() -> Self {
@@ -130,13 +112,13 @@ impl Default for ValidationConfig {
 }
 
 impl LeanSpecConfig {
-    /// Load configuration from a YAML file
+    /// Load configuration from a YAML file.
     pub fn load(path: &std::path::Path) -> Result<Self, ConfigError> {
         let content = std::fs::read_to_string(path).map_err(ConfigError::Io)?;
         serde_yaml::from_str(&content).map_err(ConfigError::Parse)
     }
 
-    /// Load configuration from the default location (.lean-spec/config.yaml)
+    /// Load configuration from the default location (`.lean-spec/config.yaml`).
     pub fn load_default() -> Result<Self, ConfigError> {
         let config_path = PathBuf::from(".lean-spec/config.yaml");
         if config_path.exists() {
@@ -147,7 +129,7 @@ impl LeanSpecConfig {
     }
 }
 
-/// Configuration error types
+/// Configuration error types.
 #[derive(Debug)]
 pub enum ConfigError {
     Io(std::io::Error),
@@ -184,17 +166,19 @@ mod tests {
         assert_eq!(config.validation.max_tokens, 3500);
         assert!(config.validation.enforce_completion_checklist);
         assert!(config.validation.allow_completion_override);
+        assert!(config.schema.default_schema.is_none());
+        assert!(config.schema.bundles.is_empty());
     }
 
     #[test]
-    fn test_parse_config() {
+    fn test_parse_config_with_schema() {
         let yaml = r#"
 specs_dir: my-specs
 default_template: minimal
-frontmatter:
-  custom:
-    milestone: string
-    sprint: number
+schema:
+  default_schema: "leanspec:feature"
+  bundles:
+    - "acme:epic"
 validation:
   max_lines: 500
   max_tokens: 4000
@@ -203,6 +187,11 @@ validation:
         assert_eq!(config.specs_dir, PathBuf::from("my-specs"));
         assert_eq!(config.default_template, Some("minimal".to_string()));
         assert_eq!(config.validation.max_lines, 500);
+        assert_eq!(
+            config.schema.default_schema,
+            Some("leanspec:feature".to_string())
+        );
+        assert_eq!(config.schema.bundles, vec!["acme:epic"]);
     }
 
     #[test]
