@@ -55,7 +55,7 @@ pub enum AdapterError {
 
     /// Field value did not match the adapter's declared schema.
     #[error("Invalid field for {adapter}: {reason}")]
-    InvalidMetadata { adapter: String, reason: String },
+    InvalidField { adapter: String, reason: String },
 
     /// A local I/O error (for file-backed adapters).
     #[error("I/O error: {0}")]

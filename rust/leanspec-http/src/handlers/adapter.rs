@@ -41,8 +41,9 @@ fn resolve_adapter_for_project(
 
     // No adapter config — fall back to the markdown adapter pointed at the
     // project's declared specs directory.
-    let config = AdapterConfig::Markdown {
-        directory: specs_dir.to_string_lossy().to_string(),
+    let config = AdapterConfig {
+        adapter: "markdown".into(),
+        settings: serde_json::json!({ "directory": specs_dir.to_string_lossy().as_ref() }),
     };
     AdapterRegistry::create(&config).map_err(api_error)
 }

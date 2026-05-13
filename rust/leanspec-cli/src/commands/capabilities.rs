@@ -6,7 +6,7 @@
 
 use colored::Colorize;
 use leanspec_core::adapters::{AdapterConfig, AdapterRegistry};
-use leanspec_core::model::{FieldKind, semantic};
+use leanspec_core::model::FieldKind;
 use std::error::Error;
 
 pub struct CapabilitiesParams {
@@ -56,7 +56,11 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
         yesno(caps.supports_search),
         yesno(caps.supports_webhooks),
     );
-    println!("  {} {}", "Default schema:".bold(), caps.default_schema.cyan());
+    println!(
+        "  {} {}",
+        "Default schema:".bold(),
+        caps.default_schema.cyan()
+    );
     println!();
 
     println!("{}", "Fields:".bold());
@@ -73,7 +77,12 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
             FieldKind::Number => "number".to_string(),
             FieldKind::Bool => "bool".to_string(),
             FieldKind::Timestamp => "timestamp".to_string(),
-            FieldKind::Enum { options, multi, allow_custom, dynamic } => {
+            FieldKind::Enum {
+                options,
+                multi,
+                allow_custom,
+                dynamic,
+            } => {
                 let values: Vec<&str> = options.iter().map(|o| o.value.as_str()).collect();
                 let flags = [
                     if *multi { "multi" } else { "" },
@@ -88,14 +97,30 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
                 if values.is_empty() {
                     format!("enum [{}]", flags)
                 } else {
-                    format!("enum [{}]{}", values.join(", "), if flags.is_empty() { String::new() } else { format!(" ({})", flags) })
+                    format!(
+                        "enum [{}]{}",
+                        values.join(", "),
+                        if flags.is_empty() {
+                            String::new()
+                        } else {
+                            format!(" ({})", flags)
+                        }
+                    )
                 }
             }
             FieldKind::Checklist { traced } => {
-                if *traced { "checklist(traced)".to_string() } else { "checklist".to_string() }
+                if *traced {
+                    "checklist(traced)".to_string()
+                } else {
+                    "checklist".to_string()
+                }
             }
             FieldKind::References { multi } => {
-                if *multi { "references(multi)".to_string() } else { "reference".to_string() }
+                if *multi {
+                    "references(multi)".to_string()
+                } else {
+                    "reference".to_string()
+                }
             }
         };
 
@@ -105,7 +130,7 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
         };
         let required = if field.required { " *required*" } else { "" };
         println!(
-            "  {:<14} {} — {}{}{}{}",
+            "  {:<14} {} \u{2014} {}{}{}{}",
             field.key.cyan(),
             field.label,
             kind,
@@ -122,7 +147,7 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
             let inverse = lt
                 .inverse_key
                 .as_deref()
-                .map(|k| format!(" ⇄ {}", k).dimmed().to_string())
+                .map(|k| format!(" \u{21c4} {}", k).dimmed().to_string())
                 .unwrap_or_default();
             println!("  {:<14} {}{}", lt.key.cyan(), lt.label, inverse);
         }
@@ -132,10 +157,9 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
 }
 
 fn yesno(b: bool) -> colored::ColoredString {
-    if b { "yes".green() } else { "no".red() }
+    if b {
+        "yes".green()
+    } else {
+        "no".red()
+    }
 }
-
-// Re-export semantic constants so callers can reference them without
-// importing the model module directly.
-#[allow(unused_imports)]
-use leanspec_core::model::semantic as _semantic;

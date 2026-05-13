@@ -58,7 +58,12 @@ impl AdapterRegistry {
 
         let mapping = match value.as_mapping() {
             Some(m) => m,
-            None => return Ok(AdapterConfig::default()),
+            None => {
+                return Err(AdapterError::ConfigError(format!(
+                    "expected a YAML mapping in {}, got a non-mapping value",
+                    path.display()
+                )))
+            }
         };
 
         // Support both `adapter:` (new) and `provider:` (legacy) top-level key.
@@ -148,7 +153,8 @@ mod tests {
 
     #[test]
     fn missing_config_returns_default() {
-        let cfg = AdapterRegistry::load_config(Path::new("/definitely/not/here.yaml")).unwrap();
+        let cfg =
+            AdapterRegistry::load_config(Path::new("/definitely/not/here.yaml")).unwrap();
         assert_eq!(cfg.adapter, "markdown");
     }
 
@@ -185,5 +191,27 @@ mod tests {
         std::fs::write(&p, "specs_dir: foo\nmax_tokens: 4000\n").unwrap();
         let cfg = AdapterRegistry::load_config(&p).unwrap();
         assert_eq!(cfg.adapter, "markdown");
+    }
+
+    #[test]
+    fn malformed_yaml_returns_config_error() {
+        let tmp = TempDir::new().unwrap();
+        let p = tmp.path().join("adapter.yaml");
+        std::fs::write(&p, "{ unclosed: [").unwrap();
+        assert!(matches!(
+            AdapterRegistry::load_config(&p).unwrap_err(),
+            AdapterError::ConfigError(_)
+        ));
+    }
+
+    #[test]
+    fn non_mapping_yaml_root_returns_config_error() {
+        let tmp = TempDir::new().unwrap();
+        let p = tmp.path().join("adapter.yaml");
+        std::fs::write(&p, "- foo\n- bar\n").unwrap();
+        assert!(matches!(
+            AdapterRegistry::load_config(&p).unwrap_err(),
+            AdapterError::ConfigError(_)
+        ));
     }
 }

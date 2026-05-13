@@ -19,7 +19,7 @@ pub struct LeanSpecConfig {
     pub pattern: Option<String>,
 
     /// Schema bundle configuration.
-    #[serde(default)]
+    #[serde(default, alias = "frontmatter")]
     pub schema: SchemaConfig,
 
     /// Validation configuration.
@@ -92,11 +92,21 @@ pub struct ValidationConfig {
     pub allow_completion_override: bool,
 }
 
-fn default_enforce_completion_checklist() -> bool { true }
-fn default_allow_completion_override() -> bool { true }
-fn default_max_lines() -> usize { 400 }
-fn default_max_tokens() -> usize { 3500 }
-fn default_warn_tokens() -> usize { 2000 }
+fn default_enforce_completion_checklist() -> bool {
+    true
+}
+fn default_allow_completion_override() -> bool {
+    true
+}
+fn default_max_lines() -> usize {
+    400
+}
+fn default_max_tokens() -> usize {
+    3500
+}
+fn default_warn_tokens() -> usize {
+    2000
+}
 
 impl Default for ValidationConfig {
     fn default() -> Self {
@@ -204,5 +214,22 @@ validation:
         let config: LeanSpecConfig = serde_yaml::from_str(yaml).unwrap();
         assert!(!config.validation.enforce_completion_checklist);
         assert!(!config.validation.allow_completion_override);
+    }
+
+    #[test]
+    fn test_legacy_frontmatter_key_parses_as_schema() {
+        let yaml = r#"
+specs_dir: my-specs
+frontmatter:
+  default_schema: "leanspec:feature"
+  bundles:
+    - "acme:epic"
+"#;
+        let config: LeanSpecConfig = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(
+            config.schema.default_schema,
+            Some("leanspec:feature".to_string())
+        );
+        assert_eq!(config.schema.bundles, vec!["acme:epic"]);
     }
 }

@@ -46,28 +46,38 @@ pub const SCHEMA_ID: &str = "leanspec:markdown";
 fn status_options() -> Vec<EnumOption> {
     vec![
         EnumOption {
-            value: "draft".into(), label: "Draft".into(),
-            color: Some("#6b7280".into()), icon: Some("file-text".into()),
+            value: "draft".into(),
+            label: "Draft".into(),
+            color: Some("#6b7280".into()),
+            icon: Some("file-text".into()),
             description: Some("Being written".into()),
         },
         EnumOption {
-            value: "planned".into(), label: "Planned".into(),
-            color: Some("#3b82f6".into()), icon: Some("calendar".into()),
+            value: "planned".into(),
+            label: "Planned".into(),
+            color: Some("#3b82f6".into()),
+            icon: Some("calendar".into()),
             description: Some("Approved, not started".into()),
         },
         EnumOption {
-            value: "in-progress".into(), label: "In Progress".into(),
-            color: Some("#f59e0b".into()), icon: Some("loader".into()),
+            value: "in-progress".into(),
+            label: "In Progress".into(),
+            color: Some("#f59e0b".into()),
+            icon: Some("loader".into()),
             description: Some("Actively being built".into()),
         },
         EnumOption {
-            value: "complete".into(), label: "Complete".into(),
-            color: Some("#10b981".into()), icon: Some("check-circle".into()),
+            value: "complete".into(),
+            label: "Complete".into(),
+            color: Some("#10b981".into()),
+            icon: Some("check-circle".into()),
             description: Some("Done and verified".into()),
         },
         EnumOption {
-            value: "archived".into(), label: "Archived".into(),
-            color: Some("#9ca3af".into()), icon: Some("archive".into()),
+            value: "archived".into(),
+            label: "Archived".into(),
+            color: Some("#9ca3af".into()),
+            icon: Some("archive".into()),
             description: Some("No longer active".into()),
         },
     ]
@@ -75,10 +85,34 @@ fn status_options() -> Vec<EnumOption> {
 
 fn priority_options() -> Vec<EnumOption> {
     vec![
-        EnumOption { value: "low".into(),      label: "Low".into(),      color: Some("#6b7280".into()), icon: None, description: None },
-        EnumOption { value: "medium".into(),   label: "Medium".into(),   color: Some("#3b82f6".into()), icon: None, description: None },
-        EnumOption { value: "high".into(),     label: "High".into(),     color: Some("#f59e0b".into()), icon: None, description: None },
-        EnumOption { value: "critical".into(), label: "Critical".into(), color: Some("#ef4444".into()), icon: None, description: None },
+        EnumOption {
+            value: "low".into(),
+            label: "Low".into(),
+            color: Some("#6b7280".into()),
+            icon: None,
+            description: None,
+        },
+        EnumOption {
+            value: "medium".into(),
+            label: "Medium".into(),
+            color: Some("#3b82f6".into()),
+            icon: None,
+            description: None,
+        },
+        EnumOption {
+            value: "high".into(),
+            label: "High".into(),
+            color: Some("#f59e0b".into()),
+            icon: None,
+            description: None,
+        },
+        EnumOption {
+            value: "critical".into(),
+            label: "Critical".into(),
+            color: Some("#ef4444".into()),
+            icon: None,
+            description: None,
+        },
     ]
 }
 
@@ -377,7 +411,7 @@ fn fields_to_frontmatter(
         .get(field::STATUS)
         .and_then(|v| v.as_str())
         .unwrap_or("draft");
-    let status = SpecStatus::from_str(status_str).map_err(|e| AdapterError::InvalidMetadata {
+    let status = SpecStatus::from_str(status_str).map_err(|e| AdapterError::InvalidField {
         adapter: "markdown".into(),
         reason: e,
     })?;
@@ -390,7 +424,7 @@ fn fields_to_frontmatter(
 
     let priority = match fields.get(field::PRIORITY).and_then(|v| v.as_str()) {
         Some(p) => Some(
-            SpecPriority::from_str(p).map_err(|e| AdapterError::InvalidMetadata {
+            SpecPriority::from_str(p).map_err(|e| AdapterError::InvalidField {
                 adapter: "markdown".into(),
                 reason: e,
             })?,
@@ -404,13 +438,31 @@ fn fields_to_frontmatter(
         .map(|s| s.to_vec())
         .unwrap_or_default();
 
-    let assignee = fields.get(field::ASSIGNEE).and_then(|v| v.as_str()).map(String::from);
-    let reviewer = fields.get(field::REVIEWER).and_then(|v| v.as_str()).map(String::from);
-    let issue = fields.get(field::ISSUE).and_then(|v| v.as_str()).map(String::from);
-    let pr = fields.get(field::PR).and_then(|v| v.as_str()).map(String::from);
-    let epic = fields.get(field::EPIC).and_then(|v| v.as_str()).map(String::from);
+    let assignee = fields
+        .get(field::ASSIGNEE)
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let reviewer = fields
+        .get(field::REVIEWER)
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let issue = fields
+        .get(field::ISSUE)
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let pr = fields
+        .get(field::PR)
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let epic = fields
+        .get(field::EPIC)
+        .and_then(|v| v.as_str())
+        .map(String::from);
     let breaking = fields.get(field::BREAKING).and_then(|v| v.as_bool());
-    let due = fields.get(field::DUE).and_then(|v| v.as_str()).map(String::from);
+    let due = fields
+        .get(field::DUE)
+        .and_then(|v| v.as_str())
+        .map(String::from);
 
     let parent = links
         .iter()
@@ -452,14 +504,14 @@ fn fields_to_metadata_update(
     let mut update = MetadataUpdate::new();
 
     if let Some(FieldValue::String(v)) = fields.get(field::STATUS) {
-        let status = SpecStatus::from_str(v).map_err(|e| AdapterError::InvalidMetadata {
+        let status = SpecStatus::from_str(v).map_err(|e| AdapterError::InvalidField {
             adapter: "markdown".into(),
             reason: e,
         })?;
         update = update.with_status(status);
     }
     if let Some(FieldValue::String(v)) = fields.get(field::PRIORITY) {
-        let priority = SpecPriority::from_str(v).map_err(|e| AdapterError::InvalidMetadata {
+        let priority = SpecPriority::from_str(v).map_err(|e| AdapterError::InvalidField {
             adapter: "markdown".into(),
             reason: e,
         })?;
@@ -481,7 +533,7 @@ fn reject_unknown_fields(
 ) -> Result<(), AdapterError> {
     for key in fields.keys() {
         if schema.field(key).is_none() {
-            return Err(AdapterError::InvalidMetadata {
+            return Err(AdapterError::InvalidField {
                 adapter: "markdown".into(),
                 reason: format!(
                     "unknown field '{}' — check the schema for supported fields",
@@ -525,6 +577,15 @@ impl Adapter for MarkdownAdapter {
     }
 
     fn create(&self, req: &CreateRequest) -> Result<SpecDoc, AdapterError> {
+        if let Some(ref id) = req.schema_id {
+            if id != SCHEMA_ID {
+                return Err(AdapterError::ConfigError(format!(
+                    "markdown adapter only supports schema '{}', got '{}'",
+                    SCHEMA_ID, id
+                )));
+            }
+        }
+
         let slug = req.slug.as_deref().unwrap_or(&req.title);
         let slug = slug_sanitize(slug);
         let number = self.next_spec_number()?;
@@ -603,10 +664,10 @@ impl Adapter for MarkdownAdapter {
         }
 
         apply_str_field!(field::REVIEWER, frontmatter.reviewer);
-        apply_str_field!(field::ISSUE,    frontmatter.issue);
-        apply_str_field!(field::PR,       frontmatter.pr);
-        apply_str_field!(field::EPIC,     frontmatter.epic);
-        apply_str_field!(field::DUE,      frontmatter.due);
+        apply_str_field!(field::ISSUE, frontmatter.issue);
+        apply_str_field!(field::PR, frontmatter.pr);
+        apply_str_field!(field::EPIC, frontmatter.epic);
+        apply_str_field!(field::DUE, frontmatter.due);
 
         if let Some(b) = req.fields.get(field::BREAKING).and_then(|v| v.as_bool()) {
             frontmatter.breaking = Some(b);
@@ -616,24 +677,42 @@ impl Adapter for MarkdownAdapter {
         // Handle explicit field clears.
         for key in &req.clear {
             match key.as_str() {
-                field::REVIEWER => { frontmatter.reviewer = None; mutated = true; }
-                field::ISSUE    => { frontmatter.issue    = None; mutated = true; }
-                field::PR       => { frontmatter.pr       = None; mutated = true; }
-                field::EPIC     => { frontmatter.epic     = None; mutated = true; }
-                field::BREAKING => { frontmatter.breaking = None; mutated = true; }
-                field::DUE      => { frontmatter.due      = None; mutated = true; }
+                field::REVIEWER => {
+                    frontmatter.reviewer = None;
+                    mutated = true;
+                }
+                field::ISSUE => {
+                    frontmatter.issue = None;
+                    mutated = true;
+                }
+                field::PR => {
+                    frontmatter.pr = None;
+                    mutated = true;
+                }
+                field::EPIC => {
+                    frontmatter.epic = None;
+                    mutated = true;
+                }
+                field::BREAKING => {
+                    frontmatter.breaking = None;
+                    mutated = true;
+                }
+                field::DUE => {
+                    frontmatter.due = None;
+                    mutated = true;
+                }
                 _ => {}
             }
         }
 
-        let title_changed   = req.title.is_some();
+        let title_changed = req.title.is_some();
         let content_changed = req.fields.contains_key(field::CONTENT);
 
         if mutated || title_changed || content_changed {
             let effective_title = req.title.clone().unwrap_or_else(|| spec.title.clone());
             let effective_body = match req.fields.get(field::CONTENT).and_then(|v| v.as_str()) {
                 Some(b) => strip_leading_title(b, &effective_title),
-                None    => spec.content.trim_start_matches('\n').to_string(),
+                None => spec.content.trim_start_matches('\n').to_string(),
             };
 
             let fm_yaml =
@@ -678,7 +757,11 @@ impl Adapter for MarkdownAdapter {
         let hits = search_specs_with_options(&specs, query, legacy_opts);
         Ok(hits
             .into_iter()
-            .map(|r| SearchHit { id: r.path, score: r.score as f32, snippet: None })
+            .map(|r| SearchHit {
+                id: r.path,
+                score: r.score as f32,
+                snippet: None,
+            })
             .collect())
     }
 }
@@ -780,9 +863,18 @@ mod tests {
         let adapter = MarkdownAdapter::new(tmp.path());
         let schema = adapter.schema();
         assert_eq!(schema.id, SCHEMA_ID);
-        assert_eq!(schema.key_for_semantic(semantic::STATUS),   Some(field::STATUS));
-        assert_eq!(schema.key_for_semantic(semantic::PRIORITY), Some(field::PRIORITY));
-        assert_eq!(schema.key_for_semantic(semantic::ASSIGNEE), Some(field::ASSIGNEE));
+        assert_eq!(
+            schema.key_for_semantic(semantic::STATUS),
+            Some(field::STATUS)
+        );
+        assert_eq!(
+            schema.key_for_semantic(semantic::PRIORITY),
+            Some(field::PRIORITY)
+        );
+        assert_eq!(
+            schema.key_for_semantic(semantic::ASSIGNEE),
+            Some(field::ASSIGNEE)
+        );
         assert_eq!(schema.key_for_semantic(semantic::DUE_DATE), Some(field::DUE));
     }
 
@@ -792,17 +884,20 @@ mod tests {
         let specs = tmp.path().join("specs");
         std::fs::create_dir_all(&specs).unwrap();
         write_spec(&specs, "001-first", "planned", Some("high"));
-        write_spec(&specs, "002-gone",  "archived", None);
+        write_spec(&specs, "002-gone", "archived", None);
 
         let adapter = MarkdownAdapter::new(&specs);
         let docs = adapter.list(&ListFilter::default()).unwrap();
         assert_eq!(docs.len(), 1);
         assert_eq!(docs[0].id, "001-first");
-        assert_eq!(docs[0].field_str(field::STATUS),   Some("planned"));
+        assert_eq!(docs[0].field_str(field::STATUS), Some("planned"));
         assert_eq!(docs[0].field_str(field::PRIORITY), Some("high"));
 
         let with_archived = adapter
-            .list(&ListFilter { include_archived: true, ..Default::default() })
+            .list(&ListFilter {
+                include_archived: true,
+                ..Default::default()
+            })
             .unwrap();
         assert_eq!(with_archived.len(), 2);
     }
@@ -827,7 +922,10 @@ mod tests {
         let specs = tmp.path().join("specs");
         std::fs::create_dir_all(&specs).unwrap();
         let adapter = MarkdownAdapter::new(&specs);
-        assert!(matches!(adapter.get("nope").unwrap_err(), AdapterError::NotFound(_)));
+        assert!(matches!(
+            adapter.get("nope").unwrap_err(),
+            AdapterError::NotFound(_)
+        ));
     }
 
     #[test]
@@ -838,9 +936,12 @@ mod tests {
         let adapter = MarkdownAdapter::new(&specs);
 
         let mut fields = HashMap::new();
-        fields.insert(field::STATUS.into(),   FieldValue::from("planned"));
+        fields.insert(field::STATUS.into(), FieldValue::from("planned"));
         fields.insert(field::PRIORITY.into(), FieldValue::from("high"));
-        fields.insert(field::TAGS.into(), FieldValue::from(vec!["a".to_string(), "b".to_string()]));
+        fields.insert(
+            field::TAGS.into(),
+            FieldValue::from(vec!["a".to_string(), "b".to_string()]),
+        );
 
         let doc = adapter
             .create(&CreateRequest {
@@ -864,6 +965,25 @@ mod tests {
     }
 
     #[test]
+    fn create_rejects_wrong_schema_id() {
+        let tmp = TempDir::new().unwrap();
+        let specs = tmp.path().join("specs");
+        std::fs::create_dir_all(&specs).unwrap();
+        let adapter = MarkdownAdapter::new(&specs);
+
+        let err = adapter
+            .create(&CreateRequest {
+                slug: None,
+                title: "Test".into(),
+                schema_id: Some("leanspec:github".into()),
+                fields: HashMap::new(),
+                links: vec![],
+            })
+            .unwrap_err();
+        assert!(matches!(err, AdapterError::ConfigError(_)));
+    }
+
+    #[test]
     fn update_changes_status_and_tags() {
         let tmp = TempDir::new().unwrap();
         let specs = tmp.path().join("specs");
@@ -873,9 +993,18 @@ mod tests {
         let adapter = MarkdownAdapter::new(&specs);
         let mut fields = HashMap::new();
         fields.insert(field::STATUS.into(), FieldValue::from("in-progress"));
-        fields.insert(field::TAGS.into(), FieldValue::from(vec!["alpha".to_string()]));
+        fields.insert(
+            field::TAGS.into(),
+            FieldValue::from(vec!["alpha".to_string()]),
+        );
         let doc = adapter
-            .update("001-test", &UpdateRequest { fields, ..Default::default() })
+            .update(
+                "001-test",
+                &UpdateRequest {
+                    fields,
+                    ..Default::default()
+                },
+            )
             .unwrap();
         assert_eq!(doc.field_str(field::STATUS), Some("in-progress"));
         assert_eq!(
@@ -895,9 +1024,15 @@ mod tests {
         let mut fields = HashMap::new();
         fields.insert("totally-fake-key".into(), FieldValue::from("yes"));
         let err = adapter
-            .update("001-test", &UpdateRequest { fields, ..Default::default() })
+            .update(
+                "001-test",
+                &UpdateRequest {
+                    fields,
+                    ..Default::default()
+                },
+            )
             .unwrap_err();
-        assert!(matches!(err, AdapterError::InvalidMetadata { .. }));
+        assert!(matches!(err, AdapterError::InvalidField { .. }));
     }
 
     #[test]
@@ -910,17 +1045,26 @@ mod tests {
         let adapter = MarkdownAdapter::new(&specs);
         let mut fields = HashMap::new();
         fields.insert(field::REVIEWER.into(), FieldValue::from("alice"));
-        fields.insert(field::ISSUE.into(),    FieldValue::from("#42"));
+        fields.insert(field::ISSUE.into(), FieldValue::from("#42"));
         fields.insert(field::BREAKING.into(), FieldValue::Bool(true));
-        fields.insert(field::DUE.into(),      FieldValue::from("2026-06-01"));
+        fields.insert(field::DUE.into(), FieldValue::from("2026-06-01"));
 
         let doc = adapter
-            .update("001-test", &UpdateRequest { fields, ..Default::default() })
+            .update(
+                "001-test",
+                &UpdateRequest {
+                    fields,
+                    ..Default::default()
+                },
+            )
             .unwrap();
         assert_eq!(doc.field_str(field::REVIEWER), Some("alice"));
-        assert_eq!(doc.field_str(field::ISSUE),    Some("#42"));
-        assert_eq!(doc.field(field::BREAKING).and_then(|v| v.as_bool()), Some(true));
-        assert_eq!(doc.field_str(field::DUE),      Some("2026-06-01"));
+        assert_eq!(doc.field_str(field::ISSUE), Some("#42"));
+        assert_eq!(
+            doc.field(field::BREAKING).and_then(|v| v.as_bool()),
+            Some(true)
+        );
+        assert_eq!(doc.field_str(field::DUE), Some("2026-06-01"));
     }
 
     #[test]
@@ -932,9 +1076,18 @@ mod tests {
 
         let adapter = MarkdownAdapter::new(&specs);
         let mut fields = HashMap::new();
-        fields.insert(field::CONTENT.into(), FieldValue::from("## Overview\n\nNew content."));
+        fields.insert(
+            field::CONTENT.into(),
+            FieldValue::from("## Overview\n\nNew content."),
+        );
         let doc = adapter
-            .update("001-test", &UpdateRequest { fields, ..Default::default() })
+            .update(
+                "001-test",
+                &UpdateRequest {
+                    fields,
+                    ..Default::default()
+                },
+            )
             .unwrap();
         assert_eq!(doc.title, "Test 001-test");
         assert!(doc.field_str(field::CONTENT).unwrap_or("").contains("## Overview"));
@@ -973,7 +1126,13 @@ mod tests {
         let mut fields = HashMap::new();
         fields.insert(field::ISSUE.into(), FieldValue::from("#99"));
         adapter
-            .update("001-test", &UpdateRequest { fields, ..Default::default() })
+            .update(
+                "001-test",
+                &UpdateRequest {
+                    fields,
+                    ..Default::default()
+                },
+            )
             .unwrap();
 
         // Then clear it.
@@ -1008,7 +1167,7 @@ mod tests {
         let specs = tmp.path().join("specs");
         std::fs::create_dir_all(&specs).unwrap();
         write_spec(&specs, "001-auth", "planned", None);
-        write_spec(&specs, "002-cli",  "planned", None);
+        write_spec(&specs, "002-cli", "planned", None);
 
         let adapter = MarkdownAdapter::new(&specs);
         let hits = adapter
