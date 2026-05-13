@@ -73,12 +73,7 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
             FieldKind::Number => "number".to_string(),
             FieldKind::Bool => "bool".to_string(),
             FieldKind::Timestamp => "timestamp".to_string(),
-            FieldKind::Enum {
-                options,
-                multi,
-                allow_custom,
-                dynamic,
-            } => {
+            FieldKind::Enum { options, multi, allow_custom, dynamic } => {
                 let values: Vec<&str> = options.iter().map(|o| o.value.as_str()).collect();
                 let flags = [
                     if *multi { "multi" } else { "" },
