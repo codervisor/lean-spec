@@ -10,8 +10,8 @@ use std::str::FromStr;
 
 use super::{Adapter, AdapterCapabilities, AdapterError, ListFilter, SearchHit, SearchOptions};
 use crate::model::{
-    CreateRequest, EnumOption, FieldDef, FieldDisplay, FieldKind, FieldValue, ItemLink, LinkTypeDef,
-    SpecDoc, SpecSchema, UpdateRequest, semantic,
+    semantic, CreateRequest, EnumOption, FieldDef, FieldDisplay, FieldKind, FieldValue, ItemLink,
+    LinkTypeDef, SpecDoc, SpecSchema, UpdateRequest,
 };
 use crate::search::{search_specs_with_options, SearchOptions as LegacySearchOptions};
 use crate::spec_ops::{MetadataUpdate, SpecArchiver, SpecLoader, SpecWriter};
@@ -341,7 +341,10 @@ pub fn spec_info_to_doc(info: &SpecInfo) -> SpecDoc {
     let fm = &info.frontmatter;
     let mut fields: HashMap<String, FieldValue> = HashMap::new();
 
-    fields.insert(field::STATUS.into(), FieldValue::String(fm.status.to_string()));
+    fields.insert(
+        field::STATUS.into(),
+        FieldValue::String(fm.status.to_string()),
+    );
     if let Some(p) = fm.priority {
         fields.insert(field::PRIORITY.into(), FieldValue::String(p.to_string()));
     }
@@ -369,9 +372,15 @@ pub fn spec_info_to_doc(info: &SpecInfo) -> SpecDoc {
     if let Some(ref d) = fm.due {
         fields.insert(field::DUE.into(), FieldValue::String(d.clone()));
     }
-    fields.insert(field::CREATED.into(), FieldValue::String(fm.created.clone()));
+    fields.insert(
+        field::CREATED.into(),
+        FieldValue::String(fm.created.clone()),
+    );
     if !info.content.is_empty() {
-        fields.insert(field::CONTENT.into(), FieldValue::String(info.content.clone()));
+        fields.insert(
+            field::CONTENT.into(),
+            FieldValue::String(info.content.clone()),
+        );
     }
 
     let mut links: Vec<ItemLink> = Vec::new();
@@ -535,7 +544,10 @@ fn reject_unknown_fields(
         if schema.field(key).is_none() {
             return Err(AdapterError::InvalidField {
                 adapter: "markdown".into(),
-                reason: format!("unknown field '{}' — check the schema for supported fields", key),
+                reason: format!(
+                    "unknown field '{}' — check the schema for supported fields",
+                    key
+                ),
             });
         }
     }
@@ -578,8 +590,7 @@ impl Adapter for MarkdownAdapter {
             if id != SCHEMA_ID {
                 return Err(AdapterError::ConfigError(format!(
                     "markdown adapter only supports schema '{}', got '{}'",
-                    SCHEMA_ID,
-                    id,
+                    SCHEMA_ID, id,
                 )));
             }
         }
@@ -857,10 +868,22 @@ mod tests {
         let adapter = MarkdownAdapter::new(tmp.path());
         let schema = adapter.schema();
         assert_eq!(schema.id, SCHEMA_ID);
-        assert_eq!(schema.key_for_semantic(semantic::STATUS), Some(field::STATUS));
-        assert_eq!(schema.key_for_semantic(semantic::PRIORITY), Some(field::PRIORITY));
-        assert_eq!(schema.key_for_semantic(semantic::ASSIGNEE), Some(field::ASSIGNEE));
-        assert_eq!(schema.key_for_semantic(semantic::DUE_DATE), Some(field::DUE));
+        assert_eq!(
+            schema.key_for_semantic(semantic::STATUS),
+            Some(field::STATUS)
+        );
+        assert_eq!(
+            schema.key_for_semantic(semantic::PRIORITY),
+            Some(field::PRIORITY)
+        );
+        assert_eq!(
+            schema.key_for_semantic(semantic::ASSIGNEE),
+            Some(field::ASSIGNEE)
+        );
+        assert_eq!(
+            schema.key_for_semantic(semantic::DUE_DATE),
+            Some(field::DUE)
+        );
     }
 
     #[test]
@@ -907,7 +930,10 @@ mod tests {
         let specs = tmp.path().join("specs");
         std::fs::create_dir_all(&specs).unwrap();
         let adapter = MarkdownAdapter::new(&specs);
-        assert!(matches!(adapter.get("nope").unwrap_err(), AdapterError::NotFound(_)));
+        assert!(matches!(
+            adapter.get("nope").unwrap_err(),
+            AdapterError::NotFound(_)
+        ));
     }
 
     #[test]
@@ -941,9 +967,10 @@ mod tests {
 
         assert!(doc.id.contains("cool-feature"));
         assert_eq!(doc.field_str(field::STATUS), Some("planned"));
-        assert!(doc.links.iter().any(|l| {
-            l.link_type == link::DEPENDS_ON && l.target_id == "001-foundation"
-        }));
+        assert!(doc
+            .links
+            .iter()
+            .any(|l| { l.link_type == link::DEPENDS_ON && l.target_id == "001-foundation" }));
     }
 
     #[test]
@@ -1042,7 +1069,10 @@ mod tests {
             .unwrap();
         assert_eq!(doc.field_str(field::REVIEWER), Some("alice"));
         assert_eq!(doc.field_str(field::ISSUE), Some("#42"));
-        assert_eq!(doc.field(field::BREAKING).and_then(|v| v.as_bool()), Some(true));
+        assert_eq!(
+            doc.field(field::BREAKING).and_then(|v| v.as_bool()),
+            Some(true)
+        );
         assert_eq!(doc.field_str(field::DUE), Some("2026-06-01"));
     }
 
@@ -1069,7 +1099,10 @@ mod tests {
             )
             .unwrap();
         assert_eq!(doc.title, "Test 001-test");
-        assert!(doc.field_str(field::CONTENT).unwrap_or("").contains("## Overview"));
+        assert!(doc
+            .field_str(field::CONTENT)
+            .unwrap_or("")
+            .contains("## Overview"));
     }
 
     #[test]

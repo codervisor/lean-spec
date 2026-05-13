@@ -57,8 +57,12 @@ pub use io::{
 };
 pub use parsers::FrontmatterParser;
 pub use relationships::{
-    validate_dependency_addition, validate_parent_assignment, validate_parent_assignment_with_index,
-    RelationshipError,
+    validate_dependency_addition, validate_parent_assignment,
+    validate_parent_assignment_with_index, RelationshipError,
+};
+pub use search::{
+    find_content_snippet, parse_query, parse_query_terms, search_specs, search_specs_with_options,
+    validate_search_query, SearchOptions, SearchQueryError, SearchResult,
 };
 pub use spec_ops::{
     apply_checklist_toggles, apply_replacements, apply_section_updates, preserve_title_heading,
@@ -75,10 +79,6 @@ pub use types::{
 pub use validators::{
     global_frontmatter_validator, global_structure_validator, global_token_count_validator,
     CompletionVerifier, FrontmatterValidator, StructureValidator, TokenCountValidator,
-};
-pub use search::{
-    find_content_snippet, parse_query, parse_query_terms, search_specs, search_specs_with_options,
-    validate_search_query, SearchOptions, SearchQueryError, SearchResult,
 };
 
 // Model layer — the new schema-driven public abstraction.

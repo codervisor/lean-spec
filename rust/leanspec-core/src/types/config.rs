@@ -197,7 +197,10 @@ validation:
         assert_eq!(config.specs_dir, PathBuf::from("my-specs"));
         assert_eq!(config.default_template, Some("minimal".to_string()));
         assert_eq!(config.validation.max_lines, 500);
-        assert_eq!(config.schema.default_schema, Some("leanspec:feature".to_string()));
+        assert_eq!(
+            config.schema.default_schema,
+            Some("leanspec:feature".to_string())
+        );
         assert_eq!(config.schema.bundles, vec!["acme:epic"]);
     }
 
@@ -223,7 +226,10 @@ frontmatter:
     - "acme:epic"
 "#;
         let config: LeanSpecConfig = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(config.schema.default_schema, Some("leanspec:feature".to_string()));
+        assert_eq!(
+            config.schema.default_schema,
+            Some("leanspec:feature".to_string())
+        );
         assert_eq!(config.schema.bundles, vec!["acme:epic"]);
     }
 }

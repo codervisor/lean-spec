@@ -437,7 +437,10 @@ mod tests {
         assert_eq!(v.as_str(), Some("hello"));
 
         let v = FieldValue::from(vec!["a".to_string(), "b".to_string()]);
-        assert_eq!(v.as_strings(), Some(&["a".to_string(), "b".to_string()][..]));
+        assert_eq!(
+            v.as_strings(),
+            Some(&["a".to_string(), "b".to_string()][..])
+        );
         assert_eq!(v.as_str(), None);
 
         let v = FieldValue::from(true);
