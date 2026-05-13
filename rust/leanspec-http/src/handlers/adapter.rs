@@ -49,10 +49,7 @@ fn resolve_adapter_for_project(
 }
 
 fn api_error(err: leanspec_core::AdapterError) -> (StatusCode, Json<ApiError>) {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiError::new("adapter_init_failed", err.to_string())),
-    )
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiError::new("adapter_init_failed", err.to_string())))
 }
 
 /// GET /api/projects/{id}/adapter
