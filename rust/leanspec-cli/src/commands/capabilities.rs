@@ -56,11 +56,7 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
         yesno(caps.supports_search),
         yesno(caps.supports_webhooks),
     );
-    println!(
-        "  {} {}",
-        "Default schema:".bold(),
-        caps.default_schema.cyan()
-    );
+    println!("  {} {}", "Default schema:".bold(), caps.default_schema.cyan());
     println!();
 
     println!("{}", "Fields:".bold());
@@ -104,7 +100,7 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
                             String::new()
                         } else {
                             format!(" ({})", flags)
-                        }
+                        },
                     )
                 }
             }

@@ -153,8 +153,7 @@ mod tests {
 
     #[test]
     fn missing_config_returns_default() {
-        let cfg =
-            AdapterRegistry::load_config(Path::new("/definitely/not/here.yaml")).unwrap();
+        let cfg = AdapterRegistry::load_config(Path::new("/definitely/not/here.yaml")).unwrap();
         assert_eq!(cfg.adapter, "markdown");
     }
 
