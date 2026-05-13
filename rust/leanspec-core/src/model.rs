@@ -122,20 +122,15 @@ impl CompletableItem {
 }
 
 /// Where a field is rendered in the UI.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../packages/ui/src/types/generated/")]
 #[serde(rename_all = "snake_case")]
 pub enum FieldDisplay {
     /// Rendered in the metadata panel / sidebar.
+    #[default]
     Inline,
     /// Rendered as a full-height body section.
     Section,
-}
-
-impl Default for FieldDisplay {
-    fn default() -> Self {
-        FieldDisplay::Inline
-    }
 }
 
 /// The primitive type of a field's value.
