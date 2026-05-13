@@ -1,19 +1,17 @@
-//! `capabilities` command — introspect the active adapter.
+//! `capabilities` command — introspect the active adapter's schema and flags.
 //!
-//! Agents should call this at session start to discover the active adapter's
-//! metadata vocabulary: which fields exist, what values they accept, which
-//! semantic roles they fill. The returned JSON is the source of truth for
-//! building adapter-aware workflows — there's no hard-coded `draft`, `planned`,
-//! `in-progress`, etc. baked into the CLI any more.
+//! Agents should call this at session start to discover which fields exist,
+//! what values they accept, and which semantic roles they fill. The returned
+//! JSON is the source of truth for building adapter-aware workflows.
 
 use colored::Colorize;
-use leanspec_core::adapters::{AdapterConfig, AdapterRegistry, MetadataKind, SemanticHint};
+use leanspec_core::adapters::{AdapterConfig, AdapterRegistry};
+use leanspec_core::model::{FieldKind, semantic};
 use std::error::Error;
 
 pub struct CapabilitiesParams {
     /// Specs directory override from `--specs-dir`. If the user didn't pass one
-    /// we let the project's adapter configuration decide — that way the active
-    /// adapter (markdown / github / ado / …) is whatever the project declared.
+    /// we let the project's adapter configuration decide.
     pub specs_dir: Option<String>,
     pub output_format: String,
 }
@@ -26,17 +24,25 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
     // `provider:` fallbacks) and defaults to markdown at `specs/`.
     let adapter = match params.specs_dir.as_deref() {
         Some(dir) => {
-            let config = AdapterConfig::Markdown {
-                directory: dir.to_string(),
+            let config = AdapterConfig {
+                adapter: "markdown".into(),
+                settings: serde_json::json!({ "directory": dir }),
             };
             AdapterRegistry::create(&config)?
         }
         None => AdapterRegistry::from_project()?,
     };
+
     let caps = adapter.capabilities();
+    let schema = adapter.schema();
 
     if params.output_format == "json" {
-        println!("{}", serde_json::to_string_pretty(caps)?);
+        let out = serde_json::json!({
+            "adapter": caps.name,
+            "capabilities": caps,
+            "schema": schema,
+        });
+        println!("{}", serde_json::to_string_pretty(&out)?);
         return Ok(());
     }
 
@@ -50,45 +56,86 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
         yesno(caps.supports_search),
         yesno(caps.supports_webhooks),
     );
+    println!("  {} {}", "Default schema:".bold(), caps.default_schema.cyan());
     println!();
-    println!("{}", "Metadata fields:".bold());
-    for field in &caps.metadata_fields {
-        let semantic = match field.semantic {
-            Some(SemanticHint::Status) => "  (status)".yellow().to_string(),
-            Some(SemanticHint::Priority) => "  (priority)".yellow().to_string(),
-            Some(SemanticHint::Tags) => "  (tags)".yellow().to_string(),
-            Some(SemanticHint::Assignee) => "  (assignee)".yellow().to_string(),
-            Some(SemanticHint::DueDate) => "  (due_date)".yellow().to_string(),
-            None => String::new(),
-        };
+
+    println!("{}", "Fields:".bold());
+    for field in &schema.fields {
+        let semantic_tag = field
+            .semantic
+            .as_deref()
+            .map(|s| format!("  ({})", s).yellow().to_string())
+            .unwrap_or_default();
+
         let kind = match &field.kind {
-            MetadataKind::Text => "text".to_string(),
-            MetadataKind::Enum { values } => format!("enum [{}]", values.join(", ")),
-            MetadataKind::StringList => "string_list".to_string(),
-            MetadataKind::Bool => "bool".to_string(),
-            MetadataKind::Number => "number".to_string(),
-            MetadataKind::Timestamp => "timestamp".to_string(),
+            FieldKind::Text => "text".to_string(),
+            FieldKind::LongText => "long_text".to_string(),
+            FieldKind::Number => "number".to_string(),
+            FieldKind::Bool => "bool".to_string(),
+            FieldKind::Timestamp => "timestamp".to_string(),
+            FieldKind::Enum { options, multi, allow_custom, dynamic } => {
+                let values: Vec<&str> = options.iter().map(|o| o.value.as_str()).collect();
+                let flags = [
+                    if *multi { "multi" } else { "" },
+                    if *allow_custom { "custom" } else { "" },
+                    if *dynamic { "dynamic" } else { "" },
+                ]
+                .iter()
+                .filter(|s| !s.is_empty())
+                .cloned()
+                .collect::<Vec<_>>()
+                .join(",");
+                if values.is_empty() {
+                    format!("enum [{}]", flags)
+                } else {
+                    format!("enum [{}]{}", values.join(", "), if flags.is_empty() { String::new() } else { format!(" ({})", flags) })
+                }
+            }
+            FieldKind::Checklist { traced } => {
+                if *traced { "checklist(traced)".to_string() } else { "checklist".to_string() }
+            }
+            FieldKind::References { multi } => {
+                if *multi { "references(multi)".to_string() } else { "reference".to_string() }
+            }
+        };
+
+        let section_tag = match field.display {
+            leanspec_core::model::FieldDisplay::Section => "  [section]".dimmed().to_string(),
+            leanspec_core::model::FieldDisplay::Inline => String::new(),
         };
         let required = if field.required { " *required*" } else { "" };
         println!(
-            "  {:<12} {} — {}{}{}",
+            "  {:<14} {} — {}{}{}{}",
             field.key.cyan(),
             field.label,
             kind,
             required,
-            semantic
+            semantic_tag,
+            section_tag,
         );
     }
-    println!();
-    println!("{} {}", "Link types:".bold(), caps.link_types.join(", "));
+
+    if !schema.link_types.is_empty() {
+        println!();
+        println!("{}", "Link types:".bold());
+        for lt in &schema.link_types {
+            let inverse = lt
+                .inverse_key
+                .as_deref()
+                .map(|k| format!(" ⇄ {}", k).dimmed().to_string())
+                .unwrap_or_default();
+            println!("  {:<14} {}{}", lt.key.cyan(), lt.label, inverse);
+        }
+    }
 
     Ok(())
 }
 
 fn yesno(b: bool) -> colored::ColoredString {
-    if b {
-        "yes".green()
-    } else {
-        "no".red()
-    }
+    if b { "yes".green() } else { "no".red() }
 }
+
+// Re-export semantic constants so callers can reference them without
+// importing the model module directly.
+#[allow(unused_imports)]
+use leanspec_core::model::semantic as _semantic;
