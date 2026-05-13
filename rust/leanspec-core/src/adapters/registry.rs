@@ -190,7 +190,7 @@ mod tests {
         std::fs::write(&p, "{ unclosed: [").unwrap();
         assert!(matches!(
             AdapterRegistry::load_config(&p).unwrap_err(),
-            AdapterError::ConfigError(_)
+            AdapterError::ConfigError(_),
         ));
     }
 
@@ -201,7 +201,7 @@ mod tests {
         std::fs::write(&p, "- foo\n- bar\n").unwrap();
         assert!(matches!(
             AdapterRegistry::load_config(&p).unwrap_err(),
-            AdapterError::ConfigError(_)
+            AdapterError::ConfigError(_),
         ));
     }
 }
