@@ -100,7 +100,7 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
                             String::new()
                         } else {
                             format!(" ({})", flags)
-                        },
+                        }
                     )
                 }
             }
