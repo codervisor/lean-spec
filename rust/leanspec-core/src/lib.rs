@@ -2,16 +2,19 @@
 //!
 //! Core library for the LeanSpec spec-coding framework.
 //!
-//! The public API is the [`adapters`] module: each adapter speaks its
-//! backend's native language (markdown files today; GitHub Issues, Azure
-//! DevOps, Jira, Linear in follow-ups) and exposes a uniform [`Adapter`]
-//! trait returning [`SpecItem`]s with dynamic, adapter-declared metadata.
+//! ## Public API layers
+//!
+//! - **Model layer** ([`model`]): the schema-driven type system — [`SpecDoc`],
+//!   [`FieldValue`], [`FieldDef`], [`SpecSchema`], and friends.
+//! - **Adapter layer** ([`adapters`]): each adapter speaks its backend's native
+//!   language (markdown files, GitHub Issues, ADO Work Items, Jira) and exposes
+//!   a uniform [`Adapter`] trait returning [`SpecDoc`]s.
 //!
 //! The other modules ([`parsers`], [`spec_ops`], [`validators`], [`compute`],
-//! [`search`], [`relationships`]) are the markdown adapter's internal
-//! machinery. They remain addressable for markdown-specific CLI commands
-//! (`backfill`, `compact`, `tokens`, …), but the public abstraction that
-//! consumers should build against is [`Adapter`].
+//! [`search`], [`relationships`]) are the markdown adapter's internal machinery.
+//! They remain addressable for markdown-specific CLI commands (`backfill`,
+//! `compact`, `tokens`, …) but the abstraction consumers should build against
+//! is [`Adapter`] + [`model`].
 //!
 //! ## Example
 //!
@@ -19,9 +22,9 @@
 //! use leanspec_core::adapters::{AdapterRegistry, ListFilter};
 //!
 //! let adapter = AdapterRegistry::default_adapter();
-//! let items = adapter.list(&ListFilter::default()).unwrap();
-//! for item in items {
-//!     println!("{}: {}", item.id, item.title);
+//! let docs = adapter.list(&ListFilter::default()).unwrap();
+//! for doc in docs {
+//!     println!("{}: {}", doc.id, doc.title);
 //! }
 //! ```
 
@@ -29,6 +32,7 @@ pub mod adapters;
 pub mod compute;
 pub mod error;
 pub mod io;
+pub mod model;
 pub mod parsers;
 pub mod relationships;
 pub mod search;
@@ -56,6 +60,10 @@ pub use relationships::{
     validate_dependency_addition, validate_parent_assignment,
     validate_parent_assignment_with_index, RelationshipError,
 };
+pub use search::{
+    find_content_snippet, parse_query, parse_query_terms, search_specs, search_specs_with_options,
+    validate_search_query, SearchOptions, SearchQueryError, SearchResult,
+};
 pub use spec_ops::{
     apply_checklist_toggles, apply_replacements, apply_section_updates, preserve_title_heading,
     rebuild_content, split_frontmatter, ArchiveError, ChecklistToggle, ChecklistToggleResult,
@@ -73,21 +81,18 @@ pub use validators::{
     CompletionVerifier, FrontmatterValidator, StructureValidator, TokenCountValidator,
 };
 
-// Re-export search module
-pub use search::{
-    find_content_snippet, parse_query, parse_query_terms, search_specs, search_specs_with_options,
-    validate_search_query, SearchOptions, SearchQueryError, SearchResult,
+// Model layer — the new schema-driven public abstraction.
+pub use model::{
+    semantic, CompletableItem, CreateRequest, EnumOption, FieldDef, FieldDisplay, FieldKind,
+    FieldValue, ItemLink, LinkTypeDef, Reference, SpecDoc, SpecSchema, UpdateRequest,
 };
 
-// Re-export adapter types — the new public abstraction after the pivot
-// described in https://github.com/codervisor/lean-spec/issues/168.
+// Adapter layer — the backend abstraction.
 //
-// Note: `SearchOptions` is exposed twice in the codebase — a legacy
-// markdown-specific one in `search::SearchOptions` and the adapter-level one.
-// The adapter version is re-exported under `AdapterSearchOptions` to keep the
-// two disambiguated while both exist during the pivot.
+// Note: `SearchOptions` is present in both `search` (legacy markdown-specific)
+// and `adapters` (adapter-level). The adapter version is re-exported under
+// `AdapterSearchOptions` to keep the two distinct during the transition.
 pub use adapters::{
-    Adapter, AdapterCapabilities, AdapterConfig, AdapterError, AdapterRegistry, CreateRequest,
-    ItemLink, ListFilter, MetadataFieldSpec, MetadataKind, MetadataValue, SearchHit,
-    SearchOptions as AdapterSearchOptions, SemanticHint, SpecItem, UpdateRequest,
+    Adapter, AdapterCapabilities, AdapterConfig, AdapterError, AdapterRegistry, ListFilter,
+    SearchHit, SearchOptions as AdapterSearchOptions,
 };

@@ -1,0 +1,55 @@
+id: "leanspec:bug"
+name: "Bug"
+extends: "leanspec:base"
+fields:
+  - key: severity
+    label: Severity
+    kind:
+      kind: enum
+      options:
+        - { value: low,      label: Low,      color: "#6b7280" }
+        - { value: medium,   label: Medium,   color: "#f59e0b" }
+        - { value: high,     label: High,     color: "#ef4444" }
+        - { value: critical, label: Critical, color: "#7c3aed" }
+      multi: false
+      allow_custom: false
+      dynamic: false
+    display: inline
+    required: false
+
+  - key: regression
+    label: Regression
+    kind:
+      kind: bool
+    display: inline
+    required: false
+
+  - key: issue
+    label: Linked Issue
+    kind:
+      kind: text
+    display: inline
+    required: false
+    placeholder: "#123"
+
+  - key: steps
+    label: Steps to Reproduce
+    kind:
+      kind: long_text
+    display: section
+    required: false
+    ai_hint: "Step-by-step instructions to reproduce the bug"
+
+  - key: expected
+    label: Expected Behaviour
+    kind:
+      kind: long_text
+    display: section
+    required: false
+
+  - key: actual
+    label: Actual Behaviour
+    kind:
+      kind: long_text
+    display: section
+    required: false

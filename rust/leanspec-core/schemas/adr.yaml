@@ -1,0 +1,43 @@
+id: "leanspec:adr"
+name: "Architecture Decision Record"
+extends: "leanspec:base"
+fields:
+  - key: decision
+    label: Decision
+    kind:
+      kind: long_text
+    display: section
+    required: true
+    ai_hint: "The architecture decision made — state it clearly and directly"
+
+  - key: context
+    label: Context
+    kind:
+      kind: long_text
+    display: section
+    required: false
+    ai_hint: "Why this decision was needed — forces, constraints, the problem being solved"
+
+  - key: consequences
+    label: Consequences
+    kind:
+      kind: long_text
+    display: section
+    required: false
+    ai_hint: "Impact of this decision — positive, negative, and neutral outcomes"
+
+  - key: alternatives
+    label: Alternatives Considered
+    kind:
+      kind: long_text
+    display: section
+    required: false
+    ai_hint: "Other options evaluated and why they were not chosen"
+
+link_types:
+  - key: supersedes
+    label: Supersedes
+    inverse_key: superseded_by
+    inverse_label: Superseded by
+  - key: related_to
+    label: Related to

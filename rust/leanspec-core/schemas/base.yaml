@@ -1,0 +1,102 @@
+id: "leanspec:base"
+name: "Base"
+fields:
+  - key: status
+    label: Status
+    kind:
+      kind: enum
+      options:
+        - value: draft
+          label: Draft
+          color: "#6b7280"
+          icon: file-text
+          description: "Being written"
+        - value: planned
+          label: Planned
+          color: "#3b82f6"
+          icon: calendar
+          description: "Approved, not started"
+        - value: in-progress
+          label: In Progress
+          color: "#f59e0b"
+          icon: loader
+          description: "Actively being built"
+        - value: complete
+          label: Complete
+          color: "#10b981"
+          icon: check-circle
+          description: "Done and verified"
+        - value: archived
+          label: Archived
+          color: "#9ca3af"
+          icon: archive
+          description: "No longer active"
+      multi: false
+      allow_custom: false
+      dynamic: false
+    display: inline
+    required: true
+    semantic: status
+
+  - key: priority
+    label: Priority
+    kind:
+      kind: enum
+      options:
+        - { value: low,      label: Low,      color: "#6b7280" }
+        - { value: medium,   label: Medium,   color: "#3b82f6" }
+        - { value: high,     label: High,     color: "#f59e0b" }
+        - { value: critical, label: Critical, color: "#ef4444" }
+      multi: false
+      allow_custom: false
+      dynamic: false
+    display: inline
+    required: false
+    semantic: priority
+
+  - key: tags
+    label: Tags
+    kind:
+      kind: enum
+      options: []
+      multi: true
+      allow_custom: true
+      dynamic: false
+    display: inline
+    required: false
+    semantic: tags
+
+  - key: assignee
+    label: Assignee
+    kind:
+      kind: enum
+      options: []
+      multi: false
+      allow_custom: true
+      dynamic: true
+    display: inline
+    required: false
+    semantic: assignee
+    placeholder: "@username"
+
+  - key: content
+    label: Content
+    kind:
+      kind: long_text
+    display: section
+    required: false
+    ai_hint: "Full spec body in markdown format"
+
+link_types:
+  - key: parent
+    label: Parent
+    inverse_key: child
+    inverse_label: Child
+  - key: child
+    label: Child
+    inverse_key: parent
+    inverse_label: Parent
+  - key: depends_on
+    label: Depends on
+    inverse_key: blocked_by
+    inverse_label: Blocked by
