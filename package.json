@@ -46,6 +46,7 @@
     "validate-binaries": "tsx scripts/validate-platform-binaries.ts",
     "publish:platforms": "tsx scripts/publish-platform-packages.ts",
     "publish:main": "tsx scripts/publish-main-packages.ts",
+    "migrate:specs": "tsx scripts/migrate-specs-to-issues.ts",
     "cli": "node bin/leanspec.js"
   }
 }
