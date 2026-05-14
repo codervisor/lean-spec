@@ -7,14 +7,19 @@
 // calls happen unless --execute is passed.
 //
 // Execute mode requires GH_TOKEN with `repo` scope and creates the issues in
-// two passes: pass 1 creates each issue and records spec_number → issue_number,
-// pass 2 rewrites depends_on references in each body to use the real issue
-// numbers and applies sub-issue parent/child links where the source frontmatter
-// declares them.
+// two passes: pass 1 creates each issue and records spec_number → issue_number;
+// pass 2 rewrites `depends_on` and `related` references in each body to use
+// the real issue numbers. Sub-issue parent/child links are NOT created — per
+// the migration design ("inline sub-files; only depends_on edges become
+// references"), IMPLEMENTATION.md / ARCHITECTURE.md are folded into the
+// parent body and GitHub's sub-issue graph is left for humans to wire up
+// post-migration if desired.
 //
 // Idempotency: each created issue carries an HTML comment marker
-// `<!-- migrated-from: specs/NNN-slug -->` in its body. Re-running --execute
-// checks for the marker via GitHub search and skips issues that already exist.
+// `<!-- migrated-from: specs/NNN-slug -->` in its body. Before pass 1, a
+// single paginated search builds a map of existing markers → issue numbers,
+// so re-running --execute is safe and doesn't burn through the Search API
+// rate limit (30 req/min) on per-spec lookups.
 
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -59,10 +64,9 @@ interface IssuePayload {
   title: string;
   body: string;
   labels: string[];
-  // unresolved references to other spec numbers (pre-pass-2)
+  // unresolved spec-number references rewritten in pass 2 of --execute
   dependsOnSpecNumbers: string[];
-  parentSpecNumber?: string;
-  childSpecNumbers: string[];
+  relatedSpecNumbers: string[];
 }
 
 interface Manifest {
@@ -113,7 +117,13 @@ function parseArgs(argv: string[]): Args {
       args.dryRun = true;
       args.execute = false;
     } else if (a === "--limit") {
-      args.limit = parseInt(argv[++i], 10);
+      const raw = argv[++i];
+      const parsed = Number(raw);
+      if (!raw || !Number.isInteger(parsed) || parsed < 1) {
+        console.error(`error: --limit requires a positive integer, got: ${raw}`);
+        process.exit(2);
+      }
+      args.limit = parsed;
     } else if (a === "--manifest") {
       args.manifestPath = argv[++i];
     } else if (a === "--owner") {
@@ -267,7 +277,10 @@ function inferLabels(rec: SpecRecord): string[] {
 
 // ---------- Body assembly ----------
 
-function buildBody(rec: SpecRecord, args: Args): { body: string; dependsOn: string[] } {
+function buildBody(
+  rec: SpecRecord,
+  args: Args,
+): { body: string; dependsOn: string[]; related: string[] } {
   const fm = rec.frontmatter;
   const lines: string[] = [];
 
@@ -313,7 +326,7 @@ function buildBody(rec: SpecRecord, args: Args): { body: string; dependsOn: stri
     lines.push(cleaned.trim());
   }
 
-  return { body: lines.join("\n") + "\n", dependsOn };
+  return { body: lines.join("\n") + "\n", dependsOn, related };
 }
 
 function normalizeRefList(list: unknown): string[] {
@@ -353,7 +366,7 @@ function buildManifest(records: SpecRecord[], args: Args): Manifest {
     }
     const labels = inferLabels(rec);
     const title = buildTitle(rec, labels);
-    const { body, dependsOn } = buildBody(rec, args);
+    const { body, dependsOn, related } = buildBody(rec, args);
 
     issues.push({
       specNumber: rec.specNumber,
@@ -362,10 +375,7 @@ function buildManifest(records: SpecRecord[], args: Args): Manifest {
       body,
       labels,
       dependsOnSpecNumbers: dependsOn,
-      parentSpecNumber: typeof rec.frontmatter.parent === "string"
-        ? normalizeRefList([rec.frontmatter.parent])[0]
-        : undefined,
-      childSpecNumbers: normalizeRefList(rec.frontmatter.children),
+      relatedSpecNumbers: related,
     });
   }
 
@@ -424,18 +434,34 @@ async function gh<T>(
   return res.json() as Promise<T>;
 }
 
-async function findExistingMigratedIssue(
+// Build a single map of (specDir → existing migrated issue) up front, via
+// one paginated search. The Search API has a 30 req/min limit, so doing
+// one search per spec for ~98 specs would either hit the cap or burn most
+// of the budget — a single label-scoped paginated walk is cheap and safe.
+async function buildExistingIssuesMap(
   token: string,
   args: Args,
-  specDir: string,
-): Promise<GitHubIssue | null> {
-  // Use search to find an issue whose body contains the migration marker.
-  // Marker: <!-- migrated-from: specs/NNN-slug -->
+): Promise<Map<string, GitHubIssue>> {
+  const map = new Map<string, GitHubIssue>();
   const q = encodeURIComponent(
-    `repo:${args.owner}/${args.repo} in:body "migrated-from: specs/${specDir}"`,
+    `repo:${args.owner}/${args.repo} is:issue label:migrated-from-file in:body "migrated-from: specs/"`,
   );
-  const res = await gh<{ items: GitHubIssue[] }>(token, "GET", `/search/issues?q=${q}`);
-  return res.items[0] ?? null;
+  let page = 1;
+  while (true) {
+    const res = await gh<{ items: (GitHubIssue & { body: string })[]; total_count: number }>(
+      token,
+      "GET",
+      `/search/issues?q=${q}&per_page=100&page=${page}`,
+    );
+    for (const item of res.items) {
+      const m = item.body?.match(/<!-- migrated-from: specs\/([^\s-]+(?:-[^\s-]+)*) -->/);
+      if (m) map.set(m[1], { number: item.number, html_url: item.html_url, node_id: item.node_id });
+    }
+    if (res.items.length < 100) break;
+    page++;
+    if (page > 10) break; // defensive cap — Search API doesn't paginate past 1000 results anyway
+  }
+  return map;
 }
 
 async function ensureLabels(token: string, args: Args, labels: string[]): Promise<void> {
@@ -478,13 +504,17 @@ async function executeMigration(manifest: Manifest, args: Args): Promise<void> {
   console.log(`bootstrapping ${manifest.labels.length} labels on ${args.owner}/${args.repo}`);
   await ensureLabels(token, args, manifest.labels);
 
+  console.log("scanning for previously migrated issues (one paginated search)");
+  const existing = await buildExistingIssuesMap(token, args);
+  console.log(`  found ${existing.size} existing migrated issues`);
+
   // Pass 1: create issues, recording spec_number → issue_number
   const created: Record<string, GitHubIssue> = {};
   for (const issue of manifest.issues) {
-    const existing = await findExistingMigratedIssue(token, args, issue.specDir);
-    if (existing) {
-      console.log(`  = skip ${issue.specDir}: already migrated → #${existing.number}`);
-      created[issue.specNumber] = existing;
+    const prior = existing.get(issue.specDir);
+    if (prior) {
+      console.log(`  = skip ${issue.specDir}: already migrated → #${prior.number}`);
+      created[issue.specNumber] = prior;
       continue;
     }
     const res = await gh<GitHubIssue>(
@@ -501,24 +531,26 @@ async function executeMigration(manifest: Manifest, args: Args): Promise<void> {
     created[issue.specNumber] = res;
   }
 
-  // Pass 2: rewrite depends_on/related/parent refs to real issue numbers
+  // Pass 2: rewrite depends_on + related refs to real issue numbers.
+  // Refs that point at non-active specs (complete/archived, not migrated)
+  // stay as `spec <num>` prose — humans can hand-link them to the historical
+  // file later.
   console.log("\npass 2: rewriting cross-references");
   for (const issue of manifest.issues) {
     const target = created[issue.specNumber];
     if (!target) continue;
-    if (!issue.dependsOnSpecNumbers.length && !issue.parentSpecNumber) continue;
+    const refs = [...issue.dependsOnSpecNumbers, ...issue.relatedSpecNumbers];
+    if (!refs.length) continue;
 
     let newBody = issue.body;
-    for (const depNum of issue.dependsOnSpecNumbers) {
-      const dep = created[depNum];
-      if (dep) {
+    for (const refNum of refs) {
+      const ref = created[refNum];
+      if (ref) {
         newBody = newBody.replace(
-          new RegExp(`spec ${depNum}\\b`, "g"),
-          `#${dep.number}`,
+          new RegExp(`spec ${refNum}\\b`, "g"),
+          `#${ref.number}`,
         );
       }
-      // else: dependency points at a non-active spec (complete/archived).
-      // Leave the `spec <num>` prose; humans can manually link to the historical file.
     }
 
     if (newBody !== issue.body) {
