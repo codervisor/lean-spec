@@ -43,9 +43,10 @@ markdown and GitHub projects.
 | `search_specs` | Full-text search across all specs |
 | `get_schema` | Return the active adapter's schema (fields, types, enum options) |
 | `get_capabilities` | Return adapter name, supported operations, schema ID |
+| `get_stats` | Token counts and field distributions — **markdown-only** |
 
-Tools `validate_spec`, `get_dependencies`, `get_stats` remain markdown-only
-and are guarded accordingly.
+Tools `validate_spec`, `get_dependencies`, and `get_stats` remain markdown-only
+and return a clear error when called on a non-markdown project.
 
 ### `get_schema` tool
 

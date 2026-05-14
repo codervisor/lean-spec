@@ -88,11 +88,11 @@ the parent. Link types are merged.
 
 ```rust
 pub fn resolve_schema(id: &str, registry: &SchemaRegistry) -> Result<SpecSchema, SchemaError> {
-    let raw = registry.get(id)?;
-    match &raw.extends {
+    let raw = registry.get(id)?.clone();
+    match raw.extends.clone() {
         None => Ok(raw),
         Some(parent_id) => {
-            let parent = resolve_schema(parent_id, registry)?;  // recursive
+            let parent = resolve_schema(&parent_id, registry)?;  // recursive
             Ok(merge_schemas(parent, raw))
         }
     }

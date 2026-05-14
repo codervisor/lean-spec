@@ -104,27 +104,33 @@ If an adapter has no status field, status distribution is omitted from output.
 
 ### Markdown-only guards
 
-These 15 commands are explicitly markdown-specific and must fail clearly when
+These 13 commands are explicitly markdown-specific and must fail clearly when
 the active adapter is not markdown:
 
 `backfill`, `compact`, `analyze`, `split`, `tokens`, `validate`, `deps`,
-`check`, `gantt`, `timeline`, `rel`, `templates`, `backfill`, `config`,
-`update --replace` / `--section` (body manipulation flags only — metadata
-update still works for any adapter)
+`check`, `gantt`, `timeline`, `rel`, `templates`, `config`
+
+`update` body-manipulation flags (`--replace`, `--section`, `--append`,
+`--check`) are **not** markdown-only — they work for any adapter via the
+fetch-transform-push pattern (fetch content string, apply pure utility, push
+back). Only commands that operate on the filesystem directly or manipulate
+YAML frontmatter get the guard.
 
 Guard helper:
 
 ```rust
-fn require_markdown_adapter(caps: &AdapterCapabilities) -> Result<(), CliError> {
+fn require_markdown_adapter(command: &str, caps: &AdapterCapabilities) -> Result<(), CliError> {
     if caps.name != "markdown" {
         return Err(CliError::MarkdownOnly {
-            command: caps.name.clone(),
+            command: command.to_string(),
             adapter: caps.name.clone(),
         });
     }
     Ok(())
 }
 ```
+
+Called as: `require_markdown_adapter("validate", &caps)?`
 
 Error message:
 ```
@@ -133,16 +139,6 @@ Active adapter: github
 
 Run `leanspec capabilities` to see what operations are available.
 ```
-
-Note: `update` body-manipulation flags (`--replace`, `--section`, `--append`,
-`--check`) work for any adapter that stores content as markdown (GitHub body,
-ADO description). Only the truly markdown-specific commands (frontmatter
-manipulation, file-level operations) get the hard guard. The guard is in the
-*command*, not in the adapter — each command declares its own requirements.
-
-Actually, body manipulation works via fetch-transform-push for any adapter, so
-`update --section` does NOT need a markdown guard. Only commands operating on
-the filesystem directly (backfill, compact, etc.) need it.
 
 ## Plan
 
@@ -168,9 +164,9 @@ the filesystem directly (backfill, compact, etc.) need it.
 - [ ] Remove `SpecLoader`, `SpecInfo`, `SpecStatus`, `SpecPriority` imports
 
 **Markdown-only guards:**
-- [ ] Add `require_markdown_adapter(caps)` helper to `commands/shared.rs`
+- [ ] Add `require_markdown_adapter(command, caps)` helper to `commands/shared.rs`
 - [ ] Add guard to: `backfill`, `compact`, `analyze`, `split`, `tokens`,
-  `validate`, `deps`, `check`, `gantt`, `timeline`, `rel`, `templates`
+  `validate`, `deps`, `check`, `gantt`, `timeline`, `rel`, `templates`, `config`
 - [ ] Each guard placed at the top of `run()` before any other work
 
 **Final cleanup:**

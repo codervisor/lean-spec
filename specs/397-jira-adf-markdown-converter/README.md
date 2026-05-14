@@ -67,7 +67,7 @@ ADF is a JSON tree:
 | `bulletList` | `- item` |
 | `orderedList` | `1. item` |
 | `listItem` | List item (recursive) |
-| `codeBlock` | ` ```lang\ncode\n``` ` |
+| `codeBlock` | fenced code block with optional language tag |
 | `blockquote` | `> text` |
 | `rule` | `---` |
 | `taskList` | Checklist (`- [ ] item` / `- [x] item`) |
