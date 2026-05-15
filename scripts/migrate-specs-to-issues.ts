@@ -416,23 +416,48 @@ async function gh<T>(
   path: string,
   body?: unknown,
 ): Promise<T> {
-  const res = await fetch(`https://api.github.com${path}`, {
-    method,
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Accept": "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-      "User-Agent": "lean-spec-migrate-specs/1.0",
-      ...(body ? { "Content-Type": "application/json" } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!res.ok) {
+  // Up to 5 attempts. Honors Retry-After when present, otherwise uses
+  // exponential backoff. Retries on 403 (secondary rate limit), 429, and
+  // 5xx — never on 4xx schema errors.
+  let lastErr: Error | null = null;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    const res = await fetch(`https://api.github.com${path}`, {
+      method,
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "lean-spec-migrate-specs/1.0",
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (res.ok) return res.json() as Promise<T>;
+
     const text = await res.text();
-    throw new Error(`GitHub ${method} ${path} → ${res.status}: ${text}`);
+    const retryable =
+      res.status === 403 && text.includes("secondary rate limit") ||
+      res.status === 429 ||
+      res.status >= 500;
+    if (!retryable) {
+      throw new Error(`GitHub ${method} ${path} → ${res.status}: ${text}`);
+    }
+    const retryAfter = Number(res.headers.get("retry-after"));
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? retryAfter * 1000
+      : Math.min(60_000, 2_000 * Math.pow(2, attempt - 1));
+    console.log(`  ! ${res.status} on ${method} ${path}; backing off ${Math.round(waitMs / 1000)}s (attempt ${attempt}/5)`);
+    await new Promise(r => setTimeout(r, waitMs));
+    lastErr = new Error(`GitHub ${method} ${path} → ${res.status}: ${text}`);
   }
-  return res.json() as Promise<T>;
+  throw lastErr ?? new Error(`GitHub ${method} ${path}: retry budget exhausted`);
 }
+
+// Conservative inter-request throttle. GitHub's secondary content-creation
+// rate limit is around 80 creates/min; pacing at ~1.5s/request gives us a
+// floor around 40 creates/min — well under the cap.
+const CREATE_THROTTLE_MS = 1500;
+const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
 // Build a single map of (specDir → existing migrated issue) up front, via
 // one paginated search. The Search API has a 30 req/min limit, so doing
@@ -529,6 +554,7 @@ async function executeMigration(manifest: Manifest, args: Args): Promise<void> {
     );
     console.log(`  + ${issue.specDir} → #${res.number}`);
     created[issue.specNumber] = res;
+    await sleep(CREATE_THROTTLE_MS);
   }
 
   // Pass 2: rewrite depends_on + related refs to real issue numbers.
@@ -558,6 +584,7 @@ async function executeMigration(manifest: Manifest, args: Args): Promise<void> {
         body: newBody,
       });
       console.log(`  ~ #${target.number}: rewrote refs`);
+      await sleep(CREATE_THROTTLE_MS);
     }
   }
 
