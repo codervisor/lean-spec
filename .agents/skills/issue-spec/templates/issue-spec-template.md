@@ -1,8 +1,7 @@
-<!-- Issue body template for lean-spec style spec issues on codervisor/lean-spec -->
+<!-- Issue body template for lean-spec style spec issues -->
 <!-- Title: spec(<area>): <short description> -->
 <!-- Labels: spec, <type>, area:<area>, priority:<level>, draft -->
-<!-- Plus provider-impact if the change touches the provider seam -->
-<!-- Plus i18n if the change adds or changes a user-visible string -->
+<!-- Consumer-repo overlay labels (apply when relevant): provider-impact, schema-impact, i18n -->
 
 ## Overview
 
@@ -10,32 +9,23 @@
 
 ## Design
 
-<!-- Technical approach at intent level. Data flow, types, architecture decisions — not line-by-line code. Include what's explicitly OUT OF SCOPE. Respect lean-spec's invariants: provider-agnostic core, identical CLI/MCP/UI behavior across backends, i18n parity. -->
+<!-- Technical approach at intent level. Data flow, state changes, API/schema surface — not line-by-line code. Include what's explicitly OUT OF SCOPE. Respect the consumer repo's architectural invariants (seam rule / provider-agnostic core / holistic verification — see the repo's CLAUDE.md). -->
 
 ## Plan
 
 - [ ] <!-- Verb + concrete deliverable -->
 - [ ] <!-- Each item independently verifiable -->
 - [ ] <!-- Order reflects implementation sequence -->
-- [ ] <!-- If this adds user-visible strings: update locales/en.json AND locales/zh-CN.json -->
 
 ## Test
 
-- [ ] <!-- Vitest unit test or Rust #[cfg(test)] module: file path + what it covers -->
-- [ ] <!-- pnpm typecheck passes -->
-- [ ] <!-- pnpm pre-push passes (typecheck + clippy) -->
-- [ ] <!-- i18n parity verified, if applicable -->
+- [ ] <!-- Test type: what to verify -->
+- [ ] <!-- Maps to plan items above -->
 
-## Provider impact
-
-<!-- Required when this change touches the provider abstraction, the types in packages/ui/src/types/specs.ts, the provider trait in rust/leanspec-core/, or anything else externally observable across backends. Drop the section ONLY if the change provably touches no provider surface (e.g. docs-only edits, CI tweaks, repo hygiene). -->
-
-- Types added / removed / renamed:
-- Trait changes:
-- markdown backend semantics:
-- github backend semantics:
-- Migration path:
-- Breaking change?  yes / no — if yes, add a `CHANGELOG.md` entry on merge (the `provider-impact` label is applied regardless)
+<!-- OPTIONAL OVERLAY SECTIONS (apply when the consumer repo requires them) -->
+<!-- ## Provider impact   (lean-spec — required when the provider seam is touched) -->
+<!-- ## Schema impact     (Duhem — required when the Verification Definition format is touched) -->
+<!-- ## Worked example    (Duhem — required when product surface is introduced) -->
 
 ## Alignment
 
@@ -53,4 +43,4 @@
 
 ## Notes
 
-<!-- Tradeoffs, related issues (#N), references. Omit section if empty. If migrated from a legacy file-based spec, note the original path here. -->
+<!-- Tradeoffs, related issues (#N), references. Omit section if empty. -->
