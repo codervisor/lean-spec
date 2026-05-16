@@ -1,17 +1,7 @@
----
-status: draft
-created: 2026-03-27
-priority: critical
-tags:
-- strategy
-- positioning
-- vision
-- harness-engineering
-created_at: 2026-03-27T00:00:00Z
-updated_at: 2026-03-27T00:00:00Z
----
-
 # LeanSpec Positioning and Codervisor Vision
+
+> Vision document — strategic context, not a shippable work item.
+> Originally tracked as spec 380; relocated 2026-05-16.
 
 ## Overview
 
