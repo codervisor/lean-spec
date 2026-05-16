@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {"id": "288", "label": "MCP", "status": "done"},
+    {"id": "288", "label": "duplicate", "status": "open"},
+    {"id": "304", "label": "chat", "status": "shipped"},
+    {"id": "305", "status": "open"},
+    {"id": "307", "label": "bad \"quote\""},
+    {"id": "close", "label": "reserved"},
+    "not-an-object"
+  ],
+  "edges": [
+    {"from": "288", "to": "999"},
+    {"from": "304", "to": "306", "source": "vibes"},
+    {"from": "288", "to": "close", "source": "depends-on"}
+  ],
+  "critical_path": ["288", "999", "close"]
+}

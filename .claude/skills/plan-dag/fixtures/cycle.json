@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    {"id": "1", "label": "alpha", "status": "open"},
+    {"id": "2", "label": "beta", "status": "open"},
+    {"id": "3", "label": "gamma", "status": "open"}
+  ],
+  "edges": [
+    {"from": "1", "to": "2", "source": "depends-on"},
+    {"from": "2", "to": "3", "source": "depends-on"},
+    {"from": "3", "to": "1", "source": "depends-on"}
+  ]
+}

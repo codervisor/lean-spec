@@ -10,6 +10,12 @@
       "source": "codervisor/forge",
       "sourceType": "github",
       "computedHash": "1848a67829d211a61b007f18d6f91690816c140b738b00265cd2f8fe46a556c6"
+    },
+    "plan-dag": {
+      "source": "onsager-ai/onsager-skills",
+      "sourceType": "github",
+      "skillPath": "skills/plan-dag/SKILL.md",
+      "computedHash": "ce958abee3d5a9a183c7c1514847ee7dfcf0ebd726657fe073a77f12fcd6a4e9"
     }
   }
 }
