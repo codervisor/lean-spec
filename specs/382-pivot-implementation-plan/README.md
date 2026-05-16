@@ -1,5 +1,5 @@
 ---
-status: draft
+status: archived
 created: 2026-05-13
 priority: critical
 tags:
@@ -8,12 +8,15 @@ tags:
 - pivot
 - github-adapter
 - cli
-depends_on:
-- "381-tool-agnostic-spec-framework"
-- "380-leanspec-positioning-and-codervisor-vision"
+depends_on: []
 created_at: 2026-05-13T00:00:00Z
-updated_at: 2026-05-13T00:00:00Z
+updated_at: 2026-05-16T00:00:00Z
 ---
+
+> **Archived 2026-05-16.** The phases described here have been crystallized
+> into concrete specs **383–401**. This document is kept for historical
+> context — see those specs for the live plan.
+
 
 # Pivot Implementation Plan
 

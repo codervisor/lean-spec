@@ -7,15 +7,17 @@ tags:
 - architecture
 - framework
 - pivot
-depends_on:
-- "380-leanspec-positioning-and-codervisor-vision"
+- umbrella
+depends_on: []
 created_at: 2026-04-16T00:00:00Z
-updated_at: 2026-04-16T00:00:00Z
+updated_at: 2026-05-16T00:00:00Z
 ---
 
 # Tool-Agnostic Spec Framework
 
-> Tracked in GitHub: https://github.com/codervisor/lean-spec/issues/168
+> Umbrella spec for the adapter pivot. Sub-specs **383–401** implement the
+> work; this spec closes when they all close. Tracked in GitHub:
+> https://github.com/codervisor/lean-spec/issues/168
 
 ## Overview
 
