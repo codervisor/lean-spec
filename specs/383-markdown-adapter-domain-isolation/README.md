@@ -7,9 +7,7 @@ tags:
 - refactoring
 - crate-boundaries
 - prerequisite
-depends_on:
-- "381-tool-agnostic-spec-framework"
-- "382-pivot-implementation-plan"
+depends_on: []
 created_at: 2026-05-14T00:00:00Z
 updated_at: 2026-05-14T00:00:00Z
 ---
