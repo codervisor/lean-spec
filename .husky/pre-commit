@@ -29,3 +29,17 @@ if grep -q "packages/cli/binaries/" pnpm-lock.yaml 2>/dev/null || \
 fi
 
 echo "✅ pnpm-lock.yaml is clean!"
+
+# specs/ is a frozen historical snapshot — new specs go on GitHub Issues.
+# Allow deletions (cleanup) and the FROZEN.md marker; block everything else.
+specs_changes=$(git diff --cached --name-only --diff-filter=AM | grep -E '^specs/' | grep -v '^specs/FROZEN\.md$' || true)
+if [ -n "$specs_changes" ]; then
+  echo "❌ specs/ is a frozen historical snapshot. New specs go on GitHub Issues."
+  echo "   See AGENTS.md › 'Spec-driven development (GitHub-issue specs)'."
+  echo ""
+  echo "   Blocked files:"
+  echo "$specs_changes" | sed 's/^/     /'
+  echo ""
+  echo "   Override with --no-verify only if you have a good reason."
+  exit 1
+fi
