@@ -29,7 +29,7 @@ Skip when:
 |-----------|----------|
 | **Scope** | Inferred — current branch's spec, the umbrella the user named, or the open issues just surveyed. |
 | **Granularity** | Spec-level; drop to sub-issue / PR level for an umbrella that has fanned out. |
-| **Output format** | Monospace text (Unicode box-drawing) laid out top-to-bottom via graphviz (default). `--as=png --out <path>` for a high-DPI image (preferred on image-capable chat surfaces — see below); `--as=ascii` for a pure-ASCII tree; `--as=dot` for raw DOT. |
+| **Output format** | Monospace text (Unicode box-drawing) laid out top-to-bottom via graphviz (default). `--as=html --out <path>` for a self-contained HTML page with the SVG and critical-path footer (preferred on web surfaces that render HTML inline — Claude Code on the web, claude.ai); `--as=svg` for raw inline SVG; `--as=png --out <path>` for a high-DPI rasterised image; `--as=ascii` for a pure-ASCII tree; `--as=dot` for raw DOT. |
 
 ## Workflow
 
@@ -102,11 +102,11 @@ Emit a JSON IR matching the schema below, then invoke the renderer. **Do not han
 - `status` ∈ `{done, in_progress, open}`; defaults to `open`. Status markers (`✓`, `…` in box-drawing mode; `[done]` / `[wip]` / `[open]` in ASCII mode) are added by the renderer — do not embed them in `label`.
 - `edges[].source` ∈ `{sub-issue, depends-on, pr-link, closes, part-of}`, required. This is the citation rule from Conventions made enforceable: no edge without a documented source on GitHub.
 - Every `from` / `to` resolves to a declared node id, or the literal `"close"`.
-- `critical_path` is optional; renderer appends it as a callout under the box-drawing and ASCII targets.
+- `critical_path` is optional; renderer appends it as a callout footer under the box-drawing, ASCII, and HTML targets (and as `Critical path:` text in the ASCII output).
 
-**Invocation.** Default emits top-to-bottom box-drawing via graphviz (requires `dot` on PATH — `apt install graphviz`, or `brew install graphviz`) and is the right choice for terminal-only surfaces. `--as=png --out <path>` rasterises the same DOT through `dot -Tsvg` and a headless Chromium screenshot at deviceScaleFactor=2 — sharper than `dot -Tpng` and the preferred output when the chat surface can show inline images (see Response handling below). Needs `dot`, `node`, and Playwright Chromium on PATH. `--as=ascii` produces a pure-ASCII indented tree with no external dependency — used explicitly for restricted terminals, and selected automatically (with a stderr note) when `dot` is missing. `--as=dot` emits raw DOT source for piping or debugging.
+**Invocation.** Default emits top-to-bottom box-drawing via graphviz (requires `dot` on PATH — `apt install graphviz`, or `brew install graphviz`) and is the right choice for terminal-only surfaces. `--as=html --out <path>` writes a self-contained HTML page that wraps the styled SVG with a critical-path footer — preferred on web surfaces that render HTML inline (Claude Code on the web, claude.ai web/mobile). `--as=svg` emits the same styled SVG without the HTML chrome — useful for embedding in markdown / GitHub / external docs. Both need only `dot`. `--as=png --out <path>` rasterises the same DOT through `dot -Tsvg` and a headless Chromium screenshot at deviceScaleFactor=2 — sharper than `dot -Tpng`, but heavier (needs `dot`, `node`, and Playwright Chromium); use it on surfaces that show inline PNGs but not inline HTML. `--as=ascii` produces a pure-ASCII indented tree with no external dependency — used explicitly for restricted terminals, and selected automatically (with a stderr note) when `dot` is missing. `--as=dot` emits raw DOT source for piping or debugging.
 
-**Visual encoding (PNG / DOT targets only).** Status is dual-encoded by fill and a leading emoji so the eye picks up state before reading the label:
+**Visual encoding (DOT / SVG / HTML / PNG targets only).** Status is dual-encoded by fill and a leading emoji so the eye picks up state before reading the label:
 
 | State | Fill | Border | Emoji |
 |-------|------|--------|-------|
@@ -118,7 +118,7 @@ Emit a JSON IR matching the schema below, then invoke the renderer. **Do not han
 
 The "available next" highlight is computed from the graph (open + every predecessor is `done`) — no IR field for it. Critical-path edges are *not* bolded: which path is "the" critical path is a caller judgement, and elevating it visually would conflate the recommendation with the graph's topology. Keep the critical path in `ir.critical_path` and let the renderer print it as a footer / let prose carry the next-pick recommendation.
 
-The text box-drawing and ASCII targets stay glyph-only (`✓` / `…` markers) because their layout math counts characters, not visual columns, and emoji are East Asian Wide. The `--emoji` flag controls whether emoji are emitted in DOT/PNG labels: `auto` (default) is on for image targets, off for text targets; `on` / `off` force it. Turn `off` if a target system lacks a color emoji font and you see tofu boxes in the PNG.
+The text box-drawing and ASCII targets stay glyph-only (`✓` / `…` markers) because their layout math counts characters, not visual columns, and emoji are East Asian Wide. The `--emoji` flag controls whether emoji are emitted in DOT / SVG / HTML / PNG labels: `auto` (default) is on for those four styled targets, off for text targets; `on` / `off` force it. Turn `off` if a target system lacks a color emoji font and you see tofu boxes in the rendered SVG / HTML / PNG.
 
 The renderer ships inside the skill. Use the path that matches how the skill was installed:
 
@@ -134,7 +134,13 @@ SCRIPT=.claude/skills/plan-dag/scripts/plan-dag-render.py   # project install
 # default: top-to-bottom box-drawing via graphviz
 "$SCRIPT" /tmp/plan.json
 
-# high-DPI PNG (preferred on image-capable surfaces; then SendUserFile)
+# self-contained HTML page (preferred on Claude Code on the web / claude.ai; then SendUserFile)
+"$SCRIPT" /tmp/plan.json --as=html --out /tmp/plan-dag.html
+
+# raw inline SVG (embed in markdown / GitHub / docs; stdout by default)
+"$SCRIPT" /tmp/plan.json --as=svg --out /tmp/plan-dag.svg
+
+# high-DPI PNG (fallback for surfaces that render PNGs inline but not HTML)
 "$SCRIPT" /tmp/plan.json --as=png --out /tmp/plan-dag.png
 
 # pure ASCII tree (no external deps; auto-selected when `dot` is missing)
@@ -153,9 +159,10 @@ If the renderer aborts with `IR validation failed`, fix the IR — do not work a
 - Do **not** retype or paraphrase the renderer output. Copy the tool result verbatim. A single shifted character destroys column alignment, and the AI's spatial reasoning is the failure mode the script was introduced to eliminate.
 - Surface rules:
   - **Claude Code (terminal runtime):** the stdout is already visible in the terminal pane. Do not duplicate it in the reply. Add commentary only — critical path summary, next pickable node, sequencing rationale.
-  - **claude.ai web / mobile, Claude Code on the web (image-capable, no real terminal pane):** prefer the PNG path. Render with `--as=png --out /tmp/plan-dag.png` and send the file via `SendUserFile` so the user sees a rasterised image instead of a wall of glyphs that may reflow under proportional fonts. Add prose commentary below the file — critical path, next pickable node — but don't echo the text-art version too.
-  - **No image surface available (raw terminals, restricted runtimes):** the default stdout box-drawing remains the right output. PR descriptions also prefer the text version since GitHub renders ` ```text ` blocks faithfully.
-- For very wide graphs (>10 nodes with cross-edges) where the default box-drawing is unwieldy, split the plan into per-track DAGs (one renderer call per track) and render the cross-edges as a final short prose list, per the existing "Cross-edges" convention in §3. The PNG target scales further before it becomes unwieldy than the text target does.
+  - **Claude Code on the web, claude.ai web / mobile (HTML-capable, no real terminal pane):** prefer the HTML path. Render with `--as=html --out /tmp/plan-dag.html` and send the file via `SendUserFile` so the user sees a scalable diagram with the legend and critical-path footer baked in. PNG (`--as=png --out /tmp/plan-dag.png`) is a fine fallback on surfaces that render inline images but not HTML. Add prose commentary below the file — critical path, next pickable node — but don't echo the text-art version too.
+  - **Markdown / GitHub PR descriptions:** prefer the default text box-drawing in a ` ```text ` block — GitHub renders it faithfully and it stays diff-able. For richer rendering in external docs or notion-style surfaces, `--as=svg` produces a few-KB embeddable SVG.
+  - **No image surface available (raw terminals, restricted runtimes):** the default stdout box-drawing remains the right output.
+- For very wide graphs (>10 nodes with cross-edges) where the default box-drawing is unwieldy, split the plan into per-track DAGs (one renderer call per track) and render the cross-edges as a final short prose list, per the existing "Cross-edges" convention in §3. The SVG / HTML / PNG targets scale further before they become unwieldy than the text target does.
 
 ## Conventions
 

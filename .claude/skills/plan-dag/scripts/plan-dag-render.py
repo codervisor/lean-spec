@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""plan-dag-render — JSON DAG IR → graphviz box-drawing / raw ASCII tree / DOT."""
+"""plan-dag-render — JSON DAG IR → graphviz box-drawing / raw ASCII tree / DOT / SVG / HTML / PNG."""
 
 import argparse
 import json
@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 from collections import deque
+from html import escape as html_escape
 from pathlib import Path
 
 STATUS_MARKER = {"done": " ✓", "in_progress": " …", "open": ""}
@@ -553,6 +554,119 @@ def render_ascii(ir):
     return out
 
 
+def _dot_to_svg(ir, emoji=True):
+    """Run `dot -Tsvg` on the styled DOT for this IR. Returns SVG source.
+
+    Shared by --as=svg, --as=html, and --as=png.
+    """
+    if shutil.which("dot") is None:
+        sys.exit(
+            "SVG / HTML / PNG targets require `dot` (graphviz) on PATH. "
+            "Install: apt install graphviz, or brew install graphviz."
+        )
+    dot_src = render_dot(ir, styled=True, emoji=emoji)
+    try:
+        svg_res = subprocess.run(
+            ["dot", "-Tsvg"], input=dot_src,
+            capture_output=True, text=True, timeout=10,
+            encoding="utf-8",
+        )
+    except subprocess.TimeoutExpired:
+        sys.exit("`dot -Tsvg` timed out after 10s.")
+    if svg_res.returncode != 0:
+        sys.stderr.write(svg_res.stderr)
+        sys.exit(svg_res.returncode or 1)
+    return svg_res.stdout
+
+
+def render_svg(ir, emoji=True):
+    """Render the IR as inline SVG: graphviz output with the XML decl +
+    DOCTYPE stripped, so the result pastes cleanly into HTML / markdown /
+    GitHub without producing invalid markup. Scalable, embeddable, a few KB.
+    """
+    return _strip_svg_prolog(_dot_to_svg(ir, emoji=emoji))
+
+
+_HTML_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<style>
+  :root {{ color-scheme: light dark; }}
+  body {{
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    margin: 2rem auto; max-width: 900px; padding: 0 1rem;
+    background: #ffffff; color: #212529;
+  }}
+  h1 {{ font-size: 1.1rem; font-weight: 600; margin: 0 0 1rem; color: #495057; }}
+  .dag {{ border: 1px solid #dee2e6; border-radius: 6px; padding: 1rem; background: #ffffff; }}
+  .dag svg {{ max-width: 100%; height: auto; display: block; margin: 0 auto; }}
+  .cp {{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+         font-size: 0.85rem; color: #495057; margin-top: 1rem; }}
+  .cp b {{ color: #212529; }}
+  /* Dark mode. Status tile fills stay bright enough on the dark card that
+     graphviz's default-black tile text remains readable, so we only swap
+     page chrome, the card bg, the SVG's white background polygon, and the
+     muted-grey edge lines (which would otherwise vanish on dark). */
+  @media (prefers-color-scheme: dark) {{
+    body {{ background: #1a1a1a; color: #e9ecef; }}
+    h1 {{ color: #adb5bd; }}
+    .dag {{ background: #2a2a2a; border-color: #404040; }}
+    .dag svg polygon[fill="white"] {{ fill: transparent; }}
+    .dag svg path[stroke="#6c757d"] {{ stroke: #adb5bd; }}
+    .dag svg polygon[fill="#6c757d"] {{ fill: #adb5bd; stroke: #adb5bd; }}
+    .cp {{ color: #adb5bd; }}
+    .cp b {{ color: #e9ecef; }}
+  }}
+</style>
+</head>
+<body>
+<h1>{heading}</h1>
+<div class="dag">
+{svg}</div>
+{footer}</body>
+</html>
+"""
+
+
+def _strip_svg_prolog(svg):
+    """Drop the XML decl + DOCTYPE so the SVG embeds cleanly under HTML5."""
+    start = svg.find("<svg")
+    return svg[start:] if start > 0 else svg
+
+
+def render_html(ir, emoji=True):
+    """Render the IR as a self-contained HTML page wrapping the inline SVG.
+
+    Adds: legend (only states present in the graph), critical-path footer
+    if `ir.critical_path` is set, max-width centering, and responsive
+    `svg { max-width: 100% }` so it scales to the viewport.
+    """
+    svg = _strip_svg_prolog(_dot_to_svg(ir, emoji=emoji))
+
+    close_id = ir.get("close")
+    if close_id is not None:
+        title_text = f"plan-dag — close #{close_id}"
+    else:
+        title_text = "plan-dag"
+    title = html_escape(title_text)
+
+    cp = ir.get("critical_path")
+    if cp:
+        path = " → ".join(
+            "close" if str(n) == "close" else f"#{n}" for n in cp
+        )
+        footer = f'<p class="cp"><b>Critical path:</b> {html_escape(path)}</p>\n'
+    else:
+        footer = ""
+
+    return _HTML_TEMPLATE.format(
+        title=title, heading=title, svg=svg, footer=footer,
+    )
+
+
 def render_png(ir, out_path, emoji=True):
     """Render the IR as a high-quality PNG.
 
@@ -561,11 +675,6 @@ def render_png(ir, out_path, emoji=True):
     correct anti-aliasing at high DPI, which matters when the PNG is
     surfaced to the user as an inline chat image.
     """
-    if shutil.which("dot") is None:
-        sys.exit(
-            "--as=png requires `dot` (graphviz) on PATH. "
-            "Install: apt install graphviz, or brew install graphviz."
-        )
     if shutil.which("node") is None:
         sys.exit(
             "--as=png requires Node (node ≥18) on PATH for Playwright."
@@ -575,22 +684,11 @@ def render_png(ir, out_path, emoji=True):
     if not svg_to_png.exists():
         sys.exit(f"--as=png: missing helper {svg_to_png}")
 
-    dot_src = render_dot(ir, styled=True, emoji=emoji)
-    try:
-        svg_res = subprocess.run(
-            ["dot", "-Tsvg"], input=dot_src,
-            capture_output=True, text=True, timeout=10,
-        )
-    except subprocess.TimeoutExpired:
-        sys.exit("`dot -Tsvg` timed out after 10s.")
-    if svg_res.returncode != 0:
-        sys.stderr.write(svg_res.stderr)
-        sys.exit(svg_res.returncode or 1)
-
+    svg = _dot_to_svg(ir, emoji=emoji)
     try:
         png_res = subprocess.run(
             ["node", str(svg_to_png), out_path],
-            input=svg_res.stdout, capture_output=True, text=True, timeout=30,
+            input=svg, capture_output=True, text=True, timeout=30,
         )
     except subprocess.TimeoutExpired:
         sys.exit("svg-to-png.mjs timed out after 30s.")
@@ -605,26 +703,33 @@ def main():
     ap.add_argument("ir", help="path to JSON IR, or '-' for stdin")
     ap.add_argument(
         "--as", dest="target", default=None,
-        choices=["ascii", "dot", "png"],
+        choices=["ascii", "dot", "svg", "html", "png"],
         help="output target. Default: top-to-bottom box-drawing via graphviz "
              "(requires `dot`; auto-falls back to --as=ascii when missing). "
+             "--as=svg: styled inline SVG (requires `dot`; stdout by default, "
+             "or --out <path>). "
+             "--as=html: standalone HTML page wrapping the SVG with a legend "
+             "and critical-path footer (requires `dot`; stdout by default, "
+             "or --out <path>). "
              "--as=png: high-quality PNG via graphviz SVG + headless "
              "Chromium (requires `dot`, `node`, and Playwright Chromium; "
-             "use --out to set the path). "
+             "--out is required). "
              "--as=ascii: pure-ASCII tree, no external deps. "
              "--as=dot: raw DOT source.",
     )
     ap.add_argument(
         "--out", default=None,
-        help="output file path. Required for --as=png; ignored otherwise.",
+        help="output file path. Required for --as=png; optional for "
+             "--as=dot / --as=svg / --as=html (default stdout); "
+             "ignored for the default box-drawing and --as=ascii targets.",
     )
     ap.add_argument(
         "--emoji", default="auto", choices=["auto", "on", "off"],
         help="emoji status indicators in node labels. auto (default): on for "
-             "--as=dot and --as=png, off for text/ascii (whose layout math "
-             "assumes single-width characters). on/off forces it. Emoji "
-             "requires a color emoji font on the rendering system; turn off "
-             "if you see tofu boxes in the PNG.",
+             "--as=dot, --as=svg, --as=html, and --as=png; off for "
+             "text/ascii (whose layout math assumes single-width "
+             "characters). on/off forces it. Emoji requires a color emoji "
+             "font on the rendering system; turn off if you see tofu boxes.",
     )
     args = ap.parse_args()
 
@@ -650,20 +755,33 @@ def main():
             )
             target = "ascii"
 
-    # Emoji policy: on for image-producing targets (dot/png), off for
-    # text-producing targets (tb/ascii) whose layout math assumes
+    # Emoji policy: on for styled / image-producing targets (dot/svg/html/png),
+    # off for text-producing targets (tb/ascii) whose layout math assumes
     # single-width characters. `on` / `off` forces it either way.
     if args.emoji == "on":
         emoji_on = True
     elif args.emoji == "off":
         emoji_on = False
     else:
-        emoji_on = target in ("dot", "png")
+        emoji_on = target in ("dot", "svg", "html", "png")
+
+    def _emit(text):
+        # Force UTF-8 on file writes so non-UTF-8 locales don't either
+        # corrupt the output (the HTML/SVG advertise UTF-8 and contain
+        # emoji + box-drawing glyphs) or raise UnicodeEncodeError.
+        if args.out:
+            Path(args.out).write_text(text, encoding="utf-8")
+        else:
+            print(text)
 
     if target == "dot":
-        print(render_dot(ir, styled=True, emoji=emoji_on))
+        _emit(render_dot(ir, styled=True, emoji=emoji_on))
     elif target == "ascii":
         print(render_ascii(ir))
+    elif target == "svg":
+        _emit(render_svg(ir, emoji=emoji_on))
+    elif target == "html":
+        _emit(render_html(ir, emoji=emoji_on))
     elif target == "png":
         if not args.out:
             sys.exit("--as=png requires --out <path>")
