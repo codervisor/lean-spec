@@ -128,3 +128,24 @@ jobs:
       
       - name: Validate specs
         run: node bin/leanspec.js validate --warnings-only
+
+  # specs/ is a frozen historical snapshot — see AGENTS.md.
+  # New specs must go on GitHub Issues; this job blocks accidental drift.
+  freeze-specs:
+    name: specs/ freeze guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Block new additions / modifications under specs/
+        run: |
+          git fetch --depth=50 origin main || true
+          added_or_mod=$(git diff --name-only --diff-filter=AM origin/main...HEAD -- specs/ \
+            | grep -v '^specs/FROZEN\.md$' || true)
+          if [ -n "$added_or_mod" ]; then
+            echo "::error::specs/ is a frozen historical snapshot. New specs must go on GitHub Issues (codervisor/lean-spec)."
+            printf '%s\n' "$added_or_mod"
+            exit 1
+          fi
+          echo "✓ no new entries under specs/"

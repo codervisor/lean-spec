@@ -10,7 +10,7 @@ This project uses the Agent Skills framework for domain-specific guidance. **Rea
 
 ### Spec-driven development (GitHub-issue specs)
 
-Lean-spec dogfoods its own SDD methodology with GitHub issues as the canonical spec medium. The historical `specs/` directory is a frozen snapshot of pre-migration work — new specs are GitHub issues on `codervisor/lean-spec`.
+Lean-spec dogfoods its own SDD methodology with GitHub issues as the canonical spec medium. The `specs/` directory is a **frozen historical snapshot** — new specs are GitHub issues on `codervisor/lean-spec`. A pre-commit hook and CI job (`freeze-specs`) block additions/modifications under `specs/`; see [`specs/FROZEN.md`](specs/FROZEN.md).
 
 1. **lean-spec-dev-process** - End-to-end SDD loop (spec → branch → PR → merge)
    - Location: [.agents/skills/lean-spec-dev-process/SKILL.md](.agents/skills/lean-spec-dev-process/SKILL.md)
