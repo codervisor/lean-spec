@@ -2,6 +2,7 @@
 //!
 //! Shared state for the HTTP server using Arc for thread-safety.
 
+use crate::adapter_resolution::find_adapter_config;
 use crate::config::ServerConfig;
 use crate::error::ServerError;
 use crate::project_registry::{Project, ProjectRegistry};
@@ -98,25 +99,17 @@ fn build_file_watcher(registry: &ProjectRegistry) -> Option<Arc<FileWatcher>> {
 
 /// Inspect a project's adapter config and return true when it resolves to a
 /// markdown adapter (or when no adapter config exists, since markdown is the
-/// default).
+/// default). Uses the same lookup order as request-time adapter resolution so
+/// the watcher never disagrees with the handlers about which projects need
+/// file events.
 fn project_uses_markdown_adapter(project_path: &Path) -> bool {
-    const CANDIDATES: &[&str] = &[
-        "leanspec.adapter.yaml",
-        ".lean-spec/adapter.yaml",
-        "leanspec.provider.yaml",
-        ".lean-spec/provider.yaml",
-    ];
-
-    for candidate in CANDIDATES {
-        let path = project_path.join(candidate);
-        if path.exists() {
-            match AdapterRegistry::load_config(&path) {
-                Ok(cfg) => return cfg.adapter == "markdown",
-                Err(_) => return false,
-            }
-        }
+    match find_adapter_config(project_path) {
+        Some(path) => match AdapterRegistry::load_config(&path) {
+            Ok(cfg) => cfg.adapter == "markdown",
+            Err(_) => false,
+        },
+        None => true,
     }
-    true
 }
 
 /// Resolve a default project path by walking up to find a `specs` directory.

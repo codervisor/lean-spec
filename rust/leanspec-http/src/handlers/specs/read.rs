@@ -198,11 +198,24 @@ fn build_hierarchy(summaries: &[SpecSummary], index: &RelationshipIndex) -> Vec<
         allowed: &HashSet<String>,
         summaries_by_id: &HashMap<String, SpecSummary>,
         children_by_parent: &HashMap<String, Vec<String>>,
+        visited: &mut HashSet<String>,
     ) -> Vec<HierarchyNode> {
+        if !visited.insert(id.to_string()) {
+            // Cycle detected — stop recursing. The first visit owns the
+            // subtree so downstream renderers still see the spec exactly
+            // once.
+            return Vec::new();
+        }
         let mut out = Vec::new();
         let children = children_by_parent.get(id).cloned().unwrap_or_default();
         for child in children {
-            let descendants = walk(&child, allowed, summaries_by_id, children_by_parent);
+            let descendants = walk(
+                &child,
+                allowed,
+                summaries_by_id,
+                children_by_parent,
+                visited,
+            );
             if allowed.contains(&child) {
                 if let Some(spec) = summaries_by_id.get(&child) {
                     out.push(HierarchyNode {
@@ -218,6 +231,7 @@ fn build_hierarchy(summaries: &[SpecSummary], index: &RelationshipIndex) -> Vec<
     }
 
     let mut roots: Vec<HierarchyNode> = Vec::new();
+    let mut visited: HashSet<String> = HashSet::new();
     for summary in summaries {
         let id = &summary.spec_name;
         let parent_in_set = index
@@ -228,7 +242,16 @@ fn build_hierarchy(summaries: &[SpecSummary], index: &RelationshipIndex) -> Vec<
         if parent_in_set {
             continue;
         }
-        let children = walk(id, &allowed, &summaries_by_id, &index.children_by_parent);
+        if !visited.insert(id.clone()) {
+            continue;
+        }
+        let children = walk(
+            id,
+            &allowed,
+            &summaries_by_id,
+            &index.children_by_parent,
+            &mut visited,
+        );
         roots.push(HierarchyNode {
             spec: summary.clone(),
             child_nodes: children,
@@ -239,8 +262,30 @@ fn build_hierarchy(summaries: &[SpecSummary], index: &RelationshipIndex) -> Vec<
     roots
 }
 
-fn doc_url_or_default(doc: &SpecDoc) -> String {
-    doc.url.clone().unwrap_or_default()
+/// Populate the response `file_path` from the adapter or, for markdown
+/// projects, from the on-disk `README.md` path so list/search responses
+/// expose the same path the UI used to receive.
+fn populate_file_path(
+    summary_file_path: &mut String,
+    doc: &SpecDoc,
+    adapter: &dyn leanspec_core::Adapter,
+    specs_dir: &std::path::Path,
+) {
+    if let Some(url) = doc.url.as_ref() {
+        if !url.is_empty() {
+            *summary_file_path = url.clone();
+            return;
+        }
+    }
+
+    if adapter.capabilities().name == "markdown" {
+        if let Some(path) = super::helpers::resolve_markdown_spec_path(specs_dir, &doc.id) {
+            *summary_file_path = path.to_string_lossy().to_string();
+            return;
+        }
+    }
+
+    *summary_file_path = String::new();
 }
 
 fn enrich_summary_from_doc(summary: &mut SpecSummary, doc: &SpecDoc, index: &RelationshipIndex) {
@@ -276,9 +321,12 @@ pub async fn list_project_specs(
         .iter()
         .map(|doc| {
             let mut summary = SpecSummary::from_doc(doc, schema).with_project_id(&project.id);
-            // Markdown adapter populates url=None; for filesystem URL we leave
-            // the file_path empty and rely on the adapter for raw access.
-            summary.file_path = doc_url_or_default(doc);
+            populate_file_path(
+                &mut summary.file_path,
+                doc,
+                adapter.as_ref(),
+                &project.specs_dir,
+            );
             enrich_summary_from_doc(&mut summary, doc, &index);
             summary
         })
@@ -503,7 +551,12 @@ pub async fn search_project_specs(
         .map(|doc| {
             let mut summary =
                 SpecSummary::from_doc_with_tokens(doc, schema).with_project_id(&project.id);
-            summary.file_path = doc_url_or_default(doc);
+            populate_file_path(
+                &mut summary.file_path,
+                doc,
+                adapter.as_ref(),
+                &project.specs_dir,
+            );
             summary
         })
         .collect();
@@ -516,4 +569,80 @@ pub async fn search_project_specs(
         query: req.query,
         project_id: Some(project.id),
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use leanspec_core::ItemLink;
+
+    fn dummy_summary(id: &str) -> SpecSummary {
+        SpecSummary {
+            project_id: None,
+            id: id.to_string(),
+            spec_number: id.split('-').next().and_then(|s| s.parse().ok()),
+            spec_name: id.to_string(),
+            title: Some(id.to_string()),
+            status: "planned".into(),
+            priority: None,
+            tags: vec![],
+            assignee: None,
+            created_at: None,
+            updated_at: None,
+            completed_at: None,
+            file_path: String::new(),
+            depends_on: vec![],
+            parent: None,
+            children: vec![],
+            required_by: vec![],
+            content_hash: None,
+            token_count: None,
+            token_status: None,
+            validation_status: None,
+            relationships: None,
+        }
+    }
+
+    fn dummy_doc(id: &str, parent: Option<&str>) -> SpecDoc {
+        let mut links = vec![];
+        if let Some(p) = parent {
+            links.push(ItemLink {
+                link_type: "parent".into(),
+                target_id: p.to_string(),
+                target_title: None,
+            });
+        }
+        SpecDoc {
+            id: id.to_string(),
+            title: id.to_string(),
+            schema_id: "leanspec:markdown".into(),
+            fields: std::collections::HashMap::new(),
+            links,
+            created_at: None,
+            updated_at: None,
+            url: None,
+            raw: None,
+        }
+    }
+
+    #[test]
+    fn build_hierarchy_handles_parent_cycle_without_recursion() {
+        // A is parent of B, B is parent of A — pathological but possible if a
+        // user hand-edits spec frontmatter. Previously this would recurse
+        // forever; now it must terminate and return each spec at most once.
+        let docs = vec![
+            dummy_doc("001-a", Some("002-b")),
+            dummy_doc("002-b", Some("001-a")),
+        ];
+        let index = build_relationship_index(&docs);
+
+        let summaries = vec![dummy_summary("001-a"), dummy_summary("002-b")];
+        let hierarchy = build_hierarchy(&summaries, &index);
+
+        fn count_nodes(nodes: &[HierarchyNode]) -> usize {
+            nodes.iter().map(|n| 1 + count_nodes(&n.child_nodes)).sum()
+        }
+        // Each spec appears at most once across the whole tree.
+        assert!(count_nodes(&hierarchy) <= 2);
+    }
 }

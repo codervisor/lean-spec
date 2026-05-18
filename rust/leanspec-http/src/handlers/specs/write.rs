@@ -38,7 +38,7 @@ use crate::types::{
 };
 
 use super::helpers::{
-    adapter_error, get_adapter_and_project, hash_raw_content, load_project_config,
+    adapter_error, get_adapter_and_project, hash_raw_content, invalid_spec_id, load_project_config,
     require_markdown_adapter, resolve_markdown_spec_path,
 };
 
@@ -137,6 +137,15 @@ pub async fn create_project_spec(
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ApiError::invalid_request("Spec name is required")),
+        ));
+    }
+    // Refuse names that could escape the project's specs directory.
+    if invalid_spec_id(spec_name) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request(
+                "Spec name must not contain path separators, '..', or absolute paths",
+            )),
         ));
     }
 

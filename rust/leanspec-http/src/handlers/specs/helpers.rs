@@ -5,27 +5,18 @@
 use axum::http::StatusCode;
 use axum::Json;
 use sha2::{Digest, Sha256};
-use std::path::{Path as FsPath, PathBuf};
+use std::path::{Component, Path as FsPath, PathBuf};
 
-use leanspec_core::adapters::{Adapter, AdapterConfig, AdapterError, AdapterRegistry};
+use leanspec_core::adapters::{Adapter, AdapterError};
 use leanspec_core::{LeanSpecConfig, TokenStatus, ValidationResult};
 
+use crate::adapter_resolution::resolve_adapter;
 use crate::error::ApiError;
 use crate::project_registry::Project;
 use crate::state::AppState;
 use crate::utils::resolve_project;
 
 use crate::types::SubSpec;
-
-/// Candidate file paths (relative to the project root) for adapter config,
-/// in priority order. Legacy `provider:` files are honoured so existing
-/// projects keep working.
-const ADAPTER_CONFIG_CANDIDATES: &[&str] = &[
-    "leanspec.adapter.yaml",
-    ".lean-spec/adapter.yaml",
-    "leanspec.provider.yaml",
-    ".lean-spec/provider.yaml",
-];
 
 /// Resolve the active adapter for a project plus the project record itself.
 ///
@@ -37,27 +28,8 @@ pub(super) async fn get_adapter_and_project(
     project_id: &str,
 ) -> Result<(Box<dyn Adapter>, Project), (StatusCode, Json<ApiError>)> {
     let project = resolve_project(state, project_id).await?;
-    let adapter = resolve_adapter_for_project(&project.path, &project.specs_dir)?;
+    let adapter = resolve_adapter(&project.path, &project.specs_dir).map_err(adapter_init_error)?;
     Ok((adapter, project))
-}
-
-pub(super) fn resolve_adapter_for_project(
-    project_root: &FsPath,
-    specs_dir: &FsPath,
-) -> Result<Box<dyn Adapter>, (StatusCode, Json<ApiError>)> {
-    for candidate in ADAPTER_CONFIG_CANDIDATES {
-        let path = project_root.join(candidate);
-        if path.exists() {
-            let config = AdapterRegistry::load_config(&path).map_err(adapter_init_error)?;
-            return AdapterRegistry::create(&config).map_err(adapter_init_error);
-        }
-    }
-
-    let config = AdapterConfig {
-        adapter: "markdown".into(),
-        settings: serde_json::json!({ "directory": specs_dir.to_string_lossy().as_ref() }),
-    };
-    AdapterRegistry::create(&config).map_err(adapter_init_error)
 }
 
 fn adapter_init_error(err: AdapterError) -> (StatusCode, Json<ApiError>) {
@@ -116,15 +88,47 @@ pub(super) fn require_markdown_adapter(
     }
 }
 
+/// Reject spec ids that could escape the specs directory (path separators,
+/// `..`, absolute paths). Returns `None` for any id that's safe to use.
+pub(super) fn invalid_spec_id(spec_id: &str) -> bool {
+    if spec_id.is_empty() {
+        return true;
+    }
+    let path = FsPath::new(spec_id);
+    if path.is_absolute() {
+        return true;
+    }
+    path.components().any(|c| {
+        matches!(
+            c,
+            Component::ParentDir | Component::RootDir | Component::Prefix(_)
+        )
+    }) || spec_id.contains('/')
+        || spec_id.contains('\\')
+}
+
 /// Try to resolve a spec id to a `README.md` path under the project's specs
 /// directory. Used by markdown-specific handlers (raw read/write, sub-spec
 /// access) that operate on files directly.
+///
+/// Refuses any spec id that contains path separators, `..`, or is absolute
+/// — those can never name a real spec dir and would let callers escape the
+/// project's specs root.
 pub(super) fn resolve_markdown_spec_path(specs_dir: &FsPath, spec_id: &str) -> Option<PathBuf> {
+    if invalid_spec_id(spec_id) {
+        return None;
+    }
+
     let direct = specs_dir.join(spec_id).join("README.md");
     if direct.exists() {
         return Some(direct);
     }
 
+    // Fuzzy match by directory-name prefix. Mirrors the markdown loader's
+    // historical behaviour ("001" matches "001-first-spec") but is narrower
+    // than the old `contains` heuristic: we only accept ids that look like a
+    // numeric prefix of the directory name to avoid resolving "01" or "1"
+    // onto an unrelated spec.
     let entries = std::fs::read_dir(specs_dir).ok()?;
     for entry in entries.flatten() {
         let path = entry.path();
@@ -134,7 +138,7 @@ pub(super) fn resolve_markdown_spec_path(specs_dir: &FsPath, spec_id: &str) -> O
         let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
             continue;
         };
-        if name.contains(spec_id) || spec_id.contains(name) {
+        if name == spec_id || directory_matches_id(name, spec_id) {
             let readme = path.join("README.md");
             if readme.exists() {
                 return Some(readme);
@@ -142,6 +146,20 @@ pub(super) fn resolve_markdown_spec_path(specs_dir: &FsPath, spec_id: &str) -> O
         }
     }
     None
+}
+
+/// Returns true when a spec id is a legitimate fuzzy match for the directory
+/// name — either the directory's numeric prefix (e.g. `001` ↔ `001-foo`) or
+/// the slug portion (`foo` ↔ `001-foo`).
+fn directory_matches_id(dir_name: &str, spec_id: &str) -> bool {
+    let Some((prefix, suffix)) = dir_name.split_once('-') else {
+        return false;
+    };
+    if prefix.is_empty() || !prefix.chars().all(|c| c.is_ascii_digit()) {
+        return false;
+    }
+    // Exact prefix match: "001" matches "001-foo" but "01" does not.
+    prefix == spec_id || suffix == spec_id
 }
 
 pub(super) fn hash_raw_content(content: &str) -> String {
@@ -284,4 +302,72 @@ pub(super) fn load_project_config(project_path: &FsPath) -> Option<LeanSpecConfi
     }
 
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    #[test]
+    fn invalid_spec_id_rejects_traversal() {
+        assert!(invalid_spec_id(""));
+        assert!(invalid_spec_id(".."));
+        assert!(invalid_spec_id("../etc"));
+        assert!(invalid_spec_id("001/../other"));
+        assert!(invalid_spec_id("/abs/path"));
+        assert!(invalid_spec_id("foo/bar"));
+        assert!(invalid_spec_id("foo\\bar"));
+    }
+
+    #[test]
+    fn invalid_spec_id_accepts_normal_ids() {
+        assert!(!invalid_spec_id("001-first-spec"));
+        assert!(!invalid_spec_id("001"));
+        assert!(!invalid_spec_id("my-spec"));
+    }
+
+    #[test]
+    fn resolve_markdown_spec_path_blocks_traversal() {
+        let tmp = TempDir::new().unwrap();
+        let specs = tmp.path().join("specs");
+        fs::create_dir_all(&specs).unwrap();
+        let outside = tmp.path().join("outside");
+        fs::create_dir_all(&outside).unwrap();
+        fs::write(outside.join("README.md"), "secret").unwrap();
+
+        assert!(resolve_markdown_spec_path(&specs, "../outside").is_none());
+        assert!(resolve_markdown_spec_path(&specs, "/etc/passwd").is_none());
+        assert!(resolve_markdown_spec_path(&specs, "").is_none());
+    }
+
+    #[test]
+    fn resolve_markdown_spec_path_finds_direct_and_fuzzy() {
+        let tmp = TempDir::new().unwrap();
+        let specs = tmp.path().join("specs");
+        let spec_dir = specs.join("001-first-spec");
+        fs::create_dir_all(&spec_dir).unwrap();
+        fs::write(spec_dir.join("README.md"), "body").unwrap();
+
+        // Exact match.
+        assert!(resolve_markdown_spec_path(&specs, "001-first-spec").is_some());
+        // Numeric prefix fuzzy.
+        assert!(resolve_markdown_spec_path(&specs, "001").is_some());
+        // Slug fuzzy.
+        assert!(resolve_markdown_spec_path(&specs, "first-spec").is_some());
+        // Bogus numeric prefix doesn't match.
+        assert!(resolve_markdown_spec_path(&specs, "01").is_none());
+        assert!(resolve_markdown_spec_path(&specs, "9").is_none());
+    }
+
+    #[test]
+    fn directory_matches_id_handles_prefix_and_slug() {
+        assert!(directory_matches_id("001-foo", "001"));
+        assert!(directory_matches_id("001-foo", "foo"));
+        assert!(!directory_matches_id("001-foo", "00"));
+        assert!(!directory_matches_id("001-foo", "1"));
+        assert!(!directory_matches_id("no-prefix", "no"));
+        assert!(!directory_matches_id("", "001"));
+    }
 }
