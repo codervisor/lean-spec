@@ -101,7 +101,7 @@ fn make_create_request(title: &str, body: &str, opts: &ComplianceOptions) -> Cre
 }
 
 /// Schema-level invariants. Pure — runs no mutations.
-pub fn check_schema_consistency<A: Adapter + ?Sized>(adapter: &A, _opts: &ComplianceOptions) {
+pub fn check_schema_consistency<A: Adapter + ?Sized>(adapter: &A, opts: &ComplianceOptions) {
     let schema = adapter.schema();
     assert!(!schema.fields.is_empty(), "schema.fields must not be empty");
 
@@ -139,6 +139,27 @@ pub fn check_schema_consistency<A: Adapter + ?Sized>(adapter: &A, _opts: &Compli
         "schema must declare a field with semantic 'status'"
     );
 
+    // Cross-check ComplianceOptions against the schema so misconfigured
+    // adapters fail fast here with a clear message rather than deep inside
+    // a CRUD or list test where the diagnostic is muddier.
+    assert!(
+        schema.field(&opts.status_key).is_some(),
+        "ComplianceOptions.status_key '{}' must exist in the schema",
+        opts.status_key
+    );
+    assert!(
+        schema.field(&opts.content_key).is_some(),
+        "ComplianceOptions.content_key '{}' must exist in the schema",
+        opts.content_key
+    );
+    if opts.supports_links {
+        assert!(
+            schema.link_types.iter().any(|lt| lt.key == opts.link_type),
+            "ComplianceOptions.link_type '{}' must be declared in schema.link_types",
+            opts.link_type
+        );
+    }
+
     let caps = adapter.capabilities();
     assert!(!caps.name.is_empty(), "capabilities.name must not be empty");
     assert_eq!(
@@ -169,16 +190,20 @@ pub fn check_crud_roundtrip<A: Adapter + ?Sized>(adapter: &A, opts: &ComplianceO
         fetched.title, title,
         "get() must return the same title that was created"
     );
-    if let Some(content) = fetched
+    let content = fetched
         .fields
         .get(&opts.content_key)
         .and_then(|v| v.as_str())
-    {
-        assert!(
-            content.contains("Body for CRUD test"),
-            "body content must round-trip on get() — got {content:?}"
-        );
-    }
+        .unwrap_or_else(|| {
+            panic!(
+                "content field '{}' must be present on get() after create() set it",
+                opts.content_key
+            )
+        });
+    assert!(
+        content.contains("Body for CRUD test"),
+        "body content must round-trip on get() — got {content:?}"
+    );
 
     // Title update.
     let new_title = format!("{title} (renamed)");
@@ -294,9 +319,15 @@ pub fn check_list_filter<A: Adapter + ?Sized>(adapter: &A, opts: &ComplianceOpti
         "free-text filter on a unique marker must match the created item"
     );
 
-    // Archived items must be excluded from the default list.
+    // Cleanup: always delete the created item so persistent backends (e.g.
+    // the real GitHub API in integration tests) don't accumulate fixtures
+    // across compliance runs. The post-delete archive assertion is gated on
+    // `delete_is_archive` because only archive adapters keep the item
+    // around for the "excluded from default list" semantics.
+    adapter
+        .delete(&created.id)
+        .expect("cleanup delete must succeed");
     if opts.delete_is_archive {
-        adapter.delete(&created.id).expect("delete must succeed");
         let listed_after = adapter
             .list(&ListFilter::default())
             .expect("list after delete must succeed");
@@ -333,6 +364,11 @@ pub fn check_search<A: Adapter + ?Sized>(adapter: &A, opts: &ComplianceOptions) 
         no_hits.is_empty(),
         "search for a nonexistent term must return an empty vec — got {no_hits:?}"
     );
+
+    // Cleanup so persistent backends don't accumulate test fixtures.
+    adapter
+        .delete(&created.id)
+        .expect("cleanup delete must succeed");
 }
 
 /// Link round-trip — skipped silently when the adapter doesn't model links.
@@ -358,6 +394,11 @@ pub fn check_links<A: Adapter + ?Sized>(adapter: &A, opts: &ComplianceOptions) {
             .any(|l| l.link_type == opts.link_type && l.target_id == opts.link_target),
         "the created link must round-trip on get_links() — got {links:?}"
     );
+
+    // Cleanup so persistent backends don't accumulate test fixtures.
+    adapter
+        .delete(&created.id)
+        .expect("cleanup delete must succeed");
 }
 
 /// `get` / `update` / `delete` on a nonexistent id all return `NotFound`.
@@ -430,37 +471,43 @@ macro_rules! adapter_compliance_tests {
         #[test]
         fn compliance_schema_consistency() {
             let (adapter, _fixture) = ($factory)();
-            $crate::adapters::test_harness::check_schema_consistency(&adapter, &$opts);
+            let opts = $opts;
+            $crate::adapters::test_harness::check_schema_consistency(&adapter, &opts);
         }
 
         #[test]
         fn compliance_crud_roundtrip() {
             let (adapter, _fixture) = ($factory)();
-            $crate::adapters::test_harness::check_crud_roundtrip(&adapter, &$opts);
+            let opts = $opts;
+            $crate::adapters::test_harness::check_crud_roundtrip(&adapter, &opts);
         }
 
         #[test]
         fn compliance_list_filter() {
             let (adapter, _fixture) = ($factory)();
-            $crate::adapters::test_harness::check_list_filter(&adapter, &$opts);
+            let opts = $opts;
+            $crate::adapters::test_harness::check_list_filter(&adapter, &opts);
         }
 
         #[test]
         fn compliance_search() {
             let (adapter, _fixture) = ($factory)();
-            $crate::adapters::test_harness::check_search(&adapter, &$opts);
+            let opts = $opts;
+            $crate::adapters::test_harness::check_search(&adapter, &opts);
         }
 
         #[test]
         fn compliance_links() {
             let (adapter, _fixture) = ($factory)();
-            $crate::adapters::test_harness::check_links(&adapter, &$opts);
+            let opts = $opts;
+            $crate::adapters::test_harness::check_links(&adapter, &opts);
         }
 
         #[test]
         fn compliance_error_cases() {
             let (adapter, _fixture) = ($factory)();
-            $crate::adapters::test_harness::check_error_cases(&adapter, &$opts);
+            let opts = $opts;
+            $crate::adapters::test_harness::check_error_cases(&adapter, &opts);
         }
     };
 }
