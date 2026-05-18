@@ -116,9 +116,22 @@ fn main() -> ExitCode {
             commands::git_repo::run(cmd, &cli.output)
         }
         Commands::Gantt { status } => commands::gantt::run(&specs_dir, status, &cli.output),
-        Commands::Init { yes, example } => {
-            commands::init::run(&specs_dir, commands::init::InitOptions { yes, example })
-        }
+        Commands::Init {
+            yes,
+            example,
+            adapter,
+            owner_repo,
+            token_env,
+        } => commands::init::run(
+            &specs_dir,
+            commands::init::InitOptions {
+                yes,
+                example,
+                adapter,
+                owner_repo,
+                token_env,
+            },
+        ),
         Commands::List {
             status,
             tag,

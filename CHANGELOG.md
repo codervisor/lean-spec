@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`leanspec init --adapter github`** ([issue #263](https://github.com/codervisor/lean-spec/issues/263)) — Initialize a GitHub Issues-backed project from the CLI: detects the GitHub remote, validates `$GITHUB_TOKEN` via `GET /user`, writes `leanspec.adapter.yaml`, and installs an adapter-agnostic `AGENTS.md`. Stubs for `--adapter ado` / `--adapter jira` print a "coming soon" message.
 - **TUI Multi-Project Management** ([spec 372](https://web.lean-spec.dev/specs/372)) — Switch between and manage multiple projects from the TUI
 - **TUI Sidebar Navigation & Tree View** ([spec 371](https://web.lean-spec.dev/specs/371)) — Sidebar with sort/filter controls and hierarchical tree view for specs
 - **TUI Board View Enhancements** — Collapsible board groups with sort indicator, TOC overlay, and scrollbars
