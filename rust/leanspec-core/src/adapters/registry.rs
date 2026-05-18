@@ -7,6 +7,8 @@
 
 use std::path::Path;
 
+#[cfg(feature = "github")]
+use super::github::GitHubAdapter;
 use super::markdown::MarkdownAdapter;
 use super::{Adapter, AdapterConfig, AdapterError};
 
@@ -25,6 +27,39 @@ impl AdapterRegistry {
                     .unwrap_or("specs");
                 Ok(Box::new(MarkdownAdapter::new(dir)))
             }
+            #[cfg(feature = "github")]
+            "github" => {
+                let owner = config
+                    .settings
+                    .get("owner")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        AdapterError::ConfigError(
+                            "github adapter requires 'owner' in settings".into(),
+                        )
+                    })?;
+                let repo = config
+                    .settings
+                    .get("repo")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        AdapterError::ConfigError(
+                            "github adapter requires 'repo' in settings".into(),
+                        )
+                    })?;
+                let token_env = config
+                    .settings
+                    .get("token_env")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("GITHUB_TOKEN");
+                Ok(Box::new(GitHubAdapter::new(owner, repo, token_env)?))
+            }
+            #[cfg(not(feature = "github"))]
+            "github" => Err(AdapterError::ConfigError(
+                "adapter 'github' requested but leanspec-core was built without \
+                 the 'github' feature — rebuild with `--features github`"
+                    .into(),
+            )),
             other => Err(AdapterError::ConfigError(format!(
                 "unknown adapter '{other}' — only 'markdown' is built-in; \
                  register additional adapters via your plugin registry"
@@ -149,6 +184,49 @@ mod tests {
     fn default_is_markdown() {
         let adapter = AdapterRegistry::default_adapter();
         assert_eq!(adapter.capabilities().name, "markdown");
+    }
+
+    #[test]
+    fn github_requires_owner_and_repo() {
+        let cfg = AdapterConfig {
+            adapter: "github".into(),
+            settings: serde_json::json!({}),
+        };
+        let err = AdapterRegistry::create(&cfg).unwrap_err();
+        assert!(matches!(err, AdapterError::ConfigError(_)));
+    }
+
+    #[cfg(feature = "github")]
+    #[test]
+    fn create_github_adapter() {
+        std::env::set_var("LEANSPEC_TEST_GH_TOKEN", "fake-token");
+        let cfg = AdapterConfig {
+            adapter: "github".into(),
+            settings: serde_json::json!({
+                "owner": "acme",
+                "repo": "backend",
+                "token_env": "LEANSPEC_TEST_GH_TOKEN",
+            }),
+        };
+        let adapter = AdapterRegistry::create(&cfg).unwrap();
+        assert_eq!(adapter.capabilities().name, "github");
+        std::env::remove_var("LEANSPEC_TEST_GH_TOKEN");
+    }
+
+    #[cfg(not(feature = "github"))]
+    #[test]
+    fn github_without_feature_is_config_error() {
+        let cfg = AdapterConfig {
+            adapter: "github".into(),
+            settings: serde_json::json!({ "owner": "x", "repo": "y" }),
+        };
+        let err = AdapterRegistry::create(&cfg).unwrap_err();
+        match err {
+            AdapterError::ConfigError(msg) => {
+                assert!(msg.contains("github") && msg.contains("feature"));
+            }
+            other => panic!("expected ConfigError, got {other:?}"),
+        }
     }
 
     #[test]
