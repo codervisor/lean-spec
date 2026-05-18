@@ -187,6 +187,132 @@ for tgt in tb ascii; do
     assert_eq "stdin $tgt matches file-arg" "$tmp/stdin.$tgt" "$EXP/happy.$tgt"
 done
 
+echo "--as=svg smoke"
+"$SCRIPT" "$FIX/happy.json" --as=svg > "$tmp/happy.svg" 2>"$tmp/happy.svg.err"
+rc=$?
+if [ "$rc" -ne 0 ]; then
+    fail=$((fail + 1))
+    printf '  FAIL --as=svg exited %d\n' "$rc"
+    sed 's/^/    /' < "$tmp/happy.svg.err"
+elif ! grep -q '<svg ' "$tmp/happy.svg"; then
+    fail=$((fail + 1))
+    printf '  FAIL --as=svg output missing <svg> root\n'
+elif ! grep -q '</svg>' "$tmp/happy.svg"; then
+    fail=$((fail + 1))
+    printf '  FAIL --as=svg output missing </svg> close\n'
+elif ! grep -q '#d4edda' "$tmp/happy.svg"; then
+    fail=$((fail + 1))
+    printf '  FAIL --as=svg missing done-state fill (#d4edda)\n'
+elif ! grep -q '#cfe2ff' "$tmp/happy.svg"; then
+    fail=$((fail + 1))
+    printf '  FAIL --as=svg missing available-next fill (#cfe2ff)\n'
+elif ! grep -q '✅' "$tmp/happy.svg"; then
+    fail=$((fail + 1))
+    printf '  FAIL --as=svg missing emoji (auto-on for SVG)\n'
+else
+    pass=$((pass + 1))
+    printf '  ok  --as=svg emits styled SVG with status fills + emoji\n'
+fi
+# --as=svg strips the XML prolog (and everything before the `<svg` tag,
+# including graphviz's generator comment) so the output is inline-paste-
+# safe — it must not start with `<?xml` or `<!DOCTYPE`.
+if grep -qE '^(<\?xml|<!DOCTYPE)' "$tmp/happy.svg"; then
+    fail=$((fail + 1))
+    printf '  FAIL --as=svg still contains XML prolog / DOCTYPE (should be stripped for inline use)\n'
+else
+    pass=$((pass + 1))
+    printf '  ok  --as=svg strips XML prolog / DOCTYPE (inline-safe)\n'
+fi
+# --as=svg --out writes to a file.
+"$SCRIPT" "$FIX/happy.json" --as=svg --out "$tmp/happy.out.svg" >/dev/null 2>&1
+if [ -s "$tmp/happy.out.svg" ] && grep -q '<svg ' "$tmp/happy.out.svg"; then
+    pass=$((pass + 1))
+    printf '  ok  --as=svg --out writes to file\n'
+else
+    fail=$((fail + 1))
+    printf '  FAIL --as=svg --out did not write a valid SVG\n'
+fi
+# --as=svg --emoji=off strips emoji.
+"$SCRIPT" "$FIX/happy.json" --as=svg --emoji=off > "$tmp/happy.svg.off" 2>/dev/null
+if grep -q '✅\|🟡\|⬜\|🎯\|🏁' "$tmp/happy.svg.off"; then
+    fail=$((fail + 1))
+    printf '  FAIL --as=svg --emoji=off leaked emoji\n'
+else
+    pass=$((pass + 1))
+    printf '  ok  --as=svg --emoji=off strips emoji\n'
+fi
+
+echo "--as=html smoke"
+"$SCRIPT" "$FIX/happy.json" --as=html > "$tmp/happy.html" 2>"$tmp/happy.html.err"
+rc=$?
+if [ "$rc" -ne 0 ]; then
+    fail=$((fail + 1))
+    printf '  FAIL --as=html exited %d\n' "$rc"
+    sed 's/^/    /' < "$tmp/happy.html.err"
+else
+    html_ok=1
+    for token in '<!DOCTYPE html>' '<title>plan-dag — close #300</title>' \
+                 'name="viewport"' \
+                 'class="dag"' '<svg ' '</svg>' \
+                 'Critical path:' '#301 → #305 → #306 → #307 → close' \
+                 '@media (prefers-color-scheme: dark)'; do
+        if ! grep -qF -- "$token" "$tmp/happy.html"; then
+            fail=$((fail + 1))
+            printf '  FAIL --as=html missing token: %s\n' "$token"
+            html_ok=0
+        fi
+    done
+    if [ "$html_ok" -eq 1 ]; then
+        pass=$((pass + 1))
+        printf '  ok  --as=html emits self-contained page with critical-path footer\n'
+    fi
+    # Legend is intentionally not part of the HTML output — assert it stays gone.
+    if grep -qE 'class="legend"|>blocked<|>in-progress<|>available next<' "$tmp/happy.html"; then
+        fail=$((fail + 1))
+        printf '  FAIL --as=html unexpectedly emitted legend markup\n'
+    else
+        pass=$((pass + 1))
+        printf '  ok  --as=html omits legend (status colors + emoji are self-explanatory)\n'
+    fi
+fi
+# --as=html --out writes to a file.
+"$SCRIPT" "$FIX/happy.json" --as=html --out "$tmp/happy.out.html" >/dev/null 2>&1
+if [ -s "$tmp/happy.out.html" ] && grep -q '<!DOCTYPE html>' "$tmp/happy.out.html"; then
+    pass=$((pass + 1))
+    printf '  ok  --as=html --out writes to file\n'
+else
+    fail=$((fail + 1))
+    printf '  FAIL --as=html --out did not write valid HTML\n'
+fi
+# A graph without a `close` sentinel drops the " — close #N" title suffix
+# and the footer disappears when no critical_path is declared.
+closeless_ir='{"nodes":[{"id":"1","label":"a","status":"done"},{"id":"2","label":"b","status":"open"}],"edges":[{"from":"1","to":"2","source":"depends-on"}]}'
+echo "$closeless_ir" | "$SCRIPT" - --as=html > "$tmp/closeless.html" 2>/dev/null
+if grep -q '<title>plan-dag</title>' "$tmp/closeless.html"; then
+    pass=$((pass + 1))
+    printf '  ok  --as=html omits close suffix when ir.close is unset\n'
+else
+    fail=$((fail + 1))
+    printf '  FAIL --as=html title for closeless IR (got: %s)\n' \
+        "$(grep -o '<title>[^<]*</title>' "$tmp/closeless.html" | head -1)"
+fi
+if grep -q 'Critical path:' "$tmp/closeless.html"; then
+    fail=$((fail + 1))
+    printf '  FAIL --as=html emitted footer with no critical_path\n'
+else
+    pass=$((pass + 1))
+    printf '  ok  --as=html omits footer when no critical_path declared\n'
+fi
+echo "--as=dot --out smoke"
+"$SCRIPT" "$FIX/happy.json" --as=dot --out "$tmp/happy.out.dot" >/dev/null 2>&1
+if [ -s "$tmp/happy.out.dot" ] && grep -q '^digraph plan' "$tmp/happy.out.dot"; then
+    pass=$((pass + 1))
+    printf '  ok  --as=dot --out writes to file\n'
+else
+    fail=$((fail + 1))
+    printf '  FAIL --as=dot --out did not write valid DOT to file\n'
+fi
+
 echo "--as=png smoke (skipped without node + Playwright Chromium)"
 # Skip markers — any of these in the helper's stderr means the local env is
 # missing a Playwright/Chromium piece and the test should be skipped rather
