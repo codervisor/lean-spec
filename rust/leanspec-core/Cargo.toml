@@ -45,6 +45,10 @@ github = ["dep:reqwest", "reqwest/blocking", "reqwest/json", "reqwest/default-tl
 # Opt-in to running the GitHub integration tests that hit api.github.com.
 # Requires `GITHUB_TOKEN`, `TEST_GITHUB_OWNER`, `TEST_GITHUB_REPO` env vars.
 github-integration-tests = ["github"]
+ado = ["dep:reqwest", "reqwest/blocking", "reqwest/json", "reqwest/default-tls"]
+# Opt-in to running the ADO integration tests that hit dev.azure.com.
+# Requires `ADO_TOKEN`, `TEST_ADO_ORG`, `TEST_ADO_PROJECT` env vars.
+ado-integration-tests = ["ado"]
 storage = ["tokio", "dirs", "uuid"]
 # Expose the adapter compliance test harness for use by out-of-tree
 # adapter implementations. Always available within this crate's own tests.

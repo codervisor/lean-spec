@@ -7,6 +7,8 @@
 
 use std::path::Path;
 
+#[cfg(feature = "ado")]
+use super::ado::AdoAdapter;
 #[cfg(feature = "github")]
 use super::github::GitHubAdapter;
 use super::markdown::MarkdownAdapter;
@@ -67,6 +69,49 @@ impl AdapterRegistry {
             "github" => Err(AdapterError::ConfigError(
                 "adapter 'github' requested but leanspec-core was built without \
                  the 'github' feature — rebuild with `--features github`"
+                    .into(),
+            )),
+            #[cfg(feature = "ado")]
+            "ado" => {
+                let org = config
+                    .settings
+                    .get("organization")
+                    .or_else(|| config.settings.get("org"))
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        AdapterError::ConfigError(
+                            "ado adapter requires 'organization' in settings".into(),
+                        )
+                    })?;
+                let project = config
+                    .settings
+                    .get("project")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        AdapterError::ConfigError(
+                            "ado adapter requires 'project' in settings".into(),
+                        )
+                    })?;
+                let token_env = config
+                    .settings
+                    .get("token_env")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("ADO_TOKEN");
+                let mut adapter = match config.settings.get("base_url").and_then(|v| v.as_str()) {
+                    Some(base) => AdoAdapter::with_base_url(org, project, token_env, base)?,
+                    None => AdoAdapter::new(org, project, token_env)?,
+                };
+                // Bake the project's actual state list into the adapter's
+                // schema so `leanspec capabilities` shows them. Failure to
+                // reach ADO is fatal here — an unreachable backend makes the
+                // adapter unusable downstream.
+                adapter.resolve_inline()?;
+                Ok(Box::new(adapter))
+            }
+            #[cfg(not(feature = "ado"))]
+            "ado" => Err(AdapterError::ConfigError(
+                "adapter 'ado' requested but leanspec-core was built without \
+                 the 'ado' feature — rebuild with `--features ado`"
                     .into(),
             )),
             other => Err(AdapterError::ConfigError(format!(
@@ -254,6 +299,85 @@ mod tests {
         match err {
             AdapterError::ConfigError(msg) => {
                 assert!(msg.contains("github") && msg.contains("feature"));
+            }
+            other => panic!("expected ConfigError, got {other:?}"),
+        }
+    }
+
+    #[cfg(feature = "ado")]
+    #[test]
+    fn ado_requires_org_and_project() {
+        let cfg = AdapterConfig {
+            adapter: "ado".into(),
+            settings: serde_json::json!({}),
+        };
+        let err = AdapterRegistry::create(&cfg).unwrap_err();
+        assert!(matches!(err, AdapterError::ConfigError(_)));
+    }
+
+    #[cfg(feature = "ado")]
+    #[test]
+    fn create_ado_adapter_resolves_states() {
+        let mut server = mockito::Server::new();
+
+        // User Story carries the state list; the other WIT types 404 (their
+        // process didn't define them).
+        server
+            .mock(
+                "GET",
+                "/acme/MyProject/_apis/wit/workitemtypes/User%20Story/states",
+            )
+            .match_query(mockito::Matcher::AnyOf(vec![mockito::Matcher::Any]))
+            .with_status(200)
+            .with_body(
+                r#"{"value":[
+                    {"name":"Active","color":"007acc","category":"InProgress"},
+                    {"name":"Closed","color":"339933","category":"Completed"}
+                ]}"#,
+            )
+            .create();
+        // Default-match-all for any other type so missing ones simply 404.
+        server
+            .mock("GET", mockito::Matcher::Any)
+            .with_status(404)
+            .with_body(r#"{"message":"not found"}"#)
+            .expect_at_least(0)
+            .create();
+
+        std::env::set_var("LEANSPEC_TEST_ADO_TOKEN", "fake-token");
+        let cfg = AdapterConfig {
+            adapter: "ado".into(),
+            settings: serde_json::json!({
+                "organization": "acme",
+                "project": "MyProject",
+                "token_env": "LEANSPEC_TEST_ADO_TOKEN",
+                "base_url": server.url(),
+            }),
+        };
+        let adapter = AdapterRegistry::create(&cfg).unwrap();
+        assert_eq!(adapter.capabilities().name, "ado");
+        let status = adapter.schema().field("status").unwrap();
+        match &status.kind {
+            crate::model::FieldKind::Enum { options, .. } => {
+                assert!(options.iter().any(|o| o.value == "Active"));
+                assert!(options.iter().any(|o| o.value == "Closed"));
+            }
+            _ => panic!("expected enum status field"),
+        }
+        std::env::remove_var("LEANSPEC_TEST_ADO_TOKEN");
+    }
+
+    #[cfg(not(feature = "ado"))]
+    #[test]
+    fn ado_without_feature_is_config_error() {
+        let cfg = AdapterConfig {
+            adapter: "ado".into(),
+            settings: serde_json::json!({ "organization": "acme", "project": "p" }),
+        };
+        let err = AdapterRegistry::create(&cfg).unwrap_err();
+        match err {
+            AdapterError::ConfigError(msg) => {
+                assert!(msg.contains("ado") && msg.contains("feature"));
             }
             other => panic!("expected ConfigError, got {other:?}"),
         }

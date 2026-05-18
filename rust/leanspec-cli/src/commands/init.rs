@@ -35,10 +35,7 @@ pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> 
     match options.adapter.as_str() {
         "markdown" => run_standard_init(specs_dir, options),
         "github" => run_github_init(options),
-        "ado" => {
-            print_coming_soon("ADO");
-            Ok(())
-        }
+        "ado" => run_ado_init(options),
         "jira" => {
             print_coming_soon("Jira");
             Ok(())
@@ -669,6 +666,187 @@ fn read_github_token(token_env: &str) -> Result<String, Box<dyn Error>> {
         )
         .into()),
     }
+}
+
+fn run_ado_init(options: InitOptions) -> Result<(), Box<dyn Error>> {
+    println!();
+    println!("{}", "Initializing Azure DevOps adapter...".bold());
+    println!();
+
+    let cwd = std::env::current_dir()?;
+    let root = find_project_root(&cwd);
+
+    // Pick the right token env. The CLI default is GITHUB_TOKEN (shared with
+    // the github adapter); when the user didn't override it, the ADO default
+    // should be ADO_TOKEN.
+    let token_env = if options.token_env == "GITHUB_TOKEN" {
+        "ADO_TOKEN".to_string()
+    } else {
+        options.token_env.clone()
+    };
+
+    // 1. Prompt for / parse organization + project.
+    let (org, project) = resolve_ado_org_project(&options)?;
+    println!(
+        "{} Using ADO project: {}/{}",
+        "✓".green(),
+        org.cyan(),
+        project.cyan()
+    );
+
+    // 2. Read and validate the PAT.
+    let token = read_ado_token(&token_env)?;
+    println!(
+        "{} Found {} ({} chars)",
+        "✓".green(),
+        token_env.cyan(),
+        token.len()
+    );
+
+    print!(
+        "  Validating token against {}/{}... ",
+        org.cyan(),
+        project.cyan()
+    );
+    let _ = std::io::Write::flush(&mut std::io::stdout());
+    match leanspec_core::adapters::ado::validate_token(&token, &org, &project, None) {
+        Ok(info) => {
+            println!(
+                "{} ({} project{} visible)",
+                "✓".green(),
+                info.project_count,
+                if info.project_count == 1 { "" } else { "s" }
+            );
+            if !info.project_found {
+                println!(
+                    "{} Project '{}' was not found in '{}'. Double-check the \
+                     name (it is case-sensitive) and re-run.",
+                    "⚠".yellow(),
+                    project,
+                    org
+                );
+            }
+        }
+        Err(err) => {
+            return Err(format!(
+                "ADO token validation failed: {}\n\n\
+                 Set a valid PAT and re-run:\n\n  \
+                 export {}=...\n\n\
+                 The PAT needs the 'Work Items (read & write)' scope, plus \
+                 'Project and Team (read)' so `leanspec capabilities` can \
+                 enumerate the project's work item type states.\n\
+                 See https://learn.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate \
+                 for how to create one.",
+                err, token_env
+            )
+            .into());
+        }
+    }
+
+    // 3. Write `leanspec.adapter.yaml`.
+    write_ado_adapter_yaml(&root, &org, &project, &token_env)?;
+
+    // 4. Write the adapter-agnostic AGENTS.md.
+    let project_name = root
+        .file_name()
+        .and_then(|s| s.to_str())
+        .filter(|s| !s.trim().is_empty())
+        .unwrap_or("project");
+    scaffold_generic_agents(&root, project_name)?;
+
+    println!();
+    println!("{}", "Done.".green().bold());
+    println!(
+        "Run `{}` to see available operations.",
+        "leanspec capabilities".cyan()
+    );
+
+    Ok(())
+}
+
+fn resolve_ado_org_project(options: &InitOptions) -> Result<(String, String), Box<dyn Error>> {
+    // Re-use the `--owner-repo` arg as `--owner-repo org/project` for ADO
+    // so the CLI surface stays small; an explicit value wins.
+    if let Some(spec) = options.owner_repo.as_deref() {
+        return parse_owner_repo(spec).ok_or_else(|| {
+            format!("--owner-repo for ADO must be in 'organization/project' format, got '{spec}'")
+                .into()
+        });
+    }
+
+    let interactive = !options.yes && std::io::stdin().is_terminal();
+    if !interactive {
+        return Err("No --owner-repo provided for ADO. Pass --owner-repo \
+            organization/project (or run interactively to be prompted)."
+            .into());
+    }
+
+    let org: String = Input::new()
+        .with_prompt("ADO organization (e.g. myorg)")
+        .interact_text()?;
+    let org = org.trim().to_string();
+    if org.is_empty() {
+        return Err("organization must not be empty".into());
+    }
+    let project: String = Input::new()
+        .with_prompt("ADO project (e.g. MyProject)")
+        .interact_text()?;
+    let project = project.trim().to_string();
+    if project.is_empty() {
+        return Err("project must not be empty".into());
+    }
+    Ok((org, project))
+}
+
+fn read_ado_token(token_env: &str) -> Result<String, Box<dyn Error>> {
+    // Trim because shell pipelines commonly leave a trailing newline. The
+    // adapter validates against control chars but a friendly trim here keeps
+    // the error message focused on actually-missing tokens.
+    match std::env::var(token_env) {
+        Ok(t) if !t.trim().is_empty() => Ok(t.trim().to_string()),
+        _ => Err(format!(
+            "{} not found in environment.\n\nSet it and re-run, or export it now:\n\n  \
+             export {}=...\n\nSee https://learn.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate \
+             for how to create a PAT.",
+            token_env, token_env
+        )
+        .into()),
+    }
+}
+
+fn write_ado_adapter_yaml(
+    root: &Path,
+    org: &str,
+    project: &str,
+    token_env: &str,
+) -> Result<(), Box<dyn Error>> {
+    let path = root.join("leanspec.adapter.yaml");
+    if path.exists() {
+        println!(
+            "{} {} already exists (preserved)",
+            "✓".cyan(),
+            path.display()
+        );
+        return Ok(());
+    }
+
+    let mut body = String::from("# Written by leanspec init --adapter ado\n");
+    body.push_str("adapter: ado\n");
+    body.push_str("settings:\n");
+    body.push_str(&format!("  organization: {}\n", org));
+    body.push_str(&format!("  project: {}\n", project));
+    if token_env == "ADO_TOKEN" {
+        body.push_str(
+            "  # token_env defaults to ADO_TOKEN; override if needed:\n  \
+             # token_env: MY_CUSTOM_TOKEN_VAR\n",
+        );
+    } else {
+        body.push_str(&format!("  token_env: {}\n", token_env));
+    }
+
+    fs::write(&path, body)?;
+    println!("{} Wrote {}", "✓".green(), path.display());
+    Ok(())
 }
 
 fn write_github_adapter_yaml(

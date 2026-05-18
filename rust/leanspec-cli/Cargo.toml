@@ -19,7 +19,7 @@ clap.workspace = true
 colored.workspace = true
 dialoguer.workspace = true
 indicatif.workspace = true
-leanspec-core = {path = "../leanspec-core", features = ["storage", "git", "github"]}
+leanspec-core = {path = "../leanspec-core", features = ["storage", "git", "github", "ado"]}
 notify = "6"
 ratatui.workspace = true
 serde.workspace = true
