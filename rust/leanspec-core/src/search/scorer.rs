@@ -1,4 +1,4 @@
-use crate::SpecInfo;
+use crate::adapters::markdown::types::SpecInfo;
 
 use super::filters::matches_field;
 use super::fuzzy::best_match_distance_in_text;

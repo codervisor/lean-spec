@@ -3,9 +3,10 @@
 //! Validates that a spec can be marked as complete by checking for unchecked
 //! checkbox items in the spec content and verifying child specs are complete.
 
+use crate::adapters::markdown::types::{SpecInfo, SpecStatus};
 use crate::types::{
-    CheckboxItem, CompletionVerificationResult, IncompleteChildSpec, Progress, SpecInfo,
-    SpecStatus, UmbrellaVerificationResult,
+    CheckboxItem, CompletionVerificationResult, IncompleteChildSpec, Progress,
+    UmbrellaVerificationResult,
 };
 use regex::Regex;
 use std::path::Path;
@@ -327,7 +328,7 @@ No checkboxes here.
         status: SpecStatus,
         parent: Option<&str>,
     ) -> SpecInfo {
-        use crate::types::SpecFrontmatter;
+        use crate::adapters::markdown::types::SpecFrontmatter;
         SpecInfo {
             path: path.to_string(),
             title: title.to_string(),

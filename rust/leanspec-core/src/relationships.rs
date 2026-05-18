@@ -1,6 +1,6 @@
 //! Relationship validation utilities
 
-use crate::types::SpecInfo;
+use crate::adapters::markdown::types::SpecInfo;
 use std::collections::{HashMap, HashSet, VecDeque};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -232,7 +232,7 @@ fn build_path(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{SpecFrontmatter, SpecInfo, SpecStatus};
+    use crate::adapters::markdown::types::{SpecFrontmatter, SpecInfo, SpecStatus};
     use std::path::PathBuf;
 
     fn make_spec(path: &str, parent: Option<&str>, depends_on: Vec<&str>) -> SpecInfo {

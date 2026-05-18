@@ -1,7 +1,8 @@
 //! Token count validation for specs
 
+use crate::adapters::markdown::types::SpecInfo;
 use crate::compute::global_token_counter;
-use crate::types::{SpecInfo, ValidationResult};
+use crate::types::ValidationResult;
 
 /// Options for token count validation
 #[derive(Debug, Clone)]
@@ -78,7 +79,7 @@ impl Default for TokenCountValidator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{SpecFrontmatter, SpecStatus};
+    use crate::adapters::markdown::types::{SpecFrontmatter, SpecStatus};
     use std::path::PathBuf;
 
     fn create_test_spec_with_content(content: &str) -> SpecInfo {

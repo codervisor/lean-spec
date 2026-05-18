@@ -1,7 +1,9 @@
 //! Spec file writing and metadata updates
 
-use super::{LoadError, SpecLoader};
-use crate::types::{SpecFrontmatter, SpecPriority, SpecStatus};
+#![allow(dead_code)]
+
+use super::loader::{LoadError, SpecLoader};
+use super::types::{SpecFrontmatter, SpecPriority, SpecStatus};
 use chrono::Utc;
 use std::fs;
 use std::path::{Path, PathBuf};

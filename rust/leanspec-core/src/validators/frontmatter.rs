@@ -1,6 +1,7 @@
 //! Frontmatter validation
 
-use crate::types::{SpecInfo, SpecStatus, ValidationResult};
+use crate::adapters::markdown::types::{SpecInfo, SpecStatus};
+use crate::types::ValidationResult;
 
 /// Options for frontmatter validation
 #[derive(Debug, Clone, Default)]
@@ -201,7 +202,7 @@ impl Default for FrontmatterValidator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::SpecFrontmatter;
+    use crate::adapters::markdown::types::SpecFrontmatter;
     use std::path::PathBuf;
 
     fn create_test_spec(status: SpecStatus, created: &str) -> SpecInfo {

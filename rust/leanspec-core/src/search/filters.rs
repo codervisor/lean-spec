@@ -1,4 +1,4 @@
-use crate::SpecInfo;
+use crate::adapters::markdown::types::SpecInfo;
 use chrono::{Datelike, NaiveDate};
 
 use super::query::QueryField;
