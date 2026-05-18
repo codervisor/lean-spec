@@ -14,6 +14,8 @@
 //!   schema id for this adapter.
 //! - [`Adapter`] is the trait each backend implements.
 
+#[cfg(feature = "ado")]
+pub mod ado;
 #[cfg(feature = "github")]
 pub mod github;
 pub mod jira;
