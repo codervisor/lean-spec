@@ -301,11 +301,18 @@ impl AdoAdapter {
         token: impl Into<String>,
         base_url: impl Into<String>,
     ) -> Result<Self, AdapterError> {
-        let token: String = token.into();
+        let org: String = org.into();
+        let project: String = project.into();
+        validate_path_segment("organization", &org)?;
+        validate_path_segment("project", &project)?;
+
+        // Tokens commonly arrive with a trailing newline from shell pipelines
+        // (`export ADO_TOKEN=$(cat token.txt)`). Trim that quietly — the CLI
+        // does the same — but still reject any embedded control chars below.
+        let token: String = token.into().trim().to_string();
         // Reject tokens that contain control characters or non-ASCII bytes.
         // Without this guard, base64 encoding would silently hide newline /
-        // CR bytes that signal a misconfigured env var (e.g. an extra
-        // trailing newline from `export ADO_TOKEN=$(cat token.txt)`).
+        // CR bytes that signal a misconfigured env var.
         validate_raw_token(&token)?;
 
         let client = Client::builder()
@@ -323,8 +330,8 @@ impl AdoAdapter {
             .collect();
 
         Ok(Self {
-            org: org.into(),
-            project: project.into(),
+            org,
+            project,
             base_url: base_url.into(),
             token,
             client,
@@ -347,10 +354,13 @@ impl AdoAdapter {
     /// adapter's schema and `closed_states` cache. Invoked by
     /// [`AdapterRegistry::create`] so callers that only call `adapter.schema()`
     /// see the resolved options.
+    ///
+    /// On failure `self.schema` is left untouched so a partial resolve never
+    /// downgrades a previously-resolved schema to defaults.
     pub fn resolve_inline(&mut self) -> Result<(), AdapterError> {
-        let mut schema = std::mem::replace(&mut self.schema, build_schema());
-        self.resolve_schema(&mut schema)?;
-        self.schema = schema;
+        let mut next = self.schema.clone();
+        self.resolve_schema(&mut next)?;
+        self.schema = next;
         Ok(())
     }
 
@@ -461,7 +471,9 @@ impl Adapter for AdoAdapter {
     }
 
     fn resolve_schema(&self, schema: &mut SpecSchema) -> Result<(), AdapterError> {
-        let mut state_options: Vec<EnumOption> = Vec::new();
+        // Each option carries its ADO category alongside so the final sort
+        // respects workflow order rather than collapsing to alphabetic.
+        let mut state_options: Vec<(EnumOption, u8)> = Vec::new();
         let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
         let mut closed: Vec<String> = Vec::new();
 
@@ -501,29 +513,35 @@ impl Adapter for AdoAdapter {
                 }
 
                 if seen.insert(name.to_string()) {
-                    state_options.push(EnumOption {
-                        value: name.to_string(),
-                        label: name.to_string(),
-                        color,
-                        icon: None,
-                        description: if category.is_empty() {
-                            None
-                        } else {
-                            Some(format!("Category: {category}"))
+                    state_options.push((
+                        EnumOption {
+                            value: name.to_string(),
+                            label: name.to_string(),
+                            color,
+                            icon: None,
+                            description: if category.is_empty() {
+                                None
+                            } else {
+                                Some(format!("Category: {category}"))
+                            },
                         },
-                    });
+                        category_order(category),
+                    ));
                 }
             }
         }
 
-        // Sort for deterministic capabilities output.
-        state_options.sort_by(|a, b| a.value.cmp(&b.value));
+        // ADO categories define the natural workflow order (Proposed →
+        // InProgress → Resolved → Completed → Removed). Sort by that first,
+        // then alphabetically within a category so the output is stable.
+        state_options.sort_by(|a, b| a.1.cmp(&b.1).then_with(|| a.0.value.cmp(&b.0.value)));
+        let sorted: Vec<EnumOption> = state_options.into_iter().map(|(o, _)| o).collect();
 
         for f in schema.fields.iter_mut() {
             if f.key == field::STATUS {
                 if let FieldKind::Enum { options, .. } = &mut f.kind {
-                    if !state_options.is_empty() {
-                        *options = state_options.clone();
+                    if !sorted.is_empty() {
+                        *options = sorted.clone();
                     }
                 }
             }
@@ -583,9 +601,13 @@ impl Adapter for AdoAdapter {
             ));
         }
         if let Some(priority) = req.fields.get(field::PRIORITY).and_then(|v| v.as_str()) {
-            if let Some(n) = priority_str_to_int(priority) {
-                patches.push(json_patch_add(ado_field::PRIORITY, Value::Number(n.into())));
-            }
+            let n = priority_str_to_int(priority).ok_or_else(|| AdapterError::InvalidField {
+                adapter: ADAPTER_NAME.into(),
+                reason: format!(
+                    "priority must be one of critical/high/medium/low, got '{priority}'"
+                ),
+            })?;
+            patches.push(json_patch_add(ado_field::PRIORITY, Value::Number(n.into())));
         }
         if let Some(tags) = req.fields.get(field::TAGS).and_then(|v| v.as_strings()) {
             patches.push(json_patch_add(
@@ -622,6 +644,19 @@ impl Adapter for AdoAdapter {
 
     fn update(&self, id: &str, req: &UpdateRequest) -> Result<SpecDoc, AdapterError> {
         reject_unknown_fields(&req.fields, &self.schema)?;
+
+        // A key cannot be set and cleared in the same request — without this
+        // guard the two would produce two JSON-Patch ops on the same field
+        // and "clear wins" silently. Surface the conflict explicitly so the
+        // caller fixes it instead of debugging a missing field after-the-fact.
+        for key in &req.clear {
+            if req.fields.contains_key(key) {
+                return Err(AdapterError::InvalidField {
+                    adapter: ADAPTER_NAME.into(),
+                    reason: format!("field '{key}' cannot be in both `fields` and `clear`"),
+                });
+            }
+        }
 
         let mut patches: Vec<Value> = Vec::new();
 
@@ -996,6 +1031,39 @@ fn json_patch_remove(path: &str) -> Value {
     })
 }
 
+/// Workflow order for ADO state categories — lower comes first.
+fn category_order(category: &str) -> u8 {
+    match category {
+        "Proposed" => 0,
+        "InProgress" => 1,
+        "Resolved" => 2,
+        "Completed" => 3,
+        "Removed" => 4,
+        _ => 5,
+    }
+}
+
+/// Reject organization / project names that would corrupt the request URL.
+/// Pre-validating here makes 404s and path-traversal-like surprises into a
+/// clear `ConfigError` at construction time instead of an opaque 401/404
+/// the first time the adapter is used.
+fn validate_path_segment(label: &str, value: &str) -> Result<(), AdapterError> {
+    if value.is_empty() {
+        return Err(AdapterError::ConfigError(format!(
+            "{label} must not be empty"
+        )));
+    }
+    if let Some(bad) = value
+        .chars()
+        .find(|c| c.is_control() || matches!(*c, '/' | '?' | '#' | ' ' | '\\'))
+    {
+        return Err(AdapterError::ConfigError(format!(
+            "{label} '{value}' contains illegal character {bad:?}"
+        )));
+    }
+    Ok(())
+}
+
 /// Reject tokens that contain bytes which would silently corrupt the Basic
 /// auth header — newlines, tabs, and other control characters.
 fn validate_raw_token(token: &str) -> Result<(), AdapterError> {
@@ -1266,27 +1334,31 @@ fn build_list_wiql(filter: &ListFilter, closed_states: &[String]) -> String {
         ));
     }
 
+    // `TOP N` makes ADO short-circuit server-side once N matches are found,
+    // sparing the WIQL engine from materialising the full result set on
+    // projects with large backlogs (server-side cap is ~20k otherwise).
     format!(
-        "SELECT [{}] FROM WorkItems WHERE {} ORDER BY [{}] DESC",
+        "SELECT TOP {} [{}] FROM WorkItems WHERE {} ORDER BY [{}] DESC",
+        DEFAULT_LIST_LIMIT,
         ado_field::ID,
         conditions.join(" AND "),
         ado_field::CHANGED_DATE
     )
 }
 
-/// Percent-encode a value for inclusion in a URL path. Minimal — only the
-/// characters that actually need escaping in ADO work item type names.
+/// Percent-encode a value for inclusion as a URL path segment. Follows RFC
+/// 3986 `unreserved`: only `A-Za-z0-9-._~` pass through; everything else
+/// (including reserved chars like `/`, `?`, `#`, `&`, `+`) is percent-encoded
+/// so a future caller can't accidentally inject path or query syntax.
 fn url_encode(value: &str) -> String {
     let mut out = String::with_capacity(value.len());
     for ch in value.chars() {
-        match ch {
-            'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' => out.push(ch),
-            ' ' => out.push_str("%20"),
-            other => {
-                let mut buf = [0u8; 4];
-                for byte in other.encode_utf8(&mut buf).bytes() {
-                    out.push_str(&format!("%{:02X}", byte));
-                }
+        if matches!(ch, 'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~') {
+            out.push(ch);
+        } else {
+            let mut buf = [0u8; 4];
+            for byte in ch.encode_utf8(&mut buf).bytes() {
+                out.push_str(&format!("%{:02X}", byte));
             }
         }
     }
@@ -1829,6 +1901,170 @@ mod tests {
             )
             .unwrap_err();
         assert!(matches!(err, AdapterError::InvalidField { .. }));
+    }
+
+    #[test]
+    fn create_rejects_invalid_priority_value() {
+        let server = mockito::Server::new();
+        let a = adapter(&server);
+        let mut fields = HashMap::new();
+        fields.insert(field::PRIORITY.into(), FieldValue::from("urgent"));
+        let err = a
+            .create(&CreateRequest {
+                slug: None,
+                title: "x".into(),
+                schema_id: None,
+                fields,
+                links: vec![],
+            })
+            .unwrap_err();
+        assert!(matches!(err, AdapterError::InvalidField { .. }));
+    }
+
+    #[test]
+    fn update_rejects_conflict_between_fields_and_clear() {
+        let server = mockito::Server::new();
+        let a = adapter(&server);
+        let mut fields = HashMap::new();
+        fields.insert(
+            field::TAGS.into(),
+            FieldValue::from(vec!["bug".to_string()]),
+        );
+        let err = a
+            .update(
+                "1",
+                &UpdateRequest {
+                    title: None,
+                    fields,
+                    clear: vec![field::TAGS.into()],
+                    replace_links: None,
+                },
+            )
+            .unwrap_err();
+        match err {
+            AdapterError::InvalidField { reason, .. } => assert!(reason.contains("tags")),
+            other => panic!("expected InvalidField, got {other:?}"),
+        }
+    }
+
+    fn expect_config_error(result: Result<AdoAdapter, AdapterError>) {
+        match result {
+            Err(AdapterError::ConfigError(_)) => {}
+            Err(other) => panic!("expected ConfigError, got {other:?}"),
+            Ok(_) => panic!("expected ConfigError, got Ok"),
+        }
+    }
+
+    #[test]
+    fn constructor_rejects_org_with_slash() {
+        expect_config_error(AdoAdapter::with_token(
+            "a/b",
+            "p",
+            "tok",
+            "http://localhost",
+        ));
+    }
+
+    #[test]
+    fn constructor_rejects_empty_project() {
+        expect_config_error(AdoAdapter::with_token(
+            "acme",
+            "",
+            "tok",
+            "http://localhost",
+        ));
+    }
+
+    #[test]
+    fn constructor_rejects_project_with_space() {
+        expect_config_error(AdoAdapter::with_token(
+            "acme",
+            "My Project",
+            "tok",
+            "http://localhost",
+        ));
+    }
+
+    #[test]
+    fn constructor_trims_token_whitespace() {
+        // Trailing newline gets stripped silently so `export ADO_TOKEN=$(cat
+        // file)` works without an unhelpful "control character" error.
+        AdoAdapter::with_token("acme", "MyProject", "valid-token\n", "http://localhost")
+            .expect("trailing newline should be trimmed");
+    }
+
+    #[test]
+    fn url_encode_strict_escapes_reserved_chars() {
+        // Reserved path / query / fragment chars must round-trip through
+        // percent-encoding rather than slip through verbatim.
+        assert_eq!(url_encode("a/b"), "a%2Fb");
+        assert_eq!(url_encode("a?b"), "a%3Fb");
+        assert_eq!(url_encode("a#b"), "a%23b");
+        assert_eq!(url_encode("a&b"), "a%26b");
+        assert_eq!(url_encode("a+b"), "a%2Bb");
+    }
+
+    #[test]
+    fn list_wiql_emits_top_n_clause() {
+        let wiql = build_list_wiql(&ListFilter::default(), &[]);
+        assert!(
+            wiql.starts_with(&format!("SELECT TOP {DEFAULT_LIST_LIMIT}")),
+            "expected TOP clause, got: {wiql}"
+        );
+    }
+
+    #[test]
+    fn resolve_schema_orders_states_by_category() {
+        let mut server = mockito::Server::new();
+        // Other WIT types 404.
+        for wit in DEFAULT_WIT_TYPES {
+            if *wit == "User Story" {
+                continue;
+            }
+            server
+                .mock(
+                    "GET",
+                    format!(
+                        "/acme/MyProject/_apis/wit/workitemtypes/{}/states",
+                        url_encode(wit)
+                    )
+                    .as_str(),
+                )
+                .match_query(Matcher::AnyOf(vec![Matcher::Any]))
+                .with_status(404)
+                .with_body(r#"{"message":"type not found"}"#)
+                .expect_at_least(0)
+                .create();
+        }
+        // Deliberately list states in non-workflow order to exercise sorting.
+        let states = json!({
+            "value": [
+                { "name": "Closed",   "color": "339933", "category": "Completed" },
+                { "name": "Active",   "color": "007acc", "category": "InProgress" },
+                { "name": "New",      "color": "b2b2b2", "category": "Proposed" },
+                { "name": "Resolved", "color": "ff9900", "category": "Resolved" }
+            ]
+        });
+        server
+            .mock(
+                "GET",
+                "/acme/MyProject/_apis/wit/workitemtypes/User%20Story/states",
+            )
+            .match_query(Matcher::AnyOf(vec![Matcher::Any]))
+            .with_status(200)
+            .with_body(states.to_string())
+            .create();
+
+        let mut a = adapter(&server);
+        a.resolve_inline().unwrap();
+        let status = a.schema().field(field::STATUS).unwrap();
+        match &status.kind {
+            FieldKind::Enum { options, .. } => {
+                let order: Vec<_> = options.iter().map(|o| o.value.as_str()).collect();
+                assert_eq!(order, vec!["New", "Active", "Resolved", "Closed"]);
+            }
+            _ => panic!("expected enum"),
+        }
     }
 
     #[test]
