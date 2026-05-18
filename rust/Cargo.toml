@@ -20,6 +20,7 @@ version = "0.2.28"
 # Core dependencies
 chrono = {version = "0.4", features = ["serde"]}
 petgraph = "0.8"
+pulldown-cmark = {version = "0.13", default-features = false}
 regex = "1.11"
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"

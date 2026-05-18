@@ -14,6 +14,7 @@
 //!   schema id for this adapter.
 //! - [`Adapter`] is the trait each backend implements.
 
+pub mod jira;
 pub mod markdown;
 pub mod registry;
 
