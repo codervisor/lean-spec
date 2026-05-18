@@ -710,6 +710,114 @@ impl Adapter for GitHubAdapter {
     }
 }
 
+/// Outcome of validating a GitHub token against `GET /user`.
+///
+/// Used by `leanspec init --adapter github` to fail fast when the configured
+/// token is invalid, and to warn (but proceed) when the token lacks the `repo`
+/// OAuth scope.
+#[derive(Debug, Clone)]
+pub struct TokenValidation {
+    /// Authenticated user login (the GitHub username the token belongs to).
+    pub user_login: String,
+    /// OAuth scopes parsed from the `X-OAuth-Scopes` response header. Fine-
+    /// grained personal access tokens return an empty list — callers should
+    /// treat absence of scopes as "unknown" rather than "no permissions".
+    pub scopes: Vec<String>,
+}
+
+impl TokenValidation {
+    /// True if the token's `X-OAuth-Scopes` header contains `repo` (or one of
+    /// its narrower subscopes). Fine-grained tokens don't expose scopes via
+    /// this header, so an empty `scopes` list returns `false` here even though
+    /// the token may still have the necessary permissions.
+    pub fn has_repo_scope(&self) -> bool {
+        self.scopes.iter().any(|s| {
+            matches!(
+                s.as_str(),
+                "repo" | "public_repo" | "repo:status" | "repo_deployment"
+            )
+        })
+    }
+}
+
+/// Validate a GitHub bearer token by calling `GET /user`.
+///
+/// `base_url` defaults to `https://api.github.com` and exists so tests can
+/// route traffic at a mock server. Returns the authenticated user and the
+/// OAuth scopes advertised by the server.
+pub fn validate_token(
+    token: &str,
+    base_url: Option<&str>,
+) -> Result<TokenValidation, AdapterError> {
+    let base = base_url
+        .unwrap_or("https://api.github.com")
+        .trim_end_matches('/');
+    let url = format!("{base}/user");
+
+    // Sanity check the token shape early so we fail with a clear AuthError
+    // instead of a confusing reqwest header error.
+    HeaderValue::from_str(&format!("Bearer {token}")).map_err(|e| AdapterError::AuthError {
+        adapter: ADAPTER_NAME.into(),
+        reason: format!("token is not a valid HTTP header value: {e}"),
+    })?;
+
+    let client = Client::builder()
+        .user_agent("leanspec-github-adapter")
+        .timeout(Duration::from_secs(30))
+        .build()
+        .map_err(|e| AdapterError::BackendError {
+            adapter: ADAPTER_NAME.into(),
+            reason: format!("failed to construct HTTP client: {e}"),
+        })?;
+
+    let resp = client
+        .get(&url)
+        .header(AUTHORIZATION, format!("Bearer {token}"))
+        .header(ACCEPT, "application/vnd.github+json")
+        .header(USER_AGENT, "leanspec-github-adapter")
+        .header("X-GitHub-Api-Version", "2022-11-28")
+        .send()
+        .map_err(|e| AdapterError::BackendError {
+            adapter: ADAPTER_NAME.into(),
+            reason: format!("network: {e}"),
+        })?;
+
+    let status = resp.status();
+    if !status.is_success() {
+        let headers = resp.headers().clone();
+        let body = resp.text().unwrap_or_default();
+        return Err(map_error(status, &headers, &body));
+    }
+
+    let scopes = resp
+        .headers()
+        .get("x-oauth-scopes")
+        .and_then(|h| h.to_str().ok())
+        .map(|s| {
+            s.split(',')
+                .map(|scope| scope.trim().to_string())
+                .filter(|scope| !scope.is_empty())
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    let body: Value = resp.json().map_err(|e| AdapterError::ParseError {
+        path: "github /user response".into(),
+        reason: e.to_string(),
+    })?;
+
+    let user_login = body
+        .get("login")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| AdapterError::ParseError {
+            path: "github /user response".into(),
+            reason: "missing 'login' field".into(),
+        })?
+        .to_string();
+
+    Ok(TokenValidation { user_login, scopes })
+}
+
 /// Project a GitHub issue JSON payload onto a [`SpecDoc`].
 pub(crate) fn issue_to_doc(issue: &Value) -> SpecDoc {
     let number = issue
@@ -1138,6 +1246,74 @@ mod tests {
             Ok(_) => panic!("should reject invalid token"),
             Err(AdapterError::AuthError { .. }) => {}
             Err(other) => panic!("expected AuthError, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn validate_token_returns_user_and_scopes() {
+        let mut server = mockito::Server::new();
+        let _m = server
+            .mock("GET", "/user")
+            .match_header("authorization", "Bearer good-token")
+            .with_status(200)
+            .with_header("x-oauth-scopes", "repo, read:org, workflow")
+            .with_body(r#"{"login":"alice","id":42}"#)
+            .create();
+
+        let info = validate_token("good-token", Some(&server.url())).unwrap();
+        assert_eq!(info.user_login, "alice");
+        assert_eq!(info.scopes, vec!["repo", "read:org", "workflow"]);
+        assert!(info.has_repo_scope());
+    }
+
+    #[test]
+    fn validate_token_no_repo_scope() {
+        let mut server = mockito::Server::new();
+        let _m = server
+            .mock("GET", "/user")
+            .with_status(200)
+            .with_header("x-oauth-scopes", "read:user")
+            .with_body(r#"{"login":"bob"}"#)
+            .create();
+
+        let info = validate_token("limited-token", Some(&server.url())).unwrap();
+        assert!(!info.has_repo_scope());
+    }
+
+    #[test]
+    fn validate_token_fine_grained_no_scopes_header() {
+        let mut server = mockito::Server::new();
+        let _m = server
+            .mock("GET", "/user")
+            .with_status(200)
+            .with_body(r#"{"login":"carol"}"#)
+            .create();
+
+        let info = validate_token("fine-grained", Some(&server.url())).unwrap();
+        assert!(info.scopes.is_empty());
+        assert!(!info.has_repo_scope());
+    }
+
+    #[test]
+    fn validate_token_401_is_auth_error() {
+        let mut server = mockito::Server::new();
+        let _m = server
+            .mock("GET", "/user")
+            .with_status(401)
+            .with_body(r#"{"message":"Bad credentials"}"#)
+            .create();
+
+        match validate_token("bad-token", Some(&server.url())) {
+            Err(AdapterError::AuthError { .. }) => {}
+            other => panic!("expected AuthError, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn validate_token_rejects_invalid_header_value() {
+        match validate_token("bad\ntoken", Some("http://localhost")) {
+            Err(AdapterError::AuthError { .. }) => {}
+            other => panic!("expected AuthError, got {other:?}"),
         }
     }
 

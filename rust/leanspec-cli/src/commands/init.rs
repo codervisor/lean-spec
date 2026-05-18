@@ -3,27 +3,62 @@ use dialoguer::{Confirm, Input};
 use serde_json::Value;
 use std::error::Error;
 use std::fs;
+use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use walkdir::WalkDir;
 
 use crate::commands::package_manager::detect_package_manager;
 
 // Embedded AGENTS.md templates
 const AGENTS_MD_TEMPLATE_DETAILED: &str = include_str!("../../templates/AGENTS.md");
+const AGENTS_MD_TEMPLATE_GENERIC: &str = include_str!("../../templates/AGENTS-generic.md");
 
 // Embedded spec template
 const SPEC_TEMPLATE: &str = include_str!("../../templates/spec-template.md");
 
+const VALID_ADAPTERS: &[&str] = &["markdown", "github", "ado", "jira"];
+
 pub struct InitOptions {
     pub yes: bool,
     pub example: Option<String>,
+    pub adapter: String,
+    pub owner_repo: Option<String>,
+    pub token_env: String,
 }
 
 pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> {
     if let Some(example_name) = options.example.as_deref() {
         return scaffold_example(specs_dir, &options, example_name);
     }
-    run_standard_init(specs_dir, options)
+
+    match options.adapter.as_str() {
+        "markdown" => run_standard_init(specs_dir, options),
+        "github" => run_github_init(options),
+        "ado" => {
+            print_coming_soon("ADO");
+            Ok(())
+        }
+        "jira" => {
+            print_coming_soon("Jira");
+            Ok(())
+        }
+        other => Err(format!(
+            "Unknown adapter '{}'. Valid adapters: {}",
+            other,
+            VALID_ADAPTERS.join(", ")
+        )
+        .into()),
+    }
+}
+
+fn print_coming_soon(label: &str) {
+    println!("{} adapter support coming soon.", label);
+    println!(
+        "Run `{}` or `{}`.",
+        "leanspec init --adapter github".cyan(),
+        "leanspec init --adapter markdown".cyan()
+    );
 }
 
 fn run_standard_init(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> {
@@ -137,6 +172,9 @@ fn scaffold_example(
         InitOptions {
             yes: true,
             example: None,
+            adapter: "markdown".to_string(),
+            owner_repo: None,
+            token_env: "GITHUB_TOKEN".to_string(),
         },
     );
     std::env::set_current_dir(&initial_dir)?;
@@ -421,4 +459,344 @@ fn scaffold_agents(root: &Path, project_name: &str) -> Result<(), Box<dyn Error>
         println!("{} AGENTS.md already exists (preserved)", "✓".cyan());
     }
     Ok(())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GitHub adapter initialization
+// ─────────────────────────────────────────────────────────────────────────────
+
+fn run_github_init(options: InitOptions) -> Result<(), Box<dyn Error>> {
+    println!();
+    println!("{}", "Initializing GitHub Issues adapter...".bold());
+    println!();
+
+    let cwd = std::env::current_dir()?;
+    let root = find_project_root(&cwd);
+
+    // 1. Detect/prompt for owner/repo.
+    let (owner, repo) = resolve_owner_repo(&root, &options)?;
+    println!(
+        "{} Using repository: {}/{}",
+        "✓".green(),
+        owner.cyan(),
+        repo.cyan()
+    );
+
+    // 2. Read and validate the token.
+    let token = read_github_token(&options.token_env)?;
+    println!(
+        "{} Found {} ({} chars)",
+        "✓".green(),
+        options.token_env.cyan(),
+        token.len()
+    );
+
+    print!(
+        "  Validating token against {}/{}... ",
+        owner.cyan(),
+        repo.cyan()
+    );
+    // Flush so the "Validating..." line shows up *before* the synchronous HTTP
+    // call rather than appearing only after the call returns.
+    let _ = std::io::Write::flush(&mut std::io::stdout());
+    match leanspec_core::adapters::github::validate_token(&token, None) {
+        Ok(info) => {
+            println!(
+                "{} authenticated as {}",
+                "✓".green(),
+                format!("@{}", info.user_login).cyan()
+            );
+            if !info.scopes.is_empty() && !info.has_repo_scope() {
+                println!(
+                    "{} Token lacks 'repo' scope; some operations may be \
+                     read-only. Scopes: {}",
+                    "⚠".yellow(),
+                    info.scopes.join(", ")
+                );
+            }
+        }
+        Err(err) => {
+            return Err(format!(
+                "GitHub token validation failed: {}\n\n\
+                 Set a valid token and re-run:\n\n  \
+                 export {}=ghp_...\n\n\
+                 See https://docs.github.com/tokens for how to create one.",
+                err, options.token_env
+            )
+            .into());
+        }
+    }
+
+    // 3. Write `leanspec.adapter.yaml` to the project root.
+    write_github_adapter_yaml(&root, &owner, &repo, &options.token_env)?;
+
+    // 4. Write the adapter-agnostic AGENTS.md.
+    let project_name = root
+        .file_name()
+        .and_then(|s| s.to_str())
+        .filter(|s| !s.trim().is_empty())
+        .unwrap_or("project");
+    scaffold_generic_agents(&root, project_name)?;
+
+    println!();
+    println!("{}", "Done.".green().bold());
+    println!(
+        "Run `{}` to see available operations.",
+        "leanspec capabilities".cyan()
+    );
+
+    Ok(())
+}
+
+fn resolve_owner_repo(
+    root: &Path,
+    options: &InitOptions,
+) -> Result<(String, String), Box<dyn Error>> {
+    // Explicit CLI override wins.
+    if let Some(spec) = options.owner_repo.as_deref() {
+        return parse_owner_repo(spec).ok_or_else(|| {
+            format!("--owner-repo must be in 'owner/repo' format, got '{spec}'").into()
+        });
+    }
+
+    let detected = detect_github_remote(root);
+    let interactive = !options.yes && std::io::stdin().is_terminal();
+
+    match (detected.clone(), interactive) {
+        (Some((owner, repo)), true) => {
+            println!(
+                "{} Detected remote: github.com/{}/{}",
+                "✓".green(),
+                owner,
+                repo
+            );
+            let default = format!("{}/{}", owner, repo);
+            let input: String = Input::new()
+                .with_prompt("Owner/repo (Enter to accept)")
+                .default(default.clone())
+                .allow_empty(true)
+                .interact_text()?;
+            let trimmed = input.trim();
+            if trimmed.is_empty() {
+                Ok((owner, repo))
+            } else {
+                parse_owner_repo(trimmed)
+                    .ok_or_else(|| format!("expected 'owner/repo' format, got '{trimmed}'").into())
+            }
+        }
+        (Some(pair), false) => Ok(pair),
+        (None, true) => {
+            println!("{} No GitHub remote detected.", "⚠".yellow());
+            let input: String = Input::new()
+                .with_prompt("Owner/repo (e.g. acme/backend)")
+                .interact_text()?;
+            parse_owner_repo(input.trim()).ok_or_else(|| {
+                format!("expected 'owner/repo' format, got '{}'", input.trim()).into()
+            })
+        }
+        (None, false) => Err("Could not detect a GitHub remote and no \
+            --owner-repo was provided. Pass --owner-repo owner/repo or run \
+            inside a git repository with a github.com remote."
+            .into()),
+    }
+}
+
+/// Parse `git remote get-url origin` and extract the (owner, repo) pair.
+/// Supports HTTPS (`https://github.com/owner/repo.git`) and SSH
+/// (`git@github.com:owner/repo.git`) URLs.
+pub(crate) fn detect_github_remote(root: &Path) -> Option<(String, String)> {
+    let output = Command::new("git")
+        .args(["-C", &root.to_string_lossy(), "remote", "get-url", "origin"])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let url = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    parse_github_url(&url)
+}
+
+/// Best-effort parser for GitHub remote URLs. Returns None on non-GitHub
+/// hosts so the caller can fall back to prompting.
+pub(crate) fn parse_github_url(url: &str) -> Option<(String, String)> {
+    let url = url.trim();
+
+    // SSH: git@github.com:owner/repo(.git)?
+    if let Some(rest) = url.strip_prefix("git@github.com:") {
+        return parse_owner_repo(rest.trim_end_matches(".git"));
+    }
+    if let Some(rest) = url.strip_prefix("ssh://git@github.com/") {
+        return parse_owner_repo(rest.trim_end_matches(".git"));
+    }
+
+    // HTTPS: https://github.com/owner/repo(.git)?
+    for prefix in [
+        "https://github.com/",
+        "http://github.com/",
+        "https://www.github.com/",
+    ] {
+        if let Some(rest) = url.strip_prefix(prefix) {
+            return parse_owner_repo(rest.trim_end_matches('/').trim_end_matches(".git"));
+        }
+    }
+
+    None
+}
+
+pub(crate) fn parse_owner_repo(spec: &str) -> Option<(String, String)> {
+    let spec = spec.trim();
+    let (owner, repo) = spec.split_once('/')?;
+    let owner = owner.trim();
+    // Reject anything beyond a single owner/repo segment.
+    let repo = repo.trim().trim_end_matches('/');
+    if owner.is_empty() || repo.is_empty() || repo.contains('/') {
+        return None;
+    }
+    Some((owner.to_string(), repo.to_string()))
+}
+
+fn read_github_token(token_env: &str) -> Result<String, Box<dyn Error>> {
+    // Trim because shell pipelines like `export GITHUB_TOKEN=$(cat token.txt)`
+    // commonly leave a trailing newline, which would otherwise fail at
+    // `HeaderValue::from_str` deep inside `validate_token` with a confusing
+    // "not a valid HTTP header value" error.
+    match std::env::var(token_env) {
+        Ok(t) if !t.trim().is_empty() => Ok(t.trim().to_string()),
+        _ => Err(format!(
+            "{} not found in environment.\n\nSet it and re-run, or export it now:\n\n  \
+             export {}=ghp_...\n\nSee https://docs.github.com/tokens for how to create one.",
+            token_env, token_env
+        )
+        .into()),
+    }
+}
+
+fn write_github_adapter_yaml(
+    root: &Path,
+    owner: &str,
+    repo: &str,
+    token_env: &str,
+) -> Result<(), Box<dyn Error>> {
+    let path = root.join("leanspec.adapter.yaml");
+    if path.exists() {
+        println!(
+            "{} {} already exists (preserved)",
+            "✓".cyan(),
+            path.display()
+        );
+        return Ok(());
+    }
+
+    let mut body = String::from("# Written by leanspec init --adapter github\n");
+    body.push_str("adapter: github\n");
+    body.push_str("settings:\n");
+    body.push_str(&format!("  owner: {}\n", owner));
+    body.push_str(&format!("  repo: {}\n", repo));
+    if token_env == "GITHUB_TOKEN" {
+        body.push_str(
+            "  # token_env defaults to GITHUB_TOKEN; override if needed:\n  \
+             # token_env: MY_CUSTOM_TOKEN_VAR\n",
+        );
+    } else {
+        body.push_str(&format!("  token_env: {}\n", token_env));
+    }
+
+    fs::write(&path, body)?;
+    println!("{} Wrote {}", "✓".green(), path.display());
+    Ok(())
+}
+
+fn scaffold_generic_agents(root: &Path, project_name: &str) -> Result<(), Box<dyn Error>> {
+    let agents_path = root.join("AGENTS.md");
+    if agents_path.exists() {
+        println!("{} AGENTS.md already exists (preserved)", "✓".cyan());
+        return Ok(());
+    }
+    let content = AGENTS_MD_TEMPLATE_GENERIC.replace("{project_name}", project_name);
+    fs::write(&agents_path, content)?;
+    println!("{} Created AGENTS.md", "✓".green());
+    Ok(())
+}
+
+/// Walk up from `start` looking for a `.git` directory; fall back to `start`
+/// if none is found. Matches `AdapterRegistry::from_project()` semantics.
+fn find_project_root(start: &Path) -> PathBuf {
+    let mut current = Some(start);
+    while let Some(dir) = current {
+        if dir.join(".git").exists() {
+            return dir.to_path_buf();
+        }
+        current = dir.parent();
+    }
+    start.to_path_buf()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_owner_repo_accepts_simple_pair() {
+        assert_eq!(
+            parse_owner_repo("acme/backend"),
+            Some(("acme".into(), "backend".into()))
+        );
+    }
+
+    #[test]
+    fn parse_owner_repo_strips_trailing_slash_and_whitespace() {
+        assert_eq!(
+            parse_owner_repo("  acme/backend/  "),
+            Some(("acme".into(), "backend".into()))
+        );
+    }
+
+    #[test]
+    fn parse_owner_repo_rejects_extra_segments() {
+        assert_eq!(parse_owner_repo("acme/backend/extra"), None);
+    }
+
+    #[test]
+    fn parse_owner_repo_rejects_missing_repo() {
+        assert_eq!(parse_owner_repo("acme/"), None);
+        assert_eq!(parse_owner_repo("/backend"), None);
+        assert_eq!(parse_owner_repo("acme"), None);
+    }
+
+    #[test]
+    fn parse_github_url_handles_https() {
+        assert_eq!(
+            parse_github_url("https://github.com/acme/backend.git"),
+            Some(("acme".into(), "backend".into()))
+        );
+        assert_eq!(
+            parse_github_url("https://github.com/acme/backend"),
+            Some(("acme".into(), "backend".into()))
+        );
+        assert_eq!(
+            parse_github_url("https://github.com/acme/backend/"),
+            Some(("acme".into(), "backend".into()))
+        );
+    }
+
+    #[test]
+    fn parse_github_url_handles_ssh() {
+        assert_eq!(
+            parse_github_url("git@github.com:acme/backend.git"),
+            Some(("acme".into(), "backend".into()))
+        );
+        assert_eq!(
+            parse_github_url("git@github.com:acme/backend"),
+            Some(("acme".into(), "backend".into()))
+        );
+    }
+
+    #[test]
+    fn parse_github_url_rejects_non_github_hosts() {
+        assert_eq!(
+            parse_github_url("https://gitlab.com/acme/backend.git"),
+            None
+        );
+        assert_eq!(parse_github_url("git@bitbucket.org:acme/backend.git"), None);
+    }
 }

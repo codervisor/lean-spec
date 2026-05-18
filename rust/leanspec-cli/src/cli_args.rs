@@ -227,6 +227,18 @@ pub(crate) enum Commands {
         /// Initialize an example project
         #[arg(long)]
         example: Option<String>,
+
+        /// Backend adapter to initialize: markdown (default), github, ado, jira
+        #[arg(long, default_value = "markdown")]
+        adapter: String,
+
+        /// GitHub adapter: owner/repo override (e.g. "acme/backend")
+        #[arg(long = "owner-repo")]
+        owner_repo: Option<String>,
+
+        /// GitHub adapter: environment variable that holds the token
+        #[arg(long = "token-env", default_value = "GITHUB_TOKEN")]
+        token_env: String,
     },
 
     /// List all specs with optional filtering
