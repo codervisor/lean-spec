@@ -133,16 +133,34 @@ fn render_ordered_list(node: &Value, ctx: &mut RenderCtx) -> Result<String, AdfE
 
 fn render_list_item(node: &Value, ctx: &mut RenderCtx) -> Result<String, AdfError> {
     let children = child_array(node);
-    let mut parts = Vec::new();
-    for child in &children {
+    let mut out = String::new();
+    for (i, child) in children.iter().enumerate() {
         let s = render_block(child, ctx)?;
-        if !s.is_empty() {
-            parts.push(s);
+        if s.is_empty() {
+            continue;
         }
+        if !out.is_empty() {
+            let prev_is_list = matches!(
+                node_type(&children[i - 1]),
+                Some("bulletList" | "orderedList" | "taskList")
+            );
+            let cur_is_list = matches!(
+                node_type(child),
+                Some("bulletList" | "orderedList" | "taskList")
+            );
+            // A leading paragraph followed by a nested list can join with a
+            // single newline (CommonMark accepts a tight item ending with a
+            // sublist). Two paragraphs or paragraph-after-block need a blank
+            // line between them.
+            if prev_is_list || cur_is_list {
+                out.push('\n');
+            } else {
+                out.push_str("\n\n");
+            }
+        }
+        out.push_str(&s);
     }
-    // List item children are joined by single newlines; nested lists keep
-    // their own newlines and are indented by the caller via `prefix_lines`.
-    Ok(parts.join("\n"))
+    Ok(out)
 }
 
 fn render_task_list(node: &Value, _ctx: &mut RenderCtx) -> Result<String, AdfError> {
@@ -284,8 +302,70 @@ fn render_table_cell(node: &Value) -> String {
 }
 
 fn render_unknown_block(node: &Value, ty: &str) -> String {
-    let text = collect_text(node);
-    format!("<!-- adf:{ty} -->\n{text}").trim_end().to_string()
+    // Sanitize `ty` so attacker-controlled node types can't break out of the
+    // HTML comment (`-->`) or inject newlines into the marker line.
+    let safe_ty: String = ty
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == ':' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    // Drop any `--` runs which would terminate the HTML comment.
+    let safe_ty = safe_ty.replace("--", "__");
+    let text = escape_md_text(&collect_text(node));
+    format!("<!-- adf:{safe_ty} -->\n{text}")
+        .trim_end()
+        .to_string()
+}
+
+/// Escape markdown metacharacters in plain text so they round-trip as literal
+/// characters instead of being re-interpreted as formatting.
+fn escape_md_text(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '\\' | '*' | '_' | '`' | '[' | ']' | '<' | '>' | '|' | '~' => {
+                out.push('\\');
+                out.push(c);
+            }
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
+/// Render text as a markdown code span, picking a backtick delimiter long
+/// enough to not collide with backtick runs inside the text.
+fn render_code_span(text: &str) -> String {
+    let max_run = max_backtick_run(text);
+    let n = max_run + 1;
+    let delim = "`".repeat(n);
+    let needs_pad = text.starts_with('`') || text.ends_with('`') || text.is_empty();
+    if needs_pad {
+        format!("{delim} {text} {delim}")
+    } else {
+        format!("{delim}{text}{delim}")
+    }
+}
+
+fn max_backtick_run(s: &str) -> usize {
+    let mut max = 0usize;
+    let mut cur = 0usize;
+    for c in s.chars() {
+        if c == '`' {
+            cur += 1;
+            if cur > max {
+                max = cur;
+            }
+        } else {
+            cur = 0;
+        }
+    }
+    max
 }
 
 fn render_inline_content(node: &Value) -> String {
@@ -389,22 +469,30 @@ fn apply_marks(text: &str, marks: &[Value]) -> String {
         }
     }
 
-    let mut result = text.to_string();
-    if is_code {
-        // Code spans don't combine with other marks.
-        result = format!("`{result}`");
+    let mut result = if is_code {
+        // Code spans don't combine with other marks and must be rendered raw
+        // (no markdown escaping inside); use a backtick run wide enough to
+        // not collide with backticks in the text itself.
+        render_code_span(text)
     } else {
+        let escaped = escape_md_text(text);
+        let mut r = escaped;
         if has_strike {
-            result = format!("~~{result}~~");
+            r = format!("~~{r}~~");
         }
         if has_em {
-            result = format!("_{result}_");
+            r = format!("_{r}_");
         }
         if has_strong {
-            result = format!("**{result}**");
+            r = format!("**{r}**");
         }
-    }
+        r
+    };
     if let Some(url) = link_url {
+        // Inside a link's destination, only `)` and whitespace are
+        // problematic. Leave it alone — `from_markdown` always produces
+        // well-formed URLs and arbitrary `href` content is the adapter's
+        // responsibility.
         result = format!("[{result}]({url})");
     }
     result
@@ -429,6 +517,14 @@ fn prefix_lines(first: &str, rest: &str, text: &str) -> String {
     if text.is_empty() {
         return first.trim_end().to_string();
     }
+    // Trim trailing whitespace from the continuation prefix when emitting it
+    // on a blank line — keeps the line "blank" visually but ensures the
+    // container (list item / blockquote) treats it as a continuation rather
+    // than as a terminator. CommonMark allows blank lines inside a list item
+    // as long as the next non-blank line is indented, but stricter parsers
+    // (and pulldown_cmark itself) are more reliable when blank lines carry
+    // the continuation prefix.
+    let rest_trimmed = rest.trim_end();
     let mut out = String::new();
     for (i, line) in text.split('\n').enumerate() {
         if i > 0 {
@@ -438,7 +534,7 @@ fn prefix_lines(first: &str, rest: &str, text: &str) -> String {
             out.push_str(first);
             out.push_str(line);
         } else if line.is_empty() {
-            // Preserve blank line, no indent.
+            out.push_str(rest_trimmed);
         } else {
             out.push_str(rest);
             out.push_str(line);
@@ -498,6 +594,11 @@ enum FrameKind {
     },
     TableCell {
         is_header: bool,
+    },
+    /// Open while `Tag::Image` is in scope. Inner text becomes the alt; on
+    /// close we emit a `mediaInline` node into the parent.
+    Image {
+        url: String,
     },
 }
 
@@ -576,7 +677,11 @@ impl AdfBuilder {
                 self.push_inline(node);
             }
             Event::SoftBreak => {
-                self.add_text(" ");
+                // ADF has no soft-break concept. Encoding as `hardBreak`
+                // preserves the line-break boundary on round-trip; the
+                // alternative of collapsing to a space silently loses the
+                // newline and changes text content.
+                self.push_inline(json!({ "type": "hardBreak" }));
             }
             Event::HardBreak => {
                 self.push_inline(json!({ "type": "hardBreak" }));
@@ -649,26 +754,12 @@ impl AdfBuilder {
                     "attrs": { "href": dest_url.into_string() },
                 }));
             }
-            Tag::Image {
-                dest_url, title, ..
-            } => {
-                // Treat as an inline frame so its text children become the alt.
-                // We don't support nested images cleanly — collect text into a
-                // synthetic paragraph frame and emit mediaInline on close.
-                self.push_frame(FrameKind::Paragraph);
-                // Stash url+title via a marker — easier: store in a temporary
-                // inside the frame's content as a placeholder text node we'll
-                // strip on close. Instead, use a dedicated frame kind would be
-                // cleaner, but to keep the enum compact we encode via a marks
-                // entry on subsequent text. Simplest: just emit a literal
-                // markdown image string.
-                let _ = title;
-                let url = dest_url.into_string();
-                // Encode the URL into the frame so End(Image) can emit the
-                // final node. We piggyback by pushing a synthetic marker into
-                // the marks vec; popped on End(Image).
-                self.marks
-                    .push(json!({ "type": "__image_url", "attrs": { "url": url } }));
+            Tag::Image { dest_url, .. } => {
+                // Open a dedicated frame so inner text events accumulate into
+                // the alt-text accumulator without polluting the marks stack.
+                self.push_frame(FrameKind::Image {
+                    url: dest_url.into_string(),
+                });
             }
             // Footnote definitions, metadata blocks: open a paragraph so any
             // inner text doesn't crash; on End we fold into the doc.
@@ -703,18 +794,11 @@ impl AdfBuilder {
                 self.marks.pop();
             }
             TagEnd::Image => {
-                // Pop the synthetic __image_url marker.
-                let url = self
-                    .marks
-                    .pop()
-                    .as_ref()
-                    .and_then(|m| m.get("attrs"))
-                    .and_then(|a| a.get("url"))
-                    .and_then(|u| u.as_str())
-                    .unwrap_or("")
-                    .to_string();
-                // Collect alt text from the frame we opened in Start(Image).
                 let frame = self.stack.pop().expect("image frame");
+                let url = match &frame.kind {
+                    FrameKind::Image { url } => url.clone(),
+                    _ => String::new(),
+                };
                 let alt = frame
                     .content
                     .iter()
@@ -891,9 +975,34 @@ impl AdfBuilder {
     fn finish(mut self) -> Value {
         // Close any unbalanced frames by folding them into the doc as plain
         // paragraphs — defensive guard, malformed markdown should not panic.
+        // Drop any unbalanced inline marks so they don't leak onto folded
+        // text nodes as bogus ADF marks.
+        self.marks.clear();
         while self.stack.len() > 1 {
             let f = self.stack.pop().unwrap();
-            let node = json!({ "type": "paragraph", "content": f.content });
+            let content = match f.kind {
+                FrameKind::Image { url } => {
+                    // Salvage as a mediaInline if we have a url, else fall
+                    // through to a plain paragraph of the alt text.
+                    let alt = f
+                        .content
+                        .iter()
+                        .filter_map(|n| n.get("text").and_then(|t| t.as_str()))
+                        .collect::<String>();
+                    if !url.is_empty() {
+                        vec![json!({
+                            "type": "mediaInline",
+                            "attrs": { "url": url, "alt": alt },
+                        })]
+                    } else if !alt.is_empty() {
+                        vec![json!({ "type": "text", "text": alt })]
+                    } else {
+                        f.content
+                    }
+                }
+                _ => f.content,
+            };
+            let node = json!({ "type": "paragraph", "content": content });
             self.top_mut().content.push(node);
         }
         let doc = self.stack.pop().expect("doc frame");
@@ -1262,6 +1371,138 @@ mod tests {
         let md = to_markdown(&adf).unwrap();
         assert!(md.contains("info"), "got: {md}");
         assert!(md.contains("adf:panel"), "got: {md}");
+    }
+
+    #[test]
+    fn to_md_escapes_markdown_metacharacters_in_plain_text() {
+        // Text like `*foo*` would be re-parsed as emphasis on round-trip
+        // unless we escape it.
+        let adf = doc(json!([
+            { "type": "paragraph", "content": [
+                { "type": "text", "text": "literal *star* and _under_ and [bracket]" }
+            ]}
+        ]));
+        let md = to_markdown(&adf).unwrap();
+        assert_eq!(md, "literal \\*star\\* and \\_under\\_ and \\[bracket\\]\n");
+        // And it round-trips back to the same text.
+        let adf2 = from_markdown(&md);
+        assert_eq!(
+            collect_text(&adf2),
+            "literal *star* and _under_ and [bracket]"
+        );
+    }
+
+    #[test]
+    fn to_md_escapes_inside_strong_mark() {
+        let adf = doc(json!([
+            { "type": "paragraph", "content": [
+                { "type": "text", "text": "a*b",
+                  "marks": [{ "type": "strong" }] }
+            ]}
+        ]));
+        assert_eq!(to_markdown(&adf).unwrap(), "**a\\*b**\n");
+    }
+
+    #[test]
+    fn to_md_code_span_widens_backtick_delimiter_when_text_has_backticks() {
+        let adf = doc(json!([
+            { "type": "paragraph", "content": [
+                { "type": "text", "text": "a`b",
+                  "marks": [{ "type": "code" }] }
+            ]}
+        ]));
+        // Single backtick can't be used; converter picks two backticks.
+        assert_eq!(to_markdown(&adf).unwrap(), "``a`b``\n");
+    }
+
+    #[test]
+    fn to_md_code_span_pads_when_text_starts_or_ends_with_backtick() {
+        let adf = doc(json!([
+            { "type": "paragraph", "content": [
+                { "type": "text", "text": "`x",
+                  "marks": [{ "type": "code" }] }
+            ]}
+        ]));
+        assert_eq!(to_markdown(&adf).unwrap(), "`` `x ``\n");
+    }
+
+    #[test]
+    fn to_md_unknown_block_sanitizes_type_against_html_comment_injection() {
+        // A node type with `-->` or HTML metacharacters would otherwise
+        // break out of the fallback comment marker.
+        let adf = doc(json!([
+            { "type": "evil--><script>", "content": [
+                { "type": "text", "text": "payload" }
+            ]}
+        ]));
+        let md = to_markdown(&adf).unwrap();
+        assert!(
+            !md.contains("-->\n<script>"),
+            "comment terminator must be sanitized: {md}"
+        );
+        assert!(md.contains("payload"));
+    }
+
+    #[test]
+    fn from_md_soft_break_becomes_hard_break() {
+        // A wrapped paragraph: pulldown emits a SoftBreak between lines.
+        let v = from_markdown("line one\nline two");
+        let inline = v["content"][0]["content"].as_array().unwrap();
+        // Expect: text "line one", hardBreak, text "line two"
+        assert_eq!(inline[0]["text"], "line one");
+        assert_eq!(inline[1]["type"], "hardBreak");
+        assert_eq!(inline[2]["text"], "line two");
+    }
+
+    #[test]
+    fn from_md_image_uses_dedicated_frame() {
+        let v = from_markdown("![alt text](https://example.com/x.png)");
+        let inline = v["content"][0]["content"].as_array().unwrap();
+        let media = inline.iter().find(|n| n["type"] == "mediaInline").unwrap();
+        assert_eq!(media["attrs"]["url"], "https://example.com/x.png");
+        assert_eq!(media["attrs"]["alt"], "alt text");
+        // The synthetic __image_url mark must not leak onto any text node.
+        for n in inline {
+            if let Some(marks) = n.get("marks").and_then(|m| m.as_array()) {
+                for m in marks {
+                    assert_ne!(
+                        m["type"], "__image_url",
+                        "synthetic mark leaked into output: {v}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn to_md_list_item_with_multiple_paragraphs() {
+        // ADF list item containing two paragraphs — CommonMark needs a blank
+        // line between them, and the blank line must carry the continuation
+        // prefix (here: nothing, just empty) without ending the item.
+        let adf = doc(json!([
+            { "type": "bulletList", "content": [
+                { "type": "listItem", "content": [
+                    { "type": "paragraph",
+                      "content": [{ "type": "text", "text": "first" }] },
+                    { "type": "paragraph",
+                      "content": [{ "type": "text", "text": "second" }] }
+                ]}
+            ]}
+        ]));
+        let md = to_markdown(&adf).unwrap();
+        // Re-parse and confirm both paragraphs remain inside one list item.
+        let parsed = from_markdown(&md);
+        let list = &parsed["content"][0];
+        assert_eq!(list["type"], "bulletList");
+        let items = list["content"].as_array().unwrap();
+        assert_eq!(items.len(), 1, "got: {md:?}\n parsed: {parsed}");
+        let inner = items[0]["content"].as_array().unwrap();
+        let paragraphs: Vec<_> = inner.iter().filter(|n| n["type"] == "paragraph").collect();
+        assert_eq!(
+            paragraphs.len(),
+            2,
+            "expected two paragraphs in item, got: {md:?}\n parsed: {parsed}"
+        );
     }
 
     #[test]
