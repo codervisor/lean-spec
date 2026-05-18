@@ -49,6 +49,10 @@ ado = ["dep:reqwest", "reqwest/blocking", "reqwest/json", "reqwest/default-tls"]
 # Opt-in to running the ADO integration tests that hit dev.azure.com.
 # Requires `ADO_TOKEN`, `TEST_ADO_ORG`, `TEST_ADO_PROJECT` env vars.
 ado-integration-tests = ["ado"]
+jira = ["dep:reqwest", "reqwest/blocking", "reqwest/json", "reqwest/default-tls"]
+# Opt-in to running the Jira integration tests that hit a real Jira Cloud site.
+# Requires `JIRA_TOKEN`, `TEST_JIRA_HOST`, `TEST_JIRA_PROJECT`, `TEST_JIRA_EMAIL`.
+jira-integration-tests = ["jira"]
 storage = ["tokio", "dirs", "uuid"]
 # Expose the adapter compliance test harness for use by out-of-tree
 # adapter implementations. Always available within this crate's own tests.

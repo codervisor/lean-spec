@@ -122,6 +122,9 @@ fn main() -> ExitCode {
             adapter,
             owner_repo,
             token_env,
+            jira_host,
+            jira_project,
+            jira_email,
         } => commands::init::run(
             &specs_dir,
             commands::init::InitOptions {
@@ -130,6 +133,9 @@ fn main() -> ExitCode {
                 adapter,
                 owner_repo,
                 token_env,
+                jira_host,
+                jira_project,
+                jira_email,
             },
         ),
         Commands::List {

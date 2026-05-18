@@ -9,7 +9,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
 
-use leanspec_core::adapters::markdown::SpecInfo;
+use leanspec_core::adapters::markdown::doc_to_spec_info;
 use leanspec_core::adapters::ListFilter;
 use leanspec_core::{
     global_frontmatter_validator, global_structure_validator, global_token_count_validator,
@@ -54,14 +54,14 @@ fn doc_semantic_strings(doc: &SpecDoc, schema: &SpecSchema, sem: &str) -> Vec<St
     }
 }
 
-/// Reconstruct a `SpecInfo`-shaped value from a `SpecDoc` and on-disk path for
-/// the markdown-only validators that still take `&SpecInfo`. This is a
-/// short-term bridge: when validators move to the schema-driven model the
-/// helper can be removed.
-fn spec_info_for_validation(
+/// Reconstruct a markdown spec view from a [`SpecDoc`] plus the on-disk file
+/// for the validators that still consume `&SpecInfo`. Reads the body off
+/// disk so the validators see the same frontmatter the parser produces — a
+/// short-term bridge until validators move to the schema-driven model.
+fn doc_to_spec_info_from_disk(
     doc: &SpecDoc,
     file_path: std::path::PathBuf,
-) -> Result<SpecInfo, (StatusCode, Json<ApiError>)> {
+) -> Result<leanspec_core::adapters::markdown::SpecInfo, (StatusCode, Json<ApiError>)> {
     let content = fs::read_to_string(&file_path).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -70,28 +70,14 @@ fn spec_info_for_validation(
     })?;
 
     let parser = FrontmatterParser::new();
-    let (frontmatter, body) = parser.parse(&content).map_err(|e| {
+    let (_, body) = parser.parse(&content).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&e.to_string())),
         )
     })?;
 
-    let title = body
-        .lines()
-        .find(|l| l.starts_with("# "))
-        .map(|l| l.trim_start_matches("# ").to_string())
-        .unwrap_or_else(|| doc.title.clone());
-
-    Ok(SpecInfo {
-        path: doc.id.clone(),
-        title,
-        frontmatter,
-        content: body,
-        file_path,
-        is_sub_spec: false,
-        parent_spec: None,
-    })
+    Ok(doc_to_spec_info(doc, file_path, Some(body)))
 }
 
 /// GET /api/projects/:projectId/specs/:spec/tokens - Get token counts for a spec
@@ -170,7 +156,7 @@ pub async fn get_project_spec_validation(
         )
     })?;
 
-    let spec_info = spec_info_for_validation(&doc, file_path)?;
+    let spec_info = doc_to_spec_info_from_disk(&doc, file_path)?;
 
     let fm_validator = global_frontmatter_validator();
     let struct_validator = global_structure_validator();

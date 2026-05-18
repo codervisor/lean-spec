@@ -1,11 +1,12 @@
 //! Spec write handlers: create, update, toggle, batch metadata
 //!
 //! The HTTP read path is adapter-driven (see [`super::read`] and spec #261).
-//! Write handlers in this module use the adapter API for create/update/delete
-//! and the markdown adapter's typed helpers (`SpecInfo`,
-//! `CompletionVerifier`) for markdown-specific behaviour like umbrella
-//! completion checks and template rendering. Full migration to a
-//! schema-driven write path lives in spec #262.
+//! Write handlers run on the same fetch-transform-push pattern: load a
+//! [`SpecDoc`] from the adapter, apply schema-aware updates or pure string
+//! transforms to its fields, then push the result back through
+//! [`Adapter::update`]. Markdown-specific operations (raw spec / sub-spec
+//! writes) are kept as direct file I/O behind `require_markdown_adapter` —
+//! those concepts don't generalise to other adapters.
 
 #![allow(clippy::result_large_err)]
 
@@ -18,14 +19,16 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
 
-use leanspec_core::adapters::markdown::{SpecInfo, SpecStatus};
+use leanspec_core::adapters::markdown::{
+    doc_to_spec_info, umbrella_completion_for_docs, MarkdownAdapter,
+};
 use leanspec_core::adapters::ListFilter;
 use leanspec_core::io::hash_content;
 use leanspec_core::{
     apply_checklist_toggles, global_frontmatter_validator, global_structure_validator,
     global_token_count_validator, global_token_counter, rebuild_content, semantic,
-    split_frontmatter, ChecklistToggle, CompletionVerifier, FieldValue, FrontmatterParser, SpecDoc,
-    SpecSchema, TemplateLoader, TokenStatus, UpdateRequest, ValidationResult,
+    split_frontmatter, ChecklistToggle, ErrorSeverity, FieldKind, FieldValue, FrontmatterParser,
+    SpecDoc, SpecSchema, TemplateLoader, TokenStatus, UpdateRequest, ValidationResult,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -91,8 +94,6 @@ fn validate_enum_value(
     field_key: &str,
     value: &str,
 ) -> Result<(), (StatusCode, Json<ApiError>)> {
-    use leanspec_core::FieldKind;
-
     let Some(field) = schema.field(field_key) else {
         return Ok(());
     };
@@ -304,67 +305,22 @@ pub async fn update_project_spec_raw(
 }
 
 /// POST /api/projects/:projectId/specs/:spec/checklist-toggle - Toggle checklist items
+///
+/// Main-spec toggles run the fetch-transform-push pattern through the adapter
+/// and work for any backend that exposes a `content` field: pull the body via
+/// `adapter.get`, apply the pure `apply_checklist_toggles` transform, push back
+/// via `adapter.update`. Body-only content hashes match the list/detail
+/// endpoints.
+///
+/// Sub-spec toggles fall back to direct file I/O and require the markdown
+/// adapter — sub-specs are extra files inside the spec directory and aren't
+/// modelled by the adapter API.
 pub async fn toggle_project_spec_checklist(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
     Json(request): Json<ChecklistToggleRequest>,
 ) -> ApiResult<Json<ChecklistToggleResponse>> {
     let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
-    require_markdown_adapter(adapter.as_ref())?;
-
-    adapter.get(&spec_id).map_err(adapter_error)?;
-
-    let spec_readme =
-        resolve_markdown_spec_path(&project.specs_dir, &spec_id).ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ApiError::spec_not_found(&spec_id)),
-            )
-        })?;
-
-    let file_path = if let Some(ref subspec_file) = request.subspec {
-        if subspec_file.contains('/') || subspec_file.contains('\\') {
-            return Err((
-                StatusCode::BAD_REQUEST,
-                Json(ApiError::invalid_request("Invalid sub-spec file")),
-            ));
-        }
-        let parent_dir = spec_readme.parent().ok_or_else(|| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error("Missing spec directory")),
-            )
-        })?;
-        let sub_path = parent_dir.join(subspec_file);
-        if !sub_path.exists() {
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ApiError::invalid_request("Sub-spec not found")),
-            ));
-        }
-        sub_path
-    } else {
-        spec_readme
-    };
-
-    let content = fs::read_to_string(&file_path).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-    let current_hash = hash_raw_content(&content);
-
-    if let Some(expected) = &request.expected_content_hash {
-        if expected != &current_hash {
-            return Err((
-                StatusCode::CONFLICT,
-                Json(ApiError::invalid_request("Content hash mismatch").with_details(current_hash)),
-            ));
-        }
-    }
-
-    let (frontmatter, body) = split_frontmatter(&content);
 
     let toggles: Vec<ChecklistToggle> = request
         .toggles
@@ -375,9 +331,123 @@ pub async fn toggle_project_spec_checklist(
         })
         .collect();
 
+    if let Some(subspec_file) = request.subspec.as_deref() {
+        // Sub-specs are markdown-only — they live as extra files inside
+        // the spec directory and aren't represented in the adapter model.
+        require_markdown_adapter(adapter.as_ref())?;
+        return toggle_subspec_checklist(
+            adapter.as_ref(),
+            &project.specs_dir,
+            &spec_id,
+            subspec_file,
+            request.expected_content_hash.as_deref(),
+            &toggles,
+        );
+    }
+
+    // Main-spec path: fetch-transform-push through the adapter.
+    let doc = adapter.get(&spec_id).map_err(adapter_error)?;
+    let body = doc
+        .fields
+        .get("content")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let current_hash = hash_content(&body);
+
+    if let Some(expected) = &request.expected_content_hash {
+        if expected != &current_hash {
+            return Err((
+                StatusCode::CONFLICT,
+                Json(ApiError::invalid_request("Content hash mismatch").with_details(current_hash)),
+            ));
+        }
+    }
+
     let (updated_body, results) = apply_checklist_toggles(&body, &toggles)
         .map_err(|e| (StatusCode::BAD_REQUEST, Json(ApiError::invalid_request(&e))))?;
 
+    let mut req_fields: HashMap<String, FieldValue> = HashMap::new();
+    req_fields.insert("content".into(), FieldValue::String(updated_body.clone()));
+    let update = UpdateRequest {
+        fields: req_fields,
+        ..Default::default()
+    };
+    adapter.update(&spec_id, &update).map_err(adapter_error)?;
+
+    let new_hash = hash_content(&updated_body);
+
+    Ok(Json(ChecklistToggleResponse {
+        success: true,
+        content_hash: new_hash,
+        toggled: results
+            .into_iter()
+            .map(|r| ChecklistToggledResult {
+                item_text: r.item_text,
+                checked: r.checked,
+                line: r.line,
+            })
+            .collect(),
+    }))
+}
+
+/// Sub-spec checklist toggle — markdown-only direct file I/O.
+fn toggle_subspec_checklist(
+    adapter: &dyn leanspec_core::adapters::Adapter,
+    specs_dir: &FsPath,
+    spec_id: &str,
+    subspec_file: &str,
+    expected_hash: Option<&str>,
+    toggles: &[ChecklistToggle],
+) -> ApiResult<Json<ChecklistToggleResponse>> {
+    if subspec_file.contains('/') || subspec_file.contains('\\') {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request("Invalid sub-spec file")),
+        ));
+    }
+    // Adapter.get confirms the parent spec exists.
+    adapter.get(spec_id).map_err(adapter_error)?;
+
+    let spec_readme = resolve_markdown_spec_path(specs_dir, spec_id).ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError::spec_not_found(spec_id)),
+        )
+    })?;
+    let parent_dir = spec_readme.parent().ok_or_else(|| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error("Missing spec directory")),
+        )
+    })?;
+    let file_path = parent_dir.join(subspec_file);
+    if !file_path.exists() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ApiError::invalid_request("Sub-spec not found")),
+        ));
+    }
+
+    let content = fs::read_to_string(&file_path).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+    let current_hash = hash_raw_content(&content);
+    if let Some(expected) = expected_hash {
+        if expected != current_hash {
+            return Err((
+                StatusCode::CONFLICT,
+                Json(ApiError::invalid_request("Content hash mismatch").with_details(current_hash)),
+            ));
+        }
+    }
+
+    let (frontmatter, body) = split_frontmatter(&content);
+    let (updated_body, results) = apply_checklist_toggles(&body, toggles)
+        .map_err(|e| (StatusCode::BAD_REQUEST, Json(ApiError::invalid_request(&e))))?;
     let updated_content = rebuild_content(frontmatter, &updated_body);
 
     fs::write(&file_path, &updated_content).map_err(|e| {
@@ -386,9 +456,7 @@ pub async fn toggle_project_spec_checklist(
             Json(ApiError::internal_error(&e.to_string())),
         )
     })?;
-
-    invalidate_markdown_cache(&project.specs_dir, &file_path);
-
+    invalidate_markdown_cache(specs_dir, &file_path);
     let new_hash = hash_raw_content(&updated_content);
 
     Ok(Json(ChecklistToggleResponse {
@@ -530,18 +598,13 @@ pub async fn update_project_metadata(
                 }
 
                 if status_str == "complete" && !updates.force.unwrap_or(false) {
-                    // Umbrella completion check still uses markdown's
-                    // SpecInfo-typed verifier. The check loads every spec
-                    // through the adapter and projects them to SpecInfo.
                     let all_docs = adapter
                         .list(&ListFilter {
                             include_archived: true,
                             ..Default::default()
                         })
                         .map_err(adapter_error)?;
-                    let all_specs = docs_to_spec_info(&all_docs, schema);
-                    let umbrella =
-                        CompletionVerifier::verify_umbrella_completion(&spec_id, &all_specs);
+                    let umbrella = umbrella_completion_for_docs(&spec_id, &all_docs);
                     if !umbrella.is_complete {
                         let names: Vec<_> = umbrella
                             .incomplete_children
@@ -719,31 +782,29 @@ pub async fn batch_spec_metadata(
         };
 
         let validation_status_str = if adapter.capabilities().name == "markdown" {
-            // Reconstruct SpecInfo from the on-disk file for the markdown
-            // validators. Non-markdown adapters get "pass" by default until
-            // schema-driven validation lands in spec #262.
+            // Markdown validators consume `SpecInfo` and look at the on-disk
+            // path. Non-markdown adapters get "pass" by default until
+            // schema-driven validation lands.
             match resolve_markdown_spec_path(&project.specs_dir, spec_name) {
-                Some(file_path) => match build_spec_info(doc, file_path) {
-                    Some(info) => {
-                        let mut validation_result = ValidationResult::new(&info.path);
-                        validation_result.merge(fm_validator.validate(&info));
-                        validation_result.merge(struct_validator.validate(&info));
-                        validation_result.merge(token_validator.validate(&info));
+                Some(file_path) => {
+                    let info = doc_to_spec_info(doc, file_path, None);
+                    let mut validation_result = ValidationResult::new(&info.path);
+                    validation_result.merge(fm_validator.validate(&info));
+                    validation_result.merge(struct_validator.validate(&info));
+                    validation_result.merge(token_validator.validate(&info));
 
-                        if validation_result.errors.is_empty() {
-                            "pass"
-                        } else if validation_result
-                            .errors
-                            .iter()
-                            .any(|e| e.severity == leanspec_core::ErrorSeverity::Error)
-                        {
-                            "fail"
-                        } else {
-                            "warn"
-                        }
+                    if validation_result.errors.is_empty() {
+                        "pass"
+                    } else if validation_result
+                        .errors
+                        .iter()
+                        .any(|e| e.severity == ErrorSeverity::Error)
+                    {
+                        "fail"
+                    } else {
+                        "warn"
                     }
-                    None => "pass",
-                },
+                }
                 None => "pass",
             }
         } else {
@@ -769,85 +830,5 @@ pub async fn batch_spec_metadata(
 /// Invalidate the markdown adapter's static spec cache for a path. Safe to
 /// call from non-markdown contexts (a no-op when the path is unknown).
 fn invalidate_markdown_cache(specs_dir: &FsPath, path: &FsPath) {
-    leanspec_core::adapters::markdown::MarkdownAdapter::new(specs_dir).invalidate_path(path);
-}
-
-fn build_spec_info(doc: &SpecDoc, file_path: std::path::PathBuf) -> Option<SpecInfo> {
-    let content = fs::read_to_string(&file_path).ok()?;
-    let parser = FrontmatterParser::new();
-    let (frontmatter, body) = parser.parse(&content).ok()?;
-    let title = body
-        .lines()
-        .find(|l| l.starts_with("# "))
-        .map(|l| l.trim_start_matches("# ").to_string())
-        .unwrap_or_else(|| doc.title.clone());
-    Some(SpecInfo {
-        path: doc.id.clone(),
-        title,
-        frontmatter,
-        content: body,
-        file_path,
-        is_sub_spec: false,
-        parent_spec: None,
-    })
-}
-
-/// Project the adapter's documents to markdown `SpecInfo` for the umbrella
-/// verifier. Only meaningful for markdown projects.
-fn docs_to_spec_info(docs: &[SpecDoc], schema: &SpecSchema) -> Vec<SpecInfo> {
-    use leanspec_core::adapters::markdown::SpecFrontmatter;
-    docs.iter()
-        .map(|doc| {
-            let status_str = doc
-                .fields
-                .get(
-                    schema
-                        .key_for_semantic(semantic::STATUS)
-                        .unwrap_or("status"),
-                )
-                .and_then(|v| v.as_str())
-                .unwrap_or("draft");
-            let status = status_str
-                .parse::<SpecStatus>()
-                .unwrap_or(SpecStatus::Draft);
-            let parent = doc
-                .links
-                .iter()
-                .find(|l| l.link_type == "parent")
-                .map(|l| l.target_id.clone());
-
-            let frontmatter = SpecFrontmatter {
-                status,
-                created: String::new(),
-                priority: None,
-                tags: Vec::new(),
-                depends_on: Vec::new(),
-                parent,
-                assignee: None,
-                reviewer: None,
-                issue: None,
-                pr: None,
-                epic: None,
-                breaking: None,
-                due: None,
-                updated: None,
-                completed: None,
-                created_at: None,
-                updated_at: None,
-                completed_at: None,
-                transitions: Vec::new(),
-                custom: std::collections::HashMap::new(),
-            };
-
-            SpecInfo {
-                path: doc.id.clone(),
-                title: doc.title.clone(),
-                frontmatter,
-                content: String::new(),
-                file_path: std::path::PathBuf::new(),
-                is_sub_spec: false,
-                parent_spec: None,
-            }
-        })
-        .collect()
+    MarkdownAdapter::new(specs_dir).invalidate_path(path);
 }
