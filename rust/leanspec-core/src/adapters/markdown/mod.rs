@@ -712,6 +712,40 @@ fn fields_to_frontmatter(
         .map(|l| l.target_id.clone())
         .collect();
 
+    // Pass through any unrecognised fields as custom frontmatter — keeps
+    // adapter-specific keys (e.g. `severity`, project-defined enums) on disk
+    // rather than silently dropping them.
+    let known_keys = [
+        field::STATUS,
+        field::PRIORITY,
+        field::TAGS,
+        field::ASSIGNEE,
+        field::REVIEWER,
+        field::ISSUE,
+        field::PR,
+        field::EPIC,
+        field::BREAKING,
+        field::DUE,
+        field::CREATED,
+        field::CONTENT,
+    ];
+    let mut custom = std::collections::HashMap::new();
+    for (key, value) in fields {
+        if known_keys.contains(&key.as_str()) {
+            continue;
+        }
+        let yaml_value = match value {
+            FieldValue::String(s) => serde_yaml::Value::String(s.clone()),
+            FieldValue::Bool(b) => serde_yaml::Value::Bool(*b),
+            FieldValue::Number(n) => serde_yaml::Value::Number(serde_yaml::Number::from(*n)),
+            FieldValue::Strings(v) => serde_yaml::Value::Sequence(
+                v.iter().map(|s| serde_yaml::Value::String(s.clone())).collect(),
+            ),
+            _ => continue,
+        };
+        custom.insert(key.clone(), yaml_value);
+    }
+
     Ok(SpecFrontmatter {
         status,
         created,
@@ -732,7 +766,7 @@ fn fields_to_frontmatter(
         updated_at: None,
         completed_at: None,
         transitions: Vec::new(),
-        custom: std::collections::HashMap::new(),
+        custom,
     })
 }
 
@@ -829,7 +863,14 @@ impl Adapter for MarkdownAdapter {
         let number = self.next_spec_number()?;
         let dir_name = format!("{:03}-{}", number, slug);
 
-        let frontmatter = fields_to_frontmatter(&req.fields, &req.links)?;
+        let now = chrono::Utc::now();
+        let mut frontmatter = fields_to_frontmatter(&req.fields, &req.links)?;
+        if frontmatter.created_at.is_none() {
+            frontmatter.created_at = Some(now);
+        }
+        if frontmatter.updated_at.is_none() {
+            frontmatter.updated_at = Some(now);
+        }
         let fm_yaml =
             serde_yaml::to_string(&frontmatter).map_err(|e| AdapterError::ParseError {
                 path: dir_name.clone(),
@@ -842,7 +883,14 @@ impl Adapter for MarkdownAdapter {
             .and_then(|v| v.as_str())
             .unwrap_or("## Overview\n\n## Design\n\n## Plan\n\n## Test\n");
 
-        let file_content = format!("---\n{}---\n\n# {}\n\n{}", fm_yaml, req.title, body);
+        // Callers may pre-render a body with its own H1 heading (e.g. when
+        // merging user-supplied content). Avoid duplicating it.
+        let trimmed = body.trim_start();
+        let file_content = if trimmed.starts_with("# ") || trimmed.starts_with("#\n") {
+            format!("---\n{}---\n\n{}", fm_yaml, trimmed)
+        } else {
+            format!("---\n{}---\n\n# {}\n\n{}", fm_yaml, req.title, body)
+        };
 
         let loader = SpecLoader::new(&self.specs_dir);
         let info = loader
