@@ -1,6 +1,6 @@
 //! Spec statistics computation
 
-use crate::types::{SpecInfo, SpecPriority, SpecStatus};
+use crate::adapters::markdown::types::{SpecInfo, SpecPriority, SpecStatus};
 use std::collections::HashMap;
 
 /// Statistics about specs
@@ -124,7 +124,7 @@ impl SpecStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::SpecFrontmatter;
+    use crate::adapters::markdown::types::SpecFrontmatter;
     use std::path::PathBuf;
 
     fn create_spec(

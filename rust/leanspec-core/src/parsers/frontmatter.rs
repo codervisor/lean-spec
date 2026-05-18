@@ -1,6 +1,9 @@
 //! Frontmatter parsing for spec markdown files
 
-use crate::types::{LeanSpecConfig, SpecFrontmatter, SpecPriority, SpecStatus, StatusTransition};
+use crate::adapters::markdown::types::{
+    SpecFrontmatter, SpecPriority, SpecStatus, StatusTransition,
+};
+use crate::types::LeanSpecConfig;
 use chrono::Utc;
 use thiserror::Error;
 

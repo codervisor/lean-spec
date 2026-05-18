@@ -1,7 +1,7 @@
 //! Insights generation for spec analysis
 
 use super::SpecStats;
-use crate::types::{SpecInfo, SpecPriority, SpecStatus};
+use crate::adapters::markdown::types::{SpecInfo, SpecPriority, SpecStatus};
 
 /// Generated insights about specs
 #[derive(Debug, Clone, Default)]
@@ -265,7 +265,7 @@ impl Insights {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::SpecFrontmatter;
+    use crate::adapters::markdown::types::SpecFrontmatter;
     use std::path::PathBuf;
 
     fn create_spec(

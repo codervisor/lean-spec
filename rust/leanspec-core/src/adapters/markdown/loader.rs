@@ -1,7 +1,10 @@
 //! Spec file loading and management
 
+#![allow(dead_code)]
+
+use super::types::SpecInfo;
 use crate::parsers::FrontmatterParser;
-use crate::types::{LeanSpecConfig, SpecInfo};
+use crate::types::LeanSpecConfig;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::{OnceLock, RwLock};

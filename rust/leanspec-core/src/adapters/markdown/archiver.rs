@@ -2,8 +2,11 @@
 //!
 //! Handles archiving specs by setting status to archived.
 
-use super::{LoadError, MetadataUpdate, SpecLoader, SpecWriter, WriteError};
-use crate::types::SpecStatus;
+#![allow(dead_code)]
+
+use super::loader::{LoadError, SpecLoader};
+use super::types::SpecStatus;
+use super::writer::{MetadataUpdate, SpecWriter, WriteError};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 

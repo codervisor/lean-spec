@@ -1,6 +1,7 @@
 //! Line count validation for specs
 
-use crate::types::{SpecInfo, ValidationResult};
+use crate::adapters::markdown::types::SpecInfo;
+use crate::types::ValidationResult;
 
 /// Options for line count validation
 #[derive(Debug, Clone)]
@@ -76,7 +77,7 @@ impl Default for LineCountValidator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{SpecFrontmatter, SpecStatus};
+    use crate::adapters::markdown::types::{SpecFrontmatter, SpecStatus};
     use std::path::PathBuf;
 
     fn create_test_spec_with_lines(line_count: usize) -> SpecInfo {

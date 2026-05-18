@@ -5,7 +5,7 @@
 //! - dependsOn: Upstream dependencies (current spec depends on these)
 //! - requiredBy: Downstream dependents (these specs depend on current)
 
-use crate::types::SpecInfo;
+use super::types::SpecInfo;
 use petgraph::graph::{DiGraph, NodeIndex};
 
 use petgraph::Direction;
@@ -324,7 +324,7 @@ impl DependencyGraph {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{SpecFrontmatter, SpecStatus};
+    use super::super::types::{SpecFrontmatter, SpecStatus};
     use std::path::PathBuf;
 
     fn create_spec(path: &str, depends_on: Vec<&str>) -> SpecInfo {

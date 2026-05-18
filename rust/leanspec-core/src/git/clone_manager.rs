@@ -255,7 +255,7 @@ fn extract_spec_metadata(
         status = Some(fm.status.to_string());
         priority = fm
             .priority
-            .map(|p: crate::types::SpecPriority| p.to_string());
+            .map(|p: crate::adapters::markdown::types::SpecPriority| p.to_string());
     }
 
     (title, status, priority)

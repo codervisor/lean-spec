@@ -1,6 +1,7 @@
 //! Structure validation for spec content
 
-use crate::types::{ErrorSeverity, SpecInfo, ValidationError, ValidationResult};
+use crate::adapters::markdown::types::SpecInfo;
+use crate::types::{ErrorSeverity, ValidationError, ValidationResult};
 use regex::Regex;
 
 /// Options for structure validation
@@ -67,7 +68,8 @@ impl StructureValidator {
         // Skip some checks for archived/complete specs
         let is_completed = matches!(
             spec.frontmatter.status,
-            crate::types::SpecStatus::Complete | crate::types::SpecStatus::Archived
+            crate::adapters::markdown::types::SpecStatus::Complete
+                | crate::adapters::markdown::types::SpecStatus::Archived
         );
 
         // Check for required sections (skip for completed specs)
@@ -272,7 +274,7 @@ struct Heading {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{SpecFrontmatter, SpecStatus};
+    use crate::adapters::markdown::types::{SpecFrontmatter, SpecStatus};
     use std::path::PathBuf;
 
     fn create_test_spec(content: &str) -> SpecInfo {

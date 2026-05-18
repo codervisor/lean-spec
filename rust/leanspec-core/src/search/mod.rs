@@ -8,7 +8,7 @@ mod fuzzy;
 mod query;
 mod scorer;
 
-use crate::SpecInfo;
+use crate::adapters::markdown::types::SpecInfo;
 use query::ParsedQuery;
 pub use query::{parse_query, parse_query_terms, validate_search_query, SearchQueryError};
 use scorer::{matches_query, score_spec};
@@ -146,7 +146,7 @@ pub fn find_content_snippet(content: &str, terms: &[String], max_len: usize) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{SpecFrontmatter, SpecPriority, SpecStatus};
+    use crate::adapters::markdown::types::{SpecFrontmatter, SpecPriority, SpecStatus};
     use std::path::PathBuf;
 
     fn create_test_spec(

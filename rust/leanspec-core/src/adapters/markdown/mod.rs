@@ -1,8 +1,22 @@
 //! Markdown adapter — the reference [`Adapter`] implementation.
 //!
-//! Wraps the existing [`SpecLoader`], [`SpecWriter`], and [`SpecArchiver`]
-//! to speak the [`Adapter`] trait, mapping each spec's YAML frontmatter and
-//! body content onto the [`SpecDoc`] shape with a declared [`SpecSchema`].
+//! Wraps the markdown-specific loader, writer, and archiver to speak the
+//! [`Adapter`] trait, mapping each spec's YAML frontmatter and body content
+//! onto the [`SpecDoc`] shape with a declared [`SpecSchema`].
+
+mod archiver;
+mod graph;
+mod loader;
+mod writer;
+
+pub mod content;
+pub mod types;
+
+pub use graph::{CompleteDependencyGraph, DependencyGraph, ImpactRadius};
+pub use loader::SpecHierarchyNode;
+pub use types::{
+    SpecFilterOptions, SpecFrontmatter, SpecInfo, SpecPriority, SpecStatus, StatusTransition,
+};
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -14,8 +28,9 @@ use crate::model::{
     LinkTypeDef, SpecDoc, SpecSchema, UpdateRequest,
 };
 use crate::search::{search_specs_with_options, SearchOptions as LegacySearchOptions};
-use crate::spec_ops::{MetadataUpdate, SpecArchiver, SpecLoader, SpecWriter};
-use crate::types::{SpecFrontmatter, SpecInfo, SpecPriority, SpecStatus};
+use archiver::SpecArchiver;
+use loader::SpecLoader;
+use writer::{MetadataUpdate, SpecWriter};
 
 /// Metadata field keys declared by the markdown adapter schema.
 pub mod field {
@@ -321,6 +336,14 @@ impl MarkdownAdapter {
 
     pub fn specs_dir(&self) -> &Path {
         &self.specs_dir
+    }
+
+    /// Invalidate cached spec entries for a changed path on disk.
+    ///
+    /// Used by file-system watchers to keep the in-memory cache coherent when
+    /// spec files change outside of the adapter's own write operations.
+    pub fn invalidate_path(&self, path: &Path) {
+        SpecLoader::invalidate_cached_path(path);
     }
 
     fn next_spec_number(&self) -> Result<u32, AdapterError> {

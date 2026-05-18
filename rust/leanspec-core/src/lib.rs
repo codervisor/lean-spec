@@ -10,11 +10,9 @@
 //!   language (markdown files, GitHub Issues, ADO Work Items, Jira) and exposes
 //!   a uniform [`Adapter`] trait returning [`SpecDoc`]s.
 //!
-//! The other modules ([`parsers`], [`spec_ops`], [`validators`], [`compute`],
-//! [`search`], [`relationships`]) are the markdown adapter's internal machinery.
-//! They remain addressable for markdown-specific CLI commands (`backfill`,
-//! `compact`, `tokens`, …) but the abstraction consumers should build against
-//! is [`Adapter`] + [`model`].
+//! Markdown-specific internals (loader, writer, archiver, types, dependency
+//! graph) live in [`adapters::markdown`] and are not re-exported from the crate
+//! root. Markdown-only CLI commands reach them via the typed adapter handle.
 //!
 //! ## Example
 //!
@@ -36,7 +34,6 @@ pub mod model;
 pub mod parsers;
 pub mod relationships;
 pub mod search;
-pub mod spec_ops;
 pub mod types;
 pub mod validators;
 
@@ -64,17 +61,17 @@ pub use search::{
     find_content_snippet, parse_query, parse_query_terms, search_specs, search_specs_with_options,
     validate_search_query, SearchOptions, SearchQueryError, SearchResult,
 };
-pub use spec_ops::{
+// Pure string utilities used by HTTP handlers in the fetch-transform-push
+// pattern. They live inside the markdown adapter module but operate purely
+// on `&str` and so are part of the generic crate API.
+pub use adapters::markdown::content::{
     apply_checklist_toggles, apply_replacements, apply_section_updates, preserve_title_heading,
-    rebuild_content, split_frontmatter, ArchiveError, ChecklistToggle, ChecklistToggleResult,
-    CompleteDependencyGraph, DependencyGraph, ImpactRadius, LoadError, MatchMode, MetadataUpdate,
-    Replacement, ReplacementResult, SectionMode, SectionUpdate, SpecArchiver, SpecHierarchyNode,
-    SpecLoader, SpecWriter, WriteError,
+    rebuild_content, split_frontmatter, ChecklistToggle, ChecklistToggleResult, MatchMode,
+    Replacement, ReplacementResult, SectionMode, SectionUpdate,
 };
 pub use types::{
     CheckboxItem, CompletionVerificationResult, ErrorSeverity, IncompleteChildSpec, LeanSpecConfig,
-    Progress, SpecFilterOptions, SpecFrontmatter, SpecInfo, SpecPriority, SpecStatus,
-    StatusTransition, UmbrellaVerificationResult, ValidationError, ValidationResult,
+    Progress, UmbrellaVerificationResult, ValidationError, ValidationResult,
 };
 pub use validators::{
     global_frontmatter_validator, global_structure_validator, global_token_count_validator,
