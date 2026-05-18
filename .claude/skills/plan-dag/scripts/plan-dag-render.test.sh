@@ -213,9 +213,9 @@ else
     pass=$((pass + 1))
     printf '  ok  --as=svg emits styled SVG with status fills + emoji\n'
 fi
-# --as=svg strips the XML prolog so the output is inline-paste-safe.
-# First line must start with `<svg` (graphviz comment + `<svg` element),
-# never `<?xml` or `<!DOCTYPE`.
+# --as=svg strips the XML prolog (and everything before the `<svg` tag,
+# including graphviz's generator comment) so the output is inline-paste-
+# safe — it must not start with `<?xml` or `<!DOCTYPE`.
 if grep -qE '^(<\?xml|<!DOCTYPE)' "$tmp/happy.svg"; then
     fail=$((fail + 1))
     printf '  FAIL --as=svg still contains XML prolog / DOCTYPE (should be stripped for inline use)\n'
