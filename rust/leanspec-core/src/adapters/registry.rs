@@ -252,6 +252,15 @@ impl AdapterRegistry {
     /// falling back to [`default_adapter`](Self::default_adapter) if none is
     /// present.
     pub fn from_project() -> Result<Box<dyn Adapter>, AdapterError> {
+        let config = Self::project_config()?;
+        Self::create(&config)
+    }
+
+    /// Load the project's adapter configuration without instantiating the
+    /// adapter. Useful for callers that need to inspect the configured
+    /// backend name before deciding which constructor to use (e.g. CLI
+    /// flags that only apply to specific adapters).
+    pub fn project_config() -> Result<AdapterConfig, AdapterError> {
         let config_paths = [
             "leanspec.adapter.yaml",
             ".lean-spec/adapter.yaml",
@@ -263,12 +272,11 @@ impl AdapterRegistry {
         for path in &config_paths {
             let path = Path::new(path);
             if path.exists() {
-                let config = Self::load_config(path)?;
-                return Self::create(&config);
+                return Self::load_config(path);
             }
         }
 
-        Ok(Self::default_adapter())
+        Ok(AdapterConfig::default())
     }
 }
 

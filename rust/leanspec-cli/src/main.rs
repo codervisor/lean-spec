@@ -146,7 +146,10 @@ fn main() -> ExitCode {
             compact,
             hierarchy,
         } => commands::list::run(commands::list::ListParams {
-            specs_dir: specs_dir.clone(),
+            // Pass through only when the user explicitly overrode specs
+            // dir; otherwise the command resolves the adapter from the
+            // project's own configuration.
+            specs_dir: cli.specs_dir.clone(),
             status,
             tags: tag,
             priority,
