@@ -640,11 +640,9 @@ def _strip_svg_prolog(svg):
 def render_html(ir, emoji=True):
     """Render the IR as a self-contained HTML page wrapping the inline SVG.
 
-    Adds: critical-path footer if `ir.critical_path` is set, max-width
-    centering, and responsive `svg { max-width: 100% }` so it scales to
-    the viewport. No legend — status is dual-encoded by the per-node fill
-    color plus a label marker (leading emoji when `emoji=True`, trailing
-    `✓` / `…` glyph when `emoji=False`), which is self-explanatory.
+    Adds: legend (only states present in the graph), critical-path footer
+    if `ir.critical_path` is set, max-width centering, and responsive
+    `svg { max-width: 100% }` so it scales to the viewport.
     """
     svg = _strip_svg_prolog(_dot_to_svg(ir, emoji=emoji))
 
@@ -710,9 +708,9 @@ def main():
              "(requires `dot`; auto-falls back to --as=ascii when missing). "
              "--as=svg: styled inline SVG (requires `dot`; stdout by default, "
              "or --out <path>). "
-             "--as=html: standalone HTML page wrapping the styled SVG with "
-             "an optional critical-path footer (requires `dot`; stdout by "
-             "default, or --out <path>). "
+             "--as=html: standalone HTML page wrapping the SVG with a legend "
+             "and critical-path footer (requires `dot`; stdout by default, "
+             "or --out <path>). "
              "--as=png: high-quality PNG via graphviz SVG + headless "
              "Chromium (requires `dot`, `node`, and Playwright Chromium; "
              "--out is required). "
