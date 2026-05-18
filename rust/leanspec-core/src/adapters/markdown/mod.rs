@@ -440,7 +440,11 @@ pub fn spec_info_to_doc(info: &SpecInfo) -> SpecDoc {
 ///
 /// `body_override` lets callers supply the on-disk body when the doc was loaded
 /// without it; if `None` the body comes from the doc's content field.
-pub fn doc_to_spec_info(doc: &SpecDoc, file_path: PathBuf, body_override: Option<String>) -> SpecInfo {
+pub fn doc_to_spec_info(
+    doc: &SpecDoc,
+    file_path: PathBuf,
+    body_override: Option<String>,
+) -> SpecInfo {
     use crate::adapters::markdown::types::SpecFrontmatter;
     use std::str::FromStr;
 
