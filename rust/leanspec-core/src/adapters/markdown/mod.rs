@@ -670,7 +670,10 @@ impl Adapter for MarkdownAdapter {
 
         writer
             .update_metadata(id, meta_update)
-            .map_err(|e| AdapterError::IoError(std::io::Error::other(e.to_string())))?;
+            .map_err(|e| match e {
+                writer::WriteError::NotFound(p) => AdapterError::NotFound(p),
+                other => AdapterError::IoError(std::io::Error::other(other.to_string())),
+            })?;
 
         // Second pass: title, content body, and extended frontmatter fields
         // (reviewer, issue, pr, epic, breaking, due) rewrite the file directly.
@@ -769,7 +772,10 @@ impl Adapter for MarkdownAdapter {
     fn delete(&self, id: &str) -> Result<(), AdapterError> {
         SpecArchiver::new(&self.specs_dir)
             .archive(id)
-            .map_err(|e| AdapterError::IoError(std::io::Error::other(e.to_string())))
+            .map_err(|e| match e {
+                archiver::ArchiveError::NotFound(p) => AdapterError::NotFound(p),
+                other => AdapterError::IoError(std::io::Error::other(other.to_string())),
+            })
     }
 
     fn search(&self, query: &str, opts: &SearchOptions) -> Result<Vec<SearchHit>, AdapterError> {
@@ -1210,4 +1216,34 @@ mod tests {
             .unwrap();
         assert!(hits.iter().any(|h| h.id == "001-auth"));
     }
+}
+
+#[cfg(test)]
+mod compliance {
+    use super::*;
+    use crate::adapter_compliance_tests;
+    use crate::adapters::test_harness::ComplianceOptions;
+    use tempfile::TempDir;
+
+    fn make_markdown_adapter() -> (MarkdownAdapter, TempDir) {
+        let dir = TempDir::new().expect("tempdir");
+        let specs = dir.path().join("specs");
+        std::fs::create_dir_all(&specs).expect("create specs dir");
+        let adapter = MarkdownAdapter::new(specs);
+        (adapter, dir)
+    }
+
+    fn markdown_options() -> ComplianceOptions {
+        ComplianceOptions {
+            status_active: "planned".into(),
+            status_alt: "in-progress".into(),
+            delete_is_archive: true,
+            supports_links: true,
+            link_type: link::DEPENDS_ON.into(),
+            link_target: "001-foundation".into(),
+            ..ComplianceOptions::default()
+        }
+    }
+
+    adapter_compliance_tests!(make_markdown_adapter, markdown_options());
 }

@@ -46,6 +46,9 @@ github = ["dep:reqwest", "reqwest/blocking", "reqwest/json", "reqwest/default-tl
 # Requires `GITHUB_TOKEN`, `TEST_GITHUB_OWNER`, `TEST_GITHUB_REPO` env vars.
 github-integration-tests = ["github"]
 storage = ["tokio", "dirs", "uuid"]
+# Expose the adapter compliance test harness for use by out-of-tree
+# adapter implementations. Always available within this crate's own tests.
+test-utils = []
 
 [dev-dependencies]
 mockito = "1.5"

@@ -1103,6 +1103,21 @@ mod tests {
     }
 
     #[test]
+    fn passes_schema_compliance_check() {
+        use crate::adapters::test_harness::{check_schema_consistency, ComplianceOptions};
+        let s = mockito::Server::new();
+        let a = adapter(&s);
+        let opts = ComplianceOptions {
+            status_active: "open".into(),
+            status_alt: "closed".into(),
+            delete_is_archive: true,
+            supports_links: false,
+            ..ComplianceOptions::default()
+        };
+        check_schema_consistency(&a, &opts);
+    }
+
+    #[test]
     fn capabilities_match_spec() {
         let s = mockito::Server::new();
         let a = adapter(&s);
@@ -1831,11 +1846,31 @@ mod tests {
 #[cfg(all(test, feature = "github-integration-tests"))]
 mod integration {
     use super::*;
+    use crate::adapters::test_harness::{run_compliance_suite, ComplianceOptions};
 
     fn live_adapter() -> Option<GitHubAdapter> {
         let owner = std::env::var("TEST_GITHUB_OWNER").ok()?;
         let repo = std::env::var("TEST_GITHUB_REPO").ok()?;
         GitHubAdapter::new(owner, repo, "GITHUB_TOKEN").ok()
+    }
+
+    fn github_compliance_options() -> ComplianceOptions {
+        ComplianceOptions {
+            status_active: "open".into(),
+            status_alt: "closed".into(),
+            delete_is_archive: true,
+            supports_links: false,
+            ..ComplianceOptions::default()
+        }
+    }
+
+    #[test]
+    #[ignore = "hits real GitHub API; requires GITHUB_TOKEN + TEST_GITHUB_OWNER + TEST_GITHUB_REPO"]
+    fn integration_compliance_suite() {
+        let Some(adapter) = live_adapter() else {
+            return;
+        };
+        run_compliance_suite(&adapter, &github_compliance_options());
     }
 
     #[test]
