@@ -478,11 +478,27 @@ impl JiraAdapter {
         }
 
         if let Some(assignee) = fields.get(field::ASSIGNEE).and_then(|v| v.as_str()) {
-            out.insert("assignee".into(), json!({ "displayName": assignee }));
+            // Jira write API requires an identifier, not the displayed name.
+            // v3 / Cloud expects `accountId`; v2 / Server expects `name` or
+            // `key`. Reads expose the Jira identifier as the field value (see
+            // `issue_to_doc`) so round-trips work; the human-readable display
+            // name remains in `raw.fields.assignee.displayName`.
+            let key = if self.api_version == 3 {
+                "accountId"
+            } else {
+                "name"
+            };
+            out.insert("assignee".into(), json!({ key: assignee }));
         }
 
         if let Some(priority) = fields.get(field::PRIORITY).and_then(|v| v.as_str()) {
-            out.insert("priority".into(), json!({ "name": priority }));
+            // The field stores normalized LeanSpec values (`high`, `medium`,
+            // …); Jira's write API needs the project's actual priority name
+            // (`"High"`). Use the live schema (populated by `resolve_schema`)
+            // to map back, falling back to a default vocabulary so we still
+            // work pre-resolution and against custom priorities.
+            let jira_name = self.normalized_priority_to_jira_name(priority);
+            out.insert("priority".into(), json!({ "name": jira_name }));
         }
 
         if let Some(due) = fields.get(field::DUE).and_then(|v| v.as_str()) {
@@ -490,6 +506,33 @@ impl JiraAdapter {
         }
 
         out
+    }
+
+    /// Look up the Jira priority name to send back over the wire when the
+    /// caller supplies a normalized LeanSpec priority value.
+    ///
+    /// Strategy:
+    /// 1. If the resolved schema's `priority` field knows an enum option
+    ///    whose `value` matches, use its `label` (the Jira name).
+    /// 2. Otherwise fall back to the standard default vocabulary
+    ///    (`high → "High"`, `critical → "Highest"`, …).
+    /// 3. As a final fallback, pass the value through unchanged so custom
+    ///    priorities still flow.
+    fn normalized_priority_to_jira_name(&self, value: &str) -> String {
+        if let Some(field) = self.schema.field(field::PRIORITY) {
+            if let FieldKind::Enum { options, .. } = &field.kind {
+                if let Some(opt) = options.iter().find(|o| o.value == value) {
+                    return opt.label.clone();
+                }
+            }
+        }
+        match value {
+            "critical" => "Highest".into(),
+            "high" => "High".into(),
+            "medium" => "Medium".into(),
+            "low" => "Low".into(),
+            other => other.into(),
+        }
     }
 
     /// Run a status transition by finding the transition whose target status
@@ -584,11 +627,15 @@ impl Adapter for JiraAdapter {
         status_options.sort_by(|a, b| a.value.cmp(&b.value));
 
         // Priorities are global. The endpoint returns an array of objects with
-        // at least { id, name, description }.
+        // at least { id, name, description }. Priority `value` is the
+        // normalized LeanSpec form (matching what `issue_to_doc` stores in
+        // documents); `label` keeps the live Jira name so writes can map
+        // back (see `normalized_priority_to_jira_name`).
         let priority_url = self.url("/priority");
         let resp = self.send(self.request(Method::GET, &priority_url))?;
         let value = Self::parse_json(resp)?;
         let mut priority_options: Vec<EnumOption> = Vec::new();
+        let mut seen_priority: std::collections::HashSet<String> = std::collections::HashSet::new();
         for item in value.as_array().cloned().unwrap_or_default() {
             if let Some(name) = item.get("name").and_then(|v| v.as_str()) {
                 let description = item
@@ -596,13 +643,20 @@ impl Adapter for JiraAdapter {
                     .and_then(|v| v.as_str())
                     .filter(|s| !s.is_empty())
                     .map(String::from);
-                priority_options.push(EnumOption {
-                    value: name.to_string(),
-                    label: name.to_string(),
-                    color: None,
-                    icon: None,
-                    description,
-                });
+                let normalized = priority_name_to_value(name);
+                // Two Jira priorities can collapse to the same normalized
+                // value (e.g. "Highest" + "Critical" → "critical"). Keep the
+                // first one we see — the write inverse mapping will surface
+                // that label, which is the project's canonical name.
+                if seen_priority.insert(normalized.clone()) {
+                    priority_options.push(EnumOption {
+                        value: normalized,
+                        label: name.to_string(),
+                        color: None,
+                        icon: None,
+                        description,
+                    });
+                }
             }
         }
         priority_options.sort_by(|a, b| a.value.cmp(&b.value));
@@ -928,13 +982,23 @@ pub(crate) fn issue_to_doc(issue: &Value, api_version: u8) -> SpecDoc {
         fields.insert(field::TAGS.into(), FieldValue::Strings(labels));
     }
 
-    if let Some(assignee) = issue_fields
-        .and_then(|f| f.get("assignee"))
-        .and_then(|a| a.get("displayName"))
-        .and_then(|v| v.as_str())
-    {
-        if !assignee.is_empty() {
-            fields.insert(field::ASSIGNEE.into(), FieldValue::String(assignee.into()));
+    if let Some(assignee_obj) = issue_fields.and_then(|f| f.get("assignee")) {
+        // Store the writable identifier so write round-trips work end-to-end:
+        // - Cloud (v3): `accountId`
+        // - Server / DC (v2): `name` or `key`
+        // We fall back through them in order; `displayName` is the final
+        // fallback for unusual responses that omit identifiers. The display
+        // name itself remains available via `SpecDoc::raw`.
+        let identifier = assignee_obj
+            .get("accountId")
+            .or_else(|| assignee_obj.get("name"))
+            .or_else(|| assignee_obj.get("key"))
+            .or_else(|| assignee_obj.get("displayName"))
+            .and_then(|v| v.as_str());
+        if let Some(id) = identifier {
+            if !id.is_empty() {
+                fields.insert(field::ASSIGNEE.into(), FieldValue::String(id.into()));
+            }
         }
     }
 
@@ -1075,6 +1139,23 @@ fn jql_quote(s: &str) -> String {
     out
 }
 
+/// Parse the `X-RateLimit-Reset` header. Jira Cloud advertises this as an
+/// ISO-8601 timestamp; some self-hosted deployments still emit Unix seconds.
+/// Returns `None` for unparseable values so the caller falls back to
+/// `Retry-After`.
+fn parse_reset_header(s: &str) -> Option<DateTime<Utc>> {
+    let s = s.trim();
+    // ISO-8601 / RFC3339 — Jira Cloud's contract.
+    if let Some(dt) = parse_jira_datetime(s) {
+        return Some(dt);
+    }
+    // Legacy / Server: Unix seconds.
+    if let Ok(ts) = s.parse::<i64>() {
+        return chrono::Utc.timestamp_opt(ts, 0).single();
+    }
+    None
+}
+
 /// Parse a Jira datetime — typically `"2026-01-02T11:00:00.000+0000"`. Falls
 /// back to RFC3339 when the offset is given as `±HH:MM`.
 fn parse_jira_datetime(s: &str) -> Option<DateTime<Utc>> {
@@ -1144,21 +1225,21 @@ pub(crate) fn map_error(status: StatusCode, headers: &HeaderMap, body: &str) -> 
             reason: extract_message_from_body(body).unwrap_or_else(|| body.into()),
         },
         429 => {
-            // Jira advertises rate limiting via `Retry-After` (seconds) plus
-            // sometimes `X-RateLimit-Reset` (unix seconds). Prefer the
-            // explicit reset timestamp when present.
+            // Jira Cloud's `X-RateLimit-Reset` is an ISO-8601 timestamp (not
+            // Unix seconds like GitHub's). Some Jira deployments fall back to
+            // `Retry-After` (seconds from now). Try the modern Cloud header
+            // first, then RFC3339, then numeric epoch, then Retry-After.
             let reset = headers
                 .get("x-ratelimit-reset")
                 .and_then(|h| h.to_str().ok())
-                .and_then(|s| s.parse::<i64>().ok())
-                .and_then(|ts| chrono::Utc.timestamp_opt(ts, 0).single());
-            let reset = reset.or_else(|| {
-                headers
-                    .get("retry-after")
-                    .and_then(|h| h.to_str().ok())
-                    .and_then(|s| s.parse::<i64>().ok())
-                    .map(|secs| Utc::now() + chrono::Duration::seconds(secs))
-            });
+                .and_then(parse_reset_header)
+                .or_else(|| {
+                    headers
+                        .get("retry-after")
+                        .and_then(|h| h.to_str().ok())
+                        .and_then(|s| s.parse::<i64>().ok())
+                        .map(|secs| Utc::now() + chrono::Duration::seconds(secs))
+                });
             AdapterError::RateLimit {
                 adapter: ADAPTER_NAME.into(),
                 reset_at: reset,
@@ -1222,7 +1303,7 @@ mod tests {
                 "status": { "name": "To Do" },
                 "priority": { "name": "High" },
                 "labels": ["bug", "backend"],
-                "assignee": { "displayName": "Alice" },
+                "assignee": { "accountId": "alice-acc-id", "displayName": "Alice" },
                 "duedate": "2026-06-30",
                 "issuetype": { "name": "Story" },
                 "created": "2026-01-01T10:00:00.000+0000",
@@ -1306,7 +1387,9 @@ mod tests {
             doc.fields.get(field::TAGS).and_then(|v| v.as_strings()),
             Some(&["bug".to_string(), "backend".to_string()][..])
         );
-        assert_eq!(doc.field_str(field::ASSIGNEE), Some("Alice"));
+        // assignee stores the writable identifier (accountId on Cloud), not
+        // the human display name — see comment in `fields_payload`.
+        assert_eq!(doc.field_str(field::ASSIGNEE), Some("alice-acc-id"));
         assert_eq!(doc.field_str(field::DUE), Some("2026-06-30"));
         let content = doc.field_str(field::CONTENT).unwrap();
         // ADF was translated to markdown; bold round-trips as **world**.
@@ -1460,8 +1543,11 @@ mod tests {
                     "project": { "key": "PROJ" },
                     "issuetype": { "name": "Story" },
                     "labels": ["backend"],
+                    // Normalized `high` is inverse-mapped to the live Jira
+                    // priority name before being sent.
                     "priority": { "name": "High" },
-                    "assignee": { "displayName": "Alice" }
+                    // Writes go through `accountId`, not the display name.
+                    "assignee": { "accountId": "alice-acc-id" }
                 }
             })))
             .with_status(201)
@@ -1480,8 +1566,8 @@ mod tests {
             field::TAGS.into(),
             FieldValue::from(vec!["backend".to_string()]),
         );
-        fields.insert(field::PRIORITY.into(), FieldValue::from("High"));
-        fields.insert(field::ASSIGNEE.into(), FieldValue::from("Alice"));
+        fields.insert(field::PRIORITY.into(), FieldValue::from("high"));
+        fields.insert(field::ASSIGNEE.into(), FieldValue::from("alice-acc-id"));
 
         let a = adapter(&server);
         let doc = a
@@ -1799,11 +1885,52 @@ mod tests {
         let priority = schema.field(field::PRIORITY).unwrap();
         match &priority.kind {
             FieldKind::Enum { options, .. } => {
-                let values: Vec<&str> = options.iter().map(|o| o.value.as_str()).collect();
-                assert_eq!(values, vec!["High", "Highest", "Low", "Medium"]);
+                // `value` is the normalized LeanSpec form (so it matches what
+                // documents carry); `label` is the live Jira name (so writes
+                // can map back via `normalized_priority_to_jira_name`).
+                let pairs: Vec<(&str, &str)> = options
+                    .iter()
+                    .map(|o| (o.value.as_str(), o.label.as_str()))
+                    .collect();
+                assert_eq!(
+                    pairs,
+                    vec![
+                        ("critical", "Highest"),
+                        ("high", "High"),
+                        ("low", "Low"),
+                        ("medium", "Medium"),
+                    ]
+                );
             }
             _ => panic!("expected enum"),
         }
+    }
+
+    #[test]
+    fn normalized_priority_inverse_uses_resolved_schema() {
+        let mut server = mockito::Server::new();
+        server
+            .mock("GET", "/rest/api/3/project/PROJ/statuses")
+            .with_status(200)
+            .with_body("[]")
+            .create();
+        server
+            .mock("GET", "/rest/api/3/priority")
+            .with_status(200)
+            .with_body(r#"[{"id":"1","name":"Critical"},{"id":"2","name":"Major"}]"#)
+            .create();
+
+        let mut a = adapter(&server);
+        a.resolve_inline().unwrap();
+
+        // `Critical` → critical; the inverse map should hand back the Jira
+        // name "Critical" (not the default "Highest").
+        assert_eq!(a.normalized_priority_to_jira_name("critical"), "Critical");
+        // Custom Jira priority `Major` survives through priority_name_to_value
+        // as `major`; lookup hits the schema and returns the Jira label.
+        assert_eq!(a.normalized_priority_to_jira_name("major"), "Major");
+        // Anything unknown falls through to the default vocabulary.
+        assert_eq!(a.normalized_priority_to_jira_name("high"), "High");
     }
 
     // ─── auth / rate limit / token validation ────────────────────────────
@@ -1828,7 +1955,34 @@ mod tests {
     }
 
     #[test]
-    fn rate_limit_response_yields_ratelimit_error() {
+    fn rate_limit_response_parses_iso8601_reset_header() {
+        // Jira Cloud advertises X-RateLimit-Reset as an ISO-8601 timestamp.
+        let mut server = mockito::Server::new();
+        server
+            .mock("GET", "/rest/api/3/issue/PROJ-1")
+            .with_status(429)
+            .with_header("x-ratelimit-reset", "2030-04-12T15:30:00Z")
+            .with_body(r#"{"errorMessages":["Too Many Requests"]}"#)
+            .create();
+
+        let a = adapter(&server);
+        let err = a.get("PROJ-1").unwrap_err();
+        match err {
+            AdapterError::RateLimit { adapter, reset_at } => {
+                assert_eq!(adapter, ADAPTER_NAME);
+                let want = DateTime::parse_from_rfc3339("2030-04-12T15:30:00Z")
+                    .unwrap()
+                    .with_timezone(&Utc);
+                assert_eq!(reset_at, Some(want));
+            }
+            other => panic!("expected RateLimit, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn rate_limit_response_falls_back_to_unix_seconds() {
+        // Some self-hosted Jira deployments emit Unix seconds. Keep parsing
+        // that for backwards compatibility.
         let mut server = mockito::Server::new();
         let reset_ts = 1_900_000_000_i64;
         server
@@ -1848,6 +2002,45 @@ mod tests {
             }
             other => panic!("expected RateLimit, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn rate_limit_falls_back_to_retry_after_when_reset_missing() {
+        let mut server = mockito::Server::new();
+        server
+            .mock("GET", "/rest/api/3/issue/PROJ-1")
+            .with_status(429)
+            .with_header("retry-after", "30")
+            .with_body(r#"{"errorMessages":["slow down"]}"#)
+            .create();
+
+        let before = Utc::now();
+        let a = adapter(&server);
+        let err = a.get("PROJ-1").unwrap_err();
+        match err {
+            AdapterError::RateLimit { reset_at, .. } => {
+                let reset = reset_at.expect("Retry-After should populate reset_at");
+                // Reset is "now + 30s"; allow a generous window for clock skew
+                // / test machine slowness rather than asserting exactly 30.
+                let delta = reset.signed_duration_since(before).num_seconds();
+                assert!(
+                    (25..=40).contains(&delta),
+                    "expected reset_at ~30s out, got {delta}s"
+                );
+            }
+            other => panic!("expected RateLimit, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_reset_header_handles_iso_and_unix_forms() {
+        let iso = parse_reset_header("2030-04-12T15:30:00Z").unwrap();
+        assert_eq!(iso.format("%Y").to_string(), "2030");
+
+        let unix = parse_reset_header("1900000000").unwrap();
+        assert_eq!(unix.timestamp(), 1_900_000_000);
+
+        assert!(parse_reset_header("not a date").is_none());
     }
 
     #[test]
