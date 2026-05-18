@@ -36,8 +36,8 @@ use serde_json::{json, Value};
 
 use super::{Adapter, AdapterCapabilities, AdapterError, ListFilter, SearchHit, SearchOptions};
 use crate::model::{
-    semantic, CreateRequest, EnumOption, FieldDef, FieldDisplay, FieldKind, FieldValue, LinkTypeDef,
-    SpecDoc, SpecSchema, UpdateRequest,
+    semantic, CreateRequest, EnumOption, FieldDef, FieldDisplay, FieldKind, FieldValue,
+    LinkTypeDef, SpecDoc, SpecSchema, UpdateRequest,
 };
 
 /// Adapter name used in errors and capabilities.
@@ -275,13 +275,21 @@ impl GitHubAdapter {
             ACCEPT,
             HeaderValue::from_static("application/vnd.github+json"),
         );
-        h.insert(USER_AGENT, HeaderValue::from_static("leanspec-github-adapter"));
-        h.insert("X-GitHub-Api-Version", HeaderValue::from_static("2022-11-28"));
+        h.insert(
+            USER_AGENT,
+            HeaderValue::from_static("leanspec-github-adapter"),
+        );
+        h.insert(
+            "X-GitHub-Api-Version",
+            HeaderValue::from_static("2022-11-28"),
+        );
         h
     }
 
     fn request(&self, method: Method, url: &str) -> RequestBuilder {
-        self.client.request(method, url).headers(self.auth_headers())
+        self.client
+            .request(method, url)
+            .headers(self.auth_headers())
     }
 
     /// Send a request and map HTTP errors onto [`AdapterError`].
@@ -514,10 +522,7 @@ impl Adapter for GitHubAdapter {
         }
 
         let url = self.url(&self.issues_path());
-        let resp = self.send(
-            self.request(Method::POST, &url)
-                .json(&Value::Object(body)),
-        )?;
+        let resp = self.send(self.request(Method::POST, &url).json(&Value::Object(body)))?;
         let value = Self::parse_json(resp)?;
         Ok(issue_to_doc(&value))
     }
@@ -586,10 +591,7 @@ impl Adapter for GitHubAdapter {
         }
 
         let url = self.url(&format!("{}/{}", self.issues_path(), id));
-        let resp = self.send(
-            self.request(Method::PATCH, &url)
-                .json(&Value::Object(body)),
-        )?;
+        let resp = self.send(self.request(Method::PATCH, &url).json(&Value::Object(body)))?;
         let value = Self::parse_json(resp)?;
         Ok(issue_to_doc(&value))
     }
@@ -629,10 +631,7 @@ impl Adapter for GitHubAdapter {
                     .and_then(|v| v.as_i64())
                     .map(|n| n.to_string())
                     .unwrap_or_default();
-                let score = item
-                    .get("score")
-                    .and_then(|v| v.as_f64())
-                    .unwrap_or(0.0) as f32;
+                let score = item.get("score").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
                 let snippet = if opts.include_body {
                     item.get("body")
                         .and_then(|v| v.as_str())
@@ -1335,9 +1334,8 @@ mod tests {
             parse_next_link(Some(&v)).as_deref(),
             Some("https://api.example.com/x?page=2"),
         );
-        let only_last = HeaderValue::from_static(
-            "<https://api.example.com/x?page=9>; rel=\"last\"",
-        );
+        let only_last =
+            HeaderValue::from_static("<https://api.example.com/x?page=9>; rel=\"last\"");
         assert_eq!(parse_next_link(Some(&only_last)), None);
         assert_eq!(parse_next_link(None), None);
     }
