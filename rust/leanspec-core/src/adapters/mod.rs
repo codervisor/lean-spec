@@ -14,10 +14,13 @@
 //!   schema id for this adapter.
 //! - [`Adapter`] is the trait each backend implements.
 
+#[cfg(feature = "github")]
+pub mod github;
 pub mod jira;
 pub mod markdown;
 pub mod registry;
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
@@ -57,6 +60,17 @@ pub enum AdapterError {
     /// Field value did not match the adapter's declared schema.
     #[error("Invalid field for {adapter}: {reason}")]
     InvalidField { adapter: String, reason: String },
+
+    /// The backend rejected the request because a rate limit has been hit.
+    ///
+    /// `reset_at` is the moment the limit window resets. `None` if the backend
+    /// did not advertise a reset time. Adapters do not retry internally — the
+    /// caller decides how to back off.
+    #[error("Rate limit hit for {adapter}; resets at {}", reset_at.map(|t| t.to_rfc3339()).unwrap_or_else(|| "unknown".into()))]
+    RateLimit {
+        adapter: String,
+        reset_at: Option<DateTime<Utc>>,
+    },
 
     /// A local I/O error (for file-backed adapters).
     #[error("I/O error: {0}")]

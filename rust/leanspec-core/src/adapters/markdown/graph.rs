@@ -323,8 +323,8 @@ impl DependencyGraph {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::types::{SpecFrontmatter, SpecStatus};
+    use super::*;
     use std::path::PathBuf;
 
     fn create_spec(path: &str, depends_on: Vec<&str>) -> SpecInfo {
