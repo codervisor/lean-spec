@@ -236,9 +236,22 @@ pub(crate) enum Commands {
         #[arg(long = "owner-repo")]
         owner_repo: Option<String>,
 
-        /// GitHub adapter: environment variable that holds the token
-        #[arg(long = "token-env", default_value = "GITHUB_TOKEN")]
-        token_env: String,
+        /// GitHub adapter: environment variable that holds the token.
+        /// Jira adapter overrides this default to `JIRA_TOKEN` when unset.
+        #[arg(long = "token-env")]
+        token_env: Option<String>,
+
+        /// Jira adapter: host (e.g. "mycompany.atlassian.net")
+        #[arg(long = "jira-host")]
+        jira_host: Option<String>,
+
+        /// Jira adapter: project key (e.g. "PROJ")
+        #[arg(long = "jira-project")]
+        jira_project: Option<String>,
+
+        /// Jira adapter: authenticating account email
+        #[arg(long = "jira-email")]
+        jira_email: Option<String>,
     },
 
     /// List all specs with optional filtering

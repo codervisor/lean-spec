@@ -9,6 +9,8 @@ use std::path::Path;
 
 #[cfg(feature = "github")]
 use super::github::GitHubAdapter;
+#[cfg(feature = "jira")]
+use super::jira::JiraAdapter;
 use super::markdown::MarkdownAdapter;
 use super::{Adapter, AdapterConfig, AdapterError};
 
@@ -67,6 +69,69 @@ impl AdapterRegistry {
             "github" => Err(AdapterError::ConfigError(
                 "adapter 'github' requested but leanspec-core was built without \
                  the 'github' feature — rebuild with `--features github`"
+                    .into(),
+            )),
+            #[cfg(feature = "jira")]
+            "jira" => {
+                let host = config
+                    .settings
+                    .get("host")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        AdapterError::ConfigError("jira adapter requires 'host' in settings".into())
+                    })?;
+                let project = config
+                    .settings
+                    .get("project")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        AdapterError::ConfigError(
+                            "jira adapter requires 'project' in settings".into(),
+                        )
+                    })?;
+                let email = config
+                    .settings
+                    .get("email")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        AdapterError::ConfigError(
+                            "jira adapter requires 'email' in settings".into(),
+                        )
+                    })?;
+                let token_env = config
+                    .settings
+                    .get("token_env")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("JIRA_TOKEN");
+                let api_version = config
+                    .settings
+                    .get("api_version")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(3) as u8;
+                let base_url = config
+                    .settings
+                    .get("base_url")
+                    .and_then(|v| v.as_str())
+                    .map(String::from);
+                let mut adapter = JiraAdapter::with_settings(
+                    host,
+                    project,
+                    email,
+                    token_env,
+                    api_version,
+                    base_url,
+                )?;
+                // Pre-fetch the project's status / priority vocabulary so
+                // `leanspec capabilities` reports the real names. Failures
+                // here are fatal: an unreachable Jira means the adapter is
+                // unusable.
+                adapter.resolve_inline()?;
+                Ok(Box::new(adapter))
+            }
+            #[cfg(not(feature = "jira"))]
+            "jira" => Err(AdapterError::ConfigError(
+                "adapter 'jira' requested but leanspec-core was built without \
+                 the 'jira' feature — rebuild with `--features jira`"
                     .into(),
             )),
             other => Err(AdapterError::ConfigError(format!(
@@ -241,6 +306,74 @@ mod tests {
             _ => panic!("expected enum tags field"),
         }
         std::env::remove_var("LEANSPEC_TEST_GH_TOKEN");
+    }
+
+    #[test]
+    fn jira_requires_host_project_and_email() {
+        let cfg = AdapterConfig {
+            adapter: "jira".into(),
+            settings: serde_json::json!({}),
+        };
+        let err = AdapterRegistry::create(&cfg).unwrap_err();
+        assert!(matches!(err, AdapterError::ConfigError(_)));
+    }
+
+    #[cfg(feature = "jira")]
+    #[test]
+    fn create_jira_adapter_resolves_options() {
+        let mut server = mockito::Server::new();
+        server
+            .mock("GET", "/rest/api/3/project/PROJ/statuses")
+            .with_status(200)
+            .with_body(r#"[{"name":"Story","statuses":[{"name":"To Do"},{"name":"Done"}]}]"#)
+            .create();
+        server
+            .mock("GET", "/rest/api/3/priority")
+            .with_status(200)
+            .with_body(r#"[{"id":"1","name":"High"}]"#)
+            .create();
+
+        std::env::set_var("LEANSPEC_TEST_JIRA_TOKEN", "fake-token");
+        let cfg = AdapterConfig {
+            adapter: "jira".into(),
+            settings: serde_json::json!({
+                "host": "demo.atlassian.net",
+                "project": "PROJ",
+                "email": "alice@example.com",
+                "token_env": "LEANSPEC_TEST_JIRA_TOKEN",
+                "base_url": server.url(),
+            }),
+        };
+        let adapter = AdapterRegistry::create(&cfg).unwrap();
+        assert_eq!(adapter.capabilities().name, "jira");
+        let status = adapter.schema().field("status").unwrap();
+        match &status.kind {
+            crate::model::FieldKind::Enum { options, .. } => {
+                let values: Vec<&str> = options.iter().map(|o| o.value.as_str()).collect();
+                assert!(values.contains(&"To Do"));
+                assert!(values.contains(&"Done"));
+            }
+            _ => panic!("expected enum status"),
+        }
+        std::env::remove_var("LEANSPEC_TEST_JIRA_TOKEN");
+    }
+
+    #[cfg(not(feature = "jira"))]
+    #[test]
+    fn jira_without_feature_is_config_error() {
+        let cfg = AdapterConfig {
+            adapter: "jira".into(),
+            settings: serde_json::json!({
+                "host": "x", "project": "y", "email": "z"
+            }),
+        };
+        let err = AdapterRegistry::create(&cfg).unwrap_err();
+        match err {
+            AdapterError::ConfigError(msg) => {
+                assert!(msg.contains("jira") && msg.contains("feature"));
+            }
+            other => panic!("expected ConfigError, got {other:?}"),
+        }
     }
 
     #[cfg(not(feature = "github"))]

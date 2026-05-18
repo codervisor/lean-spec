@@ -24,7 +24,12 @@ pub struct InitOptions {
     pub example: Option<String>,
     pub adapter: String,
     pub owner_repo: Option<String>,
-    pub token_env: String,
+    /// Environment variable that holds the API token. When `None`, defaults
+    /// per adapter: `GITHUB_TOKEN` for github, `JIRA_TOKEN` for jira.
+    pub token_env: Option<String>,
+    pub jira_host: Option<String>,
+    pub jira_project: Option<String>,
+    pub jira_email: Option<String>,
 }
 
 pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> {
@@ -39,10 +44,7 @@ pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> 
             print_coming_soon("ADO");
             Ok(())
         }
-        "jira" => {
-            print_coming_soon("Jira");
-            Ok(())
-        }
+        "jira" => run_jira_init(options),
         other => Err(format!(
             "Unknown adapter '{}'. Valid adapters: {}",
             other,
@@ -50,6 +52,13 @@ pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> 
         )
         .into()),
     }
+}
+
+fn resolved_token_env(options: &InitOptions, default: &str) -> String {
+    options
+        .token_env
+        .clone()
+        .unwrap_or_else(|| default.to_string())
 }
 
 fn print_coming_soon(label: &str) {
@@ -174,7 +183,10 @@ fn scaffold_example(
             example: None,
             adapter: "markdown".to_string(),
             owner_repo: None,
-            token_env: "GITHUB_TOKEN".to_string(),
+            token_env: None,
+            jira_host: None,
+            jira_project: None,
+            jira_email: None,
         },
     );
     std::env::set_current_dir(&initial_dir)?;
@@ -470,6 +482,7 @@ fn run_github_init(options: InitOptions) -> Result<(), Box<dyn Error>> {
     println!("{}", "Initializing GitHub Issues adapter...".bold());
     println!();
 
+    let token_env = resolved_token_env(&options, "GITHUB_TOKEN");
     let cwd = std::env::current_dir()?;
     let root = find_project_root(&cwd);
 
@@ -483,11 +496,11 @@ fn run_github_init(options: InitOptions) -> Result<(), Box<dyn Error>> {
     );
 
     // 2. Read and validate the token.
-    let token = read_github_token(&options.token_env)?;
+    let token = read_token(&token_env)?;
     println!(
         "{} Found {} ({} chars)",
         "✓".green(),
-        options.token_env.cyan(),
+        token_env.cyan(),
         token.len()
     );
 
@@ -521,14 +534,14 @@ fn run_github_init(options: InitOptions) -> Result<(), Box<dyn Error>> {
                  Set a valid token and re-run:\n\n  \
                  export {}=ghp_...\n\n\
                  See https://docs.github.com/tokens for how to create one.",
-                err, options.token_env
+                err, token_env
             )
             .into());
         }
     }
 
     // 3. Write `leanspec.adapter.yaml` to the project root.
-    write_github_adapter_yaml(&root, &owner, &repo, &options.token_env)?;
+    write_github_adapter_yaml(&root, &owner, &repo, &token_env)?;
 
     // 4. Write the adapter-agnostic AGENTS.md.
     let project_name = root
@@ -655,16 +668,15 @@ pub(crate) fn parse_owner_repo(spec: &str) -> Option<(String, String)> {
     Some((owner.to_string(), repo.to_string()))
 }
 
-fn read_github_token(token_env: &str) -> Result<String, Box<dyn Error>> {
-    // Trim because shell pipelines like `export GITHUB_TOKEN=$(cat token.txt)`
-    // commonly leave a trailing newline, which would otherwise fail at
-    // `HeaderValue::from_str` deep inside `validate_token` with a confusing
-    // "not a valid HTTP header value" error.
+fn read_token(token_env: &str) -> Result<String, Box<dyn Error>> {
+    // Trim because shell pipelines like `export X=$(cat token.txt)` commonly
+    // leave a trailing newline, which would otherwise fail at HTTP-header
+    // construction with a confusing "not a valid header value" error.
     match std::env::var(token_env) {
         Ok(t) if !t.trim().is_empty() => Ok(t.trim().to_string()),
         _ => Err(format!(
-            "{} not found in environment.\n\nSet it and re-run, or export it now:\n\n  \
-             export {}=ghp_...\n\nSee https://docs.github.com/tokens for how to create one.",
+            "{} not found in environment.\n\nSet it and re-run:\n\n  \
+             export {}=...\n",
             token_env, token_env
         )
         .into()),
@@ -715,6 +727,161 @@ fn scaffold_generic_agents(root: &Path, project_name: &str) -> Result<(), Box<dy
     let content = AGENTS_MD_TEMPLATE_GENERIC.replace("{project_name}", project_name);
     fs::write(&agents_path, content)?;
     println!("{} Created AGENTS.md", "✓".green());
+    Ok(())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Jira adapter initialization
+// ─────────────────────────────────────────────────────────────────────────────
+
+fn run_jira_init(options: InitOptions) -> Result<(), Box<dyn Error>> {
+    println!();
+    println!("{}", "Initializing Jira adapter...".bold());
+    println!();
+
+    let token_env = resolved_token_env(&options, "JIRA_TOKEN");
+    let cwd = std::env::current_dir()?;
+    let root = find_project_root(&cwd);
+
+    // 1. Resolve host, project, email — CLI overrides win, then prompt.
+    let host = prompt_required(
+        options.jira_host.clone(),
+        "Jira host (e.g. mycompany.atlassian.net)",
+        options.yes,
+    )?;
+    let project = prompt_required(
+        options.jira_project.clone(),
+        "Jira project key (e.g. PROJ)",
+        options.yes,
+    )?;
+    let email = prompt_required(
+        options.jira_email.clone(),
+        "Authenticating account email",
+        options.yes,
+    )?;
+    println!(
+        "{} Using {} / project {} as {}",
+        "✓".green(),
+        host.cyan(),
+        project.cyan(),
+        email.cyan(),
+    );
+
+    // 2. Read and validate the token.
+    let token = read_token(&token_env)?;
+    println!(
+        "{} Found {} ({} chars)",
+        "✓".green(),
+        token_env.cyan(),
+        token.len()
+    );
+
+    print!("  Validating token against {}... ", host.cyan());
+    let _ = std::io::Write::flush(&mut std::io::stdout());
+    match leanspec_core::adapters::jira::validate_token(&host, &email, &token, 3, None) {
+        Ok(info) => {
+            let label = if info.display_name.is_empty() {
+                info.account_id.clone()
+            } else {
+                info.display_name.clone()
+            };
+            println!("{} authenticated as {}", "✓".green(), label.cyan());
+        }
+        Err(err) => {
+            return Err(format!(
+                "Jira token validation failed: {}\n\n\
+                 Set a valid token and re-run:\n\n  \
+                 export {}=...\n\n\
+                 See https://id.atlassian.com/manage-profile/security/api-tokens.",
+                err, token_env
+            )
+            .into());
+        }
+    }
+
+    // 3. Write `leanspec.adapter.yaml` to the project root.
+    write_jira_adapter_yaml(&root, &host, &project, &email, &token_env)?;
+
+    // 4. Write the adapter-agnostic AGENTS.md.
+    let project_name = root
+        .file_name()
+        .and_then(|s| s.to_str())
+        .filter(|s| !s.trim().is_empty())
+        .unwrap_or("project");
+    scaffold_generic_agents(&root, project_name)?;
+
+    println!();
+    println!("{}", "Done.".green().bold());
+    println!(
+        "Run `{}` to see available operations.",
+        "leanspec capabilities".cyan()
+    );
+
+    Ok(())
+}
+
+fn prompt_required(
+    cli_value: Option<String>,
+    prompt: &str,
+    yes: bool,
+) -> Result<String, Box<dyn Error>> {
+    if let Some(value) = cli_value {
+        let trimmed = value.trim().to_string();
+        if trimmed.is_empty() {
+            return Err(format!("{prompt} cannot be empty").into());
+        }
+        return Ok(trimmed);
+    }
+    if yes || !std::io::stdin().is_terminal() {
+        return Err(format!(
+            "{prompt} not provided. Pass --jira-host / --jira-project / --jira-email \
+             when running non-interactively."
+        )
+        .into());
+    }
+    let input: String = Input::new().with_prompt(prompt).interact_text()?;
+    let trimmed = input.trim().to_string();
+    if trimmed.is_empty() {
+        return Err(format!("{prompt} cannot be empty").into());
+    }
+    Ok(trimmed)
+}
+
+fn write_jira_adapter_yaml(
+    root: &Path,
+    host: &str,
+    project: &str,
+    email: &str,
+    token_env: &str,
+) -> Result<(), Box<dyn Error>> {
+    let path = root.join("leanspec.adapter.yaml");
+    if path.exists() {
+        println!(
+            "{} {} already exists (preserved)",
+            "✓".cyan(),
+            path.display()
+        );
+        return Ok(());
+    }
+
+    let mut body = String::from("# Written by leanspec init --adapter jira\n");
+    body.push_str("adapter: jira\n");
+    body.push_str("settings:\n");
+    body.push_str(&format!("  host: {}\n", host));
+    body.push_str(&format!("  project: {}\n", project));
+    body.push_str(&format!("  email: {}\n", email));
+    if token_env == "JIRA_TOKEN" {
+        body.push_str(
+            "  # token_env defaults to JIRA_TOKEN; override if needed:\n  \
+             # token_env: MY_CUSTOM_TOKEN_VAR\n",
+        );
+    } else {
+        body.push_str(&format!("  token_env: {}\n", token_env));
+    }
+    body.push_str("  # api_version: 3   # 3 = Cloud (default); 2 = Server / DC\n");
+
+    fs::write(&path, body)?;
+    println!("{} Wrote {}", "✓".green(), path.display());
     Ok(())
 }
 

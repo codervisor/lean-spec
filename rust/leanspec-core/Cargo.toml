@@ -45,6 +45,10 @@ github = ["dep:reqwest", "reqwest/blocking", "reqwest/json", "reqwest/default-tl
 # Opt-in to running the GitHub integration tests that hit api.github.com.
 # Requires `GITHUB_TOKEN`, `TEST_GITHUB_OWNER`, `TEST_GITHUB_REPO` env vars.
 github-integration-tests = ["github"]
+jira = ["dep:reqwest", "reqwest/blocking", "reqwest/json", "reqwest/default-tls"]
+# Opt-in to running the Jira integration tests that hit a real Jira Cloud site.
+# Requires `JIRA_TOKEN`, `TEST_JIRA_HOST`, `TEST_JIRA_PROJECT`, `TEST_JIRA_EMAIL`.
+jira-integration-tests = ["jira"]
 storage = ["tokio", "dirs", "uuid"]
 # Expose the adapter compliance test harness for use by out-of-tree
 # adapter implementations. Always available within this crate's own tests.
