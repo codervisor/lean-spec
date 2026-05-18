@@ -20,6 +20,9 @@ pub mod jira;
 pub mod markdown;
 pub mod registry;
 
+#[cfg(any(test, feature = "test-utils"))]
+pub mod test_harness;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
