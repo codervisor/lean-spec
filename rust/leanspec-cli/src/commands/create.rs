@@ -26,7 +26,9 @@ pub struct CreateParams {
     pub title: Option<String>,
     pub template: Option<String>,
     pub status: Option<String>,
-    pub priority: String,
+    /// `None` means "not supplied" → markdown templates default to `medium`,
+    /// remote adapters leave priority unset.
+    pub priority: Option<String>,
     pub tags: Option<String>,
     pub parent: Option<String>,
     pub depends_on: Vec<String>,
@@ -148,7 +150,7 @@ fn run_markdown(
             &template_content,
             &title,
             &resolved_status,
-            &params.priority,
+            template_priority(params),
             &tags_vec,
         )?;
 
@@ -280,13 +282,14 @@ fn run_remote(
 // ── shared helpers ───────────────────────────────────────────────────────────
 
 fn explicit_priority(params: &CreateParams) -> Option<&str> {
-    // The clap default is `"medium"`. Treat the clap default as "not set" so
-    // we can distinguish user intent from defaulting.
-    if params.priority == "medium" {
-        None
-    } else {
-        Some(params.priority.as_str())
-    }
+    params.priority.as_deref()
+}
+
+/// Priority to render in templates / success output. `None` falls back to the
+/// canonical default of `medium` — separate from `explicit_priority`, which
+/// preserves the user's "didn't set" intent.
+fn template_priority(params: &CreateParams) -> &str {
+    params.priority.as_deref().unwrap_or("medium")
 }
 
 fn parse_field_pairs(pairs: &[String]) -> Result<HashMap<String, String>, Box<dyn Error>> {
@@ -644,7 +647,7 @@ fn print_markdown_success(
     println!("  {}: {}", "Path".bold(), doc.id);
     println!("  {}: {}", "Title".bold(), title);
     println!("  {}: {}", "Status".bold(), status);
-    println!("  {}: {}", "Priority".bold(), params.priority);
+    println!("  {}: {}", "Priority".bold(), template_priority(params));
     if !tags.is_empty() {
         println!("  {}: {}", "Tags".bold(), tags.join(", "));
     }

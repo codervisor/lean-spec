@@ -132,9 +132,9 @@ pub(crate) enum Commands {
         #[arg(short, long)]
         status: Option<String>,
 
-        /// Priority level
-        #[arg(short, long, default_value = "medium")]
-        priority: String,
+        /// Priority level (defaults to `medium` when omitted)
+        #[arg(short, long)]
+        priority: Option<String>,
 
         /// Tags (comma-separated)
         #[arg(long)]

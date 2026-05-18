@@ -422,6 +422,14 @@ pub fn spec_info_to_doc(info: &SpecInfo) -> SpecDoc {
         });
     }
 
+    // `id` is the leaf directory name (e.g. `002-child`), which is ambiguous
+    // for sub-specs. Stash the resolved README path in `raw` so callers like
+    // `view --raw` can read the underlying file without re-implementing the
+    // discovery walk.
+    let raw = serde_json::json!({
+        "file_path": info.file_path.to_string_lossy(),
+    });
+
     SpecDoc {
         id: info.path.clone(),
         title: info.title.clone(),
@@ -431,7 +439,7 @@ pub fn spec_info_to_doc(info: &SpecInfo) -> SpecDoc {
         created_at: fm.created_at,
         updated_at: fm.updated_at,
         url: None,
-        raw: None,
+        raw: Some(raw),
     }
 }
 
@@ -712,9 +720,39 @@ fn fields_to_frontmatter(
         .map(|l| l.target_id.clone())
         .collect();
 
-    // Pass through any unrecognised fields as custom frontmatter — keeps
-    // adapter-specific keys (e.g. `severity`, project-defined enums) on disk
-    // rather than silently dropping them.
+    // Typed-string fields on `SpecFrontmatter` that round-trip through the
+    // adapter as `FieldValue::String`. Surfacing them in fields without
+    // pulling them into the typed struct would produce duplicate YAML keys
+    // when serde flattens `custom`.
+    let updated = fields
+        .get("updated")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let completed = fields
+        .get("completed")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let created_at = fields
+        .get("created_at")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|t| t.with_timezone(&chrono::Utc));
+    let updated_at = fields
+        .get("updated_at")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|t| t.with_timezone(&chrono::Utc));
+    let completed_at = fields
+        .get("completed_at")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|t| t.with_timezone(&chrono::Utc));
+
+    // Any field key not handled above is preserved as custom frontmatter —
+    // keeps adapter-specific keys (e.g. `severity`, project-defined enums) on
+    // disk rather than silently dropping them. Typed keys must be excluded
+    // here because `SpecFrontmatter` flattens `custom`, which would otherwise
+    // emit duplicate YAML keys.
     let known_keys = [
         field::STATUS,
         field::PRIORITY,
@@ -728,6 +766,14 @@ fn fields_to_frontmatter(
         field::DUE,
         field::CREATED,
         field::CONTENT,
+        "created_at",
+        "updated_at",
+        "completed_at",
+        "updated",
+        "completed",
+        "transitions",
+        "parent",
+        "depends_on",
     ];
     let mut custom = std::collections::HashMap::new();
     for (key, value) in fields {
@@ -762,11 +808,11 @@ fn fields_to_frontmatter(
         epic,
         breaking,
         due,
-        updated: None,
-        completed: None,
-        created_at: None,
-        updated_at: None,
-        completed_at: None,
+        updated,
+        completed,
+        created_at,
+        updated_at,
+        completed_at,
         transitions: Vec::new(),
         custom,
     })

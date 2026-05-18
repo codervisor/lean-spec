@@ -54,9 +54,21 @@ fn resolve_adapter(specs_dir: &str) -> Result<Box<dyn Adapter>, Box<dyn Error>> 
 /// backends it prints the doc body fields (the closest approximation).
 fn print_raw(doc: &SpecDoc, adapter: &dyn Adapter, specs_dir: &str) -> Result<(), Box<dyn Error>> {
     if adapter.capabilities().name == "markdown" {
-        let path = std::path::Path::new(specs_dir)
-            .join(&doc.id)
-            .join("README.md");
+        // Prefer the adapter-resolved file path from `doc.raw`, which handles
+        // nested sub-specs (e.g. `specs/001-parent/002-child/README.md`).
+        // Fall back to the legacy `{specs_dir}/{id}/README.md` layout for
+        // top-level specs when an older adapter doesn't expose `file_path`.
+        let path = doc
+            .raw
+            .as_ref()
+            .and_then(|v| v.get("file_path"))
+            .and_then(|v| v.as_str())
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| {
+                std::path::Path::new(specs_dir)
+                    .join(&doc.id)
+                    .join("README.md")
+            });
         let content = std::fs::read_to_string(&path)?;
         println!("{}", content);
     } else {
