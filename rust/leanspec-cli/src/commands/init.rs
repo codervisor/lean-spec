@@ -496,6 +496,9 @@ fn run_github_init(options: InitOptions) -> Result<(), Box<dyn Error>> {
         owner.cyan(),
         repo.cyan()
     );
+    // Flush so the "Validating..." line shows up *before* the synchronous HTTP
+    // call rather than appearing only after the call returns.
+    let _ = std::io::Write::flush(&mut std::io::stdout());
     match leanspec_core::adapters::github::validate_token(&token, None) {
         Ok(info) => {
             println!(
@@ -653,8 +656,12 @@ pub(crate) fn parse_owner_repo(spec: &str) -> Option<(String, String)> {
 }
 
 fn read_github_token(token_env: &str) -> Result<String, Box<dyn Error>> {
+    // Trim because shell pipelines like `export GITHUB_TOKEN=$(cat token.txt)`
+    // commonly leave a trailing newline, which would otherwise fail at
+    // `HeaderValue::from_str` deep inside `validate_token` with a confusing
+    // "not a valid HTTP header value" error.
     match std::env::var(token_env) {
-        Ok(t) if !t.trim().is_empty() => Ok(t),
+        Ok(t) if !t.trim().is_empty() => Ok(t.trim().to_string()),
         _ => Err(format!(
             "{} not found in environment.\n\nSet it and re-run, or export it now:\n\n  \
              export {}=ghp_...\n\nSee https://docs.github.com/tokens for how to create one.",
