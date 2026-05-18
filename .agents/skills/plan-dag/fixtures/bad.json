@@ -5,6 +5,7 @@
     {"id": "304", "label": "chat", "status": "shipped"},
     {"id": "305", "status": "open"},
     {"id": "307", "label": "bad \"quote\""},
+    {"id": "308", "label": "#308 dup-id-prefix", "status": "open"},
     {"id": "close", "label": "reserved"},
     "not-an-object"
   ],
