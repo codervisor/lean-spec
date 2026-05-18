@@ -102,10 +102,7 @@ fn run_markdown(
     }
 
     let raw_name = strip_numeric_prefix(&params.name);
-    let slug = params
-        .slug
-        .clone()
-        .unwrap_or_else(|| raw_name.to_string());
+    let slug = params.slug.clone().unwrap_or_else(|| raw_name.to_string());
     let title = params
         .title
         .clone()
@@ -365,9 +362,9 @@ fn generate_title(name: &str) -> String {
 }
 
 fn find_project_root(specs_dir: &str) -> Result<PathBuf, Box<dyn Error>> {
-    let specs_path = Path::new(specs_dir).canonicalize().unwrap_or_else(|_| {
-        std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
-    });
+    let specs_path = Path::new(specs_dir)
+        .canonicalize()
+        .unwrap_or_else(|_| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
     let mut current = Some(specs_path.as_path());
     while let Some(path) = current {
         if path.join(".lean-spec").exists() {
@@ -419,10 +416,7 @@ fn is_draft_status_enabled(project_root: &Path) -> bool {
     if yaml_path.exists() {
         if let Ok(content) = fs::read_to_string(&yaml_path) {
             if let Ok(config) = serde_yaml::from_str::<ProjectConfig>(&content) {
-                return config
-                    .draft_status
-                    .and_then(|d| d.enabled)
-                    .unwrap_or(false);
+                return config.draft_status.and_then(|d| d.enabled).unwrap_or(false);
             }
         }
     }
@@ -516,7 +510,10 @@ fn apply_cli_overrides(
     if let Some(status) = explicit_status {
         fm.insert(YamlValue::String("status".into()), str_value(status));
     } else if !fm.contains_key(YamlValue::String("status".into())) {
-        fm.insert(YamlValue::String("status".into()), str_value(default_status));
+        fm.insert(
+            YamlValue::String("status".into()),
+            str_value(default_status),
+        );
     }
 
     if let Some(priority) = explicit_priority {
@@ -655,7 +652,11 @@ fn print_markdown_success(
         println!("  {}: {}", "Parent".bold(), parent);
     }
     if !params.depends_on.is_empty() {
-        println!("  {}: {}", "Depends on".bold(), params.depends_on.join(", "));
+        println!(
+            "  {}: {}",
+            "Depends on".bold(),
+            params.depends_on.join(", ")
+        );
     }
 }
 
@@ -678,7 +679,8 @@ mod tests {
         let (fm, body) = split_yaml_frontmatter(content);
         let fm = fm.expect("frontmatter should parse");
         assert_eq!(
-            fm.get(YamlValue::String("status".into())).and_then(|v| v.as_str()),
+            fm.get(YamlValue::String("status".into()))
+                .and_then(|v| v.as_str()),
             Some("planned")
         );
         assert!(body.starts_with("# Title"));
@@ -707,11 +709,13 @@ mod tests {
             chrono::Utc::now(),
         );
         assert_eq!(
-            fm.get(YamlValue::String("status".into())).and_then(|v| v.as_str()),
+            fm.get(YamlValue::String("status".into()))
+                .and_then(|v| v.as_str()),
             Some("in-progress")
         );
         assert_eq!(
-            fm.get(YamlValue::String("priority".into())).and_then(|v| v.as_str()),
+            fm.get(YamlValue::String("priority".into()))
+                .and_then(|v| v.as_str()),
             Some("high")
         );
         let tags = fm
@@ -741,7 +745,8 @@ mod tests {
             chrono::Utc::now(),
         );
         assert_eq!(
-            fm.get(YamlValue::String("status".into())).and_then(|v| v.as_str()),
+            fm.get(YamlValue::String("status".into()))
+                .and_then(|v| v.as_str()),
             Some("complete")
         );
     }

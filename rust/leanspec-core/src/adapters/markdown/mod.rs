@@ -739,7 +739,9 @@ fn fields_to_frontmatter(
             FieldValue::Bool(b) => serde_yaml::Value::Bool(*b),
             FieldValue::Number(n) => serde_yaml::Value::Number(serde_yaml::Number::from(*n)),
             FieldValue::Strings(v) => serde_yaml::Value::Sequence(
-                v.iter().map(|s| serde_yaml::Value::String(s.clone())).collect(),
+                v.iter()
+                    .map(|s| serde_yaml::Value::String(s.clone()))
+                    .collect(),
             ),
             _ => continue,
         };

@@ -9,8 +9,8 @@ use colored::{ColoredString, Colorize};
 use leanspec_core::adapters::markdown::MarkdownAdapter;
 use leanspec_core::adapters::{Adapter, AdapterRegistry};
 use leanspec_core::model::{
-    CompletableItem, EnumOption, FieldDef, FieldDisplay, FieldKind, FieldValue, Reference,
-    SpecDoc, SpecSchema,
+    CompletableItem, EnumOption, FieldDef, FieldDisplay, FieldKind, FieldValue, Reference, SpecDoc,
+    SpecSchema,
 };
 use std::collections::HashMap;
 use std::error::Error;
@@ -89,7 +89,11 @@ fn render_spec(doc: &SpecDoc, schema: &SpecSchema) {
     println!();
 
     // Inline metadata block.
-    for field in schema.fields.iter().filter(|f| f.display == FieldDisplay::Inline) {
+    for field in schema
+        .fields
+        .iter()
+        .filter(|f| f.display == FieldDisplay::Inline)
+    {
         if let Some(value) = doc.fields.get(&field.key) {
             let rendered = render_inline_value(value, field);
             println!("{}: {}", field.label.bold(), rendered);
@@ -127,7 +131,11 @@ fn render_spec(doc: &SpecDoc, schema: &SpecSchema) {
     }
 
     // Section fields.
-    for field in schema.fields.iter().filter(|f| f.display == FieldDisplay::Section) {
+    for field in schema
+        .fields
+        .iter()
+        .filter(|f| f.display == FieldDisplay::Section)
+    {
         if let Some(value) = doc.fields.get(&field.key) {
             println!();
             println!("{}", "─".repeat(60).dimmed());
@@ -152,9 +160,7 @@ fn render_spec(doc: &SpecDoc, schema: &SpecSchema) {
     }
 }
 
-fn group_links_by_type(
-    doc: &SpecDoc,
-) -> HashMap<&str, Vec<&leanspec_core::model::ItemLink>> {
+fn group_links_by_type(doc: &SpecDoc) -> HashMap<&str, Vec<&leanspec_core::model::ItemLink>> {
     let mut out: HashMap<&str, Vec<&leanspec_core::model::ItemLink>> = HashMap::new();
     for link in &doc.links {
         out.entry(link.link_type.as_str()).or_default().push(link);
