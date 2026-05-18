@@ -9,7 +9,7 @@
 use colored::{ColoredString, Colorize};
 use leanspec_core::adapters::markdown::MarkdownAdapter;
 use leanspec_core::adapters::{Adapter, AdapterRegistry, ListFilter};
-use leanspec_core::model::{semantic, FieldDef, FieldKind, SpecDoc, SpecSchema};
+use leanspec_core::model::{semantic, FieldDef, FieldKind, FieldValue, SpecDoc, SpecSchema};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 
@@ -163,6 +163,28 @@ fn resolve_group_by(value: Option<&str>, schema: &SpecSchema) -> Result<String, 
         .ok_or_else(|| "active schema has no enum fields to group by".into())
 }
 
+/// Render a field value into the set of group buckets it contributes to.
+/// Multi-value fields (`Strings`) produce one bucket per element; absent and
+/// non-groupable values (Checklist/References) fall back to `(none)`.
+fn field_group_keys(value: Option<&FieldValue>) -> Vec<String> {
+    match value {
+        Some(FieldValue::String(s)) => vec![s.clone()],
+        Some(FieldValue::Strings(items)) => {
+            if items.is_empty() {
+                vec![NO_VALUE.into()]
+            } else {
+                items.clone()
+            }
+        }
+        Some(FieldValue::Bool(b)) => vec![b.to_string()],
+        Some(FieldValue::Number(n)) => vec![n.to_string()],
+        Some(FieldValue::Timestamp(t)) => vec![t.format("%Y-%m-%d").to_string()],
+        Some(FieldValue::Checklist(_)) | Some(FieldValue::References(_)) | None => {
+            vec![NO_VALUE.into()]
+        }
+    }
+}
+
 /// Group documents by the named field. Multi-value fields produce an entry
 /// per value (the same doc appears in each group). Group order follows the
 /// schema's enum declaration order; values not declared in the schema (or
@@ -183,25 +205,9 @@ fn group_by_field<'a>(
 
     let mut groups: HashMap<String, Vec<&SpecDoc>> = HashMap::new();
     for doc in docs {
-        match doc.fields.get(field_key) {
-            Some(value) => {
-                if let Some(s) = value.as_str() {
-                    groups.entry(s.to_string()).or_default().push(doc);
-                } else if let Some(items) = value.as_strings() {
-                    if items.is_empty() {
-                        groups.entry(NO_VALUE.into()).or_default().push(doc);
-                    } else {
-                        for item in items {
-                            groups.entry(item.clone()).or_default().push(doc);
-                        }
-                    }
-                } else {
-                    groups.entry(NO_VALUE.into()).or_default().push(doc);
-                }
-            }
-            None => {
-                groups.entry(NO_VALUE.into()).or_default().push(doc);
-            }
+        let buckets = field_group_keys(doc.fields.get(field_key));
+        for bucket in buckets {
+            groups.entry(bucket).or_default().push(doc);
         }
     }
 
@@ -617,6 +623,25 @@ mod tests {
         let (key, items) = groups.last().unwrap();
         assert_eq!(key, NO_VALUE);
         assert_eq!(items.len(), 1);
+    }
+
+    #[test]
+    fn field_group_keys_handles_primitive_scalars() {
+        // Bool, Number and Timestamp values become readable bucket keys
+        // instead of collapsing into the "(none)" bucket.
+        assert_eq!(
+            field_group_keys(Some(&FieldValue::Bool(true))),
+            vec!["true".to_string()]
+        );
+        assert_eq!(
+            field_group_keys(Some(&FieldValue::Bool(false))),
+            vec!["false".to_string()]
+        );
+        assert_eq!(
+            field_group_keys(Some(&FieldValue::Number(42.0))),
+            vec!["42".to_string()]
+        );
+        assert_eq!(field_group_keys(None), vec![NO_VALUE.to_string()]);
     }
 
     #[test]

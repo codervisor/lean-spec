@@ -138,13 +138,11 @@ fn build_relationship_index(docs: &[SpecDoc]) -> RelationshipIndex {
                         .or_default()
                         .push(doc.id.clone());
                 }
-                LINK_DEPENDS_ON => {
-                    if link.target_id != doc.id {
-                        required_by
-                            .entry(link.target_id.clone())
-                            .or_default()
-                            .push(doc.id.clone());
-                    }
+                LINK_DEPENDS_ON if link.target_id != doc.id => {
+                    required_by
+                        .entry(link.target_id.clone())
+                        .or_default()
+                        .push(doc.id.clone());
                 }
                 _ => {}
             }
