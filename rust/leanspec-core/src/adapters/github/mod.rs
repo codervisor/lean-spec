@@ -221,12 +221,24 @@ impl GitHubAdapter {
         repo: impl Into<String>,
         token_env: impl AsRef<str>,
     ) -> Result<Self, AdapterError> {
+        Self::with_base_url(owner, repo, token_env, "https://api.github.com")
+    }
+
+    /// Same as [`Self::new`] but lets callers override the API base URL — used
+    /// for GitHub Enterprise installs (`https://github.acme.corp/api/v3`) and
+    /// for routing test traffic at a mock server.
+    pub fn with_base_url(
+        owner: impl Into<String>,
+        repo: impl Into<String>,
+        token_env: impl AsRef<str>,
+        base_url: impl Into<String>,
+    ) -> Result<Self, AdapterError> {
         let env_name = token_env.as_ref();
         let token = std::env::var(env_name).map_err(|_| AdapterError::AuthError {
             adapter: ADAPTER_NAME.into(),
             reason: format!("environment variable '{env_name}' is not set"),
         })?;
-        Self::with_token(owner, repo, token, "https://api.github.com")
+        Self::with_token(owner, repo, token, base_url)
     }
 
     /// Internal constructor used by tests so the mock server URL can be
@@ -237,6 +249,16 @@ impl GitHubAdapter {
         token: impl Into<String>,
         base_url: impl Into<String>,
     ) -> Result<Self, AdapterError> {
+        let token: String = token.into();
+        // Reject tokens that can't be serialised into an HTTP header up front,
+        // so we surface a clear `AuthError` at construction time instead of
+        // silently sending an empty `Authorization` header and getting back a
+        // confusing 401 later.
+        HeaderValue::from_str(&format!("Bearer {token}")).map_err(|e| AdapterError::AuthError {
+            adapter: ADAPTER_NAME.into(),
+            reason: format!("token is not a valid HTTP header value: {e}"),
+        })?;
+
         let client = Client::builder()
             .user_agent("leanspec-github-adapter")
             .timeout(Duration::from_secs(30))
@@ -249,7 +271,7 @@ impl GitHubAdapter {
             owner: owner.into(),
             repo: repo.into(),
             base_url: base_url.into(),
-            token: token.into(),
+            token,
             client,
             capabilities: build_capabilities(),
             schema: build_schema(),
@@ -264,13 +286,22 @@ impl GitHubAdapter {
         format!("/repos/{}/{}/issues", self.owner, self.repo)
     }
 
+    /// Fetch the repository label set and bake the result into the adapter's
+    /// own schema. Invoked by [`AdapterRegistry::create`] so callers that only
+    /// call `adapter.schema()` see the dynamically resolved options.
+    pub fn resolve_inline(&mut self) -> Result<(), AdapterError> {
+        let mut schema = std::mem::replace(&mut self.schema, build_schema());
+        self.resolve_schema(&mut schema)?;
+        self.schema = schema;
+        Ok(())
+    }
+
     fn auth_headers(&self) -> HeaderMap {
         let mut h = HeaderMap::new();
-        h.insert(
-            AUTHORIZATION,
-            HeaderValue::from_str(&format!("Bearer {}", self.token))
-                .unwrap_or_else(|_| HeaderValue::from_static("")),
-        );
+        // Token shape was validated in `with_token`; this can't fail.
+        let auth = HeaderValue::from_str(&format!("Bearer {}", self.token))
+            .expect("token validated at construction");
+        h.insert(AUTHORIZATION, auth);
         h.insert(
             ACCEPT,
             HeaderValue::from_static("application/vnd.github+json"),
@@ -402,6 +433,12 @@ impl Adapter for GitHubAdapter {
             next = link_next;
         }
 
+        // GitHub does not guarantee label order. Sort by value so the resolved
+        // schema is deterministic — capabilities output and UI diffs stay
+        // stable across runs.
+        tag_options.sort_by(|a, b| a.value.cmp(&b.value));
+        priority_options.sort_by(|a, b| a.value.cmp(&b.value));
+
         for f in schema.fields.iter_mut() {
             if let FieldKind::Enum { options, .. } = &mut f.kind {
                 if f.key == field::TAGS {
@@ -477,7 +514,9 @@ impl Adapter for GitHubAdapter {
 
     fn get(&self, id: &str) -> Result<SpecDoc, AdapterError> {
         let url = self.url(&format!("{}/{}", self.issues_path(), id));
-        let resp = self.send(self.request(Method::GET, &url))?;
+        let resp = self
+            .send(self.request(Method::GET, &url))
+            .map_err(|e| with_not_found_id(e, id))?;
         let value = Self::parse_json(resp)?;
         Ok(issue_to_doc(&value))
     }
@@ -557,41 +596,65 @@ impl Adapter for GitHubAdapter {
             );
         }
 
-        // Labels/priority: when either is set, replace the full label set
-        // GitHub-side using the union of `tags` + the optional priority label.
+        // Labels and priority both live in the same GitHub `labels` array,
+        // but `UpdateRequest` merge semantics say absent fields are kept.
+        // Compute the merged label set so a partial `tags` update doesn't
+        // wipe the priority label (and vice-versa), and per-field clears
+        // only remove the relevant slice of labels.
+        let clears_tags = req.clear.iter().any(|k| k == field::TAGS);
+        let clears_priority = req.clear.iter().any(|k| k == field::PRIORITY);
         let touches_tags = req.fields.contains_key(field::TAGS);
         let touches_priority = req.fields.contains_key(field::PRIORITY);
-        if touches_tags || touches_priority {
-            let mut labels = req
-                .fields
-                .get(field::TAGS)
-                .and_then(|v| v.as_strings())
-                .map(|s| s.to_vec())
-                .unwrap_or_default();
-            if let Some(priority) = req.fields.get(field::PRIORITY).and_then(|v| v.as_str()) {
-                labels.push(format!("{PRIORITY_LABEL_PREFIX}{priority}"));
+
+        if touches_tags || touches_priority || clears_tags || clears_priority {
+            let current = self.fetch_current_labels(id)?;
+            let (mut keep_tags, mut keep_priority): (Vec<String>, Vec<String>) = current
+                .into_iter()
+                .partition(|l| !l.starts_with(PRIORITY_LABEL_PREFIX));
+
+            if touches_tags {
+                keep_tags = req
+                    .fields
+                    .get(field::TAGS)
+                    .and_then(|v| v.as_strings())
+                    .map(|s| s.to_vec())
+                    .unwrap_or_default();
             }
+            if clears_tags {
+                keep_tags.clear();
+            }
+            if touches_priority {
+                let p = req
+                    .fields
+                    .get(field::PRIORITY)
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                keep_priority = vec![format!("{PRIORITY_LABEL_PREFIX}{p}")];
+            }
+            if clears_priority {
+                keep_priority.clear();
+            }
+
+            let mut merged = keep_tags;
+            merged.extend(keep_priority);
             body.insert(
                 "labels".into(),
-                Value::Array(labels.into_iter().map(Value::String).collect()),
+                Value::Array(merged.into_iter().map(Value::String).collect()),
             );
         }
 
-        // Explicit clears.
+        // Non-label clears (assignee). Label clears are handled above so they
+        // can be merged with `tags` / `priority` semantics in one PATCH.
         for key in &req.clear {
-            match key.as_str() {
-                field::ASSIGNEE => {
-                    body.insert("assignees".into(), Value::Array(vec![]));
-                }
-                field::TAGS | field::PRIORITY => {
-                    body.insert("labels".into(), Value::Array(vec![]));
-                }
-                _ => {}
+            if key.as_str() == field::ASSIGNEE {
+                body.insert("assignees".into(), Value::Array(vec![]));
             }
         }
 
         let url = self.url(&format!("{}/{}", self.issues_path(), id));
-        let resp = self.send(self.request(Method::PATCH, &url).json(&Value::Object(body)))?;
+        let resp = self
+            .send(self.request(Method::PATCH, &url).json(&Value::Object(body)))
+            .map_err(|e| with_not_found_id(e, id))?;
         let value = Self::parse_json(resp)?;
         Ok(issue_to_doc(&value))
     }
@@ -601,7 +664,8 @@ impl Adapter for GitHubAdapter {
         // semantics used elsewhere.
         let url = self.url(&format!("{}/{}", self.issues_path(), id));
         let body = json!({ "state": "closed" });
-        self.send(self.request(Method::PATCH, &url).json(&body))?;
+        self.send(self.request(Method::PATCH, &url).json(&body))
+            .map_err(|e| with_not_found_id(e, id))?;
         Ok(())
     }
 
@@ -753,6 +817,41 @@ pub(crate) fn issue_to_doc(issue: &Value) -> SpecDoc {
         updated_at,
         url,
         raw: Some(issue.clone()),
+    }
+}
+
+impl GitHubAdapter {
+    /// Fetch the current labels for an issue, so per-field updates can merge
+    /// rather than overwrite. Used by `update()` to honour
+    /// [`UpdateRequest`]'s "absent keys are kept" contract.
+    fn fetch_current_labels(&self, id: &str) -> Result<Vec<String>, AdapterError> {
+        let url = self.url(&format!("{}/{}", self.issues_path(), id));
+        let resp = self
+            .send(self.request(Method::GET, &url))
+            .map_err(|e| with_not_found_id(e, id))?;
+        let value = Self::parse_json(resp)?;
+        Ok(value
+            .get("labels")
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|l| {
+                        l.as_str()
+                            .map(String::from)
+                            .or_else(|| l.get("name").and_then(|n| n.as_str()).map(String::from))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default())
+    }
+}
+
+/// Re-emit a generic `NotFound(message)` (which `map_error` produces from the
+/// 404 body) as `NotFound(id)` at the call site where `id` is known.
+fn with_not_found_id(err: AdapterError, id: &str) -> AdapterError {
+    match err {
+        AdapterError::NotFound(_) => AdapterError::NotFound(id.to_string()),
+        other => other,
     }
 }
 
@@ -1017,7 +1116,7 @@ mod tests {
     }
 
     #[test]
-    fn get_not_found_maps_to_notfound() {
+    fn get_not_found_carries_requested_id() {
         let mut server = mockito::Server::new();
         server
             .mock("GET", "/repos/octo/demo/issues/999")
@@ -1026,8 +1125,20 @@ mod tests {
             .create();
 
         let a = adapter(&server);
-        let err = a.get("999").unwrap_err();
-        assert!(matches!(err, AdapterError::NotFound(_)), "{err:?}");
+        match a.get("999").unwrap_err() {
+            AdapterError::NotFound(id) => assert_eq!(id, "999"),
+            other => panic!("expected NotFound(\"999\"), got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn invalid_token_fails_at_construction() {
+        // \n is not a legal header byte; HeaderValue::from_str rejects it.
+        match GitHubAdapter::with_token("o", "r", "bad\ntoken", "http://localhost") {
+            Ok(_) => panic!("should reject invalid token"),
+            Err(AdapterError::AuthError { .. }) => {}
+            Err(other) => panic!("expected AuthError, got {other:?}"),
+        }
     }
 
     #[test]
@@ -1209,9 +1320,8 @@ mod tests {
         match &tags.kind {
             FieldKind::Enum { options, .. } => {
                 let values: Vec<&str> = options.iter().map(|o| o.value.as_str()).collect();
-                assert!(values.contains(&"bug"));
-                assert!(values.contains(&"frontend"));
-                assert!(!values.contains(&"priority:high"));
+                // Sorted alphabetically; no `priority:*` labels in `tags`.
+                assert_eq!(values, vec!["bug", "frontend"]);
             }
             _ => panic!("expected enum"),
         }
@@ -1222,6 +1332,196 @@ mod tests {
             }
             _ => panic!("expected enum"),
         }
+    }
+
+    #[test]
+    fn resolve_schema_sorts_options_deterministically() {
+        let mut server = mockito::Server::new();
+        // Intentionally shuffled by `name`.
+        let labels = json!([
+            { "name": "zeta", "color": null, "description": null },
+            { "name": "alpha", "color": null, "description": null },
+            { "name": "priority:medium", "color": null, "description": null },
+            { "name": "priority:critical", "color": null, "description": null }
+        ]);
+        server
+            .mock("GET", "/repos/octo/demo/labels")
+            .match_query(Matcher::Any)
+            .with_status(200)
+            .with_body(labels.to_string())
+            .create();
+
+        let a = adapter(&server);
+        let mut schema = a.schema().clone();
+        a.resolve_schema(&mut schema).unwrap();
+        let tag_values: Vec<String> = match &schema.field(field::TAGS).unwrap().kind {
+            FieldKind::Enum { options, .. } => options.iter().map(|o| o.value.clone()).collect(),
+            _ => unreachable!(),
+        };
+        let pri_values: Vec<String> = match &schema.field(field::PRIORITY).unwrap().kind {
+            FieldKind::Enum { options, .. } => options.iter().map(|o| o.value.clone()).collect(),
+            _ => unreachable!(),
+        };
+        assert_eq!(tag_values, vec!["alpha", "zeta"]);
+        assert_eq!(pri_values, vec!["critical", "medium"]);
+    }
+
+    #[test]
+    fn update_priority_only_preserves_existing_tags() {
+        // Issue 42 currently has labels ["bug", "frontend", "priority:low"];
+        // updating only `priority` must keep `bug` and `frontend`.
+        let mut server = mockito::Server::new();
+        let mut current = sample_issue(42);
+        current["labels"] = json!([
+            { "name": "bug" },
+            { "name": "frontend" },
+            { "name": "priority:low" }
+        ]);
+        server
+            .mock("GET", "/repos/octo/demo/issues/42")
+            .with_status(200)
+            .with_body(current.to_string())
+            .create();
+        let m = server
+            .mock("PATCH", "/repos/octo/demo/issues/42")
+            .match_body(Matcher::PartialJson(json!({
+                "labels": ["bug", "frontend", "priority:high"]
+            })))
+            .with_status(200)
+            .with_body(sample_issue(42).to_string())
+            .create();
+
+        let mut fields = HashMap::new();
+        fields.insert(field::PRIORITY.into(), FieldValue::from("high"));
+
+        let a = adapter(&server);
+        a.update(
+            "42",
+            &UpdateRequest {
+                title: None,
+                fields,
+                clear: vec![],
+                replace_links: None,
+            },
+        )
+        .unwrap();
+        m.assert();
+    }
+
+    #[test]
+    fn update_tags_only_preserves_existing_priority() {
+        let mut server = mockito::Server::new();
+        let mut current = sample_issue(42);
+        current["labels"] = json!([
+            { "name": "bug" },
+            { "name": "priority:critical" }
+        ]);
+        server
+            .mock("GET", "/repos/octo/demo/issues/42")
+            .with_status(200)
+            .with_body(current.to_string())
+            .create();
+        let m = server
+            .mock("PATCH", "/repos/octo/demo/issues/42")
+            .match_body(Matcher::PartialJson(json!({
+                "labels": ["frontend", "backend", "priority:critical"]
+            })))
+            .with_status(200)
+            .with_body(sample_issue(42).to_string())
+            .create();
+
+        let mut fields = HashMap::new();
+        fields.insert(
+            field::TAGS.into(),
+            FieldValue::from(vec!["frontend".to_string(), "backend".to_string()]),
+        );
+
+        let a = adapter(&server);
+        a.update(
+            "42",
+            &UpdateRequest {
+                title: None,
+                fields,
+                clear: vec![],
+                replace_links: None,
+            },
+        )
+        .unwrap();
+        m.assert();
+    }
+
+    #[test]
+    fn clear_priority_keeps_other_labels() {
+        let mut server = mockito::Server::new();
+        let mut current = sample_issue(42);
+        current["labels"] = json!([
+            { "name": "bug" },
+            { "name": "frontend" },
+            { "name": "priority:high" }
+        ]);
+        server
+            .mock("GET", "/repos/octo/demo/issues/42")
+            .with_status(200)
+            .with_body(current.to_string())
+            .create();
+        let m = server
+            .mock("PATCH", "/repos/octo/demo/issues/42")
+            .match_body(Matcher::PartialJson(json!({
+                "labels": ["bug", "frontend"]
+            })))
+            .with_status(200)
+            .with_body(sample_issue(42).to_string())
+            .create();
+
+        let a = adapter(&server);
+        a.update(
+            "42",
+            &UpdateRequest {
+                title: None,
+                fields: HashMap::new(),
+                clear: vec![field::PRIORITY.into()],
+                replace_links: None,
+            },
+        )
+        .unwrap();
+        m.assert();
+    }
+
+    #[test]
+    fn clear_tags_keeps_priority() {
+        let mut server = mockito::Server::new();
+        let mut current = sample_issue(42);
+        current["labels"] = json!([
+            { "name": "bug" },
+            { "name": "frontend" },
+            { "name": "priority:high" }
+        ]);
+        server
+            .mock("GET", "/repos/octo/demo/issues/42")
+            .with_status(200)
+            .with_body(current.to_string())
+            .create();
+        let m = server
+            .mock("PATCH", "/repos/octo/demo/issues/42")
+            .match_body(Matcher::PartialJson(json!({
+                "labels": ["priority:high"]
+            })))
+            .with_status(200)
+            .with_body(sample_issue(42).to_string())
+            .create();
+
+        let a = adapter(&server);
+        a.update(
+            "42",
+            &UpdateRequest {
+                title: None,
+                fields: HashMap::new(),
+                clear: vec![field::TAGS.into()],
+                replace_links: None,
+            },
+        )
+        .unwrap();
+        m.assert();
     }
 
     #[test]

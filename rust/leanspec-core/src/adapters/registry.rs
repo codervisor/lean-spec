@@ -52,7 +52,16 @@ impl AdapterRegistry {
                     .get("token_env")
                     .and_then(|v| v.as_str())
                     .unwrap_or("GITHUB_TOKEN");
-                Ok(Box::new(GitHubAdapter::new(owner, repo, token_env)?))
+                let mut adapter = match config.settings.get("base_url").and_then(|v| v.as_str()) {
+                    Some(base) => GitHubAdapter::with_base_url(owner, repo, token_env, base)?,
+                    None => GitHubAdapter::new(owner, repo, token_env)?,
+                };
+                // Bake the project's actual labels into the adapter's schema
+                // so `leanspec capabilities` shows them rather than empty
+                // dynamic enum slots. Transient failures here are fatal: an
+                // unreachable GitHub means the adapter is unusable anyway.
+                adapter.resolve_inline()?;
+                Ok(Box::new(adapter))
             }
             #[cfg(not(feature = "github"))]
             "github" => Err(AdapterError::ConfigError(
@@ -198,7 +207,18 @@ mod tests {
 
     #[cfg(feature = "github")]
     #[test]
-    fn create_github_adapter() {
+    fn create_github_adapter_resolves_labels() {
+        let mut server = mockito::Server::new();
+        server
+            .mock("GET", "/repos/acme/backend/labels")
+            .match_query(mockito::Matcher::UrlEncoded(
+                "per_page".into(),
+                "100".into(),
+            ))
+            .with_status(200)
+            .with_body(r#"[{"name":"bug","color":"ff0000"}]"#)
+            .create();
+
         std::env::set_var("LEANSPEC_TEST_GH_TOKEN", "fake-token");
         let cfg = AdapterConfig {
             adapter: "github".into(),
@@ -206,10 +226,20 @@ mod tests {
                 "owner": "acme",
                 "repo": "backend",
                 "token_env": "LEANSPEC_TEST_GH_TOKEN",
+                "base_url": server.url(),
             }),
         };
         let adapter = AdapterRegistry::create(&cfg).unwrap();
         assert_eq!(adapter.capabilities().name, "github");
+        // resolve_inline must have run — the schema should carry the live
+        // repo's `bug` label in the `tags` enum.
+        let tags = adapter.schema().field("tags").unwrap();
+        match &tags.kind {
+            crate::model::FieldKind::Enum { options, .. } => {
+                assert!(options.iter().any(|o| o.value == "bug"));
+            }
+            _ => panic!("expected enum tags field"),
+        }
         std::env::remove_var("LEANSPEC_TEST_GH_TOKEN");
     }
 
