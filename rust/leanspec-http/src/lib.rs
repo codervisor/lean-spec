@@ -22,6 +22,7 @@
 //! }
 //! ```
 
+pub mod adapter_resolution;
 pub mod config;
 pub mod error;
 pub mod handlers;

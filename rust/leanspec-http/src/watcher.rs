@@ -1,11 +1,17 @@
 //! File watcher for spec changes
+//!
+//! File watching is markdown-specific — the watcher tracks on-disk markdown
+//! roots and invalidates the markdown adapter's cache when files change.
+//! For non-markdown adapters file watching is a no-op (the project root is
+//! simply not registered with the watcher).
 
 use crate::error::ServerError;
-use leanspec_core::SpecLoader;
+use leanspec_core::adapters::markdown::MarkdownAdapter;
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::runtime::Handle;
 use tokio::sync::{broadcast, mpsc};
@@ -25,6 +31,20 @@ pub struct SpecChangeEvent {
     pub path: String,
 }
 
+/// One watched markdown root with the typed adapter handle for cache
+/// invalidation.
+pub struct MarkdownWatchTarget {
+    pub specs_dir: PathBuf,
+    pub adapter: Arc<MarkdownAdapter>,
+}
+
+impl MarkdownWatchTarget {
+    pub fn new(specs_dir: PathBuf) -> Self {
+        let adapter = Arc::new(MarkdownAdapter::new(&specs_dir));
+        Self { specs_dir, adapter }
+    }
+}
+
 pub struct FileWatcher {
     _watcher: RecommendedWatcher,
     tx: broadcast::Sender<SpecChangeEvent>,
@@ -32,7 +52,7 @@ pub struct FileWatcher {
 }
 
 impl FileWatcher {
-    pub fn new(roots: Vec<PathBuf>, debounce: Duration) -> Result<Self, ServerError> {
+    pub fn new(targets: Vec<MarkdownWatchTarget>, debounce: Duration) -> Result<Self, ServerError> {
         let (tx, _) = broadcast::channel(200);
         let (raw_tx, mut raw_rx) = mpsc::unbounded_channel::<Event>();
 
@@ -43,13 +63,21 @@ impl FileWatcher {
         })
         .map_err(|e| ServerError::ServerError(format!("Failed to start watcher: {e}")))?;
 
-        for root in &roots {
-            watcher.watch(root, RecursiveMode::Recursive).map_err(|e| {
-                ServerError::ServerError(format!("Failed to watch {}: {e}", root.display()))
-            })?;
+        for target in &targets {
+            watcher
+                .watch(&target.specs_dir, RecursiveMode::Recursive)
+                .map_err(|e| {
+                    ServerError::ServerError(format!(
+                        "Failed to watch {}: {e}",
+                        target.specs_dir.display()
+                    ))
+                })?;
         }
 
-        let roots_clone = roots.clone();
+        let targets = Arc::new(targets);
+        let roots: Vec<PathBuf> = targets.iter().map(|t| t.specs_dir.clone()).collect();
+        let targets_for_loop = targets.clone();
+        let roots_for_loop = roots.clone();
         let tx_clone = tx.clone();
         let debounce_interval = if debounce.is_zero() {
             Duration::from_millis(300)
@@ -75,8 +103,13 @@ impl FileWatcher {
                                     continue;
                                 }
 
-                                // Keep core spec cache coherent with on-disk changes.
-                                SpecLoader::invalidate_cached_path(&path);
+                                // Keep the markdown adapter's spec cache
+                                // coherent with on-disk changes.
+                                for target in targets_for_loop.iter() {
+                                    if path.starts_with(&target.specs_dir) {
+                                        target.adapter.invalidate_path(&path);
+                                    }
+                                }
 
                                 pending.insert(path, (kind, Instant::now()));
                             }
@@ -91,7 +124,7 @@ impl FileWatcher {
                         std::mem::swap(&mut drained, &mut pending);
 
                         for (path, (kind, _)) in drained {
-                            if let Some(event) = to_spec_event(&roots_clone, path, kind) {
+                            if let Some(event) = to_spec_event(&roots_for_loop, path, kind) {
                                 let _ = tx_clone.send(event);
                             }
                         }

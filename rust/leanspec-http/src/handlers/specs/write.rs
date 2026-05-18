@@ -1,24 +1,31 @@
 //! Spec write handlers: create, update, toggle, batch metadata
+//!
+//! The HTTP read path is adapter-driven (see [`super::read`] and spec #261).
+//! Write handlers in this module use the adapter API for create/update/delete
+//! and the markdown adapter's typed helpers (`SpecInfo`,
+//! `CompletionVerifier`) for markdown-specific behaviour like umbrella
+//! completion checks and template rendering. Full migration to a
+//! schema-driven write path lives in spec #262.
 
 #![allow(clippy::result_large_err)]
 
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum::Json;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path as FsPath;
 use std::sync::{LazyLock, RwLock};
 
+use axum::extract::{Path, State};
+use axum::http::StatusCode;
+use axum::Json;
+
+use leanspec_core::adapters::markdown::{SpecInfo, SpecStatus};
+use leanspec_core::adapters::ListFilter;
 use leanspec_core::io::hash_content;
-use leanspec_core::spec_ops::{
-    apply_checklist_toggles, rebuild_content, split_frontmatter, ChecklistToggle,
-};
 use leanspec_core::{
-    global_frontmatter_validator, global_structure_validator, global_token_count_validator,
-    global_token_counter, CompletionVerifier, FrontmatterParser,
-    MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecStatus, SpecWriter, TemplateLoader,
-    TokenStatus, ValidationResult,
+    apply_checklist_toggles, global_frontmatter_validator, global_structure_validator,
+    global_token_count_validator, global_token_counter, rebuild_content, semantic,
+    split_frontmatter, ChecklistToggle, CompletionVerifier, FieldValue, FrontmatterParser, SpecDoc,
+    SpecSchema, TemplateLoader, TokenStatus, UpdateRequest, ValidationResult,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -26,14 +33,16 @@ use crate::state::AppState;
 
 use crate::types::{
     BatchMetadataRequest, BatchMetadataResponse, ChecklistToggleRequest, ChecklistToggleResponse,
-    ChecklistToggledResult, CreateSpecRequest, MetadataUpdate, SpecDetail, SpecMetadata,
-    SpecRawResponse, SpecRawUpdateRequest,
+    ChecklistToggledResult, CreateSpecRequest, FrontmatterResponse, MetadataUpdate, SpecDetail,
+    SpecMetadata, SpecRawResponse, SpecRawUpdateRequest, UpdateMetadataResponse,
 };
 
-use super::helpers::{get_spec_loader, hash_raw_content, load_project_config};
+use super::helpers::{
+    adapter_error, get_adapter_and_project, hash_raw_content, invalid_spec_id, load_project_config,
+    require_markdown_adapter, resolve_markdown_spec_path,
+};
 
 // In-process cache for expensive batch metadata computation.
-// Keyed by project/spec and invalidated implicitly when content hash changes.
 static BATCH_METADATA_CACHE: LazyLock<RwLock<HashMap<String, (String, SpecMetadata)>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
 
@@ -46,7 +55,6 @@ fn render_template(template: &str, name: &str, status: &str, priority: &str, dat
 }
 
 /// Check if draft status is enabled in project config.
-/// Uses a local struct since leanspec_core::LeanSpecConfig doesn't have draft_status.
 fn is_draft_status_enabled(project_path: &FsPath) -> bool {
     #[derive(serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
@@ -70,19 +78,49 @@ fn is_draft_status_enabled(project_path: &FsPath) -> bool {
         .unwrap_or(false)
 }
 
-fn rebuild_with_frontmatter(
-    frontmatter: &leanspec_core::SpecFrontmatter,
-    body: &str,
-) -> Result<String, (StatusCode, Json<ApiError>)> {
-    let yaml = serde_yaml::to_string(frontmatter).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+fn doc_field_str<'a>(doc: &'a SpecDoc, key: &str) -> Option<&'a str> {
+    doc.fields.get(key)?.as_str()
+}
 
-    let trimmed_body = body.trim_start_matches('\n');
-    Ok(format!("---\n{}---\n{}", yaml, trimmed_body))
+fn semantic_value<'a>(doc: &'a SpecDoc, schema: &SpecSchema, sem: &str) -> Option<&'a str> {
+    doc_field_str(doc, schema.key_for_semantic(sem)?)
+}
+
+fn validate_enum_value(
+    schema: &SpecSchema,
+    field_key: &str,
+    value: &str,
+) -> Result<(), (StatusCode, Json<ApiError>)> {
+    use leanspec_core::FieldKind;
+
+    let Some(field) = schema.field(field_key) else {
+        return Ok(());
+    };
+    let FieldKind::Enum {
+        options,
+        allow_custom,
+        ..
+    } = &field.kind
+    else {
+        return Ok(());
+    };
+
+    if *allow_custom || options.is_empty() {
+        return Ok(());
+    }
+
+    if options.iter().any(|o| o.value == value) {
+        Ok(())
+    } else {
+        let valid: Vec<String> = options.iter().map(|o| o.value.clone()).collect();
+        Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(
+                ApiError::invalid_request(&format!("Invalid value for {}: '{}'", field_key, value))
+                    .with_details(serde_json::json!({ "validValues": valid })),
+            ),
+        ))
+    }
 }
 
 /// POST /api/projects/:projectId/specs - Create a spec in a project
@@ -91,12 +129,23 @@ pub async fn create_project_spec(
     Path(project_id): Path<String>,
     Json(request): Json<CreateSpecRequest>,
 ) -> ApiResult<Json<SpecDetail>> {
-    let (loader, project) = get_spec_loader(&state, &project_id).await?;
+    let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
+    require_markdown_adapter(adapter.as_ref())?;
+
     let spec_name = request.name.trim();
     if spec_name.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ApiError::invalid_request("Spec name is required")),
+        ));
+    }
+    // Refuse names that could escape the project's specs directory.
+    if invalid_spec_id(spec_name) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request(
+                "Spec name must not contain path separators, '..', or absolute paths",
+            )),
         ));
     }
 
@@ -156,34 +205,50 @@ pub async fn create_project_spec(
     if let Ok(parsed) = status.parse() {
         frontmatter.status = parsed;
     }
-
     if let Ok(parsed) = priority.parse() {
         frontmatter.priority = Some(parsed);
     }
-
     if let Some(tags) = request.tags.clone() {
         frontmatter.tags = tags;
     }
-
     if let Some(assignee) = request.assignee.clone() {
         frontmatter.assignee = Some(assignee);
     }
-
     if let Some(depends_on) = request.depends_on.clone() {
         frontmatter.depends_on = depends_on;
     }
 
-    let full_content = rebuild_with_frontmatter(&frontmatter, &body)?;
-    let created = loader
-        .create_spec(spec_name, &title, &full_content)
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?;
+    let yaml = serde_yaml::to_string(&frontmatter).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+    let trimmed_body = body.trim_start_matches('\n');
+    let full_content = format!("---\n{}---\n{}", yaml, trimmed_body);
 
-    Ok(Json(SpecDetail::from(&created)))
+    // Write the spec directly through the filesystem (markdown adapter
+    // semantics) and then re-fetch it via the adapter for the response.
+    fs::create_dir_all(&spec_dir).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+    fs::write(spec_dir.join("README.md"), &full_content).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let doc = adapter.get(spec_name).map_err(adapter_error)?;
+    let mut detail =
+        SpecDetail::from_doc(&doc, adapter.schema()).with_project_id(project.id.clone());
+    if let Some(path) = resolve_markdown_spec_path(&project.specs_dir, spec_name) {
+        detail = detail.with_file_path(path.to_string_lossy().to_string());
+    }
+    Ok(Json(detail))
 }
 
 /// PATCH /api/projects/:projectId/specs/:spec/raw - Update raw spec content
@@ -192,22 +257,19 @@ pub async fn update_project_spec_raw(
     Path((project_id, spec_id)): Path<(String, String)>,
     Json(request): Json<SpecRawUpdateRequest>,
 ) -> ApiResult<Json<SpecRawResponse>> {
-    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
-    let spec = loader.load(&spec_id).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+    let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
+    require_markdown_adapter(adapter.as_ref())?;
 
-    let spec = spec.ok_or_else(|| {
+    adapter.get(&spec_id).map_err(adapter_error)?;
+
+    let file_path = resolve_markdown_spec_path(&project.specs_dir, &spec_id).ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
             Json(ApiError::spec_not_found(&spec_id)),
         )
     })?;
 
-    let current = fs::read_to_string(&spec.file_path).map_err(|e| {
+    let current = fs::read_to_string(&file_path).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&e.to_string())),
@@ -224,20 +286,20 @@ pub async fn update_project_spec_raw(
         }
     }
 
-    // Write directly to the resolved file_path (spec.file_path) instead of
-    // calling update_spec(&spec_id, ..) which doesn't do fuzzy path resolution.
-    fs::write(&spec.file_path, &request.content).map_err(|e| {
+    fs::write(&file_path, &request.content).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&e.to_string())),
         )
     })?;
 
+    invalidate_markdown_cache(&project.specs_dir, &file_path);
+
     let new_hash = hash_raw_content(&request.content);
     Ok(Json(SpecRawResponse {
         content: request.content,
         content_hash: new_hash,
-        file_path: spec.file_path.to_string_lossy().to_string(),
+        file_path: file_path.to_string_lossy().to_string(),
     }))
 }
 
@@ -247,22 +309,19 @@ pub async fn toggle_project_spec_checklist(
     Path((project_id, spec_id)): Path<(String, String)>,
     Json(request): Json<ChecklistToggleRequest>,
 ) -> ApiResult<Json<ChecklistToggleResponse>> {
-    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
-    let spec = loader.load(&spec_id).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+    let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
+    require_markdown_adapter(adapter.as_ref())?;
 
-    let spec = spec.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError::spec_not_found(&spec_id)),
-        )
-    })?;
+    adapter.get(&spec_id).map_err(adapter_error)?;
 
-    // Determine file path: main spec or sub-spec
+    let spec_readme =
+        resolve_markdown_spec_path(&project.specs_dir, &spec_id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError::spec_not_found(&spec_id)),
+            )
+        })?;
+
     let file_path = if let Some(ref subspec_file) = request.subspec {
         if subspec_file.contains('/') || subspec_file.contains('\\') {
             return Err((
@@ -270,7 +329,7 @@ pub async fn toggle_project_spec_checklist(
                 Json(ApiError::invalid_request("Invalid sub-spec file")),
             ));
         }
-        let parent_dir = spec.file_path.parent().ok_or_else(|| {
+        let parent_dir = spec_readme.parent().ok_or_else(|| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ApiError::internal_error("Missing spec directory")),
@@ -285,7 +344,7 @@ pub async fn toggle_project_spec_checklist(
         }
         sub_path
     } else {
-        spec.file_path.clone()
+        spec_readme
     };
 
     let content = fs::read_to_string(&file_path).map_err(|e| {
@@ -296,7 +355,6 @@ pub async fn toggle_project_spec_checklist(
     })?;
     let current_hash = hash_raw_content(&content);
 
-    // Verify content hash if provided
     if let Some(expected) = &request.expected_content_hash {
         if expected != &current_hash {
             return Err((
@@ -306,10 +364,8 @@ pub async fn toggle_project_spec_checklist(
         }
     }
 
-    // Split frontmatter from body for main spec files
     let (frontmatter, body) = split_frontmatter(&content);
 
-    // Convert request toggles to core ChecklistToggle
     let toggles: Vec<ChecklistToggle> = request
         .toggles
         .iter()
@@ -319,20 +375,19 @@ pub async fn toggle_project_spec_checklist(
         })
         .collect();
 
-    // Apply checklist toggles to the body
     let (updated_body, results) = apply_checklist_toggles(&body, &toggles)
         .map_err(|e| (StatusCode::BAD_REQUEST, Json(ApiError::invalid_request(&e))))?;
 
-    // Rebuild the full content
     let updated_content = rebuild_content(frontmatter, &updated_body);
 
-    // Write updated content back to the file
     fs::write(&file_path, &updated_content).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&e.to_string())),
         )
     })?;
+
+    invalidate_markdown_cache(&project.specs_dir, &file_path);
 
     let new_hash = hash_raw_content(&updated_content);
 
@@ -363,22 +418,19 @@ pub async fn update_project_subspec_raw(
         ));
     }
 
-    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
-    let spec = loader.load(&spec_id).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+    let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
+    require_markdown_adapter(adapter.as_ref())?;
 
-    let spec = spec.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError::spec_not_found(&spec_id)),
-        )
-    })?;
+    adapter.get(&spec_id).map_err(adapter_error)?;
 
-    let parent_dir = spec.file_path.parent().ok_or_else(|| {
+    let spec_readme =
+        resolve_markdown_spec_path(&project.specs_dir, &spec_id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError::spec_not_found(&spec_id)),
+            )
+        })?;
+    let parent_dir = spec_readme.parent().ok_or_else(|| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error("Missing spec directory")),
@@ -417,6 +469,8 @@ pub async fn update_project_subspec_raw(
         )
     })?;
 
+    invalidate_markdown_cache(&project.specs_dir, &file_path);
+
     let new_hash = hash_raw_content(&request.content);
     Ok(Json(SpecRawResponse {
         content: request.content,
@@ -430,26 +484,19 @@ pub async fn update_project_metadata(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
     Json(updates): Json<MetadataUpdate>,
-) -> ApiResult<Json<crate::types::UpdateMetadataResponse>> {
-    let (loader, project) = get_spec_loader(&state, &project_id).await?;
+) -> ApiResult<Json<UpdateMetadataResponse>> {
+    let (adapter, _project) = get_adapter_and_project(&state, &project_id).await?;
+    let schema = adapter.schema();
 
-    // Verify spec exists
-    let spec = loader.load(&spec_id).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-
-    if spec.is_none() {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ApiError::spec_not_found(&spec_id)),
-        ));
-    }
+    let current_doc = adapter.get(&spec_id).map_err(adapter_error)?;
 
     if let Some(expected_hash) = &updates.expected_content_hash {
-        let current_hash = hash_content(&spec.as_ref().unwrap().content);
+        let content = current_doc
+            .fields
+            .get("content")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let current_hash = hash_content(content);
         if expected_hash != &current_hash {
             return Err((
                 StatusCode::CONFLICT,
@@ -458,178 +505,164 @@ pub async fn update_project_metadata(
         }
     }
 
-    // Check if status is being updated to "archived"
-    let is_archiving = updates
-        .status
-        .as_ref()
-        .map(|s| s == "archived")
-        .unwrap_or(false);
-
-    // If archiving, use the archiver to set status (no file move)
-    if is_archiving {
-        let archiver = SpecArchiver::new(&project.specs_dir);
-        archiver.archive(&spec_id).map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?;
-
-        // Reload the spec from the same location (status-only archiving)
-        let updated_spec = loader.load(&spec_id).map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?;
-
-        let frontmatter = updated_spec
-            .ok_or_else(|| {
-                (
-                    StatusCode::NOT_FOUND,
-                    Json(ApiError::spec_not_found(&spec_id)),
-                )
-            })?
-            .frontmatter;
-
-        return Ok(Json(crate::types::UpdateMetadataResponse {
-            success: true,
-            spec_id: spec_id.clone(),
-            frontmatter: crate::types::FrontmatterResponse::from(&frontmatter),
-        }));
-    }
-
-    // Convert HTTP metadata update to core metadata update
-    let mut core_updates = CoreMetadataUpdate::new();
-    let spec_info = spec.as_ref().unwrap();
-    let mut depends_on = spec_info.frontmatter.depends_on.clone();
-
-    if let Some(additions) = &updates.add_depends_on {
-        for dep in additions {
-            if dep == &spec_id {
-                return Err((
-                    StatusCode::BAD_REQUEST,
-                    Json(ApiError::invalid_request("Spec cannot depend on itself")),
-                ));
-            }
-            if !depends_on.contains(dep) {
-                depends_on.push(dep.clone());
-            }
-        }
-    }
-
-    if let Some(removals) = &updates.remove_depends_on {
-        depends_on.retain(|dep| !removals.contains(dep));
-    }
+    // Build the UpdateRequest from the inbound patch.
+    let mut req_fields: HashMap<String, FieldValue> = HashMap::new();
+    let mut replace_links: Option<Vec<leanspec_core::ItemLink>> = None;
 
     if let Some(status_str) = &updates.status {
-        let status: SpecStatus = status_str.parse().map_err(|_| {
-            (
-                StatusCode::BAD_REQUEST,
-                Json(ApiError::invalid_request(&format!(
-                    "Invalid status: {}",
-                    status_str
-                ))),
-            )
-        })?;
+        if let Some(key) = schema.key_for_semantic(semantic::STATUS) {
+            validate_enum_value(schema, key, status_str)?;
 
-        if spec_info.frontmatter.status == SpecStatus::Draft
-            && matches!(status, SpecStatus::InProgress | SpecStatus::Complete)
-            && !updates.force.unwrap_or(false)
-        {
-            return Err((
-                StatusCode::BAD_REQUEST,
-                Json(ApiError::invalid_request(
-                    "Cannot skip 'planned' stage. Use force to override.",
-                )),
-            ));
-        }
+            // Markdown-specific transition checks for backwards compatibility.
+            if adapter.capabilities().name == "markdown" {
+                let current_status_str =
+                    semantic_value(&current_doc, schema, semantic::STATUS).unwrap_or("");
+                if current_status_str == "draft"
+                    && matches!(status_str.as_str(), "in-progress" | "complete")
+                    && !updates.force.unwrap_or(false)
+                {
+                    return Err((
+                        StatusCode::BAD_REQUEST,
+                        Json(ApiError::invalid_request(
+                            "Cannot skip 'planned' stage. Use force to override.",
+                        )),
+                    ));
+                }
 
-        // Check umbrella completion when marking as complete
-        if status == SpecStatus::Complete && !updates.force.unwrap_or(false) {
-            let all_specs = loader.load_all().map_err(|e| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiError::internal_error(&e.to_string())),
-                )
-            })?;
-
-            let umbrella_verification =
-                CompletionVerifier::verify_umbrella_completion(&spec_id, &all_specs);
-
-            if !umbrella_verification.is_complete {
-                let incomplete_paths: Vec<_> = umbrella_verification
-                    .incomplete_children
-                    .iter()
-                    .map(|c| format!("{} ({})", c.path, c.status))
-                    .collect();
-
-                return Err((
-                    StatusCode::BAD_REQUEST,
-                    Json(ApiError::invalid_request(&format!(
-                        "Cannot mark umbrella spec complete: {} child spec(s) are not complete: {}",
-                        umbrella_verification.incomplete_children.len(),
-                        incomplete_paths.join(", ")
-                    ))),
-                ));
+                if status_str == "complete" && !updates.force.unwrap_or(false) {
+                    // Umbrella completion check still uses markdown's
+                    // SpecInfo-typed verifier. The check loads every spec
+                    // through the adapter and projects them to SpecInfo.
+                    let all_docs = adapter
+                        .list(&ListFilter {
+                            include_archived: true,
+                            ..Default::default()
+                        })
+                        .map_err(adapter_error)?;
+                    let all_specs = docs_to_spec_info(&all_docs, schema);
+                    let umbrella =
+                        CompletionVerifier::verify_umbrella_completion(&spec_id, &all_specs);
+                    if !umbrella.is_complete {
+                        let names: Vec<_> = umbrella
+                            .incomplete_children
+                            .iter()
+                            .map(|c| format!("{} ({})", c.path, c.status))
+                            .collect();
+                        return Err((
+                            StatusCode::BAD_REQUEST,
+                            Json(ApiError::invalid_request(&format!(
+                                "Cannot mark umbrella spec complete: {} child spec(s) are not complete: {}",
+                                umbrella.incomplete_children.len(),
+                                names.join(", ")
+                            ))),
+                        ));
+                    }
+                }
             }
-        }
 
-        core_updates = core_updates.with_status(status);
+            req_fields.insert(key.to_string(), FieldValue::String(status_str.clone()));
+        }
     }
 
     if let Some(priority_str) = &updates.priority {
-        let priority = priority_str.parse().map_err(|_| {
-            (
-                StatusCode::BAD_REQUEST,
-                Json(ApiError::invalid_request(&format!(
-                    "Invalid priority: {}",
-                    priority_str
-                ))),
-            )
-        })?;
-        core_updates = core_updates.with_priority(priority);
+        if let Some(key) = schema.key_for_semantic(semantic::PRIORITY) {
+            validate_enum_value(schema, key, priority_str)?;
+            req_fields.insert(key.to_string(), FieldValue::String(priority_str.clone()));
+        }
     }
 
-    if let Some(tags) = updates.tags {
-        core_updates = core_updates.with_tags(tags);
+    if let Some(tags) = &updates.tags {
+        if let Some(key) = schema.key_for_semantic(semantic::TAGS) {
+            req_fields.insert(key.to_string(), FieldValue::Strings(tags.clone()));
+        }
     }
 
-    if let Some(assignee) = updates.assignee {
-        core_updates = core_updates.with_assignee(assignee);
+    if let Some(assignee) = &updates.assignee {
+        if let Some(key) = schema.key_for_semantic(semantic::ASSIGNEE) {
+            req_fields.insert(key.to_string(), FieldValue::String(assignee.clone()));
+        }
     }
 
+    // Depends-on adjustments preserve existing entries and apply add/remove
+    // deltas on top.
     if updates.add_depends_on.is_some() || updates.remove_depends_on.is_some() {
-        core_updates = core_updates.with_depends_on(depends_on);
+        let mut depends: Vec<String> = current_doc
+            .links
+            .iter()
+            .filter(|l| l.link_type == "depends_on")
+            .map(|l| l.target_id.clone())
+            .collect();
+
+        if let Some(additions) = &updates.add_depends_on {
+            for dep in additions {
+                if dep == &spec_id {
+                    return Err((
+                        StatusCode::BAD_REQUEST,
+                        Json(ApiError::invalid_request("Spec cannot depend on itself")),
+                    ));
+                }
+                if !depends.contains(dep) {
+                    depends.push(dep.clone());
+                }
+            }
+        }
+        if let Some(removals) = &updates.remove_depends_on {
+            depends.retain(|d| !removals.contains(d));
+        }
+
+        let mut new_links: Vec<leanspec_core::ItemLink> = current_doc
+            .links
+            .iter()
+            .filter(|l| l.link_type != "depends_on")
+            .cloned()
+            .collect();
+        for target in depends {
+            new_links.push(leanspec_core::ItemLink {
+                link_type: "depends_on".into(),
+                target_id: target,
+                target_title: None,
+            });
+        }
+        replace_links = Some(new_links);
     }
 
     if let Some(parent) = updates.parent {
-        if let Some(parent_name) = parent.as_deref() {
-            if parent_name == spec_id {
+        // `Some(Some(name))` sets a parent, `Some(None)` clears it.
+        let mut links: Vec<leanspec_core::ItemLink> = replace_links
+            .clone()
+            .unwrap_or_else(|| current_doc.links.clone())
+            .into_iter()
+            .filter(|l| l.link_type != "parent")
+            .collect();
+        if let Some(name) = parent {
+            if name == spec_id {
                 return Err((
                     StatusCode::BAD_REQUEST,
                     Json(ApiError::invalid_request("Spec cannot be its own parent")),
                 ));
             }
+            links.push(leanspec_core::ItemLink {
+                link_type: "parent".into(),
+                target_id: name,
+                target_title: None,
+            });
         }
-        core_updates = core_updates.with_parent(parent);
+        replace_links = Some(links);
     }
 
-    // Update metadata using spec writer
-    let writer = SpecWriter::new(&project.specs_dir);
-    let frontmatter = writer
-        .update_metadata(&spec_id, core_updates)
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?;
+    let update = UpdateRequest {
+        title: None,
+        fields: req_fields,
+        clear: Vec::new(),
+        replace_links,
+    };
 
-    Ok(Json(crate::types::UpdateMetadataResponse {
+    let updated = adapter.update(&spec_id, &update).map_err(adapter_error)?;
+
+    Ok(Json(UpdateMetadataResponse {
         success: true,
         spec_id: spec_id.clone(),
-        frontmatter: crate::types::FrontmatterResponse::from(&frontmatter),
+        frontmatter: FrontmatterResponse::from_doc(&updated, schema),
     }))
 }
 
@@ -639,17 +672,15 @@ pub async fn batch_spec_metadata(
     Path(project_id): Path<String>,
     Json(request): Json<BatchMetadataRequest>,
 ) -> ApiResult<Json<BatchMetadataResponse>> {
-    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
+    let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
 
-    let all_specs = loader.load_all().map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-
-    // Build a map of spec_name -> SpecInfo for quick lookup
-    let spec_map: HashMap<String, _> = all_specs.iter().map(|s| (s.path.clone(), s)).collect();
+    let docs = adapter
+        .list(&ListFilter {
+            include_archived: true,
+            ..Default::default()
+        })
+        .map_err(adapter_error)?;
+    let doc_map: HashMap<String, &SpecDoc> = docs.iter().map(|d| (d.id.clone(), d)).collect();
 
     let counter = global_token_counter();
     let fm_validator = global_frontmatter_validator();
@@ -659,59 +690,164 @@ pub async fn batch_spec_metadata(
     let mut result: HashMap<String, SpecMetadata> = HashMap::new();
 
     for spec_name in &request.spec_names {
-        if let Some(spec) = spec_map.get(spec_name) {
-            let content_hash = hash_content(&spec.content);
-            let cache_key = format!("{}::{}", project_id, spec_name);
+        let Some(doc) = doc_map.get(spec_name) else {
+            continue;
+        };
+        let content = doc
+            .fields
+            .get("content")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let content_hash = hash_content(content);
+        let cache_key = format!("{}::{}", project_id, spec_name);
 
-            if let Ok(cache) = BATCH_METADATA_CACHE.read() {
-                if let Some((cached_hash, cached_metadata)) = cache.get(&cache_key) {
-                    if cached_hash == &content_hash {
-                        result.insert(spec_name.clone(), cached_metadata.clone());
-                        continue;
-                    }
+        if let Ok(cache) = BATCH_METADATA_CACHE.read() {
+            if let Some((cached_hash, cached_metadata)) = cache.get(&cache_key) {
+                if cached_hash == &content_hash {
+                    result.insert(spec_name.clone(), cached_metadata.clone());
+                    continue;
                 }
             }
+        }
 
-            // Compute token count (simple version - no detailed breakdown)
-            let (total, status) = counter.count_spec_simple(&spec.content);
-            let token_status_str = match status {
-                TokenStatus::Optimal => "optimal",
-                TokenStatus::Good => "good",
-                TokenStatus::Warning => "warning",
-                TokenStatus::Excessive => "critical",
-            };
+        let (total, status) = counter.count_spec_simple(content);
+        let token_status_str = match status {
+            TokenStatus::Optimal => "optimal",
+            TokenStatus::Good => "good",
+            TokenStatus::Warning => "warning",
+            TokenStatus::Excessive => "critical",
+        };
 
-            // Compute validation status
-            let mut validation_result = ValidationResult::new(&spec.path);
-            validation_result.merge(fm_validator.validate(spec));
-            validation_result.merge(struct_validator.validate(spec));
-            validation_result.merge(token_validator.validate(spec));
+        let validation_status_str = if adapter.capabilities().name == "markdown" {
+            // Reconstruct SpecInfo from the on-disk file for the markdown
+            // validators. Non-markdown adapters get "pass" by default until
+            // schema-driven validation lands in spec #262.
+            match resolve_markdown_spec_path(&project.specs_dir, spec_name) {
+                Some(file_path) => match build_spec_info(doc, file_path) {
+                    Some(info) => {
+                        let mut validation_result = ValidationResult::new(&info.path);
+                        validation_result.merge(fm_validator.validate(&info));
+                        validation_result.merge(struct_validator.validate(&info));
+                        validation_result.merge(token_validator.validate(&info));
 
-            let validation_status_str = if validation_result.errors.is_empty() {
-                "pass"
-            } else if validation_result
-                .errors
-                .iter()
-                .any(|e| e.severity == leanspec_core::ErrorSeverity::Error)
-            {
-                "fail"
-            } else {
-                "warn"
-            };
-
-            let metadata = SpecMetadata {
-                token_count: total,
-                token_status: token_status_str.to_string(),
-                validation_status: validation_status_str.to_string(),
-            };
-
-            result.insert(spec_name.clone(), metadata.clone());
-
-            if let Ok(mut cache) = BATCH_METADATA_CACHE.write() {
-                cache.insert(cache_key, (content_hash, metadata));
+                        if validation_result.errors.is_empty() {
+                            "pass"
+                        } else if validation_result
+                            .errors
+                            .iter()
+                            .any(|e| e.severity == leanspec_core::ErrorSeverity::Error)
+                        {
+                            "fail"
+                        } else {
+                            "warn"
+                        }
+                    }
+                    None => "pass",
+                },
+                None => "pass",
             }
+        } else {
+            "pass"
+        };
+
+        let metadata = SpecMetadata {
+            token_count: total,
+            token_status: token_status_str.to_string(),
+            validation_status: validation_status_str.to_string(),
+        };
+
+        result.insert(spec_name.clone(), metadata.clone());
+
+        if let Ok(mut cache) = BATCH_METADATA_CACHE.write() {
+            cache.insert(cache_key, (content_hash, metadata));
         }
     }
 
     Ok(Json(BatchMetadataResponse { specs: result }))
+}
+
+/// Invalidate the markdown adapter's static spec cache for a path. Safe to
+/// call from non-markdown contexts (a no-op when the path is unknown).
+fn invalidate_markdown_cache(specs_dir: &FsPath, path: &FsPath) {
+    leanspec_core::adapters::markdown::MarkdownAdapter::new(specs_dir).invalidate_path(path);
+}
+
+fn build_spec_info(doc: &SpecDoc, file_path: std::path::PathBuf) -> Option<SpecInfo> {
+    let content = fs::read_to_string(&file_path).ok()?;
+    let parser = FrontmatterParser::new();
+    let (frontmatter, body) = parser.parse(&content).ok()?;
+    let title = body
+        .lines()
+        .find(|l| l.starts_with("# "))
+        .map(|l| l.trim_start_matches("# ").to_string())
+        .unwrap_or_else(|| doc.title.clone());
+    Some(SpecInfo {
+        path: doc.id.clone(),
+        title,
+        frontmatter,
+        content: body,
+        file_path,
+        is_sub_spec: false,
+        parent_spec: None,
+    })
+}
+
+/// Project the adapter's documents to markdown `SpecInfo` for the umbrella
+/// verifier. Only meaningful for markdown projects.
+fn docs_to_spec_info(docs: &[SpecDoc], schema: &SpecSchema) -> Vec<SpecInfo> {
+    use leanspec_core::adapters::markdown::SpecFrontmatter;
+    docs.iter()
+        .map(|doc| {
+            let status_str = doc
+                .fields
+                .get(
+                    schema
+                        .key_for_semantic(semantic::STATUS)
+                        .unwrap_or("status"),
+                )
+                .and_then(|v| v.as_str())
+                .unwrap_or("draft");
+            let status = status_str
+                .parse::<SpecStatus>()
+                .unwrap_or(SpecStatus::Draft);
+            let parent = doc
+                .links
+                .iter()
+                .find(|l| l.link_type == "parent")
+                .map(|l| l.target_id.clone());
+
+            let frontmatter = SpecFrontmatter {
+                status,
+                created: String::new(),
+                priority: None,
+                tags: Vec::new(),
+                depends_on: Vec::new(),
+                parent,
+                assignee: None,
+                reviewer: None,
+                issue: None,
+                pr: None,
+                epic: None,
+                breaking: None,
+                due: None,
+                updated: None,
+                completed: None,
+                created_at: None,
+                updated_at: None,
+                completed_at: None,
+                transitions: Vec::new(),
+                custom: std::collections::HashMap::new(),
+            };
+
+            SpecInfo {
+                path: doc.id.clone(),
+                title: doc.title.clone(),
+                frontmatter,
+                content: String::new(),
+                file_path: std::path::PathBuf::new(),
+                is_sub_spec: false,
+                parent_spec: None,
+            }
+        })
+        .collect()
 }

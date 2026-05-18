@@ -65,6 +65,11 @@ pub fn create_router(state: AppState) -> Router {
             "/api/projects/{id}/adapter",
             get(handlers::get_project_adapter_capabilities),
         )
+        // Active adapter schema (per-project)
+        .route(
+            "/api/projects/{id}/schema",
+            get(handlers::get_project_schema),
+        )
         // Project routes
         .route("/api/projects", get(handlers::list_projects))
         .route("/api/projects", post(handlers::add_project))

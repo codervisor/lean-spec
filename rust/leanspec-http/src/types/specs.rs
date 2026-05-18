@@ -2,14 +2,59 @@
 
 use chrono::{DateTime, Utc};
 use leanspec_core::io::hash_content;
-use leanspec_core::{
-    global_frontmatter_validator, global_structure_validator, global_token_count_validator,
-    global_token_counter, SpecInfo, SpecPriority, SpecStats, SpecStatus, TokenStatus,
-    ValidationResult,
-};
+use leanspec_core::{global_token_counter, semantic, FieldValue, SpecDoc, SpecSchema, TokenStatus};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
+
+/// Markdown adapter field key for the body content.
+const FIELD_CONTENT: &str = "content";
+/// Markdown adapter link type for parent relationships.
+const LINK_PARENT: &str = "parent";
+/// Markdown adapter link type for dependency relationships.
+const LINK_DEPENDS_ON: &str = "depends_on";
+
+fn doc_field_str<'a>(doc: &'a SpecDoc, key: &str) -> Option<&'a str> {
+    doc.fields.get(key)?.as_str()
+}
+
+fn doc_field_strings(doc: &SpecDoc, key: &str) -> Vec<String> {
+    match doc.fields.get(key) {
+        Some(FieldValue::Strings(v)) => v.clone(),
+        _ => Vec::new(),
+    }
+}
+
+fn semantic_str<'a>(doc: &'a SpecDoc, schema: &SpecSchema, semantic: &str) -> Option<&'a str> {
+    let key = schema.key_for_semantic(semantic)?;
+    doc_field_str(doc, key)
+}
+
+fn semantic_strings(doc: &SpecDoc, schema: &SpecSchema, semantic: &str) -> Vec<String> {
+    schema
+        .key_for_semantic(semantic)
+        .map(|key| doc_field_strings(doc, key))
+        .unwrap_or_default()
+}
+
+fn spec_number_from_id(id: &str) -> Option<u32> {
+    id.split('-').next().and_then(|s| s.parse().ok())
+}
+
+fn link_targets(doc: &SpecDoc, link_type: &str) -> Vec<String> {
+    doc.links
+        .iter()
+        .filter(|l| l.link_type == link_type)
+        .map(|l| l.target_id.clone())
+        .collect()
+}
+
+fn parent_link(doc: &SpecDoc) -> Option<String> {
+    doc.links
+        .iter()
+        .find(|l| l.link_type == LINK_PARENT)
+        .map(|l| l.target_id.clone())
+}
 
 /// Lightweight spec for list views
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -49,93 +94,49 @@ pub struct SpecSummary {
     pub relationships: Option<SpecRelationships>,
 }
 
-impl From<&SpecInfo> for SpecSummary {
-    fn from(spec: &SpecInfo) -> Self {
-        // Compute token count from spec content
-        let counter = global_token_counter();
-        let token_result = counter.count_spec(&spec.content);
-        let token_status_str = match token_result.status {
-            TokenStatus::Optimal => "optimal",
-            TokenStatus::Good => "good",
-            TokenStatus::Warning => "warning",
-            TokenStatus::Excessive => "critical",
-        };
-
-        // Compute validation status
-        let fm_validator = global_frontmatter_validator();
-        let struct_validator = global_structure_validator();
-        let token_validator = global_token_count_validator();
-
-        let mut validation_result = ValidationResult::new(&spec.path);
-        validation_result.merge(fm_validator.validate(spec));
-        validation_result.merge(struct_validator.validate(spec));
-        validation_result.merge(token_validator.validate(spec));
-
-        let validation_status_str = if validation_result.errors.is_empty() {
-            "pass"
-        } else if validation_result
-            .errors
-            .iter()
-            .any(|e| e.severity == leanspec_core::ErrorSeverity::Error)
-        {
-            "fail"
-        } else {
-            "warn"
-        };
-
-        Self {
-            project_id: None,
-            id: spec.path.clone(),
-            spec_number: spec.number(),
-            spec_name: spec.path.clone(),
-            title: Some(spec.title.clone()),
-            status: spec.frontmatter.status.to_string(),
-            priority: spec.frontmatter.priority.map(|p| p.to_string()),
-            tags: spec.frontmatter.tags.clone(),
-            assignee: spec.frontmatter.assignee.clone(),
-            created_at: spec.frontmatter.created_at,
-            updated_at: spec.frontmatter.updated_at,
-            completed_at: spec.frontmatter.completed_at,
-            file_path: spec.file_path.to_string_lossy().to_string(),
-            depends_on: spec.frontmatter.depends_on.clone(),
-            parent: spec.frontmatter.parent.clone(),
-            children: Vec::new(),
-            required_by: Vec::new(), // Will be computed when needed
-            content_hash: Some(hash_content(&spec.content)),
-            token_count: Some(token_result.total),
-            token_status: Some(token_status_str.to_string()),
-            validation_status: Some(validation_status_str.to_string()),
-            relationships: None,
-        }
-    }
-}
-
 impl SpecSummary {
-    pub fn from_without_computed(spec: &SpecInfo) -> Self {
+    /// Build a summary from an adapter document without computing tokens or
+    /// validation status — used by list handlers that enrich the result later.
+    pub fn from_doc(doc: &SpecDoc, schema: &SpecSchema) -> Self {
+        let content = doc_field_str(doc, FIELD_CONTENT).unwrap_or("");
         Self {
             project_id: None,
-            id: spec.path.clone(),
-            spec_number: spec.number(),
-            spec_name: spec.path.clone(),
-            title: Some(spec.title.clone()),
-            status: spec.frontmatter.status.to_string(),
-            priority: spec.frontmatter.priority.map(|p| p.to_string()),
-            tags: spec.frontmatter.tags.clone(),
-            assignee: spec.frontmatter.assignee.clone(),
-            created_at: spec.frontmatter.created_at,
-            updated_at: spec.frontmatter.updated_at,
-            completed_at: spec.frontmatter.completed_at,
-            file_path: spec.file_path.to_string_lossy().to_string(),
-            depends_on: spec.frontmatter.depends_on.clone(),
-            parent: spec.frontmatter.parent.clone(),
+            id: doc.id.clone(),
+            spec_number: spec_number_from_id(&doc.id),
+            spec_name: doc.id.clone(),
+            title: Some(doc.title.clone()),
+            status: semantic_str(doc, schema, semantic::STATUS)
+                .unwrap_or("")
+                .to_string(),
+            priority: semantic_str(doc, schema, semantic::PRIORITY).map(String::from),
+            tags: semantic_strings(doc, schema, semantic::TAGS),
+            assignee: semantic_str(doc, schema, semantic::ASSIGNEE).map(String::from),
+            created_at: doc.created_at,
+            updated_at: doc.updated_at,
+            completed_at: None,
+            file_path: doc.url.clone().unwrap_or_default(),
+            depends_on: link_targets(doc, LINK_DEPENDS_ON),
+            parent: parent_link(doc),
             children: Vec::new(),
             required_by: Vec::new(),
-            content_hash: Some(hash_content(&spec.content)),
+            content_hash: Some(hash_content(content)),
             token_count: None,
             token_status: None,
             validation_status: None,
             relationships: None,
         }
+    }
+
+    /// Build a summary from an adapter document with token counts computed
+    /// from `fields["content"]`.
+    pub fn from_doc_with_tokens(doc: &SpecDoc, schema: &SpecSchema) -> Self {
+        let mut summary = Self::from_doc(doc, schema);
+        let content = doc_field_str(doc, FIELD_CONTENT).unwrap_or("");
+        let counter = global_token_counter();
+        let token_result = counter.count_spec(content);
+        summary.token_count = Some(token_result.total);
+        summary.token_status = Some(token_status_str(token_result.status).to_string());
+        summary
     }
 
     pub fn with_project_id(mut self, project_id: &str) -> Self {
@@ -150,6 +151,15 @@ impl SpecSummary {
             required_by: Some(required_by),
         });
         self
+    }
+}
+
+impl From<&SpecDoc> for SpecSummary {
+    fn from(doc: &SpecDoc) -> Self {
+        // Without a schema available, look up well-known field keys directly.
+        // Callers that have the schema should prefer `from_doc_with_tokens`.
+        let placeholder = placeholder_schema();
+        Self::from_doc_with_tokens(doc, &placeholder)
     }
 }
 
@@ -192,6 +202,107 @@ pub struct SpecDetail {
     pub relationships: Option<SpecRelationships>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sub_specs: Option<Vec<SubSpec>>,
+}
+
+impl SpecDetail {
+    pub fn from_doc(doc: &SpecDoc, schema: &SpecSchema) -> Self {
+        let content = doc_field_str(doc, FIELD_CONTENT).unwrap_or("").to_string();
+        let counter = global_token_counter();
+        let token_result = counter.count_spec(&content);
+
+        Self {
+            project_id: None,
+            id: doc.id.clone(),
+            spec_number: spec_number_from_id(&doc.id),
+            spec_name: doc.id.clone(),
+            title: Some(doc.title.clone()),
+            status: semantic_str(doc, schema, semantic::STATUS)
+                .unwrap_or("")
+                .to_string(),
+            priority: semantic_str(doc, schema, semantic::PRIORITY).map(String::from),
+            tags: semantic_strings(doc, schema, semantic::TAGS),
+            assignee: semantic_str(doc, schema, semantic::ASSIGNEE).map(String::from),
+            content_md: content.clone(),
+            created_at: doc.created_at,
+            updated_at: doc.updated_at,
+            completed_at: None,
+            file_path: doc.url.clone().unwrap_or_default(),
+            depends_on: link_targets(doc, LINK_DEPENDS_ON),
+            parent: parent_link(doc),
+            children: Vec::new(),
+            required_by: Vec::new(),
+            content_hash: Some(hash_content(&content)),
+            token_count: Some(token_result.total),
+            token_status: Some(token_status_str(token_result.status).to_string()),
+            validation_status: None,
+            relationships: None,
+            sub_specs: None,
+        }
+    }
+
+    pub fn with_project_id(mut self, project_id: String) -> Self {
+        self.project_id = Some(project_id);
+        self
+    }
+
+    pub fn with_file_path(mut self, file_path: String) -> Self {
+        self.file_path = file_path;
+        self
+    }
+}
+
+impl From<&SpecDoc> for SpecDetail {
+    fn from(doc: &SpecDoc) -> Self {
+        let placeholder = placeholder_schema();
+        Self::from_doc(doc, &placeholder)
+    }
+}
+
+fn token_status_str(status: TokenStatus) -> &'static str {
+    match status {
+        TokenStatus::Optimal => "optimal",
+        TokenStatus::Good => "good",
+        TokenStatus::Warning => "warning",
+        TokenStatus::Excessive => "critical",
+    }
+}
+
+/// Build a minimal schema with well-known semantic keys mapped to their
+/// conventional field keys. Used when callers don't have access to the
+/// adapter's real schema.
+fn placeholder_schema() -> SpecSchema {
+    use leanspec_core::{FieldDef, FieldDisplay, FieldKind};
+
+    fn enum_field(key: &str, label: &str, semantic_key: &str, multi: bool) -> FieldDef {
+        FieldDef {
+            key: key.into(),
+            label: label.into(),
+            kind: FieldKind::Enum {
+                options: vec![],
+                multi,
+                allow_custom: true,
+                dynamic: false,
+            },
+            display: FieldDisplay::Inline,
+            required: false,
+            semantic: Some(semantic_key.to_string()),
+            ai_hint: None,
+            placeholder: None,
+        }
+    }
+
+    SpecSchema {
+        id: "placeholder".into(),
+        name: "Placeholder".into(),
+        extends: None,
+        fields: vec![
+            enum_field("status", "Status", semantic::STATUS, false),
+            enum_field("priority", "Priority", semantic::PRIORITY, false),
+            enum_field("tags", "Tags", semantic::TAGS, true),
+            enum_field("assignee", "Assignee", semantic::ASSIGNEE, false),
+        ],
+        link_types: vec![],
+    }
 }
 
 /// Raw spec content response
@@ -267,76 +378,6 @@ pub struct CreateSpecRequest {
     pub depends_on: Option<Vec<String>>,
     pub template: Option<String>,
     pub content: Option<String>,
-}
-
-impl From<&SpecInfo> for SpecDetail {
-    fn from(spec: &SpecInfo) -> Self {
-        // Compute token count from spec content
-        let counter = global_token_counter();
-        let token_result = counter.count_spec(&spec.content);
-        let token_status_str = match token_result.status {
-            TokenStatus::Optimal => "optimal",
-            TokenStatus::Good => "good",
-            TokenStatus::Warning => "warning",
-            TokenStatus::Excessive => "critical",
-        };
-
-        // Compute validation status
-        let fm_validator = global_frontmatter_validator();
-        let struct_validator = global_structure_validator();
-        let token_validator = global_token_count_validator();
-
-        let mut validation_result = ValidationResult::new(&spec.path);
-        validation_result.merge(fm_validator.validate(spec));
-        validation_result.merge(struct_validator.validate(spec));
-        validation_result.merge(token_validator.validate(spec));
-
-        let validation_status_str = if validation_result.errors.is_empty() {
-            "pass"
-        } else if validation_result
-            .errors
-            .iter()
-            .any(|e| e.severity == leanspec_core::ErrorSeverity::Error)
-        {
-            "fail"
-        } else {
-            "warn"
-        };
-
-        Self {
-            project_id: None,
-            id: spec.path.clone(),
-            spec_number: spec.number(),
-            spec_name: spec.path.clone(),
-            title: Some(spec.title.clone()),
-            status: spec.frontmatter.status.to_string(),
-            priority: spec.frontmatter.priority.map(|p| p.to_string()),
-            tags: spec.frontmatter.tags.clone(),
-            assignee: spec.frontmatter.assignee.clone(),
-            content_md: spec.content.clone(),
-            created_at: spec.frontmatter.created_at,
-            updated_at: spec.frontmatter.updated_at,
-            completed_at: spec.frontmatter.completed_at,
-            file_path: spec.file_path.to_string_lossy().to_string(),
-            depends_on: spec.frontmatter.depends_on.clone(),
-            parent: spec.frontmatter.parent.clone(),
-            children: Vec::new(),
-            required_by: Vec::new(), // Will be computed when needed
-            content_hash: Some(hash_content(&spec.content)),
-            token_count: Some(token_result.total),
-            token_status: Some(token_status_str.to_string()),
-            validation_status: Some(validation_status_str.to_string()),
-            relationships: None,
-            sub_specs: None,
-        }
-    }
-}
-
-impl SpecDetail {
-    pub fn with_project_id(mut self, project_id: String) -> Self {
-        self.project_id = Some(project_id);
-        self
-    }
 }
 
 /// Spec relationships container
@@ -465,61 +506,6 @@ pub struct StatusCountItem {
 pub struct PriorityCountItem {
     pub priority: String,
     pub count: usize,
-}
-
-impl StatsResponse {
-    pub fn from_project_stats(stats: SpecStats, project_id: &str) -> Self {
-        let specs_by_status = vec![
-            StatusCountItem {
-                status: "draft".to_string(),
-                count: *stats.by_status.get(&SpecStatus::Draft).unwrap_or(&0),
-            },
-            StatusCountItem {
-                status: "planned".to_string(),
-                count: *stats.by_status.get(&SpecStatus::Planned).unwrap_or(&0),
-            },
-            StatusCountItem {
-                status: "in-progress".to_string(),
-                count: *stats.by_status.get(&SpecStatus::InProgress).unwrap_or(&0),
-            },
-            StatusCountItem {
-                status: "complete".to_string(),
-                count: *stats.by_status.get(&SpecStatus::Complete).unwrap_or(&0),
-            },
-            StatusCountItem {
-                status: "archived".to_string(),
-                count: *stats.by_status.get(&SpecStatus::Archived).unwrap_or(&0),
-            },
-        ];
-
-        let specs_by_priority = vec![
-            PriorityCountItem {
-                priority: "low".to_string(),
-                count: *stats.by_priority.get(&SpecPriority::Low).unwrap_or(&0),
-            },
-            PriorityCountItem {
-                priority: "medium".to_string(),
-                count: *stats.by_priority.get(&SpecPriority::Medium).unwrap_or(&0),
-            },
-            PriorityCountItem {
-                priority: "high".to_string(),
-                count: *stats.by_priority.get(&SpecPriority::High).unwrap_or(&0),
-            },
-            PriorityCountItem {
-                priority: "critical".to_string(),
-                count: *stats.by_priority.get(&SpecPriority::Critical).unwrap_or(&0),
-            },
-        ];
-
-        Self {
-            total_projects: 1,
-            total_specs: stats.total,
-            specs_by_status,
-            specs_by_priority,
-            completion_rate: stats.completion_percentage(),
-            project_id: Some(project_id.to_string()),
-        }
-    }
 }
 
 /// Dependency graph response
@@ -766,19 +752,27 @@ pub struct FrontmatterResponse {
     pub completed_at: Option<DateTime<Utc>>,
 }
 
-impl From<&leanspec_core::SpecFrontmatter> for FrontmatterResponse {
-    fn from(fm: &leanspec_core::SpecFrontmatter) -> Self {
+impl FrontmatterResponse {
+    /// Build a frontmatter response from an adapter document, using the
+    /// adapter's schema to find semantic field keys.
+    pub fn from_doc(doc: &SpecDoc, schema: &SpecSchema) -> Self {
         Self {
-            status: fm.status.to_string(),
-            created: fm.created.clone(),
-            priority: fm.priority.map(|p| p.to_string()),
-            tags: fm.tags.clone(),
-            depends_on: fm.depends_on.clone(),
-            parent: fm.parent.clone(),
-            assignee: fm.assignee.clone(),
-            created_at: fm.created_at,
-            updated_at: fm.updated_at,
-            completed_at: fm.completed_at,
+            status: semantic_str(doc, schema, semantic::STATUS)
+                .unwrap_or("")
+                .to_string(),
+            created: doc
+                .created_at
+                .map(|t| t.format("%Y-%m-%d").to_string())
+                .or_else(|| doc_field_str(doc, "created").map(String::from))
+                .unwrap_or_default(),
+            priority: semantic_str(doc, schema, semantic::PRIORITY).map(String::from),
+            tags: semantic_strings(doc, schema, semantic::TAGS),
+            depends_on: link_targets(doc, LINK_DEPENDS_ON),
+            parent: parent_link(doc),
+            assignee: semantic_str(doc, schema, semantic::ASSIGNEE).map(String::from),
+            created_at: doc.created_at,
+            updated_at: doc.updated_at,
+            completed_at: None,
         }
     }
 }
