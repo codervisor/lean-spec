@@ -306,20 +306,21 @@ pub async fn update_project_spec_raw(
 
 /// POST /api/projects/:projectId/specs/:spec/checklist-toggle - Toggle checklist items
 ///
-/// Main-spec toggles run the fetch-transform-push pattern through the adapter:
-/// pull the body via `adapter.get`, apply the pure `apply_checklist_toggles`
-/// transform, push back via `adapter.update` with the `content` field. Hashes
-/// are body-only, matching the list/detail endpoints.
+/// Main-spec toggles run the fetch-transform-push pattern through the adapter
+/// and work for any backend that exposes a `content` field: pull the body via
+/// `adapter.get`, apply the pure `apply_checklist_toggles` transform, push back
+/// via `adapter.update`. Body-only content hashes match the list/detail
+/// endpoints.
 ///
-/// Sub-spec toggles stay as direct file I/O — sub-specs are a markdown-only
-/// concept that doesn't surface through the adapter API.
+/// Sub-spec toggles fall back to direct file I/O and require the markdown
+/// adapter — sub-specs are extra files inside the spec directory and aren't
+/// modelled by the adapter API.
 pub async fn toggle_project_spec_checklist(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
     Json(request): Json<ChecklistToggleRequest>,
 ) -> ApiResult<Json<ChecklistToggleResponse>> {
     let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
-    require_markdown_adapter(adapter.as_ref())?;
 
     let toggles: Vec<ChecklistToggle> = request
         .toggles
@@ -331,6 +332,9 @@ pub async fn toggle_project_spec_checklist(
         .collect();
 
     if let Some(subspec_file) = request.subspec.as_deref() {
+        // Sub-specs are markdown-only — they live as extra files inside
+        // the spec directory and aren't represented in the adapter model.
+        require_markdown_adapter(adapter.as_ref())?;
         return toggle_subspec_checklist(
             adapter.as_ref(),
             &project.specs_dir,
