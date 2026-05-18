@@ -435,6 +435,208 @@ pub fn spec_info_to_doc(info: &SpecInfo) -> SpecDoc {
     }
 }
 
+/// Build a markdown [`SpecInfo`] from a [`SpecDoc`] for code that still needs
+/// the typed markdown view (e.g. running the file-oriented validators).
+///
+/// `body_override` lets callers supply the on-disk body when the doc was loaded
+/// without it; if `None` the body comes from the doc's content field.
+pub fn doc_to_spec_info(doc: &SpecDoc, file_path: PathBuf, body_override: Option<String>) -> SpecInfo {
+    use crate::adapters::markdown::types::SpecFrontmatter;
+    use std::str::FromStr;
+
+    let status = doc
+        .fields
+        .get(field::STATUS)
+        .and_then(|v| v.as_str())
+        .and_then(|s| SpecStatus::from_str(s).ok())
+        .unwrap_or(SpecStatus::Draft);
+
+    let priority = doc
+        .fields
+        .get(field::PRIORITY)
+        .and_then(|v| v.as_str())
+        .and_then(|s| SpecPriority::from_str(s).ok());
+
+    let tags = doc
+        .fields
+        .get(field::TAGS)
+        .and_then(|v| v.as_strings())
+        .map(|s| s.to_vec())
+        .unwrap_or_default();
+
+    let assignee = doc
+        .fields
+        .get(field::ASSIGNEE)
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let reviewer = doc
+        .fields
+        .get(field::REVIEWER)
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let issue = doc
+        .fields
+        .get(field::ISSUE)
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let pr = doc
+        .fields
+        .get(field::PR)
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let epic = doc
+        .fields
+        .get(field::EPIC)
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let breaking = doc.fields.get(field::BREAKING).and_then(|v| v.as_bool());
+    let due = doc
+        .fields
+        .get(field::DUE)
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let created = doc
+        .fields
+        .get(field::CREATED)
+        .and_then(|v| v.as_str())
+        .map(String::from)
+        .unwrap_or_default();
+
+    let parent = doc
+        .links
+        .iter()
+        .find(|l| l.link_type == link::PARENT)
+        .map(|l| l.target_id.clone());
+    let depends_on: Vec<String> = doc
+        .links
+        .iter()
+        .filter(|l| l.link_type == link::DEPENDS_ON)
+        .map(|l| l.target_id.clone())
+        .collect();
+
+    let content = body_override.unwrap_or_else(|| {
+        doc.fields
+            .get(field::CONTENT)
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string()
+    });
+
+    SpecInfo {
+        path: doc.id.clone(),
+        title: doc.title.clone(),
+        frontmatter: SpecFrontmatter {
+            status,
+            created,
+            priority,
+            tags,
+            depends_on,
+            parent,
+            assignee,
+            reviewer,
+            issue,
+            pr,
+            epic,
+            breaking,
+            due,
+            updated: None,
+            completed: None,
+            created_at: doc.created_at,
+            updated_at: doc.updated_at,
+            completed_at: None,
+            transitions: Vec::new(),
+            custom: std::collections::HashMap::new(),
+        },
+        content,
+        file_path,
+        is_sub_spec: false,
+        parent_spec: None,
+    }
+}
+
+/// Verify umbrella completion for a [`SpecDoc`] against a list of sibling docs.
+///
+/// HTTP handlers use this to enforce that all children are complete before
+/// allowing an umbrella spec to transition to `complete`. Operates purely on
+/// the schema-driven doc shape — no SpecInfo/file-system coupling.
+pub fn umbrella_completion_for_docs(
+    spec_id: &str,
+    all_docs: &[SpecDoc],
+) -> crate::types::UmbrellaVerificationResult {
+    use crate::types::{IncompleteChildSpec, Progress, UmbrellaVerificationResult};
+
+    let children: Vec<&SpecDoc> = all_docs
+        .iter()
+        .filter(|d| {
+            d.links
+                .iter()
+                .any(|l| l.link_type == link::PARENT && l.target_id == spec_id)
+        })
+        .collect();
+
+    if children.is_empty() {
+        return UmbrellaVerificationResult::not_umbrella();
+    }
+
+    let incomplete: Vec<IncompleteChildSpec> = children
+        .iter()
+        .filter(|d| {
+            let status = d
+                .fields
+                .get(field::STATUS)
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            status != "complete" && status != "archived"
+        })
+        .map(|d| IncompleteChildSpec {
+            path: d.id.clone(),
+            title: d.title.clone(),
+            status: d
+                .fields
+                .get(field::STATUS)
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string(),
+        })
+        .collect();
+
+    let completed = children.len() - incomplete.len();
+    let total = children.len();
+    let percentage = if total > 0 {
+        (completed as f64 / total as f64) * 100.0
+    } else {
+        100.0
+    };
+
+    let suggestions = if incomplete.is_empty() {
+        Vec::new()
+    } else {
+        let mut s = vec![format!(
+            "Complete {} child spec(s) before marking umbrella as complete",
+            incomplete.len()
+        )];
+        for spec in incomplete.iter().take(3) {
+            s.push(format!("  - {} ({})", spec.path, spec.status));
+        }
+        if incomplete.len() > 3 {
+            s.push(format!("  ... and {} more", incomplete.len() - 3));
+        }
+        s.push("Or use force=true to mark complete anyway".to_string());
+        s
+    };
+
+    UmbrellaVerificationResult {
+        is_complete: incomplete.is_empty(),
+        incomplete_children: incomplete,
+        progress: Progress {
+            completed,
+            total,
+            percentage,
+        },
+        suggestions,
+    }
+}
+
 fn fields_to_frontmatter(
     fields: &HashMap<String, FieldValue>,
     links: &[ItemLink],
