@@ -2,43 +2,88 @@
 
 #![allow(clippy::result_large_err)]
 
+use std::collections::{HashMap, HashSet};
+use std::fs;
+
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::Json;
-use std::fs;
 
-use leanspec_core::{
-    search_specs_with_options, DependencyGraph, SearchOptions, SpecFilterOptions,
-    SpecHierarchyNode, SpecStatus,
-};
+use leanspec_core::adapters::ListFilter;
+use leanspec_core::{semantic, SpecDoc, SpecSchema};
 
 use crate::error::{ApiError, ApiResult};
 use crate::state::AppState;
 
 use crate::types::{
-    ListSpecsQuery, ListSpecsResponse, SearchRequest, SearchResponse, SpecDetail, SpecRawResponse,
-    SpecSummary,
+    HierarchyNode, ListSpecsQuery, ListSpecsResponse, SearchRequest, SearchResponse, SpecDetail,
+    SpecRawResponse, SpecRelationships, SpecSummary,
 };
 
-use super::helpers::{detect_sub_specs, get_spec_loader, hash_raw_content};
+use super::helpers::{
+    adapter_error, detect_sub_specs, get_adapter_and_project, hash_raw_content,
+    require_markdown_adapter, resolve_markdown_spec_path,
+};
 
-fn parse_status_filter(
-    status: &Option<String>,
-) -> Result<Option<Vec<SpecStatus>>, (StatusCode, Json<ApiError>)> {
-    let parsed = status.as_ref().map(|s| {
+const LINK_PARENT: &str = "parent";
+const LINK_DEPENDS_ON: &str = "depends_on";
+
+fn parse_csv_filter(value: &Option<String>) -> Option<Vec<String>> {
+    value.as_ref().map(|s| {
         s.split(',')
-            .filter_map(|s| s.parse().ok())
-            .collect::<Vec<_>>()
-    });
+            .map(|part| part.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect()
+    })
+}
 
-    if status.is_some() && parsed.as_ref().map_or(true, |v| v.is_empty()) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ApiError::invalid_request("Invalid status filter")),
-        ));
+fn build_list_filter(query: &ListSpecsQuery, schema: &SpecSchema) -> ListFilter {
+    let mut fields: HashMap<String, Vec<String>> = HashMap::new();
+
+    if let Some(values) = parse_csv_filter(&query.status) {
+        if !values.is_empty() {
+            if let Some(key) = schema.key_for_semantic(semantic::STATUS) {
+                fields.insert(key.to_string(), values);
+            }
+        }
+    }
+    if let Some(values) = parse_csv_filter(&query.priority) {
+        if !values.is_empty() {
+            if let Some(key) = schema.key_for_semantic(semantic::PRIORITY) {
+                fields.insert(key.to_string(), values);
+            }
+        }
+    }
+    if let Some(values) = parse_csv_filter(&query.tags) {
+        if !values.is_empty() {
+            if let Some(key) = schema.key_for_semantic(semantic::TAGS) {
+                fields.insert(key.to_string(), values);
+            }
+        }
+    }
+    if let Some(assignee) = query.assignee.as_ref().filter(|s| !s.is_empty()) {
+        if let Some(key) = schema.key_for_semantic(semantic::ASSIGNEE) {
+            fields.insert(key.to_string(), vec![assignee.clone()]);
+        }
     }
 
-    Ok(parsed)
+    // Status filter explicitly "archived" implies include_archived; otherwise
+    // the user's archived specs are filtered out by the adapter list pass.
+    let include_archived = fields
+        .get(
+            schema
+                .key_for_semantic(semantic::STATUS)
+                .unwrap_or("status"),
+        )
+        .map(|values| values.iter().any(|v| v == "archived"))
+        .unwrap_or(false);
+
+    ListFilter {
+        fields,
+        text: None,
+        include_archived,
+        raw: None,
+    }
 }
 
 fn apply_pagination<T>(items: Vec<T>, offset: Option<usize>, limit: Option<usize>) -> Vec<T> {
@@ -77,7 +122,58 @@ fn next_cursor(total: usize, offset: usize, limit: Option<usize>) -> Option<Stri
     }
 }
 
-fn sort_hierarchy_nodes(nodes: &mut [crate::types::HierarchyNode]) {
+/// Build child→parent and parent→children maps from the document set's links.
+fn build_relationship_index(docs: &[SpecDoc]) -> RelationshipIndex {
+    let mut parent_by_child: HashMap<String, String> = HashMap::new();
+    let mut children_by_parent: HashMap<String, Vec<String>> = HashMap::new();
+    let mut required_by: HashMap<String, Vec<String>> = HashMap::new();
+
+    for doc in docs {
+        for link in &doc.links {
+            match link.link_type.as_str() {
+                LINK_PARENT => {
+                    parent_by_child.insert(doc.id.clone(), link.target_id.clone());
+                    children_by_parent
+                        .entry(link.target_id.clone())
+                        .or_default()
+                        .push(doc.id.clone());
+                }
+                LINK_DEPENDS_ON => {
+                    if link.target_id != doc.id {
+                        required_by
+                            .entry(link.target_id.clone())
+                            .or_default()
+                            .push(doc.id.clone());
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    for list in children_by_parent.values_mut() {
+        list.sort();
+        list.dedup();
+    }
+    for list in required_by.values_mut() {
+        list.sort();
+        list.dedup();
+    }
+
+    RelationshipIndex {
+        parent_by_child,
+        children_by_parent,
+        required_by,
+    }
+}
+
+struct RelationshipIndex {
+    parent_by_child: HashMap<String, String>,
+    children_by_parent: HashMap<String, Vec<String>>,
+    required_by: HashMap<String, Vec<String>>,
+}
+
+fn sort_hierarchy_nodes(nodes: &mut [HierarchyNode]) {
     nodes.sort_by(|a, b| match (b.spec.spec_number, a.spec.spec_number) {
         (Some(bn), Some(an)) => bn.cmp(&an),
         (Some(_), None) => std::cmp::Ordering::Less,
@@ -90,46 +186,74 @@ fn sort_hierarchy_nodes(nodes: &mut [crate::types::HierarchyNode]) {
     }
 }
 
-fn build_hierarchy_from_cached_tree(
-    tree: &[SpecHierarchyNode],
-    filtered_specs: &[crate::types::SpecSummary],
-) -> Vec<crate::types::HierarchyNode> {
-    use std::collections::{HashMap, HashSet};
-
-    let allowed: HashSet<String> = filtered_specs.iter().map(|s| s.spec_name.clone()).collect();
-    let spec_map: HashMap<String, crate::types::SpecSummary> = filtered_specs
+fn build_hierarchy(summaries: &[SpecSummary], index: &RelationshipIndex) -> Vec<HierarchyNode> {
+    let summaries_by_id: HashMap<String, SpecSummary> = summaries
         .iter()
         .map(|s| (s.spec_name.clone(), s.clone()))
         .collect();
+    let allowed: HashSet<String> = summaries_by_id.keys().cloned().collect();
 
-    fn filter_nodes(
-        nodes: &[SpecHierarchyNode],
+    fn walk(
+        id: &str,
         allowed: &HashSet<String>,
-        spec_map: &HashMap<String, crate::types::SpecSummary>,
-    ) -> Vec<crate::types::HierarchyNode> {
+        summaries_by_id: &HashMap<String, SpecSummary>,
+        children_by_parent: &HashMap<String, Vec<String>>,
+    ) -> Vec<HierarchyNode> {
         let mut out = Vec::new();
-
-        for node in nodes {
-            let child_nodes = filter_nodes(&node.child_nodes, allowed, spec_map);
-            if allowed.contains(&node.path) {
-                if let Some(spec) = spec_map.get(&node.path) {
-                    out.push(crate::types::HierarchyNode {
+        let children = children_by_parent.get(id).cloned().unwrap_or_default();
+        for child in children {
+            let descendants = walk(&child, allowed, summaries_by_id, children_by_parent);
+            if allowed.contains(&child) {
+                if let Some(spec) = summaries_by_id.get(&child) {
+                    out.push(HierarchyNode {
                         spec: spec.clone(),
-                        child_nodes,
+                        child_nodes: descendants,
                     });
                 }
             } else {
-                // Promote matching descendants when the current node is filtered out.
-                out.extend(child_nodes);
+                out.extend(descendants);
             }
         }
-
         out
     }
 
-    let mut hierarchy = filter_nodes(tree, &allowed, &spec_map);
-    sort_hierarchy_nodes(&mut hierarchy);
-    hierarchy
+    let mut roots: Vec<HierarchyNode> = Vec::new();
+    for summary in summaries {
+        let id = &summary.spec_name;
+        let parent_in_set = index
+            .parent_by_child
+            .get(id)
+            .map(|p| allowed.contains(p))
+            .unwrap_or(false);
+        if parent_in_set {
+            continue;
+        }
+        let children = walk(id, &allowed, &summaries_by_id, &index.children_by_parent);
+        roots.push(HierarchyNode {
+            spec: summary.clone(),
+            child_nodes: children,
+        });
+    }
+
+    sort_hierarchy_nodes(&mut roots);
+    roots
+}
+
+fn doc_url_or_default(doc: &SpecDoc) -> String {
+    doc.url.clone().unwrap_or_default()
+}
+
+fn enrich_summary_from_doc(summary: &mut SpecSummary, doc: &SpecDoc, index: &RelationshipIndex) {
+    summary.children = index
+        .children_by_parent
+        .get(&doc.id)
+        .cloned()
+        .unwrap_or_default();
+    summary.required_by = index.required_by.get(&doc.id).cloned().unwrap_or_default();
+    summary.relationships = Some(SpecRelationships {
+        depends_on: summary.depends_on.clone(),
+        required_by: Some(summary.required_by.clone()),
+    });
 }
 
 /// GET /api/projects/:projectId/specs - List specs for a project
@@ -140,46 +264,24 @@ pub async fn list_project_specs(
 ) -> ApiResult<Json<ListSpecsResponse>> {
     let (page_offset, page_limit) = resolve_pagination(&query)?;
 
-    let (loader, project) = get_spec_loader(&state, &project_id).await?;
+    let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
+    let schema = adapter.schema();
 
-    let all_specs = loader.load_all_metadata().map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-    let relationship_index = loader.load_relationship_index().map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-    let cached_tree = loader.load_hierarchy_tree().map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+    let filter = build_list_filter(&query, schema);
+    let docs = adapter.list(&filter).map_err(adapter_error)?;
 
-    let status_filter = parse_status_filter(&query.status)?;
+    let index = build_relationship_index(&docs);
 
-    // Apply filters
-    let filters = SpecFilterOptions {
-        status: status_filter,
-        priority: query
-            .priority
-            .map(|s| s.split(',').filter_map(|s| s.parse().ok()).collect()),
-        tags: query
-            .tags
-            .map(|s| s.split(',').map(|s| s.to_string()).collect()),
-        assignee: query.assignee,
-        search: None,
-    };
-
-    let mut filtered_specs: Vec<SpecSummary> = all_specs
+    let mut filtered_specs: Vec<SpecSummary> = docs
         .iter()
-        .filter(|s| filters.matches(s))
-        .map(|s| SpecSummary::from_without_computed(s).with_project_id(&project.id))
+        .map(|doc| {
+            let mut summary = SpecSummary::from_doc(doc, schema).with_project_id(&project.id);
+            // Markdown adapter populates url=None; for filesystem URL we leave
+            // the file_path empty and rely on the adapter for raw access.
+            summary.file_path = doc_url_or_default(doc);
+            enrich_summary_from_doc(&mut summary, doc, &index);
+            summary
+        })
         .collect();
 
     filtered_specs.sort_by(|a, b| {
@@ -187,28 +289,6 @@ pub async fn list_project_specs(
             .cmp(&a.spec_number)
             .then_with(|| b.spec_name.cmp(&a.spec_name))
     });
-
-    let filtered_specs: Vec<SpecSummary> = filtered_specs
-        .into_iter()
-        .map(|mut summary| {
-            let required_by = relationship_index
-                .required_by
-                .get(&summary.spec_name)
-                .cloned()
-                .unwrap_or_default();
-            summary.required_by = required_by.clone();
-            summary.children = relationship_index
-                .children_by_parent
-                .get(&summary.spec_name)
-                .cloned()
-                .unwrap_or_default();
-            summary.relationships = Some(crate::types::SpecRelationships {
-                depends_on: summary.depends_on.clone(),
-                required_by: Some(required_by),
-            });
-            summary
-        })
-        .collect();
 
     let total = filtered_specs.len();
     let hierarchy_requested = query.hierarchy.unwrap_or(false);
@@ -223,12 +303,8 @@ pub async fn list_project_specs(
         next_cursor(total, page_offset, page_limit)
     };
 
-    // Build hierarchy if requested - computed server-side for performance
     let hierarchy = if hierarchy_requested {
-        Some(build_hierarchy_from_cached_tree(
-            &cached_tree,
-            &filtered_specs,
-        ))
+        Some(build_hierarchy(&filtered_specs, &index))
     } else {
         None
     };
@@ -247,53 +323,43 @@ pub async fn get_project_spec(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
 ) -> ApiResult<Json<SpecDetail>> {
-    let (loader, project) = get_spec_loader(&state, &project_id).await?;
+    let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
+    let schema = adapter.schema();
 
-    let spec = loader.load(&spec_id).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+    let doc = adapter.get(&spec_id).map_err(adapter_error)?;
 
-    let spec = spec.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError::spec_not_found(&spec_id)),
-        )
-    })?;
+    let mut detail = SpecDetail::from_doc(&doc, schema).with_project_id(project.id.clone());
 
-    // Get dependency graph to compute required_by
-    let all_specs = loader.load_all().unwrap_or_default();
-    let dep_graph = DependencyGraph::new(&all_specs);
+    // Compute required_by/children from the full document set.
+    let all_docs = adapter
+        .list(&ListFilter {
+            include_archived: true,
+            ..Default::default()
+        })
+        .map_err(adapter_error)?;
+    let index = build_relationship_index(&all_docs);
 
-    let mut detail = SpecDetail::from(&spec).with_project_id(project.id.clone());
+    let required_by = index.required_by.get(&doc.id).cloned().unwrap_or_default();
+    detail.required_by = required_by.clone();
+    detail.relationships = Some(SpecRelationships {
+        depends_on: detail.depends_on.clone(),
+        required_by: Some(required_by),
+    });
+    detail.children = index
+        .children_by_parent
+        .get(&doc.id)
+        .cloned()
+        .unwrap_or_default();
 
-    // Compute required_by (filter out self-references)
-    if let Some(complete) = dep_graph.get_complete_graph(&spec.path) {
-        let required_by: Vec<String> = complete
-            .required_by
-            .iter()
-            .filter(|s| s.path != spec.path) // Prevent self-reference bug
-            .map(|s| s.path.clone())
-            .collect();
-        detail.required_by = required_by.clone();
-        detail.relationships = Some(crate::types::SpecRelationships {
-            depends_on: detail.depends_on.clone(),
-            required_by: Some(required_by),
-        });
-    }
-
-    let children: Vec<String> = all_specs
-        .iter()
-        .filter(|s| s.frontmatter.parent.as_deref() == Some(spec.path.as_str()))
-        .map(|s| s.path.clone())
-        .collect();
-    detail.children = children;
-
-    let sub_specs = detect_sub_specs(&detail.file_path);
-    if !sub_specs.is_empty() {
-        detail.sub_specs = Some(sub_specs);
+    // Markdown adapter exposes the on-disk path; populate it for the UI.
+    if adapter.capabilities().name == "markdown" {
+        if let Some(path) = resolve_markdown_spec_path(&project.specs_dir, &spec_id) {
+            detail = detail.with_file_path(path.to_string_lossy().to_string());
+            let sub_specs = detect_sub_specs(&detail.file_path);
+            if !sub_specs.is_empty() {
+                detail.sub_specs = Some(sub_specs);
+            }
+        }
     }
 
     Ok(Json(detail))
@@ -304,22 +370,20 @@ pub async fn get_project_spec_raw(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
 ) -> ApiResult<Json<SpecRawResponse>> {
-    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
-    let spec = loader.load(&spec_id).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+    let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
+    require_markdown_adapter(adapter.as_ref())?;
 
-    let spec = spec.ok_or_else(|| {
+    // Surface a 404 if the spec doesn't exist at all.
+    adapter.get(&spec_id).map_err(adapter_error)?;
+
+    let file_path = resolve_markdown_spec_path(&project.specs_dir, &spec_id).ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
             Json(ApiError::spec_not_found(&spec_id)),
         )
     })?;
 
-    let content = fs::read_to_string(&spec.file_path).map_err(|e| {
+    let content = fs::read_to_string(&file_path).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&e.to_string())),
@@ -330,7 +394,7 @@ pub async fn get_project_spec_raw(
     Ok(Json(SpecRawResponse {
         content,
         content_hash,
-        file_path: spec.file_path.to_string_lossy().to_string(),
+        file_path: file_path.to_string_lossy().to_string(),
     }))
 }
 
@@ -346,22 +410,20 @@ pub async fn get_project_subspec_raw(
         ));
     }
 
-    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
-    let spec = loader.load(&spec_id).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+    let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
+    require_markdown_adapter(adapter.as_ref())?;
 
-    let spec = spec.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError::spec_not_found(&spec_id)),
-        )
-    })?;
+    adapter.get(&spec_id).map_err(adapter_error)?;
 
-    let parent_dir = spec.file_path.parent().ok_or_else(|| {
+    let spec_readme =
+        resolve_markdown_spec_path(&project.specs_dir, &spec_id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError::spec_not_found(&spec_id)),
+            )
+        })?;
+
+    let parent_dir = spec_readme.parent().ok_or_else(|| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error("Missing spec directory")),
@@ -396,49 +458,53 @@ pub async fn search_project_specs(
     Path(project_id): Path<String>,
     Json(req): Json<SearchRequest>,
 ) -> ApiResult<Json<SearchResponse>> {
-    let (loader, project) = get_spec_loader(&state, &project_id).await?;
+    let (adapter, project) = get_adapter_and_project(&state, &project_id).await?;
+    let schema = adapter.schema();
 
-    let all_specs = loader.load_all().map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-
-    // Build enriched query by appending UI filter fields to the search query.
-    // This lets the core search engine handle field filters (status:, priority:, tag:)
-    // alongside the user's text query with boolean operators, fuzzy matching, etc.
-    let mut enriched_query = req.query.clone();
-    if let Some(ref filters) = req.filters {
-        if let Some(ref status) = filters.status {
-            enriched_query.push_str(&format!(" status:{}", status));
+    // Build a filter that combines free-text with field constraints from the
+    // structured request body. The adapter's list pass handles equality on
+    // status/priority/tags so the UI doesn't have to re-implement filtering.
+    let mut fields: HashMap<String, Vec<String>> = HashMap::new();
+    if let Some(filters) = req.filters.as_ref() {
+        if let Some(status) = filters.status.as_ref().filter(|s| !s.is_empty()) {
+            if let Some(key) = schema.key_for_semantic(semantic::STATUS) {
+                fields.insert(key.to_string(), vec![status.clone()]);
+            }
         }
-        if let Some(ref priority) = filters.priority {
-            enriched_query.push_str(&format!(" priority:{}", priority));
+        if let Some(priority) = filters.priority.as_ref().filter(|s| !s.is_empty()) {
+            if let Some(key) = schema.key_for_semantic(semantic::PRIORITY) {
+                fields.insert(key.to_string(), vec![priority.clone()]);
+            }
         }
-        if let Some(ref tags) = filters.tags {
-            for tag in tags {
-                enriched_query.push_str(&format!(" tag:{}", tag));
+        if let Some(tags) = filters.tags.as_ref().filter(|t| !t.is_empty()) {
+            if let Some(key) = schema.key_for_semantic(semantic::TAGS) {
+                fields.insert(key.to_string(), tags.clone());
             }
         }
     }
 
-    // Use the core search engine for advanced query parsing, fuzzy matching,
-    // boolean operators, field filters, and relevance scoring.
-    let search_results =
-        search_specs_with_options(&all_specs, &enriched_query, SearchOptions::new());
+    let text = if req.query.trim().is_empty() {
+        None
+    } else {
+        Some(req.query.clone())
+    };
 
-    // Map core SearchResults back to SpecSummary objects.
-    // Build a lookup from path → SpecInfo for efficient mapping.
-    let spec_map: std::collections::HashMap<&str, &leanspec_core::SpecInfo> =
-        all_specs.iter().map(|s| (s.path.as_str(), s)).collect();
+    let filter = ListFilter {
+        fields,
+        text,
+        include_archived: false,
+        raw: None,
+    };
 
-    let results: Vec<SpecSummary> = search_results
+    let docs = adapter.list(&filter).map_err(adapter_error)?;
+
+    let results: Vec<SpecSummary> = docs
         .iter()
-        .filter_map(|sr| {
-            spec_map
-                .get(sr.path.as_str())
-                .map(|s| SpecSummary::from(*s).with_project_id(&project.id))
+        .map(|doc| {
+            let mut summary =
+                SpecSummary::from_doc_with_tokens(doc, schema).with_project_id(&project.id);
+            summary.file_path = doc_url_or_default(doc);
+            summary
         })
         .collect();
 

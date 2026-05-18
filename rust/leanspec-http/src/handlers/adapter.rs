@@ -1,8 +1,8 @@
-//! Adapter introspection endpoint.
+//! Adapter introspection endpoints.
 //!
-//! Returns the active [`leanspec_core::Adapter`]'s capabilities for a given
-//! project so clients (UI, agents) can build adapter-aware workflows without
-//! assuming markdown-specific conventions.
+//! Surfaces the active [`leanspec_core::Adapter`]'s capabilities and schema
+//! for a given project so clients (UI, agents) can build adapter-aware
+//! workflows without assuming markdown-specific conventions.
 
 #![allow(clippy::result_large_err)]
 
@@ -12,6 +12,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
 use leanspec_core::adapters::{AdapterCapabilities, AdapterConfig, AdapterRegistry};
+use leanspec_core::SpecSchema;
 
 use crate::error::ApiError;
 use crate::state::AppState;
@@ -39,8 +40,6 @@ fn resolve_adapter_for_project(
         }
     }
 
-    // No adapter config — fall back to the markdown adapter pointed at the
-    // project's declared specs directory.
     let config = AdapterConfig {
         adapter: "markdown".into(),
         settings: serde_json::json!({ "directory": specs_dir.to_string_lossy().as_ref() }),
@@ -63,4 +62,17 @@ pub async fn get_project_adapter_capabilities(
     let project = resolve_project(&state, &project_id).await?;
     let adapter = resolve_adapter_for_project(&project.path, &project.specs_dir)?;
     Ok(Json(adapter.capabilities().clone()))
+}
+
+/// GET /api/projects/{id}/schema
+///
+/// Returns the active adapter's `SpecSchema` so the UI can render dynamic
+/// field sets without hard-coding adapter-specific conventions.
+pub async fn get_project_schema(
+    State(state): State<AppState>,
+    Path(project_id): Path<String>,
+) -> Result<Json<SpecSchema>, (StatusCode, Json<ApiError>)> {
+    let project = resolve_project(&state, &project_id).await?;
+    let adapter = resolve_adapter_for_project(&project.path, &project.specs_dir)?;
+    Ok(Json(adapter.schema().clone()))
 }

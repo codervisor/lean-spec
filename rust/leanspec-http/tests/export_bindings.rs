@@ -1,4 +1,4 @@
-use leanspec_core::{SpecPriority, SpecStatus, StatusTransition};
+use leanspec_core::adapters::markdown::{SpecPriority, SpecStatus, StatusTransition};
 use leanspec_http::types::{
     BatchMetadataRequest, BatchMetadataResponse, ChecklistToggleItem, ChecklistToggleRequest,
     ChecklistToggleResponse, ChecklistToggledResult, ConfigFeatures, ConfigStructure, ContextFile,

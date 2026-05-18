@@ -5,8 +5,11 @@
 use crate::config::ServerConfig;
 use crate::error::ServerError;
 use crate::project_registry::{Project, ProjectRegistry};
-use crate::watcher::{sse_connection_limit, watch_debounce, watch_enabled, FileWatcher};
-use std::path::PathBuf;
+use crate::watcher::{
+    sse_connection_limit, watch_debounce, watch_enabled, FileWatcher, MarkdownWatchTarget,
+};
+use leanspec_core::adapters::AdapterRegistry;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::{RwLock, Semaphore};
 
@@ -42,22 +45,7 @@ impl AppState {
             }
         }
 
-        let file_watcher = if watch_enabled() {
-            let roots: Vec<_> = registry.all().iter().map(|p| p.specs_dir.clone()).collect();
-            if roots.is_empty() {
-                None
-            } else {
-                match FileWatcher::new(roots, watch_debounce()) {
-                    Ok(watcher) => Some(Arc::new(watcher)),
-                    Err(err) => {
-                        tracing::warn!("Failed to initialize spec watcher: {}", err);
-                        None
-                    }
-                }
-            }
-        } else {
-            None
-        };
+        let file_watcher = build_file_watcher(&registry);
 
         let sse_connections = Arc::new(Semaphore::new(sse_connection_limit()));
 
@@ -71,12 +59,7 @@ impl AppState {
 
     /// Create state with an existing registry (for testing)
     pub async fn with_registry(config: ServerConfig, registry: ProjectRegistry) -> Self {
-        let file_watcher = if watch_enabled() {
-            let roots: Vec<_> = registry.all().iter().map(|p| p.specs_dir.clone()).collect();
-            FileWatcher::new(roots, watch_debounce()).ok().map(Arc::new)
-        } else {
-            None
-        };
+        let file_watcher = build_file_watcher(&registry);
         let sse_connections = Arc::new(Semaphore::new(sse_connection_limit()));
         Self {
             config: Arc::new(config),
@@ -85,6 +68,55 @@ impl AppState {
             sse_connections,
         }
     }
+}
+
+/// Build a file watcher restricted to projects whose adapter is markdown.
+fn build_file_watcher(registry: &ProjectRegistry) -> Option<Arc<FileWatcher>> {
+    if !watch_enabled() {
+        return None;
+    }
+
+    let targets: Vec<MarkdownWatchTarget> = registry
+        .all()
+        .into_iter()
+        .filter(|project| project_uses_markdown_adapter(&project.path))
+        .map(|project| MarkdownWatchTarget::new(project.specs_dir.clone()))
+        .collect();
+
+    if targets.is_empty() {
+        return None;
+    }
+
+    match FileWatcher::new(targets, watch_debounce()) {
+        Ok(watcher) => Some(Arc::new(watcher)),
+        Err(err) => {
+            tracing::warn!("Failed to initialize spec watcher: {}", err);
+            None
+        }
+    }
+}
+
+/// Inspect a project's adapter config and return true when it resolves to a
+/// markdown adapter (or when no adapter config exists, since markdown is the
+/// default).
+fn project_uses_markdown_adapter(project_path: &Path) -> bool {
+    const CANDIDATES: &[&str] = &[
+        "leanspec.adapter.yaml",
+        ".lean-spec/adapter.yaml",
+        "leanspec.provider.yaml",
+        ".lean-spec/provider.yaml",
+    ];
+
+    for candidate in CANDIDATES {
+        let path = project_path.join(candidate);
+        if path.exists() {
+            match AdapterRegistry::load_config(&path) {
+                Ok(cfg) => return cfg.adapter == "markdown",
+                Err(_) => return false,
+            }
+        }
+    }
+    true
 }
 
 /// Resolve a default project path by walking up to find a `specs` directory.
