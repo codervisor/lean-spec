@@ -3,6 +3,7 @@ members = [
   "leanspec-core",
   "leanspec-cli",
   "leanspec-http",
+  "leanspec-mcp",
 ]
 resolver = "2"
 
