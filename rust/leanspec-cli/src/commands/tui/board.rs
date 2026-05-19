@@ -1,4 +1,4 @@
-//! Board view widget — specs grouped by status.
+//! Board view widget — specs grouped by the schema's `status` semantic field.
 
 use ratatui::{
     buffer::Buffer,
@@ -9,7 +9,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Widget},
 };
 
-use leanspec_core::SpecInfo;
+use leanspec_core::model::SpecDoc;
 
 use super::app::{App, FocusPane, PrimaryView};
 use super::theme;
@@ -33,11 +33,13 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     block.render(area, buf);
 
     let mut lines: Vec<Line> = Vec::new();
+    let status_key = app.status_key.as_deref().unwrap_or("status");
+    let priority_key = app.priority_key.as_deref();
 
     for (gi, group) in app.board_groups.iter().enumerate() {
-        // Group header with collapse indicator
-        let header_style = theme::status_style(&group.status).add_modifier(Modifier::BOLD);
-        let symbol = theme::status_symbol(&group.status);
+        let header_color = theme::field_style(&group.value, status_key, &app.schema);
+        let header_style = header_color.add_modifier(Modifier::BOLD);
+        let symbol = theme::field_symbol(&group.value, status_key, &app.schema);
         let collapse_indicator = if group.collapsed { "▶" } else { "▼" };
         let collapsed_label = if group.collapsed { " [collapsed]" } else { "" };
 
@@ -63,9 +65,8 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
         ]));
 
         if !group.collapsed {
-            // Items in group
             for (ii, &spec_idx) in group.indices.iter().enumerate() {
-                let spec = &app.specs[spec_idx];
+                let doc = &app.specs[spec_idx];
                 let is_current = gi == app.board_group_idx && ii == app.board_item_idx;
 
                 let style = if is_current && is_focused {
@@ -76,17 +77,16 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
                     Style::default()
                 };
 
-                let pri = theme::priority_symbol(spec.frontmatter.priority.as_ref());
-                let dep_count = app
-                    .dep_graph
-                    .get_complete_graph(&spec.path)
-                    .map_or(0, |g| g.depends_on.len());
-                let line = format_spec_line(pri, spec, dep_count);
+                let pri_sym = priority_key
+                    .and_then(|k| doc.field_str(k).map(|v| (k, v)))
+                    .map(|(k, v)| theme::field_symbol(v, k, &app.schema).to_string())
+                    .unwrap_or_else(|| " ".to_string());
+                let dep_count = app.deps.dep_count(&doc.id);
+                let line = format_spec_line(&pri_sym, doc, dep_count);
                 lines.push(Line::styled(line, style));
             }
         }
 
-        // Blank line between groups
         lines.push(Line::from(""));
     }
 
@@ -97,12 +97,10 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     let total_lines = lines.len();
     let viewport_height = inner.height as usize;
 
-    // Compute scroll offset to keep the selected item visible
     let scroll = app.board_scroll(viewport_height);
     let paragraph = Paragraph::new(lines).scroll((scroll as u16, 0));
     paragraph.render(inner, buf);
 
-    // Scrollbar — only render if content exceeds viewport
     if total_lines > viewport_height {
         let mut scrollbar_state = ScrollbarState::new(total_lines)
             .position(scroll)
@@ -114,19 +112,19 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     }
 }
 
-fn format_spec_line(priority: &str, spec: &SpecInfo, dep_count: usize) -> String {
-    let title = if spec.title.chars().count() > 36 {
-        let truncated: String = spec.title.chars().take(33).collect();
+fn format_spec_line(priority: &str, doc: &SpecDoc, dep_count: usize) -> String {
+    let title = if doc.title.chars().count() > 36 {
+        let truncated: String = doc.title.chars().take(33).collect();
         format!("{}...", truncated)
     } else {
-        spec.title.clone()
+        doc.title.clone()
     };
     let dep_str = if dep_count > 0 {
         format!(" deps:{}", dep_count)
     } else {
         String::new()
     };
-    format!("  {} {} {}{}", priority, spec.path, title, dep_str)
+    format!("  {} {} {}{}", priority, doc.id, title, dep_str)
 }
 
 #[cfg(test)]
@@ -134,8 +132,6 @@ mod tests {
     use super::*;
     use ratatui::backend::TestBackend;
     use ratatui::Terminal;
-
-    use super::super::app::App;
 
     fn buffer_text(buf: &ratatui::buffer::Buffer) -> String {
         buf.content().iter().map(|c| c.symbol()).collect()
@@ -145,7 +141,7 @@ mod tests {
     fn test_board_renders_group_headers() {
         let mut app = App::empty_for_test();
         app.board_groups = vec![super::super::app::BoardGroup {
-            status: leanspec_core::SpecStatus::Draft,
+            value: "draft".to_string(),
             label: "Draft".to_string(),
             indices: vec![],
             collapsed: false,
@@ -168,7 +164,7 @@ mod tests {
     fn test_board_collapsed_group_shows_indicator() {
         let mut app = App::empty_for_test();
         app.board_groups = vec![super::super::app::BoardGroup {
-            status: leanspec_core::SpecStatus::Planned,
+            value: "planned".to_string(),
             label: "Planned".to_string(),
             indices: vec![],
             collapsed: true,

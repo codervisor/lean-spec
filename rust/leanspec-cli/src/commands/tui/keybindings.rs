@@ -311,39 +311,41 @@ pub fn handle_mouse(app: &mut App, mouse: MouseEvent) {
 }
 
 /// Handle a mouse click inside the filter overlay.
-/// The overlay geometry mirrors filter.rs render() so we can map (col, row) to an item.
+///
+/// The overlay groups filter entries by field key (status, priority, …),
+/// emitting a 1-row header before each group and a blank row after. We walk
+/// the same groups here in the same order to map a clicked terminal row back
+/// to a `filter_entries` index.
 fn handle_filter_click(app: &mut App, _col: u16, row: u16) {
-    use super::app::{FILTER_PRIORITIES, FILTER_STATUSES};
-
-    let w = app.last_frame_width;
     let h = app.last_frame_height;
+    let w = app.last_frame_width;
     if w == 0 || h == 0 {
         return;
     }
-    let _overlay_width = (w * 50 / 100).max(44).min(w);
-    let overlay_height = 16u16.min(h.saturating_sub(4));
+    let entries = app.filter_entries();
+    let total_rows = entries.len() as u16;
+    let overlay_height = (total_rows + 6).min(h.saturating_sub(4));
     let overlay_y = h.saturating_sub(overlay_height) / 2;
-    // Inner area starts one row below the border
     let inner_y = overlay_y + 1;
 
-    // Layout within inner (mirrors filter.rs chunks):
-    // 0: STATUS header
-    // 1..n_statuses: status items
-    // n_statuses+1: blank
-    // n_statuses+2: PRIORITY header
-    // n_statuses+3..n_statuses+3+n_priorities: priority items
-    let n_statuses = FILTER_STATUSES.len() as u16;
-    let status_start = inner_y + 1; // skip STATUS header row
-    let priority_start = status_start + n_statuses + 2; // skip blank + PRIORITY header
-
-    if row >= status_start && row < status_start + n_statuses {
-        let idx = (row - status_start) as usize;
-        app.filter_cursor = idx;
-        app.filter_toggle_current();
-    } else if row >= priority_start && row < priority_start + FILTER_PRIORITIES.len() as u16 {
-        let idx = FILTER_STATUSES.len() + (row - priority_start) as usize;
-        app.filter_cursor = idx;
-        app.filter_toggle_current();
+    let mut current_row = inner_y;
+    let mut last_key: Option<String> = None;
+    for (i, (key, _)) in entries.iter().enumerate() {
+        let new_group = last_key.as_deref() != Some(key.as_str());
+        if new_group {
+            // Header row, then blank row after the previous group (skipped on first group)
+            if last_key.is_some() {
+                current_row = current_row.saturating_add(1); // blank
+            }
+            current_row = current_row.saturating_add(1); // header
+            last_key = Some(key.clone());
+        }
+        if row == current_row {
+            app.filter_cursor = i;
+            app.filter_toggle_current();
+            return;
+        }
+        current_row = current_row.saturating_add(1);
     }
 }
 
@@ -951,7 +953,8 @@ mod tests {
         assert_eq!(app.sort_option, SortOption::IdAsc);
 
         handle_key(&mut app, key(KeyCode::Char('s')));
-        assert_eq!(app.sort_option, SortOption::PriorityDesc);
+        // Markdown schema declares a priority field so the cycle lands on it.
+        assert!(matches!(app.sort_option, SortOption::FieldDesc(_)));
     }
 
     #[test]
