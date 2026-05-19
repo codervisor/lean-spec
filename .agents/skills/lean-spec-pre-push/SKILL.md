@@ -164,8 +164,8 @@ If nothing under tracked source paths changed (e.g. docs-only edits):
 
 ## What this skill does NOT cover
 
-- Writing the spec issue — see [`issue-spec`](../issue-spec/SKILL.md).
+- Writing the spec issue — see [`issue-spec`](https://github.com/onsager-ai/dev-skills/blob/main/skills/issue-spec/SKILL.md) (installed globally from `onsager-ai/dev-skills`).
 - Opening or managing the PR — see [`lean-spec-pr-lifecycle`](../lean-spec-pr-lifecycle/SKILL.md).
 - The end-to-end dev loop — see [`lean-spec-dev-process`](../lean-spec-dev-process/SKILL.md).
 - Commands, CI workflows, publishing pipelines — see [`leanspec-development`](../leanspec-development/SKILL.md).
-- GitHub CLI in cloud sessions — see [`github-integration`](../github-integration/SKILL.md).
+- GitHub CLI in cloud sessions — see [`github-integration`](https://github.com/onsager-ai/dev-skills/blob/main/skills/github-integration/SKILL.md) (installed globally from `onsager-ai/dev-skills`).

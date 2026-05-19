@@ -1,21 +1,4 @@
 {
   "version": 1,
-  "skills": {
-    "github-integration": {
-      "source": "codervisor/forge",
-      "sourceType": "github",
-      "computedHash": "14357468e9d8ef12bb896d08228f938bcc0e85a7eff758baec01f9edd2547e95"
-    },
-    "parallel-worktrees": {
-      "source": "codervisor/forge",
-      "sourceType": "github",
-      "computedHash": "1848a67829d211a61b007f18d6f91690816c140b738b00265cd2f8fe46a556c6"
-    },
-    "plan-dag": {
-      "source": "onsager-ai/onsager-skills",
-      "sourceType": "github",
-      "skillPath": "skills/plan-dag/SKILL.md",
-      "computedHash": "6787d3a8369eb736f269fa3acb6ec996af92e0acd98897545ba8059158b7d78f"
-    }
-  }
+  "skills": {}
 }

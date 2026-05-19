@@ -184,12 +184,12 @@ Until automation lands on this repo, the `planned → in-progress` flip on PR op
 
 | Stage                                       | Skill / workflow                                                |
 |---------------------------------------------|-----------------------------------------------------------------|
-| Write the spec                              | [`issue-spec`](../issue-spec/SKILL.md)                          |
+| Write the spec                              | [`issue-spec`](https://github.com/onsager-ai/dev-skills/blob/main/skills/issue-spec/SKILL.md) (installed globally from `onsager-ai/dev-skills`) |
 | Commands, CI, publishing, i18n              | [`leanspec-development`](../leanspec-development/SKILL.md)      |
 | Pre-push checks                             | [`lean-spec-pre-push`](../lean-spec-pre-push/SKILL.md)          |
 | CI triage, review, iterate                  | [`lean-spec-pr-lifecycle`](../lean-spec-pr-lifecycle/SKILL.md)  |
 | On PR merge → tick Plan items               | [`lean-spec-pr-lifecycle`](../lean-spec-pr-lifecycle/SKILL.md) (manual) |
-| GitHub CLI / cloud auth                     | [`github-integration`](../github-integration/SKILL.md)          |
+| GitHub CLI / cloud auth                     | [`github-integration`](https://github.com/onsager-ai/dev-skills/blob/main/skills/github-integration/SKILL.md) (installed globally from `onsager-ai/dev-skills`) |
 
 ## Relationship to Onsager / Duhem dev process
 
