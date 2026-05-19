@@ -111,18 +111,17 @@ impl SpecWriter {
 
         // Track status transitions so the velocity history persists across
         // adapter-mediated updates the same way it did on the legacy CLI path.
+        // Both the transition log and `completed_at` are gated on an actual
+        // status change — an unrelated metadata edit (tags, assignee) on an
+        // already-Complete spec must not silently back-fill the timestamp.
         if frontmatter.status != previous_status {
             frontmatter.transitions.push(StatusTransition {
                 status: frontmatter.status,
                 at: now,
             });
-        }
-
-        // Stamp `completed_at` the first time a spec lands in Complete so
-        // downstream consumers (board cards, velocity charts) don't have to
-        // reconstruct it from the transition log.
-        if frontmatter.status == SpecStatus::Complete && frontmatter.completed_at.is_none() {
-            frontmatter.completed_at = Some(now);
+            if frontmatter.status == SpecStatus::Complete && frontmatter.completed_at.is_none() {
+                frontmatter.completed_at = Some(now);
+            }
         }
 
         if let Some(priority) = updates.priority {

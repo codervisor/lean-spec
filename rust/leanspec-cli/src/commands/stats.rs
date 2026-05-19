@@ -146,13 +146,21 @@ fn print_text(stats: &Stats, schema: &SpecSchema, detailed: bool) {
         }
         println!();
 
-        let completion = stats
-            .by_status
-            .iter()
-            .filter(|(k, _)| matches!(k.as_str(), "complete" | "closed" | "done" | "resolved"))
-            .map(|(_, v)| *v)
-            .sum::<usize>();
-        if stats.total > 0 {
+        // Progress requires knowing which status values count as "done".
+        // The schema doesn't expose a `terminal` flag on enum options yet,
+        // so until that lands we approximate: scan declared options for
+        // values that case-insensitively match well-known terminal names
+        // (`complete`, `closed`, `done`, `resolved`). If none match, we
+        // skip the line rather than print a misleading number on adapters
+        // whose workflow uses different terminology.
+        let terminal_values = terminal_status_values(schema);
+        if !terminal_values.is_empty() && stats.total > 0 {
+            let completion: usize = stats
+                .by_status
+                .iter()
+                .filter(|(k, _)| terminal_values.iter().any(|t| t.eq_ignore_ascii_case(k)))
+                .map(|(_, v)| *v)
+                .sum();
             let pct = completion as f64 / stats.total as f64 * 100.0;
             let bar_len = (pct / 100.0 * 30.0) as usize;
             let bar = "█".repeat(bar_len);
@@ -275,6 +283,27 @@ fn ordered_enum_values(
     extras.sort();
     declared.extend(extras);
     declared
+}
+
+/// Status enum values from the schema that look like a terminal "done"
+/// state. Used to compute the Progress percentage without hardcoding a
+/// fixed vocabulary at the CLI layer.
+fn terminal_status_values(schema: &SpecSchema) -> Vec<String> {
+    const TERMINAL_HINTS: &[&str] = &["complete", "closed", "done", "resolved"];
+    let Some(field) = schema.field_with_semantic(semantic::STATUS) else {
+        return Vec::new();
+    };
+    match &field.kind {
+        FieldKind::Enum { options, .. } => options
+            .iter()
+            .filter(|opt| {
+                let v = opt.value.to_ascii_lowercase();
+                TERMINAL_HINTS.iter().any(|hint| v == *hint)
+            })
+            .map(|opt| opt.value.clone())
+            .collect(),
+        _ => Vec::new(),
+    }
 }
 
 fn bar_length(count: usize, total: usize) -> usize {

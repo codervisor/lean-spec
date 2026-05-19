@@ -115,7 +115,11 @@ pub fn run(
                 println!("{} {}", "✓".green(), "Updated:".green());
                 println!("  {}", doc.id);
                 if !summary.fields_updated.is_empty() {
-                    println!("  {}: {}", "Fields".bold(), summary.fields_updated.join(", "));
+                    println!(
+                        "  {}: {}",
+                        "Fields".bold(),
+                        summary.fields_updated.join(", ")
+                    );
                 }
                 if !summary.checklist_results.is_empty() {
                     println!("  {}:", "Checklist".bold());
@@ -299,7 +303,7 @@ fn update_single(
     // ── markdown-only completion / transition guards ────────────────────────
     if let Some(new_status) = status {
         if adapter_name == "markdown" {
-            enforce_markdown_status_rules(doc, new_status, force, &fields)?;
+            enforce_markdown_status_rules(doc, schema, new_status, force, &fields)?;
         }
     }
 
@@ -318,11 +322,7 @@ fn update_single(
     })
 }
 
-fn compute_tag_diff(
-    current: Vec<String>,
-    add: Option<&str>,
-    remove: Option<&str>,
-) -> Vec<String> {
+fn compute_tag_diff(current: Vec<String>, add: Option<&str>, remove: Option<&str>) -> Vec<String> {
     let mut out = current;
     for tag in parse_csv(add) {
         if !out.contains(&tag) {
@@ -375,19 +375,24 @@ fn unsupported_msg(name: &str, adapter_name: &str) -> Box<dyn Error> {
 
 fn enforce_markdown_status_rules(
     doc: &SpecDoc,
+    schema: &SpecSchema,
     new_status: &str,
     force: bool,
     pending_fields: &HashMap<String, FieldValue>,
 ) -> Result<(), Box<dyn Error>> {
-    let current_status = doc.fields.get("status").and_then(|v| v.as_str());
+    // Look up the status field via the schema's semantic hint rather than the
+    // literal `"status"` key — keeps this guard aligned with the semantic-key
+    // path used to write the new value above.
+    let status_key = schema
+        .key_for_semantic(semantic::STATUS)
+        .unwrap_or("status");
+    let current_status = doc.fields.get(status_key).and_then(|v| v.as_str());
 
     if current_status == Some("draft")
         && (new_status == "in-progress" || new_status == "complete")
         && !force
     {
-        return Err(
-            "Cannot skip 'planned' stage from draft. Use --force to override.".into(),
-        );
+        return Err("Cannot skip 'planned' stage from draft. Use --force to override.".into());
     }
 
     if new_status == "complete" && !force {
