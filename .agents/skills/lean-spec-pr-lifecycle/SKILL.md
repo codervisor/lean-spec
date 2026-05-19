@@ -194,7 +194,7 @@ After handling a webhook event, end with one or two sentences: what the failure 
 | Related surface                                                      | Role                                                                                              |
 |----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
 | [`lean-spec-dev-process`](../lean-spec-dev-process/SKILL.md)         | Top-level SDD loop; points here for the post-push stage.                                          |
-| [`issue-spec`](../issue-spec/SKILL.md)                               | Creates the spec issue this PR links to.                                                          |
+| [`issue-spec`](https://github.com/onsager-ai/dev-skills/blob/main/skills/issue-spec/SKILL.md) | Creates the spec issue this PR links to. Installed globally from `onsager-ai/dev-skills`.         |
 | [`lean-spec-pre-push`](../lean-spec-pre-push/SKILL.md)               | Runs before `git push`; enforces the spec-link check locally and owns the conflict walkthrough.   |
 | [`leanspec-development`](../leanspec-development/SKILL.md)           | Commands, CI workflows, publishing, changelog format, runner research.                            |
-| [`github-integration`](../github-integration/SKILL.md)               | `gh` CLI in cloud sessions (CI inspection only — not for issue/PR mutation).                      |
+| [`github-integration`](https://github.com/onsager-ai/dev-skills/blob/main/skills/github-integration/SKILL.md) | `gh` CLI in cloud sessions (CI inspection only — not for issue/PR mutation). Installed globally from `onsager-ai/dev-skills`. |
