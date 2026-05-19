@@ -158,9 +158,9 @@ pub(crate) enum Commands {
         #[arg(short, long)]
         status: Option<String>,
 
-        /// Priority level
-        #[arg(short, long, default_value = "medium")]
-        priority: String,
+        /// Priority level (defaults to `medium` when omitted)
+        #[arg(short, long)]
+        priority: Option<String>,
 
         /// Tags (comma-separated)
         #[arg(long)]
@@ -189,6 +189,14 @@ pub(crate) enum Commands {
         /// Short description (inserted into template body under the title)
         #[arg(long)]
         description: Option<String>,
+
+        /// Explicit slug override (markdown adapter only — e.g. `042-my-feature`)
+        #[arg(long)]
+        slug: Option<String>,
+
+        /// Adapter-specific field as `key=value` (repeatable)
+        #[arg(long = "field")]
+        fields: Vec<String>,
     },
 
     /// List example projects

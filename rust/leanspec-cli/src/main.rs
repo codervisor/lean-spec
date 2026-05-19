@@ -85,6 +85,8 @@ fn main() -> ExitCode {
             file,
             assignee,
             description,
+            slug,
+            fields,
         } => commands::create::run(commands::create::CreateParams {
             specs_dir: specs_dir.clone(),
             name,
@@ -99,6 +101,8 @@ fn main() -> ExitCode {
             file,
             assignee,
             description,
+            slug,
+            fields,
         }),
         Commands::Rel {
             args,

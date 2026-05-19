@@ -128,7 +128,8 @@ fn test_create_generates_frontmatter_correctly() {
         frontmatter.contains_key("priority"),
         "should have priority field"
     );
-    assert!(frontmatter.contains_key("tags"), "should have tags field");
+    // `tags` is omitted when empty; once a tag is set it appears as a
+    // sequence (see `test_create_with_tags_formats_correctly`).
     assert!(
         frontmatter.contains_key("created_at"),
         "should have created_at field"

@@ -422,6 +422,14 @@ pub fn spec_info_to_doc(info: &SpecInfo) -> SpecDoc {
         });
     }
 
+    // `id` is the leaf directory name (e.g. `002-child`), which is ambiguous
+    // for sub-specs. Stash the resolved README path in `raw` so callers like
+    // `view --raw` can read the underlying file without re-implementing the
+    // discovery walk.
+    let raw = serde_json::json!({
+        "file_path": info.file_path.to_string_lossy(),
+    });
+
     SpecDoc {
         id: info.path.clone(),
         title: info.title.clone(),
@@ -431,7 +439,7 @@ pub fn spec_info_to_doc(info: &SpecInfo) -> SpecDoc {
         created_at: fm.created_at,
         updated_at: fm.updated_at,
         url: None,
-        raw: None,
+        raw: Some(raw),
     }
 }
 
@@ -712,6 +720,80 @@ fn fields_to_frontmatter(
         .map(|l| l.target_id.clone())
         .collect();
 
+    // Typed-string fields on `SpecFrontmatter` that round-trip through the
+    // adapter as `FieldValue::String`. Surfacing them in fields without
+    // pulling them into the typed struct would produce duplicate YAML keys
+    // when serde flattens `custom`.
+    let updated = fields
+        .get("updated")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let completed = fields
+        .get("completed")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let created_at = fields
+        .get("created_at")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|t| t.with_timezone(&chrono::Utc));
+    let updated_at = fields
+        .get("updated_at")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|t| t.with_timezone(&chrono::Utc));
+    let completed_at = fields
+        .get("completed_at")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|t| t.with_timezone(&chrono::Utc));
+
+    // Any field key not handled above is preserved as custom frontmatter —
+    // keeps adapter-specific keys (e.g. `severity`, project-defined enums) on
+    // disk rather than silently dropping them. Typed keys must be excluded
+    // here because `SpecFrontmatter` flattens `custom`, which would otherwise
+    // emit duplicate YAML keys.
+    let known_keys = [
+        field::STATUS,
+        field::PRIORITY,
+        field::TAGS,
+        field::ASSIGNEE,
+        field::REVIEWER,
+        field::ISSUE,
+        field::PR,
+        field::EPIC,
+        field::BREAKING,
+        field::DUE,
+        field::CREATED,
+        field::CONTENT,
+        "created_at",
+        "updated_at",
+        "completed_at",
+        "updated",
+        "completed",
+        "transitions",
+        "parent",
+        "depends_on",
+    ];
+    let mut custom = std::collections::HashMap::new();
+    for (key, value) in fields {
+        if known_keys.contains(&key.as_str()) {
+            continue;
+        }
+        let yaml_value = match value {
+            FieldValue::String(s) => serde_yaml::Value::String(s.clone()),
+            FieldValue::Bool(b) => serde_yaml::Value::Bool(*b),
+            FieldValue::Number(n) => serde_yaml::Value::Number(serde_yaml::Number::from(*n)),
+            FieldValue::Strings(v) => serde_yaml::Value::Sequence(
+                v.iter()
+                    .map(|s| serde_yaml::Value::String(s.clone()))
+                    .collect(),
+            ),
+            _ => continue,
+        };
+        custom.insert(key.clone(), yaml_value);
+    }
+
     Ok(SpecFrontmatter {
         status,
         created,
@@ -726,13 +808,13 @@ fn fields_to_frontmatter(
         epic,
         breaking,
         due,
-        updated: None,
-        completed: None,
-        created_at: None,
-        updated_at: None,
-        completed_at: None,
+        updated,
+        completed,
+        created_at,
+        updated_at,
+        completed_at,
         transitions: Vec::new(),
-        custom: std::collections::HashMap::new(),
+        custom,
     })
 }
 
@@ -829,7 +911,14 @@ impl Adapter for MarkdownAdapter {
         let number = self.next_spec_number()?;
         let dir_name = format!("{:03}-{}", number, slug);
 
-        let frontmatter = fields_to_frontmatter(&req.fields, &req.links)?;
+        let now = chrono::Utc::now();
+        let mut frontmatter = fields_to_frontmatter(&req.fields, &req.links)?;
+        if frontmatter.created_at.is_none() {
+            frontmatter.created_at = Some(now);
+        }
+        if frontmatter.updated_at.is_none() {
+            frontmatter.updated_at = Some(now);
+        }
         let fm_yaml =
             serde_yaml::to_string(&frontmatter).map_err(|e| AdapterError::ParseError {
                 path: dir_name.clone(),
@@ -842,7 +931,14 @@ impl Adapter for MarkdownAdapter {
             .and_then(|v| v.as_str())
             .unwrap_or("## Overview\n\n## Design\n\n## Plan\n\n## Test\n");
 
-        let file_content = format!("---\n{}---\n\n# {}\n\n{}", fm_yaml, req.title, body);
+        // Callers may pre-render a body with its own H1 heading (e.g. when
+        // merging user-supplied content). Avoid duplicating it.
+        let trimmed = body.trim_start();
+        let file_content = if trimmed.starts_with("# ") || trimmed.starts_with("#\n") {
+            format!("---\n{}---\n\n{}", fm_yaml, trimmed)
+        } else {
+            format!("---\n{}---\n\n# {}\n\n{}", fm_yaml, req.title, body)
+        };
 
         let loader = SpecLoader::new(&self.specs_dir);
         let info = loader

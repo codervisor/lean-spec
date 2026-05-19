@@ -689,6 +689,8 @@ fn run_ado_init(options: InitOptions) -> Result<(), Box<dyn Error>> {
     let cwd = std::env::current_dir()?;
     let root = find_project_root(&cwd);
 
+    // When the user didn't override `--token-env`, the ADO default is
+    // `ADO_TOKEN`.
     let token_env = resolved_token_env(&options, "ADO_TOKEN");
 
     // 1. Prompt for / parse organization + project.
