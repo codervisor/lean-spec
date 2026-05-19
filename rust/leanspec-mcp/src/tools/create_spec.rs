@@ -69,7 +69,7 @@ pub fn call(state: Arc<ServerState>, args: Value) -> Result<Value, McpToolError>
     };
 
     let doc = state.adapter.create(&req)?;
-    Ok(doc_to_json(&doc))
+    doc_to_json(&doc)
 }
 
 /// Convert a JSON value into a `FieldValue` consistent with the field's

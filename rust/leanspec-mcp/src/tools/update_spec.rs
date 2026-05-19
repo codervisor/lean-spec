@@ -72,5 +72,5 @@ pub fn call(state: Arc<ServerState>, args: Value) -> Result<Value, McpToolError>
     };
 
     let doc = state.adapter.update(&id, &req)?;
-    Ok(doc_to_json(&doc))
+    doc_to_json(&doc)
 }

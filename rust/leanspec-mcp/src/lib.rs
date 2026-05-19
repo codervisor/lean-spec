@@ -8,20 +8,26 @@
 //! ## Architecture
 //!
 //! ```text
+//!     main.rs ──► ServerState::from_project()
+//!                       │
+//!                       └─► AdapterRegistry::from_project()
+//!                                   │
+//!                                   └─► markdown / github / ado / jira
+//!                       (resolved once; cached in Arc<ServerState>)
+//!
 //! stdio  ─┐
 //!         │  JSON-RPC framing (protocol.rs)
 //!         ↓
-//!     dispatch (lib.rs::handle_request)
+//!     dispatch (lib.rs::handle_request, takes Arc<ServerState>)
 //!         ↓
-//!     tools::* ──► AdapterRegistry::from_project()
-//!                       │
-//!                       └─► markdown / github / ado / jira
+//!     tools::* ──► state.adapter (the already-resolved Box<dyn Adapter>)
 //! ```
 //!
-//! Adapter init is performed once at startup (`ServerState::from_project`)
-//! and shared across every tool call via `Arc<ServerState>`. For
-//! network-backed schemas, the adapter's `resolve_inline` baking happens
-//! during construction so per-call latency stays predictable.
+//! Adapter init is performed once at startup in
+//! [`state::ServerState::from_project`] and shared across every tool call
+//! via `Arc<ServerState>`. For network-backed schemas, the adapter's
+//! `resolve_inline` baking happens during construction so per-call latency
+//! stays predictable.
 
 pub mod error;
 pub mod protocol;

@@ -102,7 +102,10 @@ pub fn call(state: Arc<ServerState>, args: Value) -> Result<Value, McpToolError>
         docs.truncate(n);
     }
 
-    let serialised: Vec<Value> = docs.iter().map(doc_to_json).collect();
+    let serialised: Vec<Value> = docs
+        .iter()
+        .map(doc_to_json)
+        .collect::<Result<Vec<_>, _>>()?;
     Ok(json!({
         "specs": serialised,
         "count": serialised.len()

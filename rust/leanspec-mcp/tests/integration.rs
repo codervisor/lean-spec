@@ -85,7 +85,7 @@ fn initialize_returns_protocol_version() {
 }
 
 #[test]
-fn tools_list_advertises_all_seven_core_tools() {
+fn tools_list_advertises_core_and_markdown_only_tools() {
     let tmp = TempDir::new().unwrap();
     let state = markdown_state(&tmp);
 
