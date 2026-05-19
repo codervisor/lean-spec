@@ -53,6 +53,23 @@ struct CachedDirectory {
 
 static SPEC_CACHE: OnceLock<RwLock<HashMap<PathBuf, CachedDirectory>>> = OnceLock::new();
 
+/// Directory name used by cross-adapter migration to archive specs that have
+/// been moved to another backend. Excluded from every spec-discovery walk.
+const MIGRATED_DIR_NAME: &str = "_migrated";
+
+/// `WalkDir::filter_entry` predicate that hides the `_migrated/` archive.
+fn is_migrated_dir(entry: &walkdir::DirEntry) -> bool {
+    entry.depth() > 0 && entry.file_type().is_dir() && entry.file_name() == MIGRATED_DIR_NAME
+}
+
+/// Reject user-supplied paths that point into the `_migrated/` archive
+/// (e.g. `_migrated/001-foo` or `specs/_migrated/...`).
+fn path_components_contain_migrated(spec_path: &str) -> bool {
+    Path::new(spec_path)
+        .components()
+        .any(|c| c.as_os_str() == MIGRATED_DIR_NAME)
+}
+
 fn spec_cache() -> &'static RwLock<HashMap<PathBuf, CachedDirectory>> {
     SPEC_CACHE.get_or_init(|| RwLock::new(HashMap::new()))
 }
@@ -175,6 +192,7 @@ impl SpecLoader {
         let readme_paths: Vec<PathBuf> = WalkDir::new(&self.specs_dir)
             .max_depth(3) // Allow sub-specs
             .into_iter()
+            .filter_entry(|e| !is_migrated_dir(e))
             .filter_map(|e| e.ok())
             .filter_map(|entry| {
                 let path = entry.path();
@@ -379,6 +397,12 @@ impl SpecLoader {
 
     /// Load a single spec by path/name
     pub fn load(&self, spec_path: &str) -> Result<Option<SpecInfo>, LoadError> {
+        // Refuse explicit `_migrated/...` paths — those represent
+        // post-cross-adapter-migration archives and must not be resolvable.
+        if path_components_contain_migrated(spec_path) {
+            return Ok(None);
+        }
+
         // Try direct path first
         let readme_path = self.specs_dir.join(spec_path).join("README.md");
         if readme_path.exists() {
@@ -389,6 +413,7 @@ impl SpecLoader {
         for entry in WalkDir::new(&self.specs_dir)
             .max_depth(2)
             .into_iter()
+            .filter_entry(|e| !is_migrated_dir(e))
             .filter_map(|e| e.ok())
         {
             if entry.file_type().is_dir() {
@@ -408,6 +433,10 @@ impl SpecLoader {
     /// Load a spec by exact path/name only (no fuzzy matching)
     /// This is safer for destructive operations like archiving
     pub fn load_exact(&self, spec_path: &str) -> Result<Option<SpecInfo>, LoadError> {
+        if path_components_contain_migrated(spec_path) {
+            return Ok(None);
+        }
+
         // Try direct path first
         let readme_path = self.specs_dir.join(spec_path).join("README.md");
         if readme_path.exists() {
@@ -421,6 +450,7 @@ impl SpecLoader {
             for entry in WalkDir::new(&self.specs_dir)
                 .max_depth(2)
                 .into_iter()
+                .filter_entry(|e| !is_migrated_dir(e))
                 .filter_map(|e| e.ok())
             {
                 if !entry.file_type().is_dir() {
@@ -878,6 +908,35 @@ Content for {}.
 
         assert_eq!(specs.len(), 1);
         assert!(specs[0].content.is_empty());
+    }
+
+    #[test]
+    fn test_load_skips_migrated_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let specs_dir = temp_dir.path().join("specs");
+        std::fs::create_dir_all(&specs_dir).unwrap();
+
+        // A real spec at top level and an archived one under `_migrated/`.
+        create_test_spec(&specs_dir, "001-active", "planned");
+        let migrated_dir = specs_dir.join("_migrated");
+        std::fs::create_dir_all(&migrated_dir).unwrap();
+        create_test_spec(&migrated_dir, "002-archived", "planned");
+
+        let loader = SpecLoader::new(&specs_dir);
+
+        // Bulk load: only the active spec.
+        let specs = loader.load_all().unwrap();
+        assert_eq!(specs.len(), 1);
+        assert_eq!(specs[0].path, "001-active");
+
+        // Direct lookup: cannot resolve archived specs by id, exact name, or
+        // fuzzy substring — even though the README still exists on disk.
+        assert!(loader.load("002-archived").unwrap().is_none());
+        assert!(loader.load("archived").unwrap().is_none());
+        assert!(loader
+            .load_exact("_migrated/002-archived")
+            .unwrap()
+            .is_none());
     }
 
     #[test]

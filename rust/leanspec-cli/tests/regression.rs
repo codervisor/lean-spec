@@ -132,7 +132,14 @@ fn test_regression_preserve_created_date_format() {
     }
 }
 
-/// Example: Regression test for special characters in spec names
+/// Example: Regression test for special characters in spec names.
+///
+/// The markdown adapter's slug normalization collapses any character that
+/// is not ASCII alphanumeric or `-` into a single dash, so an input of
+/// `my-cool_feature` is intentionally written to disk as
+/// `001-my-cool-feature`. The point of this regression is that the create
+/// command must accept inputs containing such characters and *normalize*
+/// them — not reject them.
 #[test]
 fn test_regression_special_characters_in_name() {
     let ctx = TestContext::new();
@@ -144,10 +151,10 @@ fn test_regression_special_characters_in_name() {
     let result = create_spec(cwd, "my-cool_feature");
     assert!(result.success, "create should succeed");
 
-    // ASSERT: Spec directory should exist
+    // ASSERT: Spec directory should exist (underscore normalized to dash)
     assert!(
-        dir_exists(&cwd.join("specs").join("001-my-cool_feature")),
-        "spec directory should exist with special characters"
+        dir_exists(&cwd.join("specs").join("001-my-cool-feature")),
+        "spec directory should exist after slug normalization"
     );
 }
 

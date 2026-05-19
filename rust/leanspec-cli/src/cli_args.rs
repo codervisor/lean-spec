@@ -333,16 +333,44 @@ pub(crate) enum Commands {
         downstream: bool,
     },
 
-    /// Migrate specs from other SDD tools
+    /// Migrate specs across adapters, or import from other SDD tools
     Migrate {
-        /// Path to directory containing specs to migrate
-        input_path: String,
+        /// Path to directory containing specs to migrate (legacy import mode)
+        #[arg(conflicts_with = "to_adapter")]
+        input_path: Option<String>,
 
-        /// Automatic migration
+        /// Migrate the project's specs to another adapter (e.g. `github`, `ado`, `jira`).
+        /// When set, switches to cross-adapter migration mode.
+        #[arg(long = "to", value_name = "ADAPTER")]
+        to_adapter: Option<String>,
+
+        /// Path to YAML config for the target adapter.
+        /// Defaults to `leanspec.adapter.<adapter>.yaml` or
+        /// `.lean-spec/adapter.<adapter>.yaml`.
+        #[arg(long, value_name = "PATH")]
+        to_config: Option<String>,
+
+        /// Leave source files in place; only annotate with `migrated_to:`.
+        #[arg(long, conflicts_with = "delete_source")]
+        keep_source: bool,
+
+        /// Delete source files after successful migration (no recovery).
+        #[arg(long)]
+        delete_source: bool,
+
+        /// Only migrate at most N specs (useful for testing).
+        #[arg(long, value_name = "N")]
+        limit: Option<usize>,
+
+        /// Only migrate specs whose status matches.
+        #[arg(long, value_name = "STATUS")]
+        filter_status: Option<String>,
+
+        /// Automatic migration (legacy import mode only)
         #[arg(long)]
         auto: bool,
 
-        /// AI-assisted migration (copilot, claude, gemini)
+        /// AI-assisted migration (copilot, claude, gemini) — legacy import mode only
         #[arg(long = "with")]
         ai_provider: Option<String>,
 
@@ -350,15 +378,15 @@ pub(crate) enum Commands {
         #[arg(long)]
         dry_run: bool,
 
-        /// Process N docs at a time
+        /// Process N docs at a time (legacy import mode only)
         #[arg(long)]
         batch_size: Option<usize>,
 
-        /// Don't validate after migration
+        /// Don't validate after migration (legacy import mode only)
         #[arg(long)]
         skip_validation: bool,
 
-        /// Auto-run backfill after migration
+        /// Auto-run backfill after migration (legacy import mode only)
         #[arg(long)]
         backfill: bool,
     },
