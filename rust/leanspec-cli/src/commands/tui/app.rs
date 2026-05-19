@@ -37,9 +37,9 @@ pub enum AppMode {
 
 /// Sort order for the spec list.
 ///
-/// `FieldDesc(key)` / `FieldAsc(key)` sort by an enum field's declared
-/// option order in the schema (e.g. priority). Documents whose value is
-/// missing or unknown sort last regardless of direction.
+/// `FieldDesc(key)` sorts by an enum field's declared option order in the
+/// schema (e.g. priority). Documents whose value is missing or unknown sort
+/// last.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub enum SortOption {
     #[default]
@@ -87,34 +87,56 @@ fn capitalize(s: &str) -> String {
 
 /// Active filter state for the spec list.
 ///
-/// `fields` maps field key → list of selected values. Empty list (or absent
-/// key) means "no filter applied for this field — show everything." The
-/// `assignees` and `tags` lists are kept separately for semantic convenience;
-/// they apply on top of `fields`.
+/// `fields` maps field key → list of currently *selected* enum values for
+/// that field. The default state (built by [`FilterState::from_schema`]) has
+/// every enum field pre-populated with all of its declared values — so the
+/// filter popup renders every row as `[x]` and `matches()` lets every doc
+/// pass. Toggling a value off narrows the visible set.
 #[derive(Debug, Clone, Default)]
 pub struct FilterState {
     pub fields: HashMap<String, Vec<String>>,
-    pub assignees: Vec<String>,
-    pub tags: Vec<String>,
     pub hide_archived: bool,
 }
 
 impl FilterState {
-    /// Build a filter from the schema. By default no filter is active
-    /// (all values pass) and archived items are hidden.
-    pub fn from_schema(_schema: &SpecSchema) -> Self {
+    /// Build a filter pre-populated with every enum value declared by the
+    /// schema. Matches the design in spec #269: "Default: all values selected."
+    pub fn from_schema(schema: &SpecSchema) -> Self {
+        let mut fields: HashMap<String, Vec<String>> = HashMap::new();
+        for field in &schema.fields {
+            if let FieldKind::Enum { options, .. } = &field.kind {
+                if options.is_empty() {
+                    continue;
+                }
+                let values: Vec<String> = options.iter().map(|o| o.value.clone()).collect();
+                fields.insert(field.key.clone(), values);
+            }
+        }
         Self {
-            fields: HashMap::new(),
-            assignees: Vec::new(),
-            tags: Vec::new(),
+            fields,
             hide_archived: true,
         }
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.fields.values().all(|v| v.is_empty())
-            && self.assignees.is_empty()
-            && self.tags.is_empty()
+    /// True when the filter is at its schema-derived default (every enum
+    /// field has all its values selected) — i.e. no user-applied narrowing.
+    /// `hide_archived` is a separate UX toggle and not counted here.
+    pub fn is_empty(&self, schema: &SpecSchema) -> bool {
+        for field in &schema.fields {
+            if let FieldKind::Enum { options, .. } = &field.kind {
+                if options.is_empty() {
+                    continue;
+                }
+                let selected = match self.fields.get(&field.key) {
+                    Some(s) => s,
+                    None => return false,
+                };
+                if selected.len() != options.len() {
+                    return false;
+                }
+            }
+        }
+        true
     }
 
     /// Toggle a value in the filter for `key`. Adds it if absent, removes
@@ -144,7 +166,12 @@ impl FilterState {
             }
         }
         for (key, selected) in &self.fields {
+            // An empty selection means "user has deselected every value for
+            // this field" — nothing should pass for it.
             if selected.is_empty() {
+                if doc.fields.contains_key(key) {
+                    return false;
+                }
                 continue;
             }
             match doc.fields.get(key) {
@@ -158,7 +185,9 @@ impl FilterState {
                         return false;
                     }
                 }
-                _ => return false,
+                // Doc has no value for this field — pass; the user can't
+                // express "absent" in the popup, so it's never a hard filter.
+                _ => {}
             }
         }
         true
@@ -481,6 +510,34 @@ impl DepsIndex {
     }
 }
 
+/// Resolve the adapter for a project in the registry.
+///
+/// Inspects the project's root directory for an `leanspec.adapter.yaml` /
+/// `.lean-spec/adapter.yaml` (or the legacy `provider.yaml` variants) and
+/// instantiates the configured adapter. Projects without such a file fall
+/// back to the markdown adapter pointed at `project.specs_dir`.
+pub fn resolve_adapter_for_project(
+    project: &leanspec_core::storage::Project,
+) -> Result<Box<dyn Adapter>, Box<dyn Error>> {
+    use leanspec_core::adapters::markdown::MarkdownAdapter;
+    use leanspec_core::adapters::AdapterRegistry;
+
+    let candidates = [
+        "leanspec.adapter.yaml",
+        ".lean-spec/adapter.yaml",
+        "leanspec.provider.yaml",
+        ".lean-spec/provider.yaml",
+    ];
+    for candidate in candidates {
+        let path = project.path.join(candidate);
+        if path.exists() {
+            let config = AdapterRegistry::load_config(&path)?;
+            return Ok(AdapterRegistry::create(&config)?);
+        }
+    }
+    Ok(Box::new(MarkdownAdapter::new(&project.specs_dir)))
+}
+
 /// Load projects from the registry sorted favorites-first, then by last_accessed desc.
 pub fn load_projects_sorted() -> Vec<leanspec_core::storage::Project> {
     let Ok(registry) = leanspec_core::storage::ProjectRegistry::new() else {
@@ -514,13 +571,23 @@ fn enum_sort_key(field_key: &str, doc: &SpecDoc, schema: &SpecSchema) -> u32 {
         .unwrap_or(u32::MAX)
 }
 
-/// Extract a numeric id prefix from `doc.id` (e.g. `"007-foo"` → 7) so that
-/// `IdDesc` / `IdAsc` give a sensible ordering for markdown-backed adapters.
-/// Returns 0 when no prefix is present.
-fn id_number(doc: &SpecDoc) -> u32 {
+/// Ordering key for `IdDesc` / `IdAsc`. For markdown-style IDs like
+/// `"007-foo"` we sort by the leading number; for adapters with non-numeric
+/// IDs (e.g. Jira `"ABC-123"`) we fall back to a case-insensitive string
+/// compare so the order is still sensible.
+///
+/// The returned tuple sorts numerics-first (`has_number: false` > `true`
+/// because `false < true` puts numeric IDs ahead of non-numeric), then by
+/// extracted number for ties, then by the rest of the id.
+fn id_order(doc: &SpecDoc) -> (bool, u32, String) {
     let id = doc.id.trim_start_matches('#');
     let digits: String = id.chars().take_while(|c| c.is_ascii_digit()).collect();
-    digits.parse::<u32>().unwrap_or(0)
+    if let Ok(n) = digits.parse::<u32>() {
+        let rest = id[digits.len()..].to_lowercase();
+        (false, n, rest)
+    } else {
+        (true, 0, id.to_lowercase())
+    }
 }
 
 impl App {
@@ -532,8 +599,7 @@ impl App {
         initial_project: Option<leanspec_core::storage::Project>,
     ) -> Result<Self, Box<dyn Error>> {
         let mut schema = adapter.schema().clone();
-        // Best effort — adapters with static schemas (markdown) no-op here.
-        let _ = adapter.resolve_schema(&mut schema);
+        adapter.resolve_schema(&mut schema)?;
         let status_key = schema
             .key_for_semantic(semantic::STATUS)
             .map(|k| k.to_string());
@@ -541,14 +607,14 @@ impl App {
             .key_for_semantic(semantic::PRIORITY)
             .map(|k| k.to_string());
 
-        let specs: Vec<SpecDoc> = adapter
-            .list(&ListFilter {
-                fields: HashMap::new(),
-                text: None,
-                include_archived: true,
-                raw: None,
-            })
-            .unwrap_or_default();
+        // Surface backend errors (auth, network, schema) up front rather than
+        // showing an empty project — `App::new` already returns `Result`.
+        let specs: Vec<SpecDoc> = adapter.list(&ListFilter {
+            fields: HashMap::new(),
+            text: None,
+            include_archived: true,
+            raw: None,
+        })?;
         let deps = DepsIndex::build(&specs);
 
         let filter = FilterState::from_schema(&schema);
@@ -713,32 +779,54 @@ impl App {
         self.project_mgmt = None;
     }
 
-    /// Switch to a project: instantiate its adapter via the registry and
-    /// reload state. Errors here are surfaced as `message` on the project
-    /// management view so the user can recover without crashing the TUI.
+    /// Switch to a project: resolve its adapter (honouring an
+    /// `leanspec.adapter.yaml` in the project root, so GitHub / ADO / Jira
+    /// projects use their configured adapter) and reload state. On error,
+    /// stash a message on the project management overlay rather than
+    /// crashing the TUI.
     pub fn switch_project(&mut self, project: leanspec_core::storage::Project) {
         self.save_prefs();
         if let Ok(mut registry) = leanspec_core::storage::ProjectRegistry::new() {
             let _ = registry.touch_last_accessed(&project.id);
         }
-        let specs_dir = project.specs_dir.to_string_lossy().into_owned();
+
+        let adapter = match resolve_adapter_for_project(&project) {
+            Ok(a) => a,
+            Err(e) => {
+                if let Some(ref mut mgmt) = self.project_mgmt {
+                    mgmt.message = Some(format!("Failed to open project: {}", e));
+                }
+                return;
+            }
+        };
+
         self.current_project = Some(project);
         if let Some(ref p) = self.current_project.clone() {
             let prefs = Self::load_prefs(&p.id);
             self.apply_prefs(&prefs);
         }
-        self.reload_with_markdown_dir(&specs_dir);
+        if let Err(e) = self.reload_with_adapter(adapter) {
+            if let Some(ref mut mgmt) = self.project_mgmt {
+                mgmt.message = Some(format!("Failed to load specs: {}", e));
+            }
+            return;
+        }
         self.close_overlay();
     }
 
-    /// Replace the active adapter with a fresh markdown adapter pointed at
-    /// `specs_dir` and reload all derived state. Used by the project switcher;
-    /// remote-adapter projects would need a more elaborate construction path.
-    pub fn reload_with_markdown_dir(&mut self, specs_dir: &str) {
-        use leanspec_core::adapters::markdown::MarkdownAdapter;
-        let adapter: Box<dyn Adapter> = Box::new(MarkdownAdapter::new(specs_dir));
+    /// Replace the active adapter and reload all derived state from it.
+    /// Used both by the project switcher and by any test code that wants to
+    /// swap the backing store without rebuilding the whole `App`.
+    pub fn reload_with_adapter(&mut self, adapter: Box<dyn Adapter>) -> Result<(), Box<dyn Error>> {
         let mut schema = adapter.schema().clone();
-        let _ = adapter.resolve_schema(&mut schema);
+        adapter.resolve_schema(&mut schema)?;
+        let specs: Vec<SpecDoc> = adapter.list(&ListFilter {
+            fields: HashMap::new(),
+            text: None,
+            include_archived: true,
+            raw: None,
+        })?;
+
         self.adapter = adapter;
         self.schema = schema;
         self.status_key = self
@@ -749,15 +837,7 @@ impl App {
             .schema
             .key_for_semantic(semantic::PRIORITY)
             .map(|k| k.to_string());
-        self.specs = self
-            .adapter
-            .list(&ListFilter {
-                fields: HashMap::new(),
-                text: None,
-                include_archived: true,
-                raw: None,
-            })
-            .unwrap_or_default();
+        self.specs = specs;
         self.deps = DepsIndex::build(&self.specs);
         self.filtered_specs = (0..self.specs.len()).collect();
         self.board_group_idx = 0;
@@ -773,6 +853,7 @@ impl App {
         self.tree_rows = Vec::new();
         self.apply_filter_and_sort();
         self.load_selected_detail();
+        Ok(())
     }
 
     /// Apply current filter + sort to rebuild `filtered_specs`, board groups, and tree rows.
@@ -790,8 +871,8 @@ impl App {
             let sa = &specs[a];
             let sb = &specs[b];
             match &sort {
-                SortOption::IdDesc => id_number(sb).cmp(&id_number(sa)),
-                SortOption::IdAsc => id_number(sa).cmp(&id_number(sb)),
+                SortOption::IdDesc => id_order(sb).cmp(&id_order(sa)),
+                SortOption::IdAsc => id_order(sa).cmp(&id_order(sb)),
                 SortOption::FieldDesc(key) => {
                     enum_sort_key(key, sa, schema).cmp(&enum_sort_key(key, sb, schema))
                 }
@@ -1731,13 +1812,17 @@ mod tests {
         let entries = app.filter_entries();
         assert!(!entries.is_empty(), "schema should expose filter entries");
 
+        // Default state pre-populates every enum value, so the first toggle
+        // deselects it; the second re-selects.
         let (key, value) = entries[0].clone();
-        app.filter_cursor = 0;
-        app.filter_toggle_current();
         assert!(app.filter.is_selected(&key, &value));
 
+        app.filter_cursor = 0;
         app.filter_toggle_current();
         assert!(!app.filter.is_selected(&key, &value));
+
+        app.filter_toggle_current();
+        assert!(app.filter.is_selected(&key, &value));
     }
 
     #[test]

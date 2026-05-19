@@ -22,7 +22,11 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
         theme::border_unfocused_style()
     };
 
-    let filter_indicator = if !app.filter.is_empty() { " [F]" } else { "" };
+    let filter_indicator = if !app.filter.is_empty(&app.schema) {
+        " [F]"
+    } else {
+        ""
+    };
     let board_title = format!(" Board [{}]{} ", app.sort_option.label(), filter_indicator);
 
     let block = Block::default()

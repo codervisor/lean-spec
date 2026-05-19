@@ -27,7 +27,7 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
 
     Clear.render(overlay_area, buf);
 
-    let filter_label = if app.filter.is_empty() {
+    let filter_label = if app.filter.is_empty(&app.schema) {
         " Filter (no active filters) "
     } else {
         " Filter (active) "

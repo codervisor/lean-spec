@@ -96,7 +96,9 @@ fn resolve_startup(
         return Ok((Box::new(MarkdownAdapter::new(dir)), None));
     }
 
-    // 2. --project resolves through the registry to a project + markdown adapter.
+    // 2. --project resolves through the registry. Honour the project's own
+    //    adapter.yaml if it has one (so GitHub / ADO / Jira projects open
+    //    with their configured backend), falling back to markdown.
     if let Some(name) = project_name {
         if let Ok(registry) = leanspec_core::storage::ProjectRegistry::new() {
             if let Some(project) = registry
@@ -106,8 +108,7 @@ fn resolve_startup(
                 .cloned()
                 .cloned()
             {
-                let specs_dir = project.specs_dir.to_string_lossy().into_owned();
-                let adapter: Box<dyn Adapter> = Box::new(MarkdownAdapter::new(&specs_dir));
+                let adapter = app::resolve_adapter_for_project(&project)?;
                 return Ok((adapter, Some(project)));
             }
         }

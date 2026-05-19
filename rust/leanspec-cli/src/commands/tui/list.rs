@@ -20,7 +20,11 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
         theme::border_unfocused_style()
     };
 
-    let filter_indicator = if !app.filter.is_empty() { " [F]" } else { "" };
+    let filter_indicator = if !app.filter.is_empty(&app.schema) {
+        " [F]"
+    } else {
+        ""
+    };
     let tree_indicator = if app.tree_mode { " [Tree]" } else { "" };
     let title = format!(
         " List [{}]{}{} ",
