@@ -1,4 +1,4 @@
-//! List view widget — flat table or tree with sort indicator.
+//! List view widget — flat table or tree of `SpecDoc`s.
 
 use ratatui::{
     buffer::Buffer,
@@ -20,7 +20,11 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
         theme::border_unfocused_style()
     };
 
-    let filter_indicator = if !app.filter.is_empty() { " [F]" } else { "" };
+    let filter_indicator = if !app.filter.is_empty(&app.schema) {
+        " [F]"
+    } else {
+        ""
+    };
     let tree_indicator = if app.tree_mode { " [Tree]" } else { "" };
     let title = format!(
         " List [{}]{}{} ",
@@ -46,11 +50,10 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
 fn render_flat(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
     let mut lines: Vec<Line> = Vec::new();
 
-    // Header row
     lines.push(Line::from(vec![
         Span::styled(" S ", theme::header_style()),
         Span::styled("P  ", theme::header_style()),
-        Span::styled(format!("{:<30}", "Path"), theme::header_style()),
+        Span::styled(format!("{:<30}", "ID"), theme::header_style()),
         Span::styled("Title", theme::header_style()),
     ]));
     lines.push(Line::styled(
@@ -60,8 +63,9 @@ fn render_flat(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
 
     let visible_rows = area.height.saturating_sub(3) as usize;
     let total = app.filtered_specs.len();
-
     let offset = app.list_scroll_offset;
+    let status_key = app.status_key.as_deref();
+    let priority_key = app.priority_key.as_deref();
 
     for (vi, &spec_idx) in app
         .filtered_specs
@@ -70,7 +74,7 @@ fn render_flat(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
         .skip(offset)
         .take(visible_rows)
     {
-        let spec = &app.specs[spec_idx];
+        let doc = &app.specs[spec_idx];
         let is_current = vi == app.list_selected;
 
         let style = if is_current && is_focused {
@@ -81,14 +85,21 @@ fn render_flat(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
             Style::default()
         };
 
-        let status_sym = theme::status_symbol(&spec.frontmatter.status);
-        let priority_sym = theme::priority_symbol(spec.frontmatter.priority.as_ref());
-        let path = truncate_path(&spec.path, 28);
-        let title = truncate_str(&spec.title, 30);
-        let dep_count = app
-            .dep_graph
-            .get_complete_graph(&spec.path)
-            .map_or(0, |g| g.depends_on.len());
+        let status_sym = status_key
+            .and_then(|k| {
+                doc.field_str(k)
+                    .map(|v| theme::field_symbol(v, k, &app.schema))
+            })
+            .unwrap_or(" ");
+        let priority_sym = priority_key
+            .and_then(|k| {
+                doc.field_str(k)
+                    .map(|v| theme::field_symbol(v, k, &app.schema))
+            })
+            .unwrap_or(" ");
+        let path = truncate_path(&doc.id, 28);
+        let title = truncate_str(&doc.title, 30);
+        let dep_count = app.deps.dep_count(&doc.id);
         let dep_str = if dep_count > 0 {
             format!(" d:{}", dep_count)
         } else {
@@ -110,7 +121,6 @@ fn render_flat(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
 
     Paragraph::new(lines).render(area, buf);
 
-    // Scrollbar — only render when content exceeds viewport
     if total > visible_rows {
         let mut scrollbar_state = ScrollbarState::new(total)
             .position(app.list_selected)
@@ -125,9 +135,7 @@ fn render_flat(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
 fn render_tree(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
     let mut lines: Vec<Line> = Vec::new();
 
-    // Header
-    let mode_label = " S  P  Tree";
-    lines.push(Line::styled(mode_label, theme::header_style()));
+    lines.push(Line::styled(" S  P  Tree", theme::header_style()));
     lines.push(Line::styled(
         " ".to_string() + &"-".repeat(area.width.saturating_sub(2) as usize),
         theme::dimmed_style(),
@@ -135,8 +143,9 @@ fn render_tree(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
 
     let visible_rows = area.height.saturating_sub(3) as usize;
     let total = app.tree_rows.len();
-
     let offset = app.list_scroll_offset;
+    let status_key = app.status_key.as_deref();
+    let priority_key = app.priority_key.as_deref();
 
     for (vi, row) in app
         .tree_rows
@@ -145,7 +154,7 @@ fn render_tree(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
         .skip(offset)
         .take(visible_rows)
     {
-        let spec = &app.specs[row.spec_idx];
+        let doc = &app.specs[row.spec_idx];
         let is_current = vi == app.list_selected;
 
         let base_style = if is_current && is_focused {
@@ -167,9 +176,19 @@ fn render_tree(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
             "  "
         };
 
-        let status_sym = theme::status_symbol(&spec.frontmatter.status);
-        let priority_sym = theme::priority_symbol(spec.frontmatter.priority.as_ref());
-        let title = truncate_str(&spec.title, 35_usize.saturating_sub(row.depth * 2));
+        let status_sym = status_key
+            .and_then(|k| {
+                doc.field_str(k)
+                    .map(|v| theme::field_symbol(v, k, &app.schema))
+            })
+            .unwrap_or(" ");
+        let priority_sym = priority_key
+            .and_then(|k| {
+                doc.field_str(k)
+                    .map(|v| theme::field_symbol(v, k, &app.schema))
+            })
+            .unwrap_or(" ");
+        let title = truncate_str(&doc.title, 35_usize.saturating_sub(row.depth * 2));
 
         let expand_style = if row.has_children {
             base_style.add_modifier(Modifier::BOLD)
@@ -182,7 +201,7 @@ fn render_tree(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
                 format!(" {} {} {}{}", status_sym, priority_sym, indent, expand_sym),
                 expand_style,
             ),
-            Span::styled(format!("{} {}", spec.path, title), base_style),
+            Span::styled(format!("{} {}", doc.id, title), base_style),
         ]));
     }
 
@@ -192,7 +211,6 @@ fn render_tree(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
 
     Paragraph::new(lines).render(area, buf);
 
-    // Scrollbar — only render when content exceeds viewport
     if total > visible_rows {
         let mut scrollbar_state = ScrollbarState::new(total)
             .position(app.list_selected)
@@ -227,8 +245,6 @@ mod tests {
     use ratatui::backend::TestBackend;
     use ratatui::Terminal;
 
-    use super::super::app::App;
-
     fn buffer_text(buf: &ratatui::buffer::Buffer) -> String {
         buf.content().iter().map(|c| c.symbol()).collect()
     }
@@ -249,7 +265,7 @@ mod tests {
 
         let buf_str = buffer_text(terminal.backend().buffer());
         assert!(buf_str.contains("List"));
-        assert!(buf_str.contains("Path"));
+        assert!(buf_str.contains("ID"));
     }
 
     #[test]
@@ -267,7 +283,6 @@ mod tests {
             .unwrap();
 
         let buf_str = buffer_text(terminal.backend().buffer());
-        // Default sort label should appear in title
         assert!(buf_str.contains("ID"));
     }
 }

@@ -1,4 +1,4 @@
-//! Dependency tree widget — upstream and downstream deps for selected spec.
+//! Dependency tree widget — upstream and downstream deps for the selected spec.
 
 use ratatui::{
     buffer::Buffer,
@@ -18,7 +18,7 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     let inner = block.inner(area);
     block.render(area, buf);
 
-    let Some(spec) = &app.selected_detail else {
+    let Some(doc) = &app.selected_detail else {
         let msg =
             Paragraph::new("  Select a spec to view dependencies").style(theme::dimmed_style());
         msg.render(inner, buf);
@@ -26,61 +26,71 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     };
 
     let mut lines: Vec<Line> = Vec::new();
+    let status_key = app.status_key.as_deref();
 
-    // Upstream (depends on)
-    let upstream = app.dep_graph.get_upstream(&spec.path, 3);
+    let upstream_ids = app
+        .deps
+        .depends_on
+        .get(&doc.id)
+        .cloned()
+        .unwrap_or_default();
     lines.push(Line::from(Span::styled(
         " Upstream (depends on):",
         theme::header_style(),
     )));
-    if upstream.is_empty() {
+    if upstream_ids.is_empty() {
         lines.push(Line::styled("   (none)", theme::dimmed_style()));
     } else {
-        for dep in &upstream {
-            let sym = theme::status_symbol(&dep.frontmatter.status);
-            let style = theme::status_style(&dep.frontmatter.status);
-            lines.push(Line::from(vec![
-                Span::raw("   "),
-                Span::styled(sym, style),
-                Span::raw(format!(" {} - {}", dep.path, dep.title)),
-            ]));
+        for dep_id in &upstream_ids {
+            push_dep_line(&mut lines, dep_id, app, status_key);
         }
     }
 
     lines.push(Line::from(""));
 
-    // Downstream (required by)
-    let downstream = app.dep_graph.get_downstream(&spec.path, 3);
+    let downstream_ids = app
+        .deps
+        .required_by
+        .get(&doc.id)
+        .cloned()
+        .unwrap_or_default();
     lines.push(Line::from(Span::styled(
         " Downstream (required by):",
         theme::header_style(),
     )));
-    if downstream.is_empty() {
+    if downstream_ids.is_empty() {
         lines.push(Line::styled("   (none)", theme::dimmed_style()));
     } else {
-        for dep in &downstream {
-            let sym = theme::status_symbol(&dep.frontmatter.status);
-            let style = theme::status_style(&dep.frontmatter.status);
-            lines.push(Line::from(vec![
-                Span::raw("   "),
-                Span::styled(sym, style),
-                Span::raw(format!(" {} - {}", dep.path, dep.title)),
-            ]));
-        }
-    }
-
-    // Direct dependencies from frontmatter
-    if !spec.frontmatter.depends_on.is_empty() {
-        lines.push(Line::from(""));
-        lines.push(Line::from(Span::styled(
-            " Direct dependencies (frontmatter):",
-            theme::header_style(),
-        )));
-        for dep_path in &spec.frontmatter.depends_on {
-            lines.push(Line::from(format!("   -> {}", dep_path)));
+        for dep_id in &downstream_ids {
+            push_dep_line(&mut lines, dep_id, app, status_key);
         }
     }
 
     let paragraph = Paragraph::new(lines);
     paragraph.render(inner, buf);
+}
+
+fn push_dep_line(lines: &mut Vec<Line>, dep_id: &str, app: &App, status_key: Option<&str>) {
+    let dep_doc = app.specs.iter().find(|d| d.id == dep_id);
+    let (sym, style, title) = match dep_doc {
+        Some(d) => {
+            let (s, st) = status_key
+                .and_then(|k| {
+                    d.field_str(k).map(|v| {
+                        (
+                            theme::field_symbol(v, k, &app.schema).to_string(),
+                            theme::field_style(v, k, &app.schema),
+                        )
+                    })
+                })
+                .unwrap_or_else(|| (" ".to_string(), theme::dimmed_style()));
+            (s, st, d.title.clone())
+        }
+        None => (" ".to_string(), theme::dimmed_style(), String::new()),
+    };
+    lines.push(Line::from(vec![
+        Span::raw("   "),
+        Span::styled(sym, style),
+        Span::raw(format!(" {} - {}", dep_id, title)),
+    ]));
 }

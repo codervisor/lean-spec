@@ -1,17 +1,21 @@
-//! Detail pane widget — spec metadata header + scrollable content body.
+//! Detail pane widget — schema-driven metadata header + scrollable body.
+//!
+//! The metadata block iterates `schema.fields` and renders each inline field
+//! using `theme::field_style` / `theme::field_symbol`. The body is the
+//! `selected_body` string loaded from the adapter (markdown stores it in the
+//! `content` field; remote adapters synthesise it from section fields).
 
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Layout, Rect},
     prelude::StatefulWidget,
-    style::Style,
     text::{Line, Span},
     widgets::{
         Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Widget, Wrap,
     },
 };
 
-use leanspec_core::SpecInfo;
+use leanspec_core::model::{FieldDisplay, FieldKind, FieldValue, SpecDoc, SpecSchema};
 
 use super::app::{App, DetailMode, FocusPane};
 use super::markdown;
@@ -47,95 +51,122 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
     }
 }
 
-fn render_spec_detail(area: Rect, buf: &mut Buffer, spec: &SpecInfo, app: &App) {
-    // Split into header (fixed) and body (scrollable)
-    let chunks = Layout::vertical([Constraint::Length(6), Constraint::Min(1)]).split(area);
+fn render_spec_detail(area: Rect, buf: &mut Buffer, doc: &SpecDoc, app: &App) {
+    let metadata_lines = build_metadata_lines(doc, app, area.width);
+    let header_height = (metadata_lines.len() as u16).min(area.height);
 
-    // Metadata header
-    render_metadata(chunks[0], buf, spec, app);
+    let chunks =
+        Layout::vertical([Constraint::Length(header_height), Constraint::Min(1)]).split(area);
 
-    // Content body (scrollable)
-    render_content(chunks[1], buf, spec, app);
+    Paragraph::new(metadata_lines).render(chunks[0], buf);
+    render_content(chunks[1], buf, app);
 }
 
-fn render_metadata(area: Rect, buf: &mut Buffer, spec: &SpecInfo, app: &App) {
-    let status_style = theme::status_style(&spec.frontmatter.status);
-    let status_sym = theme::status_symbol(&spec.frontmatter.status);
-    let status_label = spec.frontmatter.status_label();
+fn build_metadata_lines<'a>(doc: &'a SpecDoc, app: &'a App, width: u16) -> Vec<Line<'a>> {
+    let schema = &app.schema;
 
-    let priority_sym = theme::priority_symbol(spec.frontmatter.priority.as_ref());
-    let priority_str = spec
-        .frontmatter
-        .priority
-        .map(|p| p.to_string())
-        .unwrap_or_else(|| "-".to_string());
+    let mut lines: Vec<Line> = Vec::new();
+    lines.push(Line::from(vec![Span::styled(
+        doc.title.clone(),
+        theme::title_style(),
+    )]));
 
-    // Dependency counts
-    let (dep_count, req_count) = app
-        .dep_graph
-        .get_complete_graph(&spec.path)
-        .map(|g| (g.depends_on.len(), g.required_by.len()))
-        .unwrap_or((0, 0));
-
+    let dep_count = app.deps.dep_count(&doc.id);
+    let req_count = app.deps.req_count(&doc.id);
     let deps_str = if dep_count > 0 || req_count > 0 {
         format!("  deps:{} req:{}", dep_count, req_count)
     } else {
         String::new()
     };
+    lines.push(Line::from(vec![
+        Span::styled(format!(" {}", doc.id), theme::dimmed_style()),
+        Span::styled(deps_str, theme::dimmed_style()),
+    ]));
 
-    // Tags as chips
-    let tags_str = if spec.frontmatter.tags.is_empty() {
-        "-".to_string()
-    } else {
-        spec.frontmatter
-            .tags
-            .iter()
-            .map(|t| format!("[{}]", t))
-            .collect::<Vec<_>>()
-            .join(" ")
-    };
+    // One inline-field line per schema-declared inline field that has a value.
+    for field in &schema.fields {
+        if field.display != FieldDisplay::Inline {
+            continue;
+        }
+        if field.key == "content" {
+            continue;
+        }
+        let Some(value) = doc.fields.get(&field.key) else {
+            continue;
+        };
+        let line = render_inline_field(field, value, schema);
+        lines.push(line);
+    }
 
-    // Dates
-    let created_str = spec.frontmatter.created.as_str();
-    let updated_str = spec.frontmatter.updated.as_deref().unwrap_or("-");
-
-    let lines = vec![
-        Line::from(vec![Span::styled(spec.title.clone(), theme::title_style())]),
-        Line::from(vec![
-            Span::styled(format!(" {}", spec.path), theme::dimmed_style()),
-            Span::styled(deps_str, theme::dimmed_style()),
-        ]),
-        Line::from(vec![
-            Span::raw(" Status: "),
-            Span::styled(format!("{} {}", status_sym, status_label), status_style),
-            Span::raw("  Priority: "),
-            Span::styled(
-                format!("{} {}", priority_sym, priority_str),
-                Style::default(),
-            ),
-        ]),
-        Line::from(vec![
+    if let Some(created) = doc.created_at {
+        lines.push(Line::from(vec![
             Span::raw(" Created: "),
-            Span::styled(created_str.to_string(), theme::dimmed_style()),
-            Span::raw("  Updated: "),
-            Span::styled(updated_str.to_string(), theme::dimmed_style()),
-        ]),
-        Line::from(vec![
-            Span::raw(" Tags: "),
-            Span::styled(tags_str, theme::dimmed_style()),
-        ]),
-        Line::styled(
-            " ".to_string() + &"─".repeat(area.width.saturating_sub(2) as usize),
-            theme::dimmed_style(),
-        ),
-    ];
+            Span::styled(
+                created.format("%Y-%m-%d").to_string(),
+                theme::dimmed_style(),
+            ),
+        ]));
+    }
+    if let Some(updated) = doc.updated_at {
+        lines.push(Line::from(vec![
+            Span::raw(" Updated: "),
+            Span::styled(
+                updated.format("%Y-%m-%d").to_string(),
+                theme::dimmed_style(),
+            ),
+        ]));
+    }
 
-    let paragraph = Paragraph::new(lines);
-    paragraph.render(area, buf);
+    lines.push(Line::styled(
+        " ".to_string() + &"─".repeat(width.saturating_sub(2) as usize),
+        theme::dimmed_style(),
+    ));
+    lines
 }
 
-fn render_content(area: Rect, buf: &mut Buffer, spec: &SpecInfo, app: &App) {
-    let lines = markdown::render_markdown(&spec.content, area.width);
+fn render_inline_field<'a>(
+    field: &'a leanspec_core::model::FieldDef,
+    value: &'a FieldValue,
+    schema: &'a SpecSchema,
+) -> Line<'a> {
+    let label_span = Span::raw(format!(" {}: ", field.label));
+    let value_spans = match (&field.kind, value) {
+        (FieldKind::Enum { multi: false, .. }, FieldValue::String(s)) => {
+            let style = theme::field_style(s, &field.key, schema);
+            let sym = theme::field_symbol(s, &field.key, schema);
+            let label = super::app::field_label(s, &field.key, schema);
+            vec![Span::styled(format!("{} {}", sym, label), style)]
+        }
+        (FieldKind::Enum { multi: true, .. }, FieldValue::Strings(values)) => {
+            if values.is_empty() {
+                vec![Span::raw("-")]
+            } else {
+                values
+                    .iter()
+                    .map(|v| Span::raw(format!("[{}] ", v)))
+                    .collect()
+            }
+        }
+        (_, FieldValue::String(s)) => vec![Span::raw(s.clone())],
+        (_, FieldValue::Strings(values)) => {
+            if values.is_empty() {
+                vec![Span::raw("-")]
+            } else {
+                vec![Span::raw(values.join(", "))]
+            }
+        }
+        (_, FieldValue::Bool(b)) => vec![Span::raw(if *b { "true" } else { "false" })],
+        (_, FieldValue::Number(n)) => vec![Span::raw(n.to_string())],
+        (_, FieldValue::Timestamp(t)) => vec![Span::raw(t.format("%Y-%m-%d").to_string())],
+        _ => vec![Span::raw("-")],
+    };
+    let mut spans = vec![label_span];
+    spans.extend(value_spans);
+    Line::from(spans)
+}
+
+fn render_content(area: Rect, buf: &mut Buffer, app: &App) {
+    let lines = markdown::render_markdown(&app.selected_body, area.width);
     let total_lines = lines.len();
     let viewport_height = area.height as usize;
 
@@ -144,7 +175,6 @@ fn render_content(area: Rect, buf: &mut Buffer, spec: &SpecInfo, app: &App) {
         .scroll((app.detail_scroll, 0));
     paragraph.render(area, buf);
 
-    // Scrollbar — only render when content exceeds viewport
     if total_lines > viewport_height {
         let mut scrollbar_state = ScrollbarState::new(total_lines)
             .position(app.detail_scroll as usize)
@@ -161,8 +191,6 @@ mod tests {
     use super::*;
     use ratatui::backend::TestBackend;
     use ratatui::Terminal;
-
-    use super::super::app::App;
 
     fn buffer_text(buf: &ratatui::buffer::Buffer) -> String {
         buf.content().iter().map(|c| c.symbol()).collect()
