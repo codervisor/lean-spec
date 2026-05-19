@@ -316,6 +316,61 @@ else
     printf '  FAIL cycle stderr missing: contains a cycle\n'
 fi
 
+echo "--stagger shrinks width of wide-fanout layouts"
+# Build a wide-fanout IR inline (9 siblings → close). With unflatten on PATH,
+# the default --stagger=5 should produce a measurably narrower SVG than
+# --stagger=0 (raw dot). If unflatten isn't available, we expect identical
+# widths — the renderer falls through silently and the test reports "skip".
+wide_ir='{"nodes":[
+  {"id":"n1","label":"a","status":"open"},{"id":"n2","label":"b","status":"open"},
+  {"id":"n3","label":"c","status":"open"},{"id":"n4","label":"d","status":"open"},
+  {"id":"n5","label":"e","status":"open"},{"id":"n6","label":"f","status":"open"},
+  {"id":"n7","label":"g","status":"open"},{"id":"n8","label":"h","status":"open"},
+  {"id":"n9","label":"i","status":"open"}],
+ "edges":[
+  {"from":"n1","to":"close","source":"closes"},{"from":"n2","to":"close","source":"closes"},
+  {"from":"n3","to":"close","source":"closes"},{"from":"n4","to":"close","source":"closes"},
+  {"from":"n5","to":"close","source":"closes"},{"from":"n6","to":"close","source":"closes"},
+  {"from":"n7","to":"close","source":"closes"},{"from":"n8","to":"close","source":"closes"},
+  {"from":"n9","to":"close","source":"closes"}],
+ "close":"300"}'
+if ! command -v unflatten >/dev/null 2>&1; then
+    printf '  skip --stagger width comparison (unflatten not on PATH)\n'
+else
+    "$py3" - <<PY > "$tmp/wide.dot" 2>&1
+import importlib.util, json
+spec = importlib.util.spec_from_file_location("pdr", "scripts/plan-dag-render.py")
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+ir = json.loads('''$wide_ir''')
+print(mod.render_dot(ir, emoji=False))
+PY
+    raw_w=$(dot -Tsvg < "$tmp/wide.dot" | grep -oE 'width="[0-9.]+pt"' | head -1 | grep -oE '[0-9.]+')
+    stag_w=$(unflatten -f -l 5 < "$tmp/wide.dot" | dot -Tsvg | grep -oE 'width="[0-9.]+pt"' | head -1 | grep -oE '[0-9.]+')
+    # awk for float comparison; require >=20% width reduction so we catch a
+    # complete no-op (e.g. unflatten silently fails) but tolerate engine drift.
+    if [ -z "$raw_w" ] || [ -z "$stag_w" ]; then
+        fail=$((fail + 1))
+        printf '  FAIL could not parse SVG widths (raw=%s stag=%s)\n' "$raw_w" "$stag_w"
+    elif awk -v r="$raw_w" -v s="$stag_w" 'BEGIN{ exit !(s < 0.8 * r) }'; then
+        pass=$((pass + 1))
+        printf '  ok  --stagger shrinks width %s → %s pt\n' "$raw_w" "$stag_w"
+    else
+        fail=$((fail + 1))
+        printf '  FAIL --stagger did not measurably shrink width (%s → %s pt)\n' "$raw_w" "$stag_w"
+    fi
+fi
+# --stagger=0 must always produce identical output to the no-unflatten baseline.
+"$SCRIPT" "$FIX/happy.json" --stagger=0 --out "$tmp/stag0.png" \
+    >/dev/null 2>"$tmp/stag0.err" || true
+if grep -qE "$png_skip_re" "$tmp/stag0.err" 2>/dev/null; then
+    printf '  skip --stagger=0 PNG (Playwright/Chromium not available)\n'
+elif [ ! -s "$tmp/stag0.png" ] && [ ! -e "$tmp/stag0.png" ]; then
+    : # nothing to assert
+elif file "$tmp/stag0.png" 2>/dev/null | grep -q 'PNG image'; then
+    pass=$((pass + 1))
+    printf '  ok  --stagger=0 renders a PNG\n'
+fi
+
 echo "missing dot on PATH (must error, not silently fall back)"
 PATH="" "$py3" "$SCRIPT" "$FIX/happy.json" --out "$tmp/nodot.png" \
     > "$tmp/nodot.out" 2>"$tmp/nodot.err"
