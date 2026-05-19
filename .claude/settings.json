@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '--- codervisor hooks: no setup needed ---'"
+            "command": "bash .claude/hooks/session-start.sh"
           }
         ]
       }
