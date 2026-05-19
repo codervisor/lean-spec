@@ -264,14 +264,42 @@ def render_dot(ir, emoji=True):
     return "\n".join(lines)
 
 
-def _dot_to_svg(ir, emoji=True):
+def _unflatten_dot(dot_src, stagger):
+    """Stagger wide ranks across multiple levels via graphviz `unflatten`.
+
+    `unflatten -f -l N` adds invisible edges so siblings that share a
+    successor (typical for many specs all flowing into CLOSE) get pushed
+    onto chains up to N deep, trading height for width. Without it, a plan
+    with N parallel sub-issues renders as one rank N nodes wide — readable
+    at N=3 but a horizontal scroll bar by N=8.
+
+    `stagger=0` disables. If `unflatten` is missing from PATH (older or
+    stripped graphviz), fall through to the original DOT — the diagram
+    still renders, just wider.
+    """
+    if stagger <= 0 or shutil.which("unflatten") is None:
+        return dot_src
+    try:
+        res = subprocess.run(
+            ["unflatten", "-f", "-l", str(stagger)],
+            input=dot_src, capture_output=True, text=True, timeout=5,
+            encoding="utf-8",
+        )
+    except subprocess.TimeoutExpired:
+        return dot_src
+    if res.returncode != 0 or not res.stdout.strip():
+        return dot_src
+    return res.stdout
+
+
+def _dot_to_svg(ir, emoji=True, stagger=5):
     """Run `dot -Tsvg` on the styled DOT for this IR. Returns SVG source."""
     if shutil.which("dot") is None:
         sys.exit(
             "plan-dag-render requires `dot` (graphviz) on PATH. "
             "Install: apt install graphviz, or brew install graphviz."
         )
-    dot_src = render_dot(ir, emoji=emoji)
+    dot_src = _unflatten_dot(render_dot(ir, emoji=emoji), stagger)
     try:
         svg_res = subprocess.run(
             ["dot", "-Tsvg"], input=dot_src,
@@ -286,7 +314,7 @@ def _dot_to_svg(ir, emoji=True):
     return svg_res.stdout
 
 
-def render_png(ir, out_path, emoji=True):
+def render_png(ir, out_path, emoji=True, stagger=5):
     """Render the IR as a high-quality PNG.
 
     Pipeline: dot -Tsvg → headless Chromium (via Playwright) → PNG. Going
@@ -296,7 +324,7 @@ def render_png(ir, out_path, emoji=True):
     """
     # _dot_to_svg checks dot first (the upstream tool); after that we need
     # node + Playwright for the rasterisation step.
-    svg = _dot_to_svg(ir, emoji=emoji)
+    svg = _dot_to_svg(ir, emoji=emoji, stagger=stagger)
     if shutil.which("node") is None:
         sys.exit(
             "plan-dag-render requires Node (node ≥18) on PATH for Playwright."
@@ -335,7 +363,17 @@ def main():
              "text markers. Turn off if the rendering system lacks a color "
              "emoji font and you see tofu boxes.",
     )
+    ap.add_argument(
+        "--stagger", type=int, default=5, metavar="N",
+        help="cap the horizontal width of wide ranks by piping DOT through "
+             "graphviz `unflatten -f -l N`. Siblings that share a successor "
+             "get pushed onto chains up to N deep, trading height for width "
+             "so the rendered PNG fits readable aspect ratios. Default 5; "
+             "use 0 to disable and accept the raw `dot` layout (wider).",
+    )
     args = ap.parse_args()
+    if args.stagger < 0:
+        ap.error("--stagger must be >= 0")
 
     text = sys.stdin.read() if args.ir == "-" else Path(args.ir).read_text()
     try:
@@ -350,7 +388,7 @@ def main():
             sys.stderr.write(f"  - {err}\n")
         sys.exit(1)
 
-    render_png(ir, args.out, emoji=(args.emoji == "on"))
+    render_png(ir, args.out, emoji=(args.emoji == "on"), stagger=args.stagger)
 
 
 if __name__ == "__main__":

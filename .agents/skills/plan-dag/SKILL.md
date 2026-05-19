@@ -31,7 +31,7 @@ Skip when:
 |-----------|----------|
 | **Scope** | Inferred — current branch's spec, the umbrella the user named, or the open issues just surveyed. |
 | **Granularity** | Spec-level; drop to sub-issue / PR level for an umbrella that has fanned out. |
-| **Output** | High-DPI PNG (only target). `--out <path>` is required; emoji status indicators are on by default and can be turned off with `--emoji=off` if the rendering system lacks a color emoji font. |
+| **Output** | High-DPI PNG (only target). `--out <path>` is required; emoji status indicators are on by default and can be turned off with `--emoji=off` if the rendering system lacks a color emoji font. Wide ranks (many siblings sharing a successor) are staggered across multiple chains by default via graphviz `unflatten`; tune with `--stagger N` (default 5; 0 disables). |
 
 ## Workflow
 
@@ -136,6 +136,9 @@ SCRIPT=.claude/skills/plan-dag/scripts/plan-dag-render.py   # project install
 
 # emoji off — falls back to ✓ / … text markers in node labels
 "$SCRIPT" /tmp/plan.json --out /tmp/plan-dag.png --emoji=off
+
+# stagger off — accept the raw `dot` layout (one rank can be 10+ nodes wide)
+"$SCRIPT" /tmp/plan.json --out /tmp/plan-dag.png --stagger=0
 ```
 
 The renderer needs `dot` (graphviz; `apt install graphviz` / `brew install graphviz`) on PATH for the SVG layout step, and `node` (≥18) + Playwright Chromium (`npm i -g playwright && npx playwright install chromium`) for the rasterisation step. Both checks run upfront and fail loudly with install guidance — there is no silent fallback to text or ASCII, by design (the formats removed had limitations the PNG output exists to avoid).
@@ -147,7 +150,7 @@ If the renderer aborts with `IR validation failed`, fix the IR — do not work a
 - Send the PNG via `SendUserFile` so it renders inline as part of the assistant message.
 - Add prose commentary below the file — critical path, next pickable node, sequencing rationale. The PNG carries the topology; the prose carries the recommendation.
 - Do **not** re-render the same plan in another format and attach both — one DAG per response.
-- For very wide graphs (>10 nodes with cross-edges) where the single PNG becomes unwieldy, split the plan into per-track DAGs (one renderer call per track) and render the cross-edges as a final short prose list, per the existing "Cross-edges" convention in §3.
+- The renderer already shrinks wide layouts (siblings that all flow into CLOSE, or fan-out from a hub) by piping DOT through `unflatten -f -l 5`, trading height for width. For *truly* wide graphs (>10 nodes with many cross-edges) where even the staggered PNG is still unwieldy, split the plan into per-track DAGs (one renderer call per track) and render the cross-edges as a final short prose list, per the existing "Cross-edges" convention in §3.
 
 ## Conventions
 
