@@ -55,8 +55,8 @@ fn render_spec_detail(area: Rect, buf: &mut Buffer, doc: &SpecDoc, app: &App) {
     let metadata_lines = build_metadata_lines(doc, app, area.width);
     let header_height = (metadata_lines.len() as u16).min(area.height);
 
-    let chunks = Layout::vertical([Constraint::Length(header_height), Constraint::Min(1)])
-        .split(area);
+    let chunks =
+        Layout::vertical([Constraint::Length(header_height), Constraint::Min(1)]).split(area);
 
     Paragraph::new(metadata_lines).render(chunks[0], buf);
     render_content(chunks[1], buf, app);

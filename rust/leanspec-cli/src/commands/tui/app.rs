@@ -298,10 +298,21 @@ pub const PRESET_COLORS: &[(&str, &str)] = &[
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ProjectMgmtAction {
     None,
-    Renaming { id: String, buffer: String },
-    ConfirmDelete { id: String },
-    AddingProject { buffer: String, message: Option<String> },
-    ChangingColor { id: String, color_idx: usize },
+    Renaming {
+        id: String,
+        buffer: String,
+    },
+    ConfirmDelete {
+        id: String,
+    },
+    AddingProject {
+        buffer: String,
+        message: Option<String>,
+    },
+    ChangingColor {
+        id: String,
+        color_idx: usize,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -896,7 +907,9 @@ impl App {
         rows: &mut Vec<TreeRow>,
     ) {
         let id = &specs[spec_idx].id;
-        let children = children_map.get(id).map_or(&[] as &[usize], |v| v.as_slice());
+        let children = children_map
+            .get(id)
+            .map_or(&[] as &[usize], |v| v.as_slice());
         let has_children = !children.is_empty();
         let is_collapsed = collapsed.contains(id);
 

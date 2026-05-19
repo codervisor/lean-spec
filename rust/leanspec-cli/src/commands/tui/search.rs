@@ -63,7 +63,10 @@ pub fn render(area: Rect, buf: &mut Buffer, app: &App) {
             if spec_idx < app.specs.len() {
                 let doc = &app.specs[spec_idx];
                 let sym = status_key
-                    .and_then(|k| doc.field_str(k).map(|v| theme::field_symbol(v, k, &app.schema)))
+                    .and_then(|k| {
+                        doc.field_str(k)
+                            .map(|v| theme::field_symbol(v, k, &app.schema))
+                    })
                     .unwrap_or(" ");
                 let style = if i == 0 {
                     theme::highlight_style()

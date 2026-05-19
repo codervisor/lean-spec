@@ -82,10 +82,16 @@ fn render_flat(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
         };
 
         let status_sym = status_key
-            .and_then(|k| doc.field_str(k).map(|v| theme::field_symbol(v, k, &app.schema)))
+            .and_then(|k| {
+                doc.field_str(k)
+                    .map(|v| theme::field_symbol(v, k, &app.schema))
+            })
             .unwrap_or(" ");
         let priority_sym = priority_key
-            .and_then(|k| doc.field_str(k).map(|v| theme::field_symbol(v, k, &app.schema)))
+            .and_then(|k| {
+                doc.field_str(k)
+                    .map(|v| theme::field_symbol(v, k, &app.schema))
+            })
             .unwrap_or(" ");
         let path = truncate_path(&doc.id, 28);
         let title = truncate_str(&doc.title, 30);
@@ -167,10 +173,16 @@ fn render_tree(area: Rect, buf: &mut Buffer, app: &App, is_focused: bool) {
         };
 
         let status_sym = status_key
-            .and_then(|k| doc.field_str(k).map(|v| theme::field_symbol(v, k, &app.schema)))
+            .and_then(|k| {
+                doc.field_str(k)
+                    .map(|v| theme::field_symbol(v, k, &app.schema))
+            })
             .unwrap_or(" ");
         let priority_sym = priority_key
-            .and_then(|k| doc.field_str(k).map(|v| theme::field_symbol(v, k, &app.schema)))
+            .and_then(|k| {
+                doc.field_str(k)
+                    .map(|v| theme::field_symbol(v, k, &app.schema))
+            })
             .unwrap_or(" ");
         let title = truncate_str(&doc.title, 35_usize.saturating_sub(row.depth * 2));
 
