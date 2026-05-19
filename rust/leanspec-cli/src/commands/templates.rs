@@ -1,7 +1,9 @@
 //! Templates command implementation
 //!
-//! Manage spec templates for creating new specs.
+//! Manage spec templates for creating new specs. Markdown-only — templates
+//! produce YAML frontmatter, which has no analogue on issue-tracker backends.
 
+use crate::commands::shared::require_markdown_project;
 use colored::Colorize;
 use std::error::Error;
 use std::fs;
@@ -13,6 +15,8 @@ pub fn run(
     name: Option<&str>,
     output_format: &str,
 ) -> Result<(), Box<dyn Error>> {
+    require_markdown_project("templates")?;
+
     let config_dir = Path::new(".lean-spec");
     let templates_dir = config_dir.join("templates");
 

@@ -1,7 +1,9 @@
 //! Split command implementation
 //!
-//! Split a spec into multiple files by line ranges.
+//! Split a spec into multiple files by line ranges. Markdown-only — operates
+//! on README.md directly.
 
+use crate::commands::shared::require_markdown_project;
 use colored::Colorize;
 use std::error::Error;
 use std::fs;
@@ -15,6 +17,8 @@ pub fn run(
     dry_run: bool,
     _output_format: &str,
 ) -> Result<(), Box<dyn Error>> {
+    require_markdown_project("split")?;
+
     if outputs.is_empty() {
         return Err("At least one --output option is required".into());
     }

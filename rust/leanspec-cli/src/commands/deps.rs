@@ -1,5 +1,6 @@
-//! Deps command — migration stub.
+//! Deps command — markdown-only.
 
+use crate::commands::shared::require_markdown_project;
 use std::error::Error;
 
 pub fn run(
@@ -10,5 +11,6 @@ pub fn run(
     _downstream: bool,
     _output_format: &str,
 ) -> Result<(), Box<dyn Error>> {
+    require_markdown_project("deps")?;
     Err("`deps` is not yet migrated to the adapter API".into())
 }

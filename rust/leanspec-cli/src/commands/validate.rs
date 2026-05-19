@@ -1,5 +1,6 @@
-//! Validate command — migration stub.
+//! Validate command — markdown-only.
 
+use crate::commands::shared::require_markdown_project;
 use std::error::Error;
 
 pub fn run(
@@ -10,5 +11,6 @@ pub fn run(
     _warnings_only: bool,
     _output_format: &str,
 ) -> Result<(), Box<dyn Error>> {
+    require_markdown_project("validate")?;
     Err("`validate` is not yet migrated to the adapter API".into())
 }

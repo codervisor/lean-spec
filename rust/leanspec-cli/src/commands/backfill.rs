@@ -1,5 +1,6 @@
-//! Backfill command — migration stub.
+//! Backfill command — markdown-only.
 
+use crate::commands::shared::require_markdown_project;
 use std::error::Error;
 
 #[allow(clippy::too_many_arguments)]
@@ -13,5 +14,6 @@ pub fn run(
     _bootstrap: bool,
     _output_format: &str,
 ) -> Result<(), Box<dyn Error>> {
+    require_markdown_project("backfill")?;
     Err("`backfill` is not yet migrated to the adapter API".into())
 }
