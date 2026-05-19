@@ -37,7 +37,25 @@ fn main() -> ExitCode {
             bootstrap,
             &cli.output,
         ),
-        Commands::Board { group_by } => commands::board::run(&specs_dir, &group_by, &cli.output),
+        Commands::Board {
+            group_by,
+            by_parent,
+            status,
+            tag,
+            priority,
+            assignee,
+            compact,
+        } => commands::board::run(commands::board::BoardParams {
+            specs_dir: cli.specs_dir.clone(),
+            group_by,
+            by_parent,
+            status,
+            tags: tag,
+            priority,
+            assignee,
+            compact,
+            output_format: cli.output.clone(),
+        }),
         Commands::Capabilities => {
             commands::capabilities::run(commands::capabilities::CapabilitiesParams {
                 // Pass through only when the user explicitly overrode specs

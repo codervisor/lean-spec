@@ -76,9 +76,35 @@ pub(crate) enum Commands {
 
     /// Show project board view
     Board {
-        /// Group by: status, priority, assignee, tag, parent
-        #[arg(short, long, default_value = "status")]
-        group_by: String,
+        /// Group by field key (default: the schema's status field).
+        /// Examples: status, priority, assignee, tags. Use --by-parent
+        /// for parent-hierarchy grouping.
+        #[arg(short, long)]
+        group_by: Option<String>,
+
+        /// Group by parent link instead of a field
+        #[arg(long = "by-parent", conflicts_with = "group_by")]
+        by_parent: bool,
+
+        /// Pre-filter by status
+        #[arg(short, long)]
+        status: Option<String>,
+
+        /// Pre-filter by tag (repeatable)
+        #[arg(short, long)]
+        tag: Option<Vec<String>>,
+
+        /// Pre-filter by priority
+        #[arg(short, long)]
+        priority: Option<String>,
+
+        /// Pre-filter by assignee
+        #[arg(short, long)]
+        assignee: Option<String>,
+
+        /// Show compact output (omit per-spec details)
+        #[arg(short, long)]
+        compact: bool,
     },
 
     /// Print the active adapter's capabilities and metadata vocabulary.
