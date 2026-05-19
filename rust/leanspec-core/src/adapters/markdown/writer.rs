@@ -3,7 +3,7 @@
 #![allow(dead_code)]
 
 use super::loader::{LoadError, SpecLoader};
-use super::types::{SpecFrontmatter, SpecPriority, SpecStatus};
+use super::types::{SpecFrontmatter, SpecPriority, SpecStatus, StatusTransition};
 use chrono::Utc;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -102,9 +102,27 @@ impl SpecWriter {
 
         // Update frontmatter
         let mut frontmatter = spec.frontmatter.clone();
+        let previous_status = frontmatter.status;
+        let now = Utc::now();
 
         if let Some(status) = updates.status {
             frontmatter.status = status;
+        }
+
+        // Track status transitions so the velocity history persists across
+        // adapter-mediated updates the same way it did on the legacy CLI path.
+        if frontmatter.status != previous_status {
+            frontmatter.transitions.push(StatusTransition {
+                status: frontmatter.status,
+                at: now,
+            });
+        }
+
+        // Stamp `completed_at` the first time a spec lands in Complete so
+        // downstream consumers (board cards, velocity charts) don't have to
+        // reconstruct it from the transition log.
+        if frontmatter.status == SpecStatus::Complete && frontmatter.completed_at.is_none() {
+            frontmatter.completed_at = Some(now);
         }
 
         if let Some(priority) = updates.priority {
@@ -132,7 +150,7 @@ impl SpecWriter {
         }
 
         // Update timestamp
-        frontmatter.updated_at = Some(Utc::now());
+        frontmatter.updated_at = Some(now);
 
         // Rebuild the spec content with updated frontmatter
         let new_content = self.rebuild_spec_with_frontmatter(&spec.content, &frontmatter)?;

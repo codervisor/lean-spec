@@ -1,10 +1,9 @@
-//! Analyze command — migration stub.
-//!
-//! Awaiting migration to the adapter API (tracked in the subsequent CLI
-//! migration specs). Replaced as part of the broader adapter rollout.
+//! Analyze command — markdown-only.
 
+use crate::commands::shared::require_markdown_project;
 use std::error::Error;
 
 pub fn run(_specs_dir: &str, _spec: &str, _output_format: &str) -> Result<(), Box<dyn Error>> {
+    require_markdown_project("analyze")?;
     Err("`analyze` is not yet migrated to the adapter API".into())
 }

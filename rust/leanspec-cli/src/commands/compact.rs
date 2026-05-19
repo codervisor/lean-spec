@@ -1,7 +1,9 @@
 //! Compact command implementation
 //!
-//! Remove specified line ranges from a spec.
+//! Remove specified line ranges from a spec. Markdown-only — operates on the
+//! README.md file directly.
 
+use crate::commands::shared::require_markdown_project;
 use colored::Colorize;
 use std::error::Error;
 use std::fs;
@@ -14,6 +16,8 @@ pub fn run(
     dry_run: bool,
     output_format: &str,
 ) -> Result<(), Box<dyn Error>> {
+    require_markdown_project("compact")?;
+
     if removes.is_empty() {
         return Err("At least one --remove option is required".into());
     }
