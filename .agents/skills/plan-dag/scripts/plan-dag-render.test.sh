@@ -359,16 +359,32 @@ PY
         printf '  FAIL --stagger did not measurably shrink width (%s → %s pt)\n' "$raw_w" "$stag_w"
     fi
 fi
-# --stagger=0 must always produce identical output to the no-unflatten baseline.
-"$SCRIPT" "$FIX/happy.json" --stagger=0 --out "$tmp/stag0.png" \
-    >/dev/null 2>"$tmp/stag0.err" || true
-if grep -qE "$png_skip_re" "$tmp/stag0.err" 2>/dev/null; then
-    printf '  skip --stagger=0 PNG (Playwright/Chromium not available)\n'
-elif [ ! -s "$tmp/stag0.png" ] && [ ! -e "$tmp/stag0.png" ]; then
-    : # nothing to assert
-elif file "$tmp/stag0.png" 2>/dev/null | grep -q 'PNG image'; then
-    pass=$((pass + 1))
-    printf '  ok  --stagger=0 renders a PNG\n'
+# --stagger=0 must produce a valid PNG (same shape as the happy-path PNG smoke
+# above): gated on node being on PATH, capture the exit code, treat a
+# Playwright-skip stderr as skip, and fail loudly for anything else.
+if command -v node >/dev/null 2>&1; then
+    "$SCRIPT" "$FIX/happy.json" --stagger=0 --out "$tmp/stag0.png" \
+        >/dev/null 2>"$tmp/stag0.err"
+    rc=$?
+    if [ "$rc" -ne 0 ]; then
+        if grep -qE "$png_skip_re" "$tmp/stag0.err"; then
+            printf '  skip --stagger=0 PNG (Playwright/Chromium not available)\n'
+        else
+            fail=$((fail + 1))
+            printf '  FAIL --stagger=0 exited %d\n' "$rc"
+            sed 's/^/    /' < "$tmp/stag0.err"
+        fi
+    elif [ ! -s "$tmp/stag0.png" ]; then
+        fail=$((fail + 1))
+        printf '  FAIL --stagger=0 produced empty output\n'
+    elif ! file "$tmp/stag0.png" 2>/dev/null | grep -q 'PNG image'; then
+        fail=$((fail + 1))
+        printf '  FAIL --stagger=0 output is not a PNG (file: %s)\n' \
+            "$(file "$tmp/stag0.png" 2>/dev/null || echo unknown)"
+    else
+        pass=$((pass + 1))
+        printf '  ok  --stagger=0 renders a PNG\n'
+    fi
 fi
 
 echo "missing dot on PATH (must error, not silently fall back)"
