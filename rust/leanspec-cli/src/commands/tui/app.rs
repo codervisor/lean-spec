@@ -175,15 +175,13 @@ impl FilterState {
                 continue;
             }
             match doc.fields.get(key) {
-                Some(FieldValue::String(s)) => {
-                    if !selected.iter().any(|v| v == s) {
-                        return false;
-                    }
+                Some(FieldValue::String(s)) if !selected.iter().any(|v| v == s) => {
+                    return false;
                 }
-                Some(FieldValue::Strings(values)) => {
-                    if !values.iter().any(|v| selected.contains(v)) {
-                        return false;
-                    }
+                Some(FieldValue::Strings(values))
+                    if !values.iter().any(|v| selected.contains(v)) =>
+                {
+                    return false;
                 }
                 // Doc has no value for this field — pass; the user can't
                 // express "absent" in the popup, so it's never a hard filter.
