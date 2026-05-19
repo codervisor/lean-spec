@@ -1628,6 +1628,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "leanspec-mcp"
+version = "0.2.28"
+dependencies = [
+ "chrono",
+ "leanspec-core",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
 name = "leb128fmt"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

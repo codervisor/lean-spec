@@ -1,0 +1,31 @@
+[package]
+authors.workspace = true
+description = "Model Context Protocol server for LeanSpec — adapter-aware spec management for AI agents"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "leanspec-mcp"
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+name = "leanspec_mcp"
+path = "src/lib.rs"
+
+[[bin]]
+name = "leanspec-mcp"
+path = "src/main.rs"
+
+[dependencies]
+chrono.workspace = true
+leanspec-core = {path = "../leanspec-core", features = ["storage", "git", "github", "ado", "jira"]}
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+tempfile.workspace = true
