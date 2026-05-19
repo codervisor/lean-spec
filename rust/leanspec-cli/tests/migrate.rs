@@ -106,3 +106,26 @@ fn test_migrate_requires_target_or_input() {
         "expected usage hint, got: {combined}"
     );
 }
+
+#[test]
+fn test_migrate_rejects_input_path_with_to_flag() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+    init_project(cwd, true);
+
+    let external = cwd.join("external");
+    fs::create_dir_all(&external).unwrap();
+
+    // Clap is configured with `conflicts_with` so this should fail before
+    // any of the actual command logic runs.
+    let result = exec_cli(
+        &["migrate", external.to_str().unwrap(), "--to", "github"],
+        cwd,
+    );
+    assert!(!result.success, "expected clap conflict error");
+    let combined = format!("{}{}", result.stderr, result.stdout).to_lowercase();
+    assert!(
+        combined.contains("cannot be used") || combined.contains("conflict"),
+        "expected clap conflict hint, got: {combined}"
+    );
+}

@@ -336,6 +336,7 @@ pub(crate) enum Commands {
     /// Migrate specs across adapters, or import from other SDD tools
     Migrate {
         /// Path to directory containing specs to migrate (legacy import mode)
+        #[arg(conflicts_with = "to_adapter")]
         input_path: Option<String>,
 
         /// Migrate the project's specs to another adapter (e.g. `github`, `ado`, `jira`).

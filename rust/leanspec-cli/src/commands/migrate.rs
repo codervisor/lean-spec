@@ -49,11 +49,15 @@ pub struct MigrateParams {
 
 pub fn run(params: MigrateParams) -> Result<(), Box<dyn Error>> {
     match (&params.to_adapter, &params.input_path) {
-        (Some(target), _) => run_cross_adapter(target.clone(), params),
+        (Some(_), Some(_)) => Err("`migrate` accepts either `--to <adapter>` for \
+             cross-adapter migration or an input path for legacy import — not both.\n\
+             Run `leanspec migrate --help` for details."
+            .into()),
+        (Some(target), None) => run_cross_adapter(target.clone(), params),
         (None, Some(path)) => run_legacy_import(path.clone(), params),
         (None, None) => Err("`migrate` needs either `--to <adapter>` for \
-             cross-adapter migration or an input path for legacy import. \
-             Run `lean-spec migrate --help` for details."
+             cross-adapter migration or an input path for legacy import.\n\
+             Run `leanspec migrate --help` for details."
             .into()),
     }
 }
@@ -107,8 +111,13 @@ fn run_cross_adapter(target_name: String, params: MigrateParams) -> Result<(), B
     println!();
 
     // List source docs, skip those already migrated.
+    //
+    // The markdown adapter doesn't currently project custom frontmatter keys
+    // into `SpecDoc.fields`, so a quick `contains_key("migrated_to")` check
+    // is unreliable. Read the actual frontmatter from the spec's file (via
+    // `raw.file_path` recorded by the markdown adapter) and check there.
     let mut docs = source.list(&ListFilter::default())?;
-    docs.retain(|d| !d.fields.contains_key(MIGRATED_TO_KEY));
+    docs.retain(|d| !source_doc_is_migrated(d));
     if let Some(status) = &params.filter_status {
         let status_key = source.schema().key_for_semantic(semantic::STATUS);
         if let Some(key) = status_key {
@@ -243,11 +252,9 @@ fn build_create_request(
                     transferred_keys.insert(sk.to_string());
                 }
             }
-            (Some(sk), None) => {
-                if doc.fields.contains_key(sk) {
-                    *dropped.entry((*semantic).to_string()).or_insert(0) += 1;
-                    transferred_keys.insert(sk.to_string());
-                }
+            (Some(sk), None) if doc.fields.contains_key(sk) => {
+                *dropped.entry((*semantic).to_string()).or_insert(0) += 1;
+                transferred_keys.insert(sk.to_string());
             }
             _ => {}
         }
@@ -316,10 +323,8 @@ fn describe_dry_run(
                     );
                 }
             }
-            (Some(sk), None) => {
-                if doc.fields.contains_key(sk) {
-                    println!("      {} {}: DROPPED (no target key)", "✗".red(), semantic);
-                }
+            (Some(sk), None) if doc.fields.contains_key(sk) => {
+                println!("      {} {}: DROPPED (no target key)", "✗".red(), semantic);
             }
             _ => {}
         }
@@ -402,6 +407,42 @@ fn load_target_config(
     .into())
 }
 
+/// Read the README path the markdown adapter stashed in `SpecDoc.raw`.
+///
+/// `doc.id` is only the leaf directory name and is ambiguous for sub-specs,
+/// so the adapter records the full file path in the `raw` payload. We rely
+/// on that rather than reconstructing the path from `specs_dir + id`.
+fn doc_readme_path(doc: &SpecDoc) -> Option<PathBuf> {
+    doc.raw
+        .as_ref()?
+        .get("file_path")?
+        .as_str()
+        .map(PathBuf::from)
+}
+
+/// `true` if the source spec already carries a `migrated_to:` annotation.
+///
+/// The markdown adapter does not project custom frontmatter keys into
+/// `SpecDoc.fields`, so we re-read the README and parse the frontmatter
+/// here. Any unreadable / malformed file is treated as "not migrated" so
+/// the user can re-run after fixing the file.
+fn source_doc_is_migrated(doc: &SpecDoc) -> bool {
+    let Some(path) = doc_readme_path(doc) else {
+        return false;
+    };
+    let Ok(raw) = fs::read_to_string(&path) else {
+        return false;
+    };
+    let (Some(fm), _) = leanspec_core::split_frontmatter(&raw) else {
+        return false;
+    };
+    fm.lines().any(|line| {
+        line.split_once(':')
+            .map(|(k, _)| k.trim() == MIGRATED_TO_KEY)
+            .unwrap_or(false)
+    })
+}
+
 fn finalize_source(
     doc: &SpecDoc,
     target_id: &str,
@@ -409,8 +450,19 @@ fn finalize_source(
     delete_source: bool,
     specs_dir: &Path,
 ) -> Result<(), Box<dyn Error>> {
-    let spec_dir = specs_dir.join(&doc.id);
-    let readme_path = spec_dir.join("README.md");
+    let readme_path = doc_readme_path(doc).ok_or_else(|| -> Box<dyn Error> {
+        "markdown adapter did not report a file path for this spec".into()
+    })?;
+    let spec_dir = readme_path
+        .parent()
+        .ok_or_else(|| -> Box<dyn Error> {
+            format!(
+                "could not derive spec directory from {}",
+                readme_path.display()
+            )
+            .into()
+        })?
+        .to_path_buf();
 
     if delete_source {
         if spec_dir.exists() {
@@ -428,10 +480,18 @@ fn finalize_source(
         return Ok(());
     }
 
-    // Default: archive — move the spec directory under `_migrated/`.
-    let archive_root = specs_dir.join(MIGRATED_DIR);
-    fs::create_dir_all(&archive_root)?;
-    let dest = archive_root.join(&doc.id);
+    // Default: archive — move the spec directory under `_migrated/`. Place
+    // the archive at `<specs_dir>/_migrated/<relative-to-specs_dir>` so the
+    // sub-spec layout (`parent/child/`) is preserved.
+    let rel = spec_dir.strip_prefix(specs_dir).unwrap_or_else(|_| {
+        // Fall back to the leaf directory name if the spec isn't under
+        // `specs_dir` for some reason (shouldn't happen in practice).
+        Path::new(spec_dir.file_name().unwrap_or_default())
+    });
+    let dest = specs_dir.join(MIGRATED_DIR).join(rel);
+    if let Some(parent) = dest.parent() {
+        fs::create_dir_all(parent)?;
+    }
     if dest.exists() {
         fs::remove_dir_all(&dest)?;
     }
@@ -450,20 +510,27 @@ fn annotate_migrated_to(readme_path: &Path, target_id: &str) -> Result<(), Box<d
 ///
 /// Operates as a textual edit so it doesn't depend on the markdown adapter's
 /// full frontmatter struct, which doesn't model `migrated_to` natively.
+/// Delimits frontmatter the same way [`leanspec_core::split_frontmatter`]
+/// does, so files that end with `---` at EOF or with trailing whitespace
+/// after the closing fence still parse.
 fn insert_frontmatter_field(raw: &str, key: &str, value: &str) -> Result<String, Box<dyn Error>> {
-    let Some(rest) = raw.strip_prefix("---\n") else {
+    let (Some(fm_block), body) = leanspec_core::split_frontmatter(raw) else {
         return Err("source file has no YAML frontmatter".into());
     };
-    let Some(end) = rest.find("\n---\n") else {
-        return Err("source file frontmatter is unterminated".into());
-    };
-    let fm = &rest[..end];
-    let body = &rest[end + "\n---\n".len()..];
+
+    // `fm_block` looks like `---\n<inner>\n---` (possibly with trailing space
+    // before the final newline). Strip the fences so we can edit the inner
+    // YAML and rebuild deterministically.
+    let inner = fm_block
+        .strip_prefix("---\n")
+        .and_then(|s| s.trim_end_matches('\n').strip_suffix("---"))
+        .map(str::trim_end)
+        .ok_or_else(|| -> Box<dyn Error> { "malformed frontmatter fences".into() })?;
 
     let new_line = format!("{key}: {value}");
     let mut found = false;
     let mut new_fm_lines: Vec<String> = Vec::new();
-    for line in fm.lines() {
+    for line in inner.lines() {
         if let Some((existing_key, _)) = line.split_once(':') {
             if existing_key.trim() == key {
                 new_fm_lines.push(new_line.clone());
@@ -477,7 +544,8 @@ fn insert_frontmatter_field(raw: &str, key: &str, value: &str) -> Result<String,
         new_fm_lines.push(new_line);
     }
     let new_fm = new_fm_lines.join("\n");
-    Ok(format!("---\n{new_fm}\n---\n{body}"))
+    let body_trimmed = body.trim_start_matches('\n');
+    Ok(format!("---\n{new_fm}\n---\n\n{body_trimmed}"))
 }
 
 fn write_migration_map(
@@ -488,14 +556,31 @@ fn write_migration_map(
     fs::create_dir_all(specs_dir)?;
     let path = specs_dir.join(MIGRATION_MAP_FILE);
 
-    let mut existing: serde_json::Value = if path.exists() {
-        serde_json::from_str(&fs::read_to_string(&path)?).unwrap_or_else(|_| serde_json::json!({}))
-    } else {
-        serde_json::json!({})
-    };
+    // If a prior `.migration-map.json` exists but doesn't parse as a JSON
+    // object — including the corrupted-by-hand case — preserve the user's
+    // file by writing a sibling backup, then start fresh. We never silently
+    // overwrite an unexpected shape.
+    let mut existing: serde_json::Value = serde_json::json!({});
+    if path.exists() {
+        let raw = fs::read_to_string(&path)?;
+        match serde_json::from_str::<serde_json::Value>(&raw) {
+            Ok(value) if value.is_object() => existing = value,
+            _ => {
+                let backup = path.with_extension("json.bak");
+                fs::write(&backup, &raw)?;
+                eprintln!(
+                    "  {} existing migration map at {} was not a JSON object; \
+                     backed it up to {} and starting fresh.",
+                    "warning:".yellow(),
+                    path.display(),
+                    backup.display(),
+                );
+            }
+        }
+    }
     let existing_obj = existing
         .as_object_mut()
-        .expect("migration map root must be an object");
+        .expect("existing was just narrowed to a JSON object above");
     existing_obj.insert(
         "adapter".into(),
         serde_json::Value::String(target_adapter.into()),
@@ -845,5 +930,16 @@ mod tests {
     fn insert_frontmatter_rejects_missing_block() {
         let raw = "# no frontmatter\n";
         assert!(insert_frontmatter_field(raw, "migrated_to", "x").is_err());
+    }
+
+    #[test]
+    fn insert_frontmatter_handles_trailing_space_terminator() {
+        // The shared split_frontmatter regex allows whitespace before the
+        // newline after the closing `---`. Make sure we do too — the markdown
+        // adapter happily parses these and we must not refuse to annotate them.
+        let raw = "---\nstatus: planned\n---  \n\n# Title\n";
+        let out = insert_frontmatter_field(raw, "migrated_to", "github:7").unwrap();
+        assert!(out.contains("migrated_to: github:7"));
+        assert!(out.contains("# Title"));
     }
 }
