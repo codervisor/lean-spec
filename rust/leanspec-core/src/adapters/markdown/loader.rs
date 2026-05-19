@@ -175,6 +175,15 @@ impl SpecLoader {
         let readme_paths: Vec<PathBuf> = WalkDir::new(&self.specs_dir)
             .max_depth(3) // Allow sub-specs
             .into_iter()
+            .filter_entry(|entry| {
+                // Skip directories used as out-of-band storage by lean-spec
+                // itself: `_migrated/` holds files moved by cross-adapter
+                // migration and must not appear in `list`/`get`/`stats`.
+                if entry.depth() == 0 || !entry.file_type().is_dir() {
+                    return true;
+                }
+                entry.file_name() != "_migrated"
+            })
             .filter_map(|e| e.ok())
             .filter_map(|entry| {
                 let path = entry.path();
