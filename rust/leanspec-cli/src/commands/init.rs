@@ -58,6 +58,7 @@ fn resolved_token_env(options: &InitOptions, default: &str) -> String {
         .unwrap_or_else(|| default.to_string())
 }
 
+#[allow(dead_code)]
 fn print_coming_soon(label: &str) {
     println!("{} adapter support coming soon.", label);
     println!(
@@ -688,14 +689,7 @@ fn run_ado_init(options: InitOptions) -> Result<(), Box<dyn Error>> {
     let cwd = std::env::current_dir()?;
     let root = find_project_root(&cwd);
 
-    // Pick the right token env. The CLI default is GITHUB_TOKEN (shared with
-    // the github adapter); when the user didn't override it, the ADO default
-    // should be ADO_TOKEN.
-    let token_env = if options.token_env == "GITHUB_TOKEN" {
-        "ADO_TOKEN".to_string()
-    } else {
-        options.token_env.clone()
-    };
+    let token_env = resolved_token_env(&options, "ADO_TOKEN");
 
     // 1. Prompt for / parse organization + project.
     let (org, project) = resolve_ado_org_project(&options)?;
