@@ -23,6 +23,7 @@ pub mod git_repo;
 pub mod analyze;
 pub mod archive;
 pub mod check;
+pub mod crystallize;
 pub mod examples;
 pub mod files;
 pub mod gantt;
