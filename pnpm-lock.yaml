@@ -42,6 +42,8 @@ importers:
         specifier: ^3.1.11
         version: 3.1.11
 
+  packages/mcp: {}
+
   packages/ui:
     dependencies:
       '@ai-sdk/react':

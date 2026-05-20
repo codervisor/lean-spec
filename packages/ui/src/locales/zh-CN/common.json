@@ -1218,7 +1218,7 @@
         "title": "配置",
         "description": "LeanSpec 项目配置与设置",
         "empty": "没有找到配置文件",
-        "suggestion": "运行 'lean-spec init' 生成配置文件"
+        "suggestion": "运行 'leanspec init' 生成配置文件"
       },
       "docs": {
         "title": "项目文档",
@@ -1230,7 +1230,7 @@
     "emptyState": {
       "title": "未检测到项目上下文",
       "description": "该项目暂未配置任何上下文文件，AI Agent 无法了解项目背景。",
-      "suggestion": "先创建 AGENTS.md 或执行 'lean-spec init'"
+      "suggestion": "先创建 AGENTS.md 或执行 'leanspec init'"
     },
     "search": {
       "noMatchesTitle": "未找到匹配项",

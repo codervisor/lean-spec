@@ -4,7 +4,7 @@
  * 
  * This script ensures all Rust packages use the same version as the root package.json. It updates:
  * - Rust workspace version in rust/Cargo.toml
- * - CLI platform packages (lean-spec-darwin-x64, etc.)
+ * - CLI platform packages (@leanspec/cli-darwin-x64, etc.)
  * - MCP platform packages (@leanspec/mcp-darwin-x64, etc.)
  * - HTTP server platform packages (@leanspec/http-darwin-x64, etc.)
  * 

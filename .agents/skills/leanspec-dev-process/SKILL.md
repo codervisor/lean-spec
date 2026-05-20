@@ -1,9 +1,11 @@
 ---
-name: lean-spec-dev-process
-description: The end-to-end spec-issue-driven dev loop for lean-spec — spec → branch → implement → PR → merge → closure. Use when asked "how do I start work", "what's the process", "SDD loop", "spec-driven development", "how do we ship a change on lean-spec", "from scratch what do I do", or when you're about to begin a non-trivial change on `codervisor/lean-spec` and haven't yet decided how to split spec/PR. Delegates to `issue-spec` (spec writing), `lean-spec-pre-push` (pre-push checks), `lean-spec-pr-lifecycle` (post-push), and `leanspec-development` (commands, CI, publishing, i18n).
+name: leanspec-dev-process
+description: The end-to-end spec-issue-driven dev loop for lean-spec — spec → branch → implement → PR → merge → closure. Use when asked "how do I start work", "what's the process", "SDD loop", "spec-driven development", "how do we ship a change on lean-spec", "from scratch what do I do", or when you're about to begin a non-trivial change on `codervisor/lean-spec` and haven't yet decided how to split spec/PR. Delegates to `issue-spec` (spec writing), `leanspec-pre-push` (pre-push checks), `leanspec-pr-lifecycle` (post-push), and `leanspec-development` (commands, CI, publishing, i18n).
+metadata:
+  internal: true
 ---
 
-# lean-spec-dev-process
+# leanspec-dev-process
 
 The spec-issue-driven development (SDD) loop on lean-spec. Every non-trivial change starts as a GitHub spec issue on `codervisor/lean-spec`, proceeds through a PR that references it, and closes when the PR merges.
 
@@ -27,13 +29,13 @@ Lean-spec is its own dogfood: we use the SDD loop we ship. The historical `specs
      │   branch + implement                                            │
      │        │                                                        │
      │        ↓                                                        │
-     │   lean-spec-pre-push   ← merge preview, typecheck, test, clippy │
+     │   leanspec-pre-push    ← merge preview, typecheck, test, clippy │
      │        │                                                        │
      │        ↓                                                        │
      │   git push → open PR (body: "Closes #N" or "Part of #N")        │
      │        │                                                        │
      │        ↓                                                        │
-     │   lean-spec-pr-lifecycle  ← CI triage, review, iterate          │
+     │   leanspec-pr-lifecycle   ← CI triage, review, iterate          │
      │        │                                                        │
      │        ↓                                                        │
      │   merge                                                         │
@@ -91,7 +93,7 @@ Implement the spec's Plan items in order. Keep commits small and focused. Commit
 
 ### 4. Pre-push
 
-Trigger `lean-spec-pre-push` (or say "ready to push"). The full checklist is in that skill; in summary:
+Trigger `leanspec-pre-push` (or say "ready to push"). The full checklist is in that skill; in summary:
 
 1. Sync `origin/main` into the branch (CI tests a merge preview, not the branch alone). Resolve conflicts locally, never on the PR web editor.
 2. `pnpm typecheck` (never skip before marking complete).
@@ -114,7 +116,7 @@ PR body must begin with a linking line:
 | Scaffolding / one phase of a multi-phase spec       | `Part of #N`   |
 | Related work that shouldn't close the spec          | `Refs #N`      |
 
-Under `## Delivers`, list the Plan items this PR ticks (exact text from the spec's Plan). After merge, tick those checkboxes manually on the parent spec — see `lean-spec-pr-lifecycle`.
+Under `## Delivers`, list the Plan items this PR ticks (exact text from the spec's Plan). After merge, tick those checkboxes manually on the parent spec — see `leanspec-pr-lifecycle`.
 
 If the PR is genuinely trivial (typo, doc-only, one-line obvious fix), apply the `trivial` label and skip the spec-linking requirement. Use sparingly — if reviewers flag it as needing context, escalate to a spec.
 
@@ -122,7 +124,7 @@ If the PR is genuinely trivial (typo, doc-only, one-line obvious fix), apply the
 
 ### 6. During review
 
-Trigger `lean-spec-pr-lifecycle` (or say "triage PR" / "CI is failing" / respond to a webhook). It covers:
+Trigger `leanspec-pr-lifecycle` (or say "triage PR" / "CI is failing" / respond to a webhook). It covers:
 
 - CI triage: build / test / lint / i18n-parity failures.
 - Review-comment discipline: fix the code, don't reply per comment.
@@ -131,7 +133,7 @@ Trigger `lean-spec-pr-lifecycle` (or say "triage PR" / "CI is failing" / respond
 ### 7. Merge
 
 - `Closes #N` PRs auto-close the spec on merge.
-- `Part of #N` / `Refs #N` PRs leave the spec open; tick the delivered Plan items manually on the parent spec, and if all sub-issues of a parent are closed, ping the parent. See `lean-spec-pr-lifecycle`.
+- `Part of #N` / `Refs #N` PRs leave the spec open; tick the delivered Plan items manually on the parent spec, and if all sub-issues of a parent are closed, ping the parent. See `leanspec-pr-lifecycle`.
 - For PRs labeled `provider-impact`, append the change to `CHANGELOG.md` under the next-version heading. The `leanspec-development` skill's "Changelog" section is the format reference.
 
 ### 8. Closed-unmerged path
@@ -167,7 +169,7 @@ The labels on a spec issue must reflect reality at all times:
 | `in-progress` | At least one PR is open against this spec.       |
 | (closed)      | All Plan items delivered, spec closed.           |
 
-Until automation lands on this repo, the `planned → in-progress` flip on PR open is **manual** — `lean-spec-pr-lifecycle` covers the mechanics.
+Until automation lands on this repo, the `planned → in-progress` flip on PR open is **manual** — `leanspec-pr-lifecycle` covers the mechanics.
 
 ## Anti-patterns (don't)
 
@@ -177,7 +179,7 @@ Until automation lands on this repo, the `planned → in-progress` flip on PR op
 - **Editing Plan checkboxes to mark items done before the PR merges.** Tick them on merge, not before.
 - **Provider change without `## Provider impact` callout.** The provider seam is the central product promise; mis-tracking a change to it corrupts the signal for users adopting different backends.
 - **User-visible string in only one locale.** Both `en` and `zh-CN` ship together, every time.
-- **Skipping `lean-spec-pre-push`.** Even a thin checklist catches the cheap mistakes; the typecheck/clippy gate exists because CI re-runs these and slow CI cycles cost more than local cycles.
+- **Skipping `leanspec-pre-push`.** Even a thin checklist catches the cheap mistakes; the typecheck/clippy gate exists because CI re-runs these and slow CI cycles cost more than local cycles.
 - **Authoring a new `specs/NNN-slug/` directory.** The file-based corpus is frozen post-migration. New work is GitHub issues.
 
 ## Delegation map
@@ -186,9 +188,9 @@ Until automation lands on this repo, the `planned → in-progress` flip on PR op
 |---------------------------------------------|-----------------------------------------------------------------|
 | Write the spec                              | [`issue-spec`](https://github.com/onsager-ai/dev-skills/blob/main/skills/issue-spec/SKILL.md) (installed globally from `onsager-ai/dev-skills`) |
 | Commands, CI, publishing, i18n              | [`leanspec-development`](../leanspec-development/SKILL.md)      |
-| Pre-push checks                             | [`lean-spec-pre-push`](../lean-spec-pre-push/SKILL.md)          |
-| CI triage, review, iterate                  | [`lean-spec-pr-lifecycle`](../lean-spec-pr-lifecycle/SKILL.md)  |
-| On PR merge → tick Plan items               | [`lean-spec-pr-lifecycle`](../lean-spec-pr-lifecycle/SKILL.md) (manual) |
+| Pre-push checks                             | [`leanspec-pre-push`](../leanspec-pre-push/SKILL.md)            |
+| CI triage, review, iterate                  | [`leanspec-pr-lifecycle`](../leanspec-pr-lifecycle/SKILL.md)    |
+| On PR merge → tick Plan items               | [`leanspec-pr-lifecycle`](../leanspec-pr-lifecycle/SKILL.md) (manual) |
 | GitHub CLI / cloud auth                     | [`github-integration`](https://github.com/onsager-ai/dev-skills/blob/main/skills/github-integration/SKILL.md) (installed globally from `onsager-ai/dev-skills`) |
 
 ## Relationship to Onsager / Duhem dev process

@@ -33,10 +33,10 @@ LeanSpec is a spec coding framework that works with whatever spec workflow you a
 
 ```bash
 # Markdown specs (default — works out of the box)
-npm install -g lean-spec && lean-spec init
+npm install -g leanspec && leanspec init
 
 # Or try with a tutorial project
-npx lean-spec init --example dark-theme
+npx leanspec init --example dark-theme
 cd dark-theme && npm install && npm start
 ```
 
@@ -63,9 +63,9 @@ directory: specs
 **Visualize your project (works with any backend):**
 
 ```bash
-lean-spec board    # Kanban view
-lean-spec stats    # Project metrics
-lean-spec ui       # Web UI at localhost:3000
+leanspec board    # Kanban view
+leanspec stats    # Project metrics
+leanspec ui       # Web UI at localhost:3000
 ```
 
 **Next:** [Your First Spec with AI](https://www.lean-spec.dev/docs/tutorials/first-spec-with-ai) (10 min tutorial)
@@ -93,7 +93,7 @@ Works with any AI coding assistant via MCP or CLI:
 ```json
 {
   "mcpServers": {
-    "lean-spec": { "command": "npx", "args": ["@leanspec/mcp"] }
+    "leanspec": { "command": "npx", "args": ["@leanspec/mcp"] }
   }
 }
 ```
@@ -137,7 +137,7 @@ Teach your AI assistant the Spec-Driven Development methodology:
 
 ```bash
 # Install the leanspec skill
-npx skills add codervisor/skills@leanspec
+npx skills add codervisor/lean-spec@leanspec
 ```
 
 This installs the **leanspec** skill which teaches AI agents:
@@ -148,7 +148,7 @@ This installs the **leanspec** skill which teaches AI agents:
 
 **Compatible with:** Claude Code, Cursor, Windsurf, GitHub Copilot, and other [Agent Skills](https://skills.sh/) compatible tools.
 
-📖 [Skill source →](https://github.com/codervisor/skills)
+📖 [Skill source →](skills/leanspec/SKILL.md)
 
 ---
 
@@ -156,11 +156,11 @@ This installs the **leanspec** skill which teaches AI agents:
 
 | Feature             | Description                                                                                       |
 | ------------------- | ------------------------------------------------------------------------------------------------- |
-| **📊 Kanban Board**  | `lean-spec board` - visual project tracking                                                       |
-| **🔍 Smart Search**  | `lean-spec search` - find specs by content or metadata                                            |
+| **📊 Kanban Board**  | `leanspec board` - visual project tracking                                                        |
+| **🔍 Smart Search**  | `leanspec search` - find specs by content or metadata                                             |
 | **🔗 Dependencies**  | Track spec relationships with `depends_on` and `related`                                          |
-| **🎨 Web UI**        | `lean-spec ui` - browser-based dashboard                                                          |
-| **📈 Project Stats** | `lean-spec stats` - health metrics and bottleneck detection                                       |
+| **🎨 Web UI**        | `leanspec ui` - browser-based dashboard                                                           |
+| **📈 Project Stats** | `leanspec stats` - health metrics and bottleneck detection                                        |
 | **🤖 AI-Native**     | MCP server + CLI for AI assistants                                                                |
 | **🖥️ Desktop App**   | Desktop app repo: [codervisor/lean-spec-desktop](https://github.com/codervisor/lean-spec-desktop) |
 

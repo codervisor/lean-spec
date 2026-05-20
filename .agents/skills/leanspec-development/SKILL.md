@@ -1,6 +1,8 @@
 ---
 name: leanspec-development
 description: Development workflows, commands, publishing, CI/CD, changelog management, and contribution guidelines for LeanSpec. Use when contributing code, fixing bugs, setting up dev environment, running tests or linting, working with the monorepo structure, looking up build/dev/test/publish/format/lint commands, preparing releases, publishing to npm, bumping versions, syncing package versions, testing dev builds, troubleshooting npm distribution, updating changelogs, triggering CI/CD workflows, monitoring build status, debugging failed runs, managing artifacts, checking CI before releases, or researching AI agent runners. Triggers include any development, scripting, publishing, CI/CD, changelog, or runner research task in this project.
+metadata:
+  internal: true
 ---
 
 # LeanSpec Development Skill

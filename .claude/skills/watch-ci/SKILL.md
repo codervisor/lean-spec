@@ -2,6 +2,8 @@
 name: watch-ci
 description: Watch GitHub Actions CI status for the current commit until completion. Use after pushing changes to monitor build results.
 allowed-tools: Bash
+metadata:
+  internal: true
 ---
 
 # Watch CI
