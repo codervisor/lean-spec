@@ -56,13 +56,14 @@ fn main() -> ExitCode {
             compact,
             output_format: cli.output.clone(),
         }),
-        Commands::Capabilities => {
+        Commands::Capabilities { refresh } => {
             commands::capabilities::run(commands::capabilities::CapabilitiesParams {
                 // Pass through only when the user explicitly overrode specs
                 // dir; otherwise the command resolves the adapter from the
                 // project's own configuration.
                 specs_dir: cli.specs_dir.clone(),
                 output_format: cli.output.clone(),
+                refresh,
             })
         }
         Commands::Check { fix } => commands::check::run(&specs_dir, fix, &cli.output),

@@ -42,7 +42,8 @@ pub fn definition(schema: &leanspec_core::SpecSchema) -> ToolDefinition {
 }
 
 pub fn call(state: Arc<ServerState>, args: Value) -> Result<Value, McpToolError> {
-    let schema = state.adapter.schema().clone();
+    let adapter = state.adapter();
+    let schema = adapter.schema().clone();
 
     let mut fields: HashMap<String, Vec<String>> = HashMap::new();
 
@@ -97,7 +98,7 @@ pub fn call(state: Arc<ServerState>, args: Value) -> Result<Value, McpToolError>
         raw: None,
     };
 
-    let mut docs = state.adapter.list(&filter)?;
+    let mut docs = adapter.list(&filter)?;
     if let Some(n) = limit {
         docs.truncate(n);
     }

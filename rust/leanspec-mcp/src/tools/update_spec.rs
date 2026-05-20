@@ -29,7 +29,8 @@ pub fn definition(schema: &SpecSchema) -> ToolDefinition {
 }
 
 pub fn call(state: Arc<ServerState>, args: Value) -> Result<Value, McpToolError> {
-    let schema = state.adapter.schema().clone();
+    let adapter = state.adapter();
+    let schema = adapter.schema().clone();
 
     let id = args
         .get("id")
@@ -71,6 +72,6 @@ pub fn call(state: Arc<ServerState>, args: Value) -> Result<Value, McpToolError>
         replace_links: None,
     };
 
-    let doc = state.adapter.update(&id, &req)?;
+    let doc = adapter.update(&id, &req)?;
     doc_to_json(&doc)
 }

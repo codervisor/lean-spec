@@ -112,7 +112,14 @@ pub(crate) enum Commands {
     /// Agents should call this at session start to discover which fields and
     /// values the backend supports instead of assuming markdown-specific
     /// conventions.
-    Capabilities,
+    Capabilities {
+        /// Force a fresh schema enrichment call, even when the static schema
+        /// would suffice. The CLI is single-shot, so the practical effect is
+        /// to surface enrichment errors (offline, bad token) loudly instead
+        /// of falling back silently to the static defaults.
+        #[arg(long)]
+        refresh: bool,
+    },
 
     /// Check for sequence conflicts
     Check {

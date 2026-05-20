@@ -14,6 +14,12 @@ pub struct CapabilitiesParams {
     /// we let the project's adapter configuration decide.
     pub specs_dir: Option<String>,
     pub output_format: String,
+    /// `--refresh`: hint that the caller wants a freshly-enriched schema.
+    /// The CLI has no cross-invocation cache so this is informational — the
+    /// command already builds an adapter from scratch every call. Kept on
+    /// the surface so the flag stays available when long-running modes
+    /// (e.g. `leanspec ui --capabilities-stream`) reuse this code.
+    pub refresh: bool,
 }
 
 pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
@@ -22,6 +28,7 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
     // consult `AdapterRegistry::from_project()` which reads
     // `leanspec.adapter.yaml` / `.lean-spec/adapter.yaml` (with legacy
     // `provider:` fallbacks) and defaults to markdown at `specs/`.
+    let _ = params.refresh; // see field docs — CLI is single-shot
     let adapter = match params.specs_dir.as_deref() {
         Some(dir) => {
             let config = AdapterConfig {

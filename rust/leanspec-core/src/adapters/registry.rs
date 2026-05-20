@@ -19,6 +19,19 @@ use super::{Adapter, AdapterConfig, AdapterError};
 /// Factory for [`Adapter`] instances.
 pub struct AdapterRegistry;
 
+/// Print a one-line warning when an adapter's `resolve_inline` enrichment
+/// fails. The CLI continues with the static schema; agents fall back to the
+/// declared defaults rather than aborting on offline / auth errors.
+#[cfg_attr(
+    not(any(feature = "github", feature = "ado", feature = "jira")),
+    allow(dead_code)
+)]
+fn warn_on_resolve(adapter: &str, result: Result<(), AdapterError>) {
+    if let Err(err) = result {
+        eprintln!("warning: could not enrich {adapter} schema ({err}). Using static defaults.");
+    }
+}
+
 impl AdapterRegistry {
     /// Instantiate an adapter from the provided configuration.
     pub fn create(config: &AdapterConfig) -> Result<Box<dyn Adapter>, AdapterError> {
@@ -62,9 +75,10 @@ impl AdapterRegistry {
                 };
                 // Bake the project's actual labels into the adapter's schema
                 // so `leanspec capabilities` shows them rather than empty
-                // dynamic enum slots. Transient failures here are fatal: an
-                // unreachable GitHub means the adapter is unusable anyway.
-                adapter.resolve_inline()?;
+                // dynamic enum slots. Enrichment failures are warnings, not
+                // fatal — the CLI still works offline; agents fall back to
+                // the schema's static defaults.
+                warn_on_resolve("github", adapter.resolve_inline());
                 Ok(Box::new(adapter))
             }
             #[cfg(not(feature = "github"))]
@@ -104,10 +118,10 @@ impl AdapterRegistry {
                     None => AdoAdapter::new(org, project, token_env)?,
                 };
                 // Bake the project's actual state list into the adapter's
-                // schema so `leanspec capabilities` shows them. Failure to
-                // reach ADO is fatal here — an unreachable backend makes the
-                // adapter unusable downstream.
-                adapter.resolve_inline()?;
+                // schema so `leanspec capabilities` shows them. Enrichment
+                // failures are warnings, not fatal — downstream calls will
+                // surface real errors when they hit the unreachable backend.
+                warn_on_resolve("ado", adapter.resolve_inline());
                 Ok(Box::new(adapter))
             }
             #[cfg(not(feature = "ado"))]
@@ -167,10 +181,10 @@ impl AdapterRegistry {
                     base_url,
                 )?;
                 // Pre-fetch the project's status / priority vocabulary so
-                // `leanspec capabilities` reports the real names. Failures
-                // here are fatal: an unreachable Jira means the adapter is
-                // unusable.
-                adapter.resolve_inline()?;
+                // `leanspec capabilities` reports the real names. Enrichment
+                // failures are warnings, not fatal — the static schema's
+                // defaults remain usable offline.
+                warn_on_resolve("jira", adapter.resolve_inline());
                 Ok(Box::new(adapter))
             }
             #[cfg(not(feature = "jira"))]

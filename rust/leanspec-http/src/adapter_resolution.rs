@@ -6,8 +6,11 @@
 //! drifting away from request-time adapter resolution.
 
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
-use leanspec_core::adapters::{Adapter, AdapterConfig, AdapterError, AdapterRegistry};
+use leanspec_core::adapters::{
+    Adapter, AdapterCache, AdapterConfig, AdapterError, AdapterRegistry,
+};
 
 /// Candidate file paths (relative to the project root) for adapter config,
 /// in priority order. The legacy `provider:` files are honoured so existing
@@ -51,12 +54,38 @@ pub fn load_adapter_config(
 }
 
 /// Resolve and instantiate the active adapter for a project.
+///
+/// Builds a fresh adapter every call; for handlers that fire frequently use
+/// [`resolve_adapter_cached`] so the network-backed schema-enrichment isn't
+/// repeated on every request.
 pub fn resolve_adapter(
     project_root: &Path,
     specs_dir: &Path,
 ) -> Result<Box<dyn Adapter>, AdapterError> {
     let config = load_adapter_config(project_root, specs_dir)?;
     AdapterRegistry::create(&config)
+}
+
+/// Resolve the adapter for a project through the shared [`AdapterCache`],
+/// re-using a cached instance when one is still fresh.
+pub fn resolve_adapter_cached(
+    cache: &AdapterCache,
+    project_root: &Path,
+    specs_dir: &Path,
+) -> Result<Arc<dyn Adapter>, AdapterError> {
+    let config = load_adapter_config(project_root, specs_dir)?;
+    cache.get_or_resolve(project_root, || AdapterRegistry::create(&config))
+}
+
+/// Force the cached adapter for `project_root` to re-resolve, even if its TTL
+/// hasn't expired yet. Returns the freshly-built instance.
+pub fn refresh_adapter(
+    cache: &AdapterCache,
+    project_root: &Path,
+    specs_dir: &Path,
+) -> Result<Arc<dyn Adapter>, AdapterError> {
+    let config = load_adapter_config(project_root, specs_dir)?;
+    cache.refresh(project_root, || AdapterRegistry::create(&config))
 }
 
 /// When the active adapter is markdown, rewrite a relative `settings.directory`

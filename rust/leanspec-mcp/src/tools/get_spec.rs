@@ -37,6 +37,6 @@ pub fn call(state: Arc<ServerState>, args: Value) -> Result<Value, McpToolError>
         .get("id")
         .and_then(|v| v.as_str())
         .ok_or_else(|| McpToolError::InvalidRequest("missing required field 'id'".into()))?;
-    let doc = state.adapter.get(id)?;
+    let doc = state.adapter().get(id)?;
     doc_to_json(&doc)
 }

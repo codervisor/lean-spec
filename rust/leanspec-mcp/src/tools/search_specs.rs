@@ -57,7 +57,7 @@ pub fn call(state: Arc<ServerState>, args: Value) -> Result<Value, McpToolError>
         include_body,
     };
 
-    let hits = state.adapter.search(query, &opts)?;
+    let hits = state.adapter().search(query, &opts)?;
     Ok(json!({
         "hits": hits,
         "count": hits.len()

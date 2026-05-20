@@ -84,7 +84,8 @@ fn require_markdown(state: &ServerState, tool: &str) -> Result<(), McpToolError>
 
 pub fn validate_spec(state: Arc<ServerState>, args: Value) -> Result<Value, McpToolError> {
     require_markdown(&state, "validate_spec")?;
-    let schema = state.adapter.schema().clone();
+    let adapter = state.adapter();
+    let schema = adapter.schema().clone();
 
     let target_id = args
         .get("id")
@@ -92,8 +93,8 @@ pub fn validate_spec(state: Arc<ServerState>, args: Value) -> Result<Value, McpT
         .map(|s| s.to_string());
 
     let docs: Vec<SpecDoc> = match target_id.as_ref() {
-        Some(id) => vec![state.adapter.get(id)?],
-        None => state.adapter.list(&ListFilter::default())?,
+        Some(id) => vec![adapter.get(id)?],
+        None => adapter.list(&ListFilter::default())?,
     };
 
     let mut results: Vec<Value> = Vec::with_capacity(docs.len());
@@ -173,7 +174,8 @@ pub fn get_dependencies(state: Arc<ServerState>, args: Value) -> Result<Value, M
         .and_then(|v| v.as_str())
         .ok_or_else(|| McpToolError::InvalidRequest("missing required field 'id'".into()))?;
 
-    let doc = state.adapter.get(id)?;
+    let adapter = state.adapter();
+    let doc = adapter.get(id)?;
 
     let mut direct_deps: Vec<&str> = Vec::new();
     let mut parent: Option<&str> = None;
@@ -186,7 +188,7 @@ pub fn get_dependencies(state: Arc<ServerState>, args: Value) -> Result<Value, M
     }
 
     // Reverse-lookup: which other specs depend on this one?
-    let all = state.adapter.list(&ListFilter::default())?;
+    let all = adapter.list(&ListFilter::default())?;
     let dependents: Vec<&str> = all
         .iter()
         .filter(|d| {
@@ -207,9 +209,10 @@ pub fn get_dependencies(state: Arc<ServerState>, args: Value) -> Result<Value, M
 
 pub fn get_stats(state: Arc<ServerState>) -> Result<Value, McpToolError> {
     require_markdown(&state, "get_stats")?;
-    let schema = state.adapter.schema().clone();
+    let adapter = state.adapter();
+    let schema = adapter.schema().clone();
 
-    let docs = state.adapter.list(&ListFilter {
+    let docs = adapter.list(&ListFilter {
         include_archived: true,
         ..Default::default()
     })?;

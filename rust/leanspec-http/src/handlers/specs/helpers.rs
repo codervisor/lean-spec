@@ -7,10 +7,12 @@ use axum::Json;
 use sha2::{Digest, Sha256};
 use std::path::{Component, Path as FsPath, PathBuf};
 
+use std::sync::Arc;
+
 use leanspec_core::adapters::{Adapter, AdapterError};
 use leanspec_core::{LeanSpecConfig, TokenStatus, ValidationResult};
 
-use crate::adapter_resolution::resolve_adapter;
+use crate::adapter_resolution::resolve_adapter_cached;
 use crate::error::ApiError;
 use crate::project_registry::Project;
 use crate::state::AppState;
@@ -20,15 +22,18 @@ use crate::types::SubSpec;
 
 /// Resolve the active adapter for a project plus the project record itself.
 ///
-/// Adapter config is read from the project root using the same lookup order
-/// as the CLI. When no config file is present we fall back to the markdown
-/// adapter pointed at the project's declared `specs_dir`.
+/// Routes through the shared [`leanspec_core::adapters::AdapterCache`] so
+/// network-backed schema enrichment (e.g. GitHub labels) is paid once per
+/// cache window. The returned [`Arc<dyn Adapter>`] is safe to share across
+/// requests; subsequent calls within the cache TTL hand back the same
+/// instance.
 pub(super) async fn get_adapter_and_project(
     state: &AppState,
     project_id: &str,
-) -> Result<(Box<dyn Adapter>, Project), (StatusCode, Json<ApiError>)> {
+) -> Result<(Arc<dyn Adapter>, Project), (StatusCode, Json<ApiError>)> {
     let project = resolve_project(state, project_id).await?;
-    let adapter = resolve_adapter(&project.path, &project.specs_dir).map_err(adapter_init_error)?;
+    let adapter = resolve_adapter_cached(&state.adapter_cache, &project.path, &project.specs_dir)
+        .map_err(adapter_init_error)?;
     Ok((adapter, project))
 }
 
