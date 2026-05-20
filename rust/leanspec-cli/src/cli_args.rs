@@ -204,6 +204,11 @@ pub(crate) enum Commands {
         /// Adapter-specific field as `key=value` (repeatable)
         #[arg(long = "field")]
         fields: Vec<String>,
+
+        /// Schema id to apply to the new spec (e.g. `acme:sprint-story`).
+        /// Falls back to the adapter's default schema when omitted.
+        #[arg(long = "schema")]
+        schema_id: Option<String>,
     },
 
     /// List example projects
@@ -408,6 +413,12 @@ pub(crate) enum Commands {
         editor: Option<String>,
     },
 
+    /// List, inspect, and validate schemas (built-in + custom)
+    Schema {
+        #[command(subcommand)]
+        action: SchemaSubcommand,
+    },
+
     /// Search specs
     Search {
         /// Search query (supports AND/OR/NOT, field filters, phrases, fuzzy)
@@ -610,6 +621,24 @@ pub(crate) enum Commands {
         /// Show raw markdown
         #[arg(long)]
         raw: bool,
+    },
+}
+
+#[derive(Subcommand)]
+pub(crate) enum SchemaSubcommand {
+    /// List every available schema (built-in + custom).
+    List,
+
+    /// Show all fields of a resolved schema.
+    Show {
+        /// Schema id (e.g. `leanspec:feature`, `acme:sprint-story`).
+        id: String,
+    },
+
+    /// Validate a schema YAML file against the registry.
+    Validate {
+        /// Path to the schema YAML file.
+        path: String,
     },
 }
 

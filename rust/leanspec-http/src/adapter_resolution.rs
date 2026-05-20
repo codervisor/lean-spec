@@ -46,6 +46,7 @@ pub fn load_adapter_config(
         AdapterConfig {
             adapter: "markdown".into(),
             settings: serde_json::json!({ "directory": specs_dir.to_string_lossy().as_ref() }),
+            schema_id: None,
         }
     };
 

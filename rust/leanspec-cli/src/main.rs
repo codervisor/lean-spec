@@ -7,7 +7,7 @@ use clap::Parser;
 use colored::Colorize;
 use std::process::ExitCode;
 
-use crate::cli_args::{Cli, Commands, GitSubcommand};
+use crate::cli_args::{Cli, Commands, GitSubcommand, SchemaSubcommand};
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
@@ -88,6 +88,7 @@ fn main() -> ExitCode {
             description,
             slug,
             fields,
+            schema_id,
         } => commands::create::run(commands::create::CreateParams {
             specs_dir: specs_dir.clone(),
             name,
@@ -104,6 +105,7 @@ fn main() -> ExitCode {
             description,
             slug,
             fields,
+            schema_id,
         }),
         Commands::Rel {
             args,
@@ -213,6 +215,11 @@ fn main() -> ExitCode {
             output_format: cli.output.clone(),
         }),
         Commands::Open { spec, editor } => commands::open::run(&specs_dir, &spec, editor),
+        Commands::Schema { action } => match action {
+            SchemaSubcommand::List => commands::schema::list(&cli.output),
+            SchemaSubcommand::Show { id } => commands::schema::show(&id, &cli.output),
+            SchemaSubcommand::Validate { path } => commands::schema::validate(&path, &cli.output),
+        },
         Commands::Search { query, limit } => {
             commands::search::run(&specs_dir, &query, limit, &cli.output)
         }

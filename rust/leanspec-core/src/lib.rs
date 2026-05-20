@@ -33,6 +33,7 @@ pub mod io;
 pub mod model;
 pub mod parsers;
 pub mod relationships;
+pub mod schema_registry;
 pub mod search;
 pub mod types;
 pub mod validators;
@@ -82,6 +83,11 @@ pub use validators::{
 pub use model::{
     semantic, CompletableItem, CreateRequest, EnumOption, FieldDef, FieldDisplay, FieldKind,
     FieldValue, ItemLink, LinkTypeDef, Reference, SpecDoc, SpecSchema, UpdateRequest,
+};
+
+// Schema registry — built-in + custom YAML schema bundles.
+pub use schema_registry::{
+    validate_schema_file, SchemaError, SchemaRegistry, ValidationIssue, BUILTIN_PREFIX,
 };
 
 // Adapter layer — the backend abstraction.

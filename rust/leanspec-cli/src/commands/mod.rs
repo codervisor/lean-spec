@@ -9,6 +9,7 @@ pub mod create;
 pub mod deps;
 pub mod list;
 pub mod rel;
+pub mod schema;
 pub mod search;
 pub mod stats;
 pub mod tokens;

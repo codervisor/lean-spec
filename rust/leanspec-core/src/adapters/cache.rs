@@ -164,6 +164,7 @@ mod tests {
         AdapterRegistry::create(&AdapterConfig {
             adapter: "markdown".into(),
             settings: serde_json::json!({ "directory": "specs" }),
+            schema_id: None,
         })
     }
 

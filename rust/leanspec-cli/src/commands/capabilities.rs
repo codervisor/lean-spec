@@ -34,6 +34,7 @@ pub fn run(params: CapabilitiesParams) -> Result<(), Box<dyn Error>> {
             let config = AdapterConfig {
                 adapter: "markdown".into(),
                 settings: serde_json::json!({ "directory": dir }),
+                schema_id: None,
             };
             AdapterRegistry::create(&config)?
         }

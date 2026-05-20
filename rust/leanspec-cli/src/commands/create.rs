@@ -40,6 +40,9 @@ pub struct CreateParams {
     pub slug: Option<String>,
     /// Repeatable `key=value` pairs for adapter-specific fields.
     pub fields: Vec<String>,
+    /// Optional schema id override. When set, forwarded to the adapter via
+    /// `CreateRequest::schema_id`. The adapter decides whether to honour it.
+    pub schema_id: Option<String>,
 }
 
 pub fn run(params: CreateParams) -> Result<(), Box<dyn Error>> {
@@ -188,7 +191,7 @@ fn run_markdown(
     let req = CreateRequest {
         slug: Some(slug),
         title: title.clone(),
-        schema_id: None,
+        schema_id: params.schema_id.clone(),
         fields,
         links: std::mem::take(&mut links),
     };
@@ -269,7 +272,7 @@ fn run_remote(
     let req = CreateRequest {
         slug: None,
         title: title.clone(),
-        schema_id: None,
+        schema_id: params.schema_id.clone(),
         fields,
         links,
     };
