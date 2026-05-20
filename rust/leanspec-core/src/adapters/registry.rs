@@ -244,11 +244,18 @@ impl AdapterRegistry {
             None => return Ok(AdapterConfig::default()),
         };
 
+        // Pull schema_id out of the top level (if present) so it is not
+        // forwarded to the adapter's `settings` blob.
+        let schema_id = mapping
+            .get(serde_yaml::Value::String("schema_id".into()))
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
+
         // Collect all remaining YAML keys as the settings object.
         let mut settings = serde_json::Map::new();
         for (k, v) in mapping.iter() {
             if let Some(key_str) = k.as_str() {
-                if key_str != "adapter" && key_str != "provider" {
+                if !matches!(key_str, "adapter" | "provider" | "schema_id") {
                     if let Ok(json_val) = serde_json::to_value(v) {
                         settings.insert(key_str.to_string(), json_val);
                     }
@@ -259,6 +266,7 @@ impl AdapterRegistry {
         Ok(AdapterConfig {
             adapter: adapter_name,
             settings: serde_json::Value::Object(settings),
+            schema_id,
         })
     }
 
@@ -304,6 +312,7 @@ mod tests {
         let cfg = AdapterConfig {
             adapter: "markdown".into(),
             settings: serde_json::json!({ "directory": "specs" }),
+            schema_id: None,
         };
         let adapter = AdapterRegistry::create(&cfg).unwrap();
         assert_eq!(adapter.capabilities().name, "markdown");
@@ -314,6 +323,7 @@ mod tests {
         let cfg = AdapterConfig {
             adapter: "nonexistent".into(),
             settings: serde_json::Value::Null,
+            schema_id: None,
         };
         assert!(matches!(
             AdapterRegistry::create(&cfg).unwrap_err(),
@@ -332,6 +342,7 @@ mod tests {
         let cfg = AdapterConfig {
             adapter: "github".into(),
             settings: serde_json::json!({}),
+            schema_id: None,
         };
         let err = AdapterRegistry::create(&cfg).unwrap_err();
         assert!(matches!(err, AdapterError::ConfigError(_)));
@@ -360,6 +371,7 @@ mod tests {
                 "token_env": "LEANSPEC_TEST_GH_TOKEN",
                 "base_url": server.url(),
             }),
+            schema_id: None,
         };
         let adapter = AdapterRegistry::create(&cfg).unwrap();
         assert_eq!(adapter.capabilities().name, "github");
@@ -380,6 +392,7 @@ mod tests {
         let cfg = AdapterConfig {
             adapter: "jira".into(),
             settings: serde_json::json!({}),
+            schema_id: None,
         };
         let err = AdapterRegistry::create(&cfg).unwrap_err();
         assert!(matches!(err, AdapterError::ConfigError(_)));
@@ -410,6 +423,7 @@ mod tests {
                 "token_env": "LEANSPEC_TEST_JIRA_TOKEN",
                 "base_url": server.url(),
             }),
+            schema_id: None,
         };
         let adapter = AdapterRegistry::create(&cfg).unwrap();
         assert_eq!(adapter.capabilities().name, "jira");
@@ -433,6 +447,7 @@ mod tests {
             settings: serde_json::json!({
                 "host": "x", "project": "y", "email": "z"
             }),
+            schema_id: None,
         };
         let err = AdapterRegistry::create(&cfg).unwrap_err();
         match err {
@@ -449,6 +464,7 @@ mod tests {
         let cfg = AdapterConfig {
             adapter: "github".into(),
             settings: serde_json::json!({ "owner": "x", "repo": "y" }),
+            schema_id: None,
         };
         let err = AdapterRegistry::create(&cfg).unwrap_err();
         match err {
@@ -465,6 +481,7 @@ mod tests {
         let cfg = AdapterConfig {
             adapter: "ado".into(),
             settings: serde_json::json!({}),
+            schema_id: None,
         };
         let err = AdapterRegistry::create(&cfg).unwrap_err();
         assert!(matches!(err, AdapterError::ConfigError(_)));
@@ -508,6 +525,7 @@ mod tests {
                 "token_env": "LEANSPEC_TEST_ADO_TOKEN",
                 "base_url": server.url(),
             }),
+            schema_id: None,
         };
         let adapter = AdapterRegistry::create(&cfg).unwrap();
         assert_eq!(adapter.capabilities().name, "ado");
@@ -528,6 +546,7 @@ mod tests {
         let cfg = AdapterConfig {
             adapter: "ado".into(),
             settings: serde_json::json!({ "organization": "acme", "project": "p" }),
+            schema_id: None,
         };
         let err = AdapterRegistry::create(&cfg).unwrap_err();
         match err {

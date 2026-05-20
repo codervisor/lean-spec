@@ -278,6 +278,17 @@ fn scaffold_specs(root: &Path, specs_path: &Path) -> Result<(), Box<dyn Error>> 
         );
     }
 
+    // Create .lean-spec/schemas/ for custom schema bundles (issue #275).
+    let schemas_dir = config_dir.join("schemas");
+    if !schemas_dir.exists() {
+        fs::create_dir_all(&schemas_dir)?;
+        println!(
+            "{} Created custom schemas directory: {}",
+            "✓".green(),
+            schemas_dir.display()
+        );
+    }
+
     // Create specs README
     let specs_readme = specs_path.join("README.md");
     if !specs_readme.exists() {

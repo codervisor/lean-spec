@@ -148,6 +148,13 @@ pub struct AdapterConfig {
     pub adapter: String,
     #[serde(default)]
     pub settings: serde_json::Value,
+    /// Optional schema id (from the [`SchemaRegistry`]) that documents
+    /// produced by this adapter conform to. When unset, the adapter uses
+    /// its own built-in default schema.
+    ///
+    /// [`SchemaRegistry`]: crate::schema_registry::SchemaRegistry
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub schema_id: Option<String>,
 }
 
 impl Default for AdapterConfig {
@@ -155,6 +162,7 @@ impl Default for AdapterConfig {
         Self {
             adapter: "markdown".to_string(),
             settings: serde_json::json!({ "directory": "specs" }),
+            schema_id: None,
         }
     }
 }
