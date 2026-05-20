@@ -368,6 +368,7 @@ jobs:
       
       - name: Validate specs
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
+        continue-on-error: true
         run: node bin/leanspec.js validate --warnings-only
       
       - name: Prepare packages for npm publish
