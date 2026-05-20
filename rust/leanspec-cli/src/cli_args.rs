@@ -148,6 +148,25 @@ pub(crate) enum Commands {
         dry_run: bool,
     },
 
+    /// Scan the codebase and generate `AGENTS.md` / skill files
+    Crystallize {
+        /// Print everything to stdout and write nothing
+        #[arg(long)]
+        dry_run: bool,
+
+        /// Output target: `files` (default), `stdout`
+        #[arg(long, default_value = "files")]
+        output_target: String,
+
+        /// Merge with existing `AGENTS.md` instead of overwriting it
+        #[arg(long)]
+        update: bool,
+
+        /// Filename to write L1 rules into (default `AGENTS.md`)
+        #[arg(long, default_value = "AGENTS.md")]
+        target: String,
+    },
+
     /// Create a new spec
     Create {
         /// Spec name (e.g., "my-feature")

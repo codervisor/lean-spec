@@ -73,6 +73,30 @@ fn main() -> ExitCode {
             removes,
             dry_run,
         } => commands::compact::run(&specs_dir, &spec, removes, dry_run, &cli.output),
+        Commands::Crystallize {
+            dry_run,
+            output_target,
+            update,
+            target,
+        } => {
+            use commands::crystallize::{run as crystallize_run, CrystallizeOptions};
+            let mode = if dry_run {
+                commands::crystallize::WriteMode::DryRun
+            } else if output_target == "stdout" {
+                commands::crystallize::WriteMode::Stdout
+            } else if update {
+                commands::crystallize::WriteMode::Update
+            } else {
+                commands::crystallize::WriteMode::Write
+            };
+            let root = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+            crystallize_run(CrystallizeOptions {
+                root,
+                specs_dir: specs_dir.clone(),
+                target,
+                mode,
+            })
+        }
         Commands::Create {
             name,
             title,
