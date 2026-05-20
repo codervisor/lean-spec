@@ -79,7 +79,7 @@ pnpm --filter @leanspec/ui preview   # preview production build
 
 The desktop application now lives in a dedicated repository:
 
-- https://github.com/codervisor/lean-spec-desktop
+- https://github.com/codervisor/leanspec-desktop
 
 ## Building
 

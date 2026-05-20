@@ -1,7 +1,7 @@
 # LeanSpec
 
 <p align="center">
-  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/logo-with-bg.svg" alt="LeanSpec Logo" width="120" height="120">
+  <img src="https://github.com/codervisor/leanspec-docs/blob/main/static/img/logo-with-bg.svg" alt="LeanSpec Logo" width="120" height="120">
 </p>
 
 <p align="center">
@@ -162,10 +162,10 @@ This installs the **leanspec** skill which teaches AI agents:
 | **🎨 Web UI**        | `leanspec ui` - browser-based dashboard                                                           |
 | **📈 Project Stats** | `leanspec stats` - health metrics and bottleneck detection                                        |
 | **🤖 AI-Native**     | MCP server + CLI for AI assistants                                                                |
-| **🖥️ Desktop App**   | Desktop app repo: [codervisor/lean-spec-desktop](https://github.com/codervisor/lean-spec-desktop) |
+| **🖥️ Desktop App**   | Desktop app repo: [codervisor/leanspec-desktop](https://github.com/codervisor/leanspec-desktop) |
 
 <p align="center">
-  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/ui/ui-board-view.png" alt="Kanban Board View" width="800">
+  <img src="https://github.com/codervisor/leanspec-docs/blob/main/static/img/ui/ui-board-view.png" alt="Kanban Board View" width="800">
 </p>
 
 ---
@@ -194,7 +194,7 @@ rustc --version  # Should be 1.70 or higher (dev only)
 
 The desktop application has moved to a dedicated repository:
 
-- https://github.com/codervisor/lean-spec-desktop
+- https://github.com/codervisor/leanspec-desktop
 
 Use that repository for desktop development, CI, and release workflows.
 
@@ -263,5 +263,5 @@ If you find LeanSpec helpful, feel free to add me on WeChat (note "LeanSpec") to
 如果您觉得 LeanSpec 对您有帮助，欢迎添加微信（备注 "LeanSpec"）加入交流群。
 
 <p align="center">
-  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/qr-code.png" alt="WeChat Contact | 微信联系" height="280">
+  <img src="https://github.com/codervisor/leanspec-docs/blob/main/static/img/qr-code.png" alt="WeChat Contact | 微信联系" height="280">
 </p>
