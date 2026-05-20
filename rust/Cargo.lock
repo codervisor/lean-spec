@@ -1546,7 +1546,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "leanspec-cli"
-version = "0.2.28"
+version = "0.3.0"
 dependencies = [
  "assert_cmd",
  "chrono",
@@ -1571,7 +1571,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-core"
-version = "0.2.28"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "dirs",
@@ -1597,7 +1597,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-http"
-version = "0.2.28"
+version = "0.3.0"
 dependencies = [
  "async-stream",
  "axum",
@@ -1629,7 +1629,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-mcp"
-version = "0.2.28"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "leanspec-core",
