@@ -16,6 +16,7 @@
 
 #[cfg(feature = "ado")]
 pub mod ado;
+pub mod cache;
 #[cfg(feature = "github")]
 pub mod github;
 pub mod jira;
@@ -192,6 +193,7 @@ impl fmt::Debug for dyn Adapter {
     }
 }
 
+pub use cache::{AdapterCache, DEFAULT_TTL as ADAPTER_CACHE_DEFAULT_TTL};
 pub use registry::AdapterRegistry;
 
 #[cfg(test)]

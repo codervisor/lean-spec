@@ -23,6 +23,6 @@ pub fn definition() -> ToolDefinition {
 }
 
 pub fn call(state: Arc<ServerState>) -> Result<Value, McpToolError> {
-    serde_json::to_value(state.adapter.capabilities())
+    serde_json::to_value(state.adapter().capabilities())
         .map_err(|e| McpToolError::Internal(e.to_string()))
 }

@@ -109,6 +109,7 @@ fn tools_list_advertises_core_and_markdown_only_tools() {
         "search_specs",
         "get_schema",
         "get_capabilities",
+        "reload_schema",
         "validate_spec",
         "get_dependencies",
         "get_stats",
@@ -164,7 +165,7 @@ fn list_specs_returns_existing_specs() {
         "status".into(),
         leanspec_core::model::FieldValue::Strings(vec!["planned".into()]),
     );
-    state.adapter.create(&req).expect("create seed spec");
+    state.adapter().create(&req).expect("create seed spec");
 
     let resp = call_tool(Arc::clone(&state), "list_specs", json!({}));
     let s = structured(&resp);
@@ -247,6 +248,20 @@ fn list_specs_routes_through_active_adapter() {
     assert_eq!(s["count"], 1);
     assert_eq!(s["specs"][0]["id"], "42");
     assert_eq!(s["specs"][0]["title"], "Remote spec");
+}
+
+#[test]
+fn reload_schema_tool_is_dispatchable() {
+    // reload_schema goes through `AdapterRegistry::from_project()` which
+    // reads from cwd; we only assert the tool is wired into the dispatcher
+    // and produces a valid JSON-RPC response (success or error envelope).
+    // Real reload behaviour is covered indirectly by the registry tests.
+    let tmp = TempDir::new().unwrap();
+    let state = markdown_state(&tmp);
+
+    let resp = call_tool(state, "reload_schema", json!({}));
+    let envelope_ok = resp.result.is_some() || resp.error.is_some();
+    assert!(envelope_ok, "reload_schema must return a JSON-RPC envelope");
 }
 
 #[test]

@@ -70,6 +70,12 @@ pub fn create_router(state: AppState) -> Router {
             "/api/projects/{id}/schema",
             get(handlers::get_project_schema),
         )
+        // Force a re-resolution of the project's adapter schema, flushing
+        // the shared cache so the next reads see live backend values.
+        .route(
+            "/api/projects/{id}/schema/refresh",
+            post(handlers::refresh_project_schema),
+        )
         // Project routes
         .route("/api/projects", get(handlers::list_projects))
         .route("/api/projects", post(handlers::add_project))

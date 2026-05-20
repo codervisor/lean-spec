@@ -9,7 +9,7 @@ use crate::project_registry::{Project, ProjectRegistry};
 use crate::watcher::{
     sse_connection_limit, watch_debounce, watch_enabled, FileWatcher, MarkdownWatchTarget,
 };
-use leanspec_core::adapters::AdapterRegistry;
+use leanspec_core::adapters::{AdapterCache, AdapterRegistry};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::{RwLock, Semaphore};
@@ -28,6 +28,11 @@ pub struct AppState {
 
     /// SSE connection limiter
     pub sse_connections: Arc<Semaphore>,
+
+    /// Shared cache of resolved adapters, keyed by project root. Network-backed
+    /// adapters (GitHub, ADO, Jira) bake their schema in their constructor;
+    /// this cache stops every request from issuing a fresh round-trip.
+    pub adapter_cache: Arc<AdapterCache>,
 }
 
 impl AppState {
@@ -55,6 +60,7 @@ impl AppState {
             registry: Arc::new(RwLock::new(registry)),
             file_watcher,
             sse_connections,
+            adapter_cache: Arc::new(AdapterCache::default()),
         })
     }
 
@@ -67,6 +73,7 @@ impl AppState {
             registry: Arc::new(RwLock::new(registry)),
             file_watcher,
             sse_connections,
+            adapter_cache: Arc::new(AdapterCache::default()),
         }
     }
 }
