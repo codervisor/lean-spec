@@ -1,5 +1,5 @@
 {
-  "name": "lean-spec",
+  "name": "leanspec",
   "version": "0.2.28",
   "private": true,
   "packageManager": "pnpm@10.30.2",

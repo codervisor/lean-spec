@@ -6,7 +6,7 @@ This directory contains the LeanSpec monorepo packages.
 
 ```
 packages/
-├── cli/               - lean-spec: CLI wrapper for Rust binary
+├── cli/               - leanspec: CLI wrapper for Rust binary
 ├── mcp/               - @leanspec/mcp: MCP server wrapper
 └── ui/                - @leanspec/ui: Primary Vite SPA (web + desktop + shared UI library)
 ```
@@ -26,18 +26,18 @@ packages/
 
 - Rust provides backend for both HTTP server and CLI/MCP commands
 
-## lean-spec (CLI)
+## leanspec (CLI)
 
 **JavaScript wrapper for Rust CLI binary.**
 
-Provides platform detection, binary resolution, and templates for `lean-spec init`.
+Provides platform detection, binary resolution, and templates for `leanspec init`.
 
 ### Usage
 
 ```bash
-npm install -g lean-spec
-npx lean-spec list
-npx lean-spec create my-feature
+npm install -g leanspec
+npx leanspec list
+npx leanspec create my-feature
 ```
 
 ### Development
@@ -45,7 +45,7 @@ npx lean-spec create my-feature
 ```bash
 cd rust && cargo build --release
 node scripts/copy-rust-binaries.mjs
-node bin/lean-spec.js --version
+node bin/leanspec.js --version
 ```
 
 ## @leanspec/mcp
@@ -108,15 +108,14 @@ pnpm --filter @leanspec/ui test
 ## Publishing
 
 Published packages:
-- `lean-spec` - CLI (wrapper + Rust binary via optional dependencies)
+- `leanspec` - CLI (wrapper + Rust binary via optional dependencies)
 - `@leanspec/mcp` - MCP server wrapper
 - `@leanspec/ui` - Vite SPA bundle
 
-Platform-specific binary packages (published separately):
-- `lean-spec-darwin-arm64`
-- `lean-spec-darwin-x64`
-- `lean-spec-linux-x64`
-- `lean-spec-windows-x64`
+Platform-specific binary packages (published separately, one per family):
+- `@leanspec/cli-{darwin-arm64,darwin-x64,linux-x64,windows-x64}`
+- `@leanspec/mcp-{darwin-arm64,darwin-x64,linux-x64,windows-x64}`
+- `@leanspec/http-{darwin-arm64,darwin-x64,linux-x64,windows-x64}`
 
 ## Migration Notes
 
