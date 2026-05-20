@@ -1,5 +1,5 @@
 {
-  "name": "leanspec",
+  "name": "@leanspec/cli",
   "version": "0.3.0",
   "description": "Specification-driven development made simple",
   "type": "module",

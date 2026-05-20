@@ -33,10 +33,10 @@ LeanSpec is a spec coding framework that works with whatever spec workflow you a
 
 ```bash
 # Markdown specs (default — works out of the box)
-npm install -g leanspec && leanspec init
+npm install -g @leanspec/cli && leanspec init
 
 # Or try with a tutorial project
-npx leanspec init --example dark-theme
+npx -p @leanspec/cli leanspec init --example dark-theme
 cd dark-theme && npm install && npm start
 ```
 
