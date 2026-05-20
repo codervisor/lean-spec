@@ -18,7 +18,8 @@ pub enum WriteMode {
     /// each skill file.
     Write,
     /// Like `Write`, but preserve manual content outside the BEGIN/END markers
-    /// in `AGENTS.md` and merge skill files (replace generated block only).
+    /// in `AGENTS.md`. Skill files in `.claude/skills/` are still overwritten —
+    /// they are wholly regenerated rather than merged.
     Update,
 }
 
@@ -93,33 +94,47 @@ fn write_skills(skills_dir: &Path, skills: &[SkillFile]) -> Result<Vec<PathBuf>,
 ///
 /// Behaviour:
 /// - If the file does not exist: write the generated block as-is.
-/// - If the file contains BEGIN/END markers: replace what's between them.
-/// - Otherwise: append the generated block to the existing content with a
-///   blank-line separator.
+/// - If the file contains a well-formed BEGIN/END marker pair (BEGIN appears
+///   before END): replace what's between them.
+/// - Otherwise (no markers, or markers out of order / malformed — e.g. END
+///   appears in a quoted example before any BEGIN): append the generated
+///   block to the existing content with a blank-line separator. We never
+///   splice based on an END marker that doesn't follow a BEGIN.
 pub fn merge_agents_md(path: &Path, fresh: &str) -> Result<String, Box<dyn Error>> {
     if !path.exists() {
         return Ok(fresh.to_string());
     }
     let existing = fs::read_to_string(path)?;
 
-    if let (Some(begin), Some(end_after)) = (existing.find(BEGIN_MARK), existing.find(END_MARK)) {
-        // end_after is the start of END_MARK; we want to splice it out.
-        let end = end_after + END_MARK.len();
-        // Drop optional trailing newline after the END marker so we don't
-        // accumulate blank lines on every regeneration.
-        let mut after = &existing[end..];
-        if let Some(stripped) = after.strip_prefix('\n') {
-            after = stripped;
+    // Search for END only *after* the BEGIN marker, so a stray END earlier in
+    // the file (in a quoted example, for instance) can't be used to splice
+    // the wrong region.
+    if let Some(begin) = existing.find(BEGIN_MARK) {
+        let after_begin = begin + BEGIN_MARK.len();
+        if let Some(end_rel) = existing[after_begin..].find(END_MARK) {
+            let end = after_begin + end_rel + END_MARK.len();
+            // Strip a single trailing line break after END_MARK so repeated
+            // regenerations stay idempotent. Handles `\n`, `\r\n`, and `\r`.
+            let mut after = &existing[end..];
+            if let Some(stripped) = after.strip_prefix("\r\n") {
+                after = stripped;
+            } else if let Some(stripped) = after.strip_prefix('\n') {
+                after = stripped;
+            } else if let Some(stripped) = after.strip_prefix('\r') {
+                after = stripped;
+            }
+            let mut out = String::new();
+            out.push_str(&existing[..begin]);
+            out.push_str(fresh.trim_end_matches('\n'));
+            out.push('\n');
+            out.push_str(after);
+            return Ok(out);
         }
-        let mut out = String::new();
-        out.push_str(&existing[..begin]);
-        out.push_str(fresh.trim_end_matches('\n'));
-        out.push('\n');
-        out.push_str(after);
-        return Ok(out);
+        // BEGIN with no following END — file is malformed; fall through to
+        // the append path rather than corrupting it further.
     }
 
-    // No markers — append. Keep manual content on top, generated block below.
+    // No usable markers — append. Keep manual content on top, generated block below.
     let mut out = existing.trim_end().to_string();
     out.push_str("\n\n");
     out.push_str(fresh);
@@ -161,6 +176,44 @@ mod tests {
         assert!(merged.contains("NEW"));
         // Manual portion is on top of the generated block.
         assert!(merged.find("Original body.").unwrap() < merged.find("NEW").unwrap());
+    }
+
+    #[test]
+    fn merge_ignores_stray_end_marker_before_begin() {
+        let tmp = TempDir::new().unwrap();
+        let path = tmp.path().join("AGENTS.md");
+        // An example in the manual section that quotes END_MARK, followed by
+        // a real BEGIN/END pair below it.
+        let existing = format!(
+            "# Manual\n\nLook: {} this is just an example.\n\n{}\nOLD\n{}\n",
+            END_MARK, BEGIN_MARK, END_MARK
+        );
+        fs::write(&path, &existing).unwrap();
+        let fresh = format!("{}\nNEW\n{}\n", BEGIN_MARK, END_MARK);
+        let merged = merge_agents_md(&path, &fresh).unwrap();
+        assert!(
+            merged.contains("this is just an example."),
+            "stray END_MARK earlier in file must not be spliced; got: {merged}"
+        );
+        assert!(merged.contains("NEW"));
+        assert!(!merged.contains("OLD"));
+    }
+
+    #[test]
+    fn merge_strips_crlf_after_end_marker_idempotently() {
+        let tmp = TempDir::new().unwrap();
+        let path = tmp.path().join("AGENTS.md");
+        let existing = format!("{}\r\nOLD\r\n{}\r\n# trailer\r\n", BEGIN_MARK, END_MARK);
+        fs::write(&path, &existing).unwrap();
+        let fresh = format!("{}\nNEW\n{}\n", BEGIN_MARK, END_MARK);
+        let merged = merge_agents_md(&path, &fresh).unwrap();
+        // Trailer should follow the END marker directly with no extra blank
+        // line from the stripped CRLF.
+        let suffix = format!("{}\n# trailer\r\n", END_MARK);
+        assert!(
+            merged.ends_with(&suffix),
+            "expected idempotent CRLF strip; got: {merged:?}"
+        );
     }
 
     #[test]

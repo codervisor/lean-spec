@@ -198,7 +198,9 @@ fn clean_ident(s: &str) -> Option<String> {
 }
 
 /// If a strong majority of files share a common subdirectory prefix beyond
-/// the area key, return that prefix (without trailing slash).
+/// the area key, return that prefix (without trailing slash). The prefix is
+/// always a *directory* — the file's basename is excluded so we never claim
+/// something like `rust/foo/src/lib.rs/` "holds the implementation".
 fn dominant_subdir(files: &[String]) -> Option<String> {
     if files.len() < 4 {
         return None;
@@ -206,8 +208,15 @@ fn dominant_subdir(files: &[String]) -> Option<String> {
     let mut counts: BTreeMap<String, usize> = BTreeMap::new();
     for f in files {
         let parts: Vec<&str> = f.split('/').collect();
-        if parts.len() >= 4 {
-            let prefix = parts[..4].join("/");
+        // Drop the trailing basename and require at least 4 directory
+        // components above it (e.g. `rust/<crate>/src/<area>/<file>`).
+        let dir_parts: &[&str] = if parts.len() > 1 {
+            &parts[..parts.len() - 1]
+        } else {
+            &[]
+        };
+        if dir_parts.len() >= 4 {
+            let prefix = dir_parts[..4].join("/");
             *counts.entry(prefix).or_default() += 1;
         }
     }
@@ -230,6 +239,22 @@ mod tests {
         let tmp = TempDir::new().unwrap();
         let signals = scan(tmp.path());
         assert!(signals.is_empty());
+    }
+
+    #[test]
+    fn dominant_subdir_never_returns_a_filename() {
+        // Files at the area boundary (4 path segments — `rust/<crate>/src/<file>`)
+        // must not produce a "prefix" that ends in a filename.
+        let files: Vec<String> = (0..5).map(|i| format!("rust/foo/src/file{i}.rs")).collect();
+        let result = dominant_subdir(&files);
+        // None is fine; what's *not* fine is returning something ending in
+        // a `.rs` file.
+        if let Some(p) = result {
+            assert!(
+                !p.ends_with(".rs"),
+                "dominant_subdir returned a filename: {p}"
+            );
+        }
     }
 
     #[test]

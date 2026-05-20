@@ -70,7 +70,7 @@ pub fn scan(root: &Path) -> Vec<Signal> {
     if rust_tests >= 5 && uses_test_context * 2 >= rust_tests {
         signals.push(Signal::new(
             Category::Testing,
-            "Rust integration tests use the `TestContext` helper from `tests/common/mod.rs`",
+            "Rust integration tests use a shared `TestContext` helper under the crate's `tests/common/` module",
             0.8,
             SOURCE,
         ));

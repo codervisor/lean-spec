@@ -1,4 +1,13 @@
-use clap::{ArgAction, Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand, ValueEnum};
+
+/// Output target for `leanspec crystallize`.
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub(crate) enum CrystallizeOutput {
+    /// Write generated content to `AGENTS.md` and `.claude/skills/`.
+    Files,
+    /// Print generated content to stdout; don't touch the filesystem.
+    Stdout,
+}
 
 #[derive(Parser)]
 #[command(name = "lean-spec")]
@@ -154,9 +163,9 @@ pub(crate) enum Commands {
         #[arg(long)]
         dry_run: bool,
 
-        /// Output target: `files` (default), `stdout`
-        #[arg(long, default_value = "files")]
-        output_target: String,
+        /// Output target: `files` (default) or `stdout`
+        #[arg(long, value_enum, default_value_t = CrystallizeOutput::Files)]
+        output_target: CrystallizeOutput,
 
         /// Merge with existing `AGENTS.md` instead of overwriting it
         #[arg(long)]
