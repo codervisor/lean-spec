@@ -158,7 +158,7 @@ pnpm sync-versions --dry-run
 ```bash
 # Pull latest docs (maintainers only)
 git subtree pull --prefix=docs-site \
-  https://github.com/codervisor/lean-spec-docs.git \
+  https://github.com/codervisor/leanspec-docs.git \
   main --squash
 
 # For development, work directly in docs-site/
