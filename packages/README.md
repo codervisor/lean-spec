@@ -26,18 +26,18 @@ packages/
 
 - Rust provides backend for both HTTP server and CLI/MCP commands
 
-## leanspec (CLI)
+## @leanspec/cli
 
-**JavaScript wrapper for Rust CLI binary.**
+**JavaScript wrapper for Rust CLI binary. Installs the `leanspec` command.**
 
 Provides platform detection, binary resolution, and templates for `leanspec init`.
 
 ### Usage
 
 ```bash
-npm install -g leanspec
-npx leanspec list
-npx leanspec create my-feature
+npm install -g @leanspec/cli
+leanspec list
+leanspec create my-feature
 ```
 
 ### Development
@@ -45,7 +45,7 @@ npx leanspec create my-feature
 ```bash
 cd rust && cargo build --release
 node scripts/copy-rust-binaries.mjs
-node bin/leanspec.js --version
+node packages/cli/bin/leanspec.js --version
 ```
 
 ## @leanspec/mcp
@@ -108,7 +108,7 @@ pnpm --filter @leanspec/ui test
 ## Publishing
 
 Published packages:
-- `leanspec` - CLI (wrapper + Rust binary via optional dependencies)
+- `@leanspec/cli` - CLI (wrapper + Rust binary via optional dependencies; installs the `leanspec` command)
 - `@leanspec/mcp` - MCP server wrapper
 - `@leanspec/ui` - Vite SPA bundle
 
