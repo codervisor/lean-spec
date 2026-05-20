@@ -1,15 +1,15 @@
 ---
 name: leanspec-pr-lifecycle
-description: Manage a lean-spec PR after it's been pushed — spec-issue linking, manual planned→in-progress label flip, CI triage, review-comment discipline, merge-conflict recovery on open PRs, webhook subscription, and CHANGELOG follow-through on merge. Triggers include "CI is failing", "check is red", "link this issue", "Closes vs Part of", "respond to review", "subscribe to PR", "triage PR", "the PR is ready", "PR has conflicts", "branch has conflicts with main", "merge conflict on the PR", or when a github-webhook-activity event arrives on a lean-spec PR. Paired with `leanspec-dev-process` (overall loop), `issue-spec` (spec creation), and `leanspec-pre-push` (which owns the pre-push conflict walkthrough).
+description: Manage a lean-spec PR after it's been pushed — spec-issue linking, CI triage, review-comment discipline, merge-conflict recovery on open PRs, webhook subscription, and CHANGELOG follow-through on merge. Triggers include "CI is failing", "check is red", "link this issue", "Closes vs Part of", "respond to review", "subscribe to PR", "triage PR", "the PR is ready", "PR has conflicts", "branch has conflicts with main", "merge conflict on the PR", or when a github-webhook-activity event arrives on a lean-spec PR. Paired with `leanspec-dev-process` (overall loop), `issue-spec` (spec creation), and `leanspec-pre-push` (which owns the pre-push conflict walkthrough).
 metadata:
   internal: true
 ---
 
 # leanspec-pr-lifecycle
 
-Everything that happens after `git push` on a lean-spec PR. Covers spec-issue linking and manual label upkeep, CI triage, review-comment discipline, webhook subscription, and the manual ticking of Plan items / CHANGELOG entries on merge.
+Everything that happens after `git push` on a lean-spec PR. Covers spec-issue linking, CI triage, review-comment discipline, webhook subscription, and the manual ticking of Plan items / CHANGELOG entries on merge.
 
-This is lean-spec's analogue of `onsager-pr-lifecycle` / `duhem-pr-lifecycle`. The discipline is the same; this repo doesn't yet have the `pr-spec-sync` workflow, so a few label transitions Onsager automates are still manual here.
+This is lean-spec's analogue of `onsager-pr-lifecycle` / `duhem-pr-lifecycle`. The discipline is the same.
 
 ## Tool discipline
 
@@ -55,7 +55,7 @@ GitHub only honors auto-close on each `#N` individually; `Closes #27, #30, #33` 
 
 ### The `## Delivers` subsection
 
-For `Part of #N` PRs (and ideally all PRs), include a `## Delivers` subsection in the body listing the exact Plan items this PR ticks. Copy the item text verbatim from the spec's `## Plan`, but mark each as `- [x]`. Use this list to tick the parent spec's checkboxes after merge — see "Issue progress labels" below.
+For `Part of #N` PRs (and ideally all PRs), include a `## Delivers` subsection in the body listing the exact Plan items this PR ticks. Copy the item text verbatim from the spec's `## Plan`, but mark each as `- [x]`. Use this list to tick the parent spec's checkboxes after merge — see "Issue progress" below.
 
 Example PR body:
 
@@ -82,27 +82,13 @@ If the linked spec is labeled `provider-impact`, the PR body must include a `## 
 
 If `Breaking change? yes`, the PR must also touch `CHANGELOG.md` under the next `[Unreleased]` heading. Comment on the PR if either is missing.
 
-## Issue progress labels — manual on this repo
+## Issue progress
 
-Lean-spec doesn't yet have a `pr-spec-sync` workflow. Until it does, **this skill is responsible for the flips**:
+Spec issues use only their open/closed state — no status labels. Lifecycle moves:
 
-| Spec label    | What it means                              | Who flips it (lean-spec)                   |
-|---------------|--------------------------------------------|--------------------------------------------|
-| `draft`       | AI/human-drafted, not yet reviewed         | Human (via `planned` move — alignment gate)|
-| `planned`     | Ready for implementation                   | Human (alignment gate)                     |
-| `in-progress` | At least one open PR                       | **This skill, manually, on PR open**       |
-| closed        | Delivered, tests passing                   | GitHub (via `Closes` keyword on merge)     |
-
-Concretely, when a PR is opened:
-
-1. Read the PR body. If it contains a `Closes #N` / `Part of #N` / `Fixes #N` / `Refs #N` line, look up issue `#N` on `codervisor/leanspec`.
-2. If the issue's status label is `planned`, flip it to `in-progress`: remove `planned`, add `in-progress`. Use `mcp__github__issue_write` with the **full intended label set** (this tool replaces labels rather than merging).
-3. If the issue's status label is `draft`, **don't flip it**. Comment on the PR instead, asking the author to drive the spec through human review first.
-
-When a PR is closed unmerged:
-
-1. Search for any other open PR referencing the same issue. If one exists, leave the spec at `in-progress`.
-2. If no other PR references it, flip the spec back to `planned`: remove `in-progress`, add `planned`.
+- PR merged with `Closes #N` → issue auto-closes (GitHub).
+- PR merged with `Part of #N` → spec stays open; tick the delivered Plan items on the parent manually (see below).
+- PR closed unmerged → spec issue stays open as-is.
 
 When a PR is merged with `Part of #N` (parent stays open):
 

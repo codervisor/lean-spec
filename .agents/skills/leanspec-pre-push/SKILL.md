@@ -106,11 +106,11 @@ Before pushing, confirm this branch corresponds to a known spec issue (or is exp
    mcp__github__list_issues  repo=codervisor/leanspec  labels=[spec]  state=open
    ```
 
-   Then filter in memory for `planned` or `in-progress` status labels. Or read your commit messages (`git log origin/main..HEAD`) for a `#N` reference.
+   Or read your commit messages (`git log origin/main..HEAD`) for a `#N` reference.
 
    If you can't find one, stop and create one via `issue-spec` (or triage whether this is truly `trivial`).
 
-2. **Confirm the spec's status is `planned` or `in-progress`.** If still `draft`, stop — the human-AI alignment gate has not been passed. Resolve open questions on the spec issue first.
+2. **Confirm any open questions on the spec are resolved.** If the spec's `### Open questions` subsection still has unanswered items, stop and resolve them in the issue thread first — the design isn't pinned yet.
 
 3. **Draft the PR body linking line** so you can paste it in:
 
@@ -154,7 +154,7 @@ git push -u origin <branch>
 
 Retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s) on transient network errors. **Never** use `--force` on `main` or long-lived branches without explicit ask.
 
-After push, since this repo doesn't have a `pr-spec-sync` workflow yet, **`leanspec-pr-lifecycle` will manually flip the spec issue's label from `planned` to `in-progress`** when the PR opens.
+After push, open the PR with the spec-link line in its body (or apply the `trivial` label). The spec issue stays open until the PR closes it — no status labels to flip.
 
 ## Fast path
 
