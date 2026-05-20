@@ -14,7 +14,7 @@ This is lean-spec's analogue of `onsager-pr-lifecycle` / `duhem-pr-lifecycle`. T
 ## Tool discipline
 
 - **No `gh` CLI for issue/PR manipulation, no `hub`, no direct GitHub API.** Always use `mcp__github__*`. The `gh` CLI is fine for CI workflow inspection (`gh run list`, `gh run view`) — see [`leanspec-development`](../leanspec-development/SKILL.md) "CI/CD"; it's just not the tool for spec-label updates or PR body edits.
-- Scope is restricted to `codervisor/lean-spec` for this skill.
+- Scope is restricted to `codervisor/leanspec` for this skill.
 - Don't open PRs unless the user explicitly asks. Creating one is a one-way door in this project's workflow.
 
 ## Spec-issue linking (mandatory)
@@ -95,7 +95,7 @@ Lean-spec doesn't yet have a `pr-spec-sync` workflow. Until it does, **this skil
 
 Concretely, when a PR is opened:
 
-1. Read the PR body. If it contains a `Closes #N` / `Part of #N` / `Fixes #N` / `Refs #N` line, look up issue `#N` on `codervisor/lean-spec`.
+1. Read the PR body. If it contains a `Closes #N` / `Part of #N` / `Fixes #N` / `Refs #N` line, look up issue `#N` on `codervisor/leanspec`.
 2. If the issue's status label is `planned`, flip it to `in-progress`: remove `planned`, add `in-progress`. Use `mcp__github__issue_write` with the **full intended label set** (this tool replaces labels rather than merging).
 3. If the issue's status label is `draft`, **don't flip it**. Comment on the PR instead, asking the author to drive the spec through human review first.
 
@@ -122,7 +122,7 @@ Some issues are **umbrella trackers** that reference several sub-issues as a che
 
 After merge, for each auto-closed or explicitly-closed issue:
 
-1. Search for umbrella trackers that reference it: `mcp__github__search_issues` with `repo:codervisor/lean-spec #N in:body is:issue is:open`.
+1. Search for umbrella trackers that reference it: `mcp__github__search_issues` with `repo:codervisor/leanspec #N in:body is:issue is:open`.
 2. For each match, read the tracker body. If there's a matching `- [ ] ... #N ...` line in a Progress / Plan section, flip it to `- [x]`.
 3. Post one tracker comment summarizing the delta, not one per issue: "PR #<pr> landed #N1, #N2, #N3; ticked in Progress."
 4. If after the tick every sub-issue is closed, note that the tracker itself is now a candidate for closure — don't close it unilaterally, just flag it.

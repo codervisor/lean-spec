@@ -23,7 +23,7 @@ const config: Config = {
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'codervisor', // Usually your GitHub org/user name.
-  projectName: 'lean-spec', // Usually your repo name.
+  projectName: 'leanspec', // Usually your repo name.
 
   onBrokenLinks: 'throw',
 
@@ -44,7 +44,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/codervisor/lean-spec/tree/main/docs-site/',
+            'https://github.com/codervisor/leanspec/tree/main/docs-site/',
         },
         blog: {
           showReadingTime: true,
@@ -55,7 +55,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/codervisor/lean-spec/tree/main/docs-site/',
+            'https://github.com/codervisor/leanspec/tree/main/docs-site/',
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -105,7 +105,7 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: 'https://github.com/codervisor/lean-spec',
+          href: 'https://github.com/codervisor/leanspec',
           label: 'GitHub',
           position: 'right',
         },
@@ -140,15 +140,15 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/codervisor/lean-spec',
+              href: 'https://github.com/codervisor/leanspec',
             },
             {
               label: 'Issues',
-              href: 'https://github.com/codervisor/lean-spec/issues',
+              href: 'https://github.com/codervisor/leanspec/issues',
             },
             {
               label: 'Discussions',
-              href: 'https://github.com/codervisor/lean-spec/discussions',
+              href: 'https://github.com/codervisor/leanspec/discussions',
             },
           ],
         },
@@ -161,11 +161,11 @@ const config: Config = {
             },
             {
               label: 'Contributing',
-              href: 'https://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md',
+              href: 'https://github.com/codervisor/leanspec/blob/main/CONTRIBUTING.md',
             },
             {
               label: 'Changelog',
-              href: 'https://github.com/codervisor/lean-spec/blob/main/CHANGELOG.md',
+              href: 'https://github.com/codervisor/leanspec/blob/main/CHANGELOG.md',
             },
             {
               label: 'npm Package',

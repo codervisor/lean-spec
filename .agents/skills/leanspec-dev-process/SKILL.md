@@ -1,13 +1,13 @@
 ---
 name: leanspec-dev-process
-description: The end-to-end spec-issue-driven dev loop for lean-spec — spec → branch → implement → PR → merge → closure. Use when asked "how do I start work", "what's the process", "SDD loop", "spec-driven development", "how do we ship a change on lean-spec", "from scratch what do I do", or when you're about to begin a non-trivial change on `codervisor/lean-spec` and haven't yet decided how to split spec/PR. Delegates to `issue-spec` (spec writing), `leanspec-pre-push` (pre-push checks), `leanspec-pr-lifecycle` (post-push), and `leanspec-development` (commands, CI, publishing, i18n).
+description: The end-to-end spec-issue-driven dev loop for lean-spec — spec → branch → implement → PR → merge → closure. Use when asked "how do I start work", "what's the process", "SDD loop", "spec-driven development", "how do we ship a change on lean-spec", "from scratch what do I do", or when you're about to begin a non-trivial change on `codervisor/leanspec` and haven't yet decided how to split spec/PR. Delegates to `issue-spec` (spec writing), `leanspec-pre-push` (pre-push checks), `leanspec-pr-lifecycle` (post-push), and `leanspec-development` (commands, CI, publishing, i18n).
 metadata:
   internal: true
 ---
 
 # leanspec-dev-process
 
-The spec-issue-driven development (SDD) loop on lean-spec. Every non-trivial change starts as a GitHub spec issue on `codervisor/lean-spec`, proceeds through a PR that references it, and closes when the PR merges.
+The spec-issue-driven development (SDD) loop on lean-spec. Every non-trivial change starts as a GitHub spec issue on `codervisor/leanspec`, proceeds through a PR that references it, and closes when the PR merges.
 
 Lean-spec is its own dogfood: we use the SDD loop we ship. The historical `specs/` directory is frozen as a snapshot of pre-migration work; new specs are GitHub issues. This is the same shape as Onsager's and Duhem's loops — the area taxonomy and toolchain checks are lean-spec-specific.
 
@@ -52,7 +52,7 @@ Lean-spec is its own dogfood: we use the SDD loop we ship. The historical `specs
 
 ### 1. Write the spec
 
-Trigger `issue-spec` (or say "spec this"). It creates a GitHub issue on `codervisor/lean-spec` with:
+Trigger `issue-spec` (or say "spec this"). It creates a GitHub issue on `codervisor/leanspec` with:
 
 - `## Overview`, `## Design`, `## Plan`, `## Test`, `## Alignment`, `## Notes`
 - `## Provider impact` when the change touches the provider seam

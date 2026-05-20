@@ -13,7 +13,7 @@ Poll the GitHub Actions CI pipeline for the **current HEAD commit** until all jo
 ## Environment
 
 The `gh` CLI is **not available** in the Claude VM. Use the GitHub REST API via `curl`.
-The repo is `codervisor/lean-spec`.
+The repo is `codervisor/leanspec`.
 
 ## Steps
 
