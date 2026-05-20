@@ -100,10 +100,10 @@ If the diff touches user-visible strings:
 
 Before pushing, confirm this branch corresponds to a known spec issue (or is explicitly trivial). This is the local enforcement of the SDD loop's spec-link rule.
 
-1. **Find the spec issue.** Search open issues with the `spec` label on `codervisor/lean-spec`:
+1. **Find the spec issue.** Search open issues with the `spec` label on `codervisor/leanspec`:
 
    ```
-   mcp__github__list_issues  repo=codervisor/lean-spec  labels=[spec]  state=open
+   mcp__github__list_issues  repo=codervisor/leanspec  labels=[spec]  state=open
    ```
 
    Then filter in memory for `planned` or `in-progress` status labels. Or read your commit messages (`git log origin/main..HEAD`) for a `#N` reference.

@@ -10,7 +10,7 @@ This project uses the Agent Skills framework for domain-specific guidance. **Rea
 
 ### Spec-driven development (GitHub-issue specs)
 
-Lean-spec dogfoods its own SDD methodology with GitHub issues as the canonical spec medium. The `specs/` directory is a **frozen historical snapshot** — new specs are GitHub issues on `codervisor/lean-spec`. A pre-commit hook and CI job (`freeze-specs`) block additions/modifications under `specs/`; see [`specs/FROZEN.md`](specs/FROZEN.md).
+Lean-spec dogfoods its own SDD methodology with GitHub issues as the canonical spec medium. The `specs/` directory is a **frozen historical snapshot** — new specs are GitHub issues on `codervisor/leanspec`. A pre-commit hook and CI job (`freeze-specs`) block additions/modifications under `specs/`; see [`specs/FROZEN.md`](specs/FROZEN.md).
 
 1. **leanspec-dev-process** - End-to-end SDD loop (spec → branch → PR → merge)
    - Location: [.agents/skills/leanspec-dev-process/SKILL.md](.agents/skills/leanspec-dev-process/SKILL.md)
@@ -48,7 +48,7 @@ Lean-spec dogfoods its own SDD methodology with GitHub issues as the canonical s
 
 - **leanspec** (external) - Spec-Driven Development methodology for downstream users
   - Location: [skills/leanspec/SKILL.md](skills/leanspec/SKILL.md) (shipped from this repo)
-  - Install: `npx skills add codervisor/lean-spec@leanspec`
+  - Install: `npx skills add codervisor/leanspec@leanspec`
   - Use when: Reading what we ship to users (this repo dogfoods that methodology via the four skills above)
 
 ## Project-Specific Rules

@@ -29,15 +29,15 @@
   },
   "link.item.label.GitHub": {
     "message": "GitHub",
-    "description": "The label of footer link with label=GitHub linking to https://github.com/codervisor/lean-spec"
+    "description": "The label of footer link with label=GitHub linking to https://github.com/codervisor/leanspec"
   },
   "link.item.label.Issues": {
     "message": "问题反馈",
-    "description": "The label of footer link with label=Issues linking to https://github.com/codervisor/lean-spec/issues"
+    "description": "The label of footer link with label=Issues linking to https://github.com/codervisor/leanspec/issues"
   },
   "link.item.label.Discussions": {
     "message": "讨论区",
-    "description": "The label of footer link with label=Discussions linking to https://github.com/codervisor/lean-spec/discussions"
+    "description": "The label of footer link with label=Discussions linking to https://github.com/codervisor/leanspec/discussions"
   },
   "link.item.label.Blog": {
     "message": "博客",
@@ -45,11 +45,11 @@
   },
   "link.item.label.Contributing": {
     "message": "参与贡献",
-    "description": "The label of footer link with label=Contributing linking to https://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md"
+    "description": "The label of footer link with label=Contributing linking to https://github.com/codervisor/leanspec/blob/main/CONTRIBUTING.md"
   },
   "link.item.label.Changelog": {
     "message": "更新日志",
-    "description": "The label of footer link with label=Changelog linking to https://github.com/codervisor/lean-spec/blob/main/CHANGELOG.md"
+    "description": "The label of footer link with label=Changelog linking to https://github.com/codervisor/leanspec/blob/main/CHANGELOG.md"
   },
   "link.item.label.npm Package": {
     "message": "npm 包",

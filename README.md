@@ -5,9 +5,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/codervisor/lean-spec/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/codervisor/lean-spec/ci.yml?branch=main" alt="CI Status"></a>
-  <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/v/lean-spec.svg" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/dm/lean-spec.svg" alt="npm downloads"></a>
+  <a href="https://github.com/codervisor/leanspec/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/codervisor/leanspec/ci.yml?branch=main" alt="CI Status"></a>
+  <a href="https://www.npmjs.com/package/@leanspec/cli"><img src="https://img.shields.io/npm/v/@leanspec/cli.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@leanspec/cli"><img src="https://img.shields.io/npm/dm/@leanspec/cli.svg" alt="npm downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
 </p>
 
@@ -137,7 +137,7 @@ Teach your AI assistant the Spec-Driven Development methodology:
 
 ```bash
 # Install the leanspec skill
-npx skills add codervisor/lean-spec@leanspec
+npx skills add codervisor/leanspec@leanspec
 ```
 
 This installs the **leanspec** skill which teaches AI agents:
@@ -252,7 +252,7 @@ See [package.json](package.json) for all available scripts.
 
 ## Community
 
-💬 [Discussions](https://github.com/codervisor/lean-spec/discussions) · 🐛 [Issues](https://github.com/codervisor/lean-spec/issues) · 🤝 [Contributing](CONTRIBUTING.md) · 📋 [Changelog](CHANGELOG.md) · 📄 [LICENSE](LICENSE)
+💬 [Discussions](https://github.com/codervisor/leanspec/discussions) · 🐛 [Issues](https://github.com/codervisor/leanspec/issues) · 🤝 [Contributing](CONTRIBUTING.md) · 📋 [Changelog](CHANGELOG.md) · 📄 [LICENSE](LICENSE)
 
 ---
 

@@ -21,12 +21,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codervisor/lean-spec.git",
+    "url": "https://github.com/codervisor/leanspec.git",
     "directory": "packages/http-server"
   },
   "homepage": "https://lean-spec.dev",
   "bugs": {
-    "url": "https://github.com/codervisor/lean-spec/issues"
+    "url": "https://github.com/codervisor/leanspec/issues"
   },
   "files": [
     "bin/",
