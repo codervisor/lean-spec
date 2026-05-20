@@ -1,9 +1,11 @@
 ---
-name: lean-spec-pre-push
+name: leanspec-pre-push
 description: Run before pushing code to the lean-spec repo to catch what reviewers and CI will catch later, and confirm the branch has a linked spec issue in a valid state. Reproduces the merge-preview environment, walks through this repo's common merge-conflict patterns, and runs the project's typecheck / clippy / test gates. Triggers include "before push", "ready to push", "pre-push check", "push readiness", "prep for PR", "resolve merge conflict", "merge conflict", "branch has conflicts", "sync with main", or proactively before any git push on a lean-spec branch.
+metadata:
+  internal: true
 ---
 
-# lean-spec-pre-push
+# leanspec-pre-push
 
 Mechanical checklist that catches the reviewer / CI failures this repo has actually had, plus a spec-link check that enforces the SDD loop locally.
 
@@ -152,7 +154,7 @@ git push -u origin <branch>
 
 Retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s) on transient network errors. **Never** use `--force` on `main` or long-lived branches without explicit ask.
 
-After push, since this repo doesn't have a `pr-spec-sync` workflow yet, **`lean-spec-pr-lifecycle` will manually flip the spec issue's label from `planned` to `in-progress`** when the PR opens.
+After push, since this repo doesn't have a `pr-spec-sync` workflow yet, **`leanspec-pr-lifecycle` will manually flip the spec issue's label from `planned` to `in-progress`** when the PR opens.
 
 ## Fast path
 
@@ -165,7 +167,7 @@ If nothing under tracked source paths changed (e.g. docs-only edits):
 ## What this skill does NOT cover
 
 - Writing the spec issue — see [`issue-spec`](https://github.com/onsager-ai/dev-skills/blob/main/skills/issue-spec/SKILL.md) (installed globally from `onsager-ai/dev-skills`).
-- Opening or managing the PR — see [`lean-spec-pr-lifecycle`](../lean-spec-pr-lifecycle/SKILL.md).
-- The end-to-end dev loop — see [`lean-spec-dev-process`](../lean-spec-dev-process/SKILL.md).
+- Opening or managing the PR — see [`leanspec-pr-lifecycle`](../leanspec-pr-lifecycle/SKILL.md).
+- The end-to-end dev loop — see [`leanspec-dev-process`](../leanspec-dev-process/SKILL.md).
 - Commands, CI workflows, publishing pipelines — see [`leanspec-development`](../leanspec-development/SKILL.md).
 - GitHub CLI in cloud sessions — see [`github-integration`](https://github.com/onsager-ai/dev-skills/blob/main/skills/github-integration/SKILL.md) (installed globally from `onsager-ai/dev-skills`).

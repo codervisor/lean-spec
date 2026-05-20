@@ -1,9 +1,11 @@
 ---
-name: lean-spec-pr-lifecycle
-description: Manage a lean-spec PR after it's been pushed — spec-issue linking, manual planned→in-progress label flip, CI triage, review-comment discipline, merge-conflict recovery on open PRs, webhook subscription, and CHANGELOG follow-through on merge. Triggers include "CI is failing", "check is red", "link this issue", "Closes vs Part of", "respond to review", "subscribe to PR", "triage PR", "the PR is ready", "PR has conflicts", "branch has conflicts with main", "merge conflict on the PR", or when a github-webhook-activity event arrives on a lean-spec PR. Paired with `lean-spec-dev-process` (overall loop), `issue-spec` (spec creation), and `lean-spec-pre-push` (which owns the pre-push conflict walkthrough).
+name: leanspec-pr-lifecycle
+description: Manage a lean-spec PR after it's been pushed — spec-issue linking, manual planned→in-progress label flip, CI triage, review-comment discipline, merge-conflict recovery on open PRs, webhook subscription, and CHANGELOG follow-through on merge. Triggers include "CI is failing", "check is red", "link this issue", "Closes vs Part of", "respond to review", "subscribe to PR", "triage PR", "the PR is ready", "PR has conflicts", "branch has conflicts with main", "merge conflict on the PR", or when a github-webhook-activity event arrives on a lean-spec PR. Paired with `leanspec-dev-process` (overall loop), `issue-spec` (spec creation), and `leanspec-pre-push` (which owns the pre-push conflict walkthrough).
+metadata:
+  internal: true
 ---
 
-# lean-spec-pr-lifecycle
+# leanspec-pr-lifecycle
 
 Everything that happens after `git push` on a lean-spec PR. Covers spec-issue linking and manual label upkeep, CI triage, review-comment discipline, webhook subscription, and the manual ticking of Plan items / CHANGELOG entries on merge.
 
@@ -153,9 +155,9 @@ When GitHub shows "This branch has conflicts that must be resolved" or `mcp__git
 
 1. **Don't** use `mcp__github__update_pull_request_branch` to auto-merge main in via GitHub. That surfaces the same conflicts without giving you the resolution workspace, then commits a broken merge if you accept the default.
 
-2. Check out the branch locally and run the full conflict walkthrough in [`lean-spec-pre-push`](../lean-spec-pre-push/SKILL.md) (step 1, "Resolving conflicts").
+2. Check out the branch locally and run the full conflict walkthrough in [`leanspec-pre-push`](../leanspec-pre-push/SKILL.md) (step 1, "Resolving conflicts").
 
-3. After the merge commit lands, continue with the rest of `lean-spec-pre-push` (typecheck, test, clippy, spec-link, provider/i18n evidence) before pushing.
+3. After the merge commit lands, continue with the rest of `leanspec-pre-push` (typecheck, test, clippy, spec-link, provider/i18n evidence) before pushing.
 
 4. Push the merge commit to the same branch with `git push` (no `--force`). The existing PR updates in place; the conflict banner clears when GitHub re-evaluates.
 
@@ -193,8 +195,8 @@ After handling a webhook event, end with one or two sentences: what the failure 
 
 | Related surface                                                      | Role                                                                                              |
 |----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
-| [`lean-spec-dev-process`](../lean-spec-dev-process/SKILL.md)         | Top-level SDD loop; points here for the post-push stage.                                          |
+| [`leanspec-dev-process`](../leanspec-dev-process/SKILL.md)           | Top-level SDD loop; points here for the post-push stage.                                          |
 | [`issue-spec`](https://github.com/onsager-ai/dev-skills/blob/main/skills/issue-spec/SKILL.md) | Creates the spec issue this PR links to. Installed globally from `onsager-ai/dev-skills`.         |
-| [`lean-spec-pre-push`](../lean-spec-pre-push/SKILL.md)               | Runs before `git push`; enforces the spec-link check locally and owns the conflict walkthrough.   |
+| [`leanspec-pre-push`](../leanspec-pre-push/SKILL.md)                 | Runs before `git push`; enforces the spec-link check locally and owns the conflict walkthrough.   |
 | [`leanspec-development`](../leanspec-development/SKILL.md)           | Commands, CI workflows, publishing, changelog format, runner research.                            |
 | [`github-integration`](https://github.com/onsager-ai/dev-skills/blob/main/skills/github-integration/SKILL.md) | `gh` CLI in cloud sessions (CI inspection only — not for issue/PR mutation). Installed globally from `onsager-ai/dev-skills`. |
